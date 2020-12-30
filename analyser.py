@@ -2,7 +2,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import uic, QtCore, QtWidgets
 
 
 class UserInterface(QtWidgets.QMainWindow):
@@ -10,20 +10,10 @@ class UserInterface(QtWidgets.QMainWindow):
         # roep de __init__() aan van de parent class
         super().__init__()
 
-        self.resize(600, 400)
+        uic.loadUi(open("analyser.ui"), self)
 
-        # elk QMainWindow moet een central widget hebben
-        # hierbinnen maak je een layout en hang je andere widgets
-        central_widget = QtWidgets.QWidget()
-        self.setCentralWidget(central_widget)
-
-        # voeg geneste layouts en widgets toe
-        vbox = QtWidgets.QVBoxLayout(central_widget)
-
-        data_view = QtWidgets.QTableView(central_widget)
-        vbox.addWidget(data_view)
         data_model = DataModel()
-        data_view.setModel(data_model)
+        self.data_view.setModel(data_model)
 
 
 class DataModel(QtCore.QAbstractTableModel):
