@@ -25,10 +25,11 @@ class UserInterface(QtWidgets.QMainWindow):
         self.name_edit.textEdited.connect(self.rename_column)
 
     def selection_changed(self, selected, deselected):
-        first_selection = selected.first()
-        col_idx = first_selection.left()
-        self._selected_col_idx = col_idx
-        self.name_edit.setText(self.data_model.get_column_name(col_idx))
+        if not selected.isEmpty():
+            first_selection = selected.first()
+            col_idx = first_selection.left()
+            self._selected_col_idx = col_idx
+            self.name_edit.setText(self.data_model.get_column_name(col_idx))
 
     def add_column(self):
         self.data_model.insertColumn(self.data_model.columnCount())
