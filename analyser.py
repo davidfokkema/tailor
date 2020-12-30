@@ -43,9 +43,9 @@ class DataModel(QtCore.QAbstractTableModel):
 
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole:
-            col = self._data.columns[index.column()]
+            col = index.column()
             row = index.row()
-            return float(self._data[col][row])
+            return float(self._data.iat[row, col])
         return QtCore.QVariant()
 
     def headerData(self, section, orientation, role):
