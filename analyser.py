@@ -14,13 +14,19 @@ class UserInterface(QtWidgets.QMainWindow):
 
         self.data_model = DataModel()
         self.data_view.setModel(self.data_model)
+
         self.selection = self.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
+
+        self.add_column_button.clicked.connect(self.add_column)
 
     def selection_changed(self, selected, deselected):
         first_selection = selected.first()
         col_idx = first_selection.left()
         self.name_edit.setText(self.data_model.get_column_name(col_idx))
+
+    def add_column(self):
+        self.data_model.insertColumn(self.data_model.columnCount())
 
 
 class DataModel(QtCore.QAbstractTableModel):
@@ -32,10 +38,10 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data = pd.DataFrame.from_dict({"x": x, "y": y})
         pass
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=None):
         return len(self._data)
 
-    def columnCount(self, parent):
+    def columnCount(self, parent=None):
         return len(self._data.columns)
 
     def data(self, index, role):
@@ -64,6 +70,11 @@ class DataModel(QtCore.QAbstractTableModel):
             else:
                 return self._data.index[section]
         return QtCore.QVariant()
+
+    def insertColumn(self, column, parent=None):
+        self.beginInsertColumns(QtCore.QModelIndex(), column, column)
+        self._data.insert(column, "y" + str(column), np.nan)
+        self.endInsertColumns()
 
     def flags(self, index):
         flags = super().flags(index)
