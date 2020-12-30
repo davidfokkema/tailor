@@ -43,10 +43,22 @@ class DataModel(QtCore.QAbstractTableModel):
 
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole:
-            col = index.column()
             row = index.row()
+            col = index.column()
             return float(self._data.iat[row, col])
         return QtCore.QVariant()
+
+    def setData(self, index, value, role):
+        if role == QtCore.Qt.EditRole:
+            row = index.row()
+            col = index.column()
+            try:
+                self._data.iat[row, col] = value
+            except ValueError:
+                return False
+            else:
+                return True
+        return False
 
     def headerData(self, section, orientation, role):
         if role == QtCore.Qt.DisplayRole:
@@ -54,6 +66,11 @@ class DataModel(QtCore.QAbstractTableModel):
                 return self._data.columns[section]
             else:
                 return self._data.index[section]
+        return QtCore.QVariant()
+
+    def flags(self, index):
+        flags = super().flags(index)
+        return flags | QtCore.Qt.ItemIsEditable
 
 
 def main():
