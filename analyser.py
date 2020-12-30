@@ -12,8 +12,15 @@ class UserInterface(QtWidgets.QMainWindow):
 
         uic.loadUi(open("analyser.ui"), self)
 
-        data_model = DataModel()
-        self.data_view.setModel(data_model)
+        self.data_model = DataModel()
+        self.data_view.setModel(self.data_model)
+        self.selection = self.data_view.selectionModel()
+        self.selection.selectionChanged.connect(self.selection_changed)
+
+    def selection_changed(self, selected, deselected):
+        first_selection = selected.first()
+        col_idx = first_selection.left()
+        self.name_edit.setText(self.data_model.get_column_name(col_idx))
 
 
 class DataModel(QtCore.QAbstractTableModel):
@@ -61,6 +68,9 @@ class DataModel(QtCore.QAbstractTableModel):
     def flags(self, index):
         flags = super().flags(index)
         return flags | QtCore.Qt.ItemIsEditable
+
+    def get_column_name(self, idx):
+        return self._data.columns[idx]
 
 
 def main():
