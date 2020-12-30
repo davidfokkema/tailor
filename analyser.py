@@ -6,6 +6,9 @@ from PyQt5 import uic, QtCore, QtWidgets
 
 
 class UserInterface(QtWidgets.QMainWindow):
+
+    _selected_col_idx = None
+
     def __init__(self):
         # roep de __init__() aan van de parent class
         super().__init__()
@@ -19,14 +22,20 @@ class UserInterface(QtWidgets.QMainWindow):
         self.selection.selectionChanged.connect(self.selection_changed)
 
         self.add_column_button.clicked.connect(self.add_column)
+        self.name_edit.textEdited.connect(self.rename_column)
 
     def selection_changed(self, selected, deselected):
         first_selection = selected.first()
         col_idx = first_selection.left()
+        self._selected_col_idx = col_idx
         self.name_edit.setText(self.data_model.get_column_name(col_idx))
 
     def add_column(self):
         self.data_model.insertColumn(self.data_model.columnCount())
+
+    def rename_column(self, name):
+        if self._selected_col_idx is not None:
+            self.data_model.rename_column(self._selected_col_idx, name)
 
 
 class DataModel(QtCore.QAbstractTableModel):
@@ -75,6 +84,11 @@ class DataModel(QtCore.QAbstractTableModel):
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, "y" + str(column), np.nan)
         self.endInsertColumns()
+
+    def rename_column(self, col_idx, name):
+        old_name = self._data.columns[col_idx]
+        self._data.rename(columns={old_name: name}, inplace=True)
+        self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
 
     def flags(self, index):
         flags = super().flags(index)
