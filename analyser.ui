@@ -92,6 +92,13 @@
         </layout>
        </item>
        <item>
+        <widget class="QPushButton" name="recalculate_button">
+         <property name="text">
+          <string>Recalculate Column</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="add_column_button">
          <property name="text">
           <string>Add Column</string>

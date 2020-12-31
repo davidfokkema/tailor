@@ -23,6 +23,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
         self.add_column_button.clicked.connect(self.add_column)
         self.name_edit.textEdited.connect(self.rename_column)
+        self.recalculate_button.clicked.connect(self.recalculate_column)
 
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():
@@ -30,6 +31,7 @@ class UserInterface(QtWidgets.QMainWindow):
             col_idx = first_selection.left()
             self._selected_col_idx = col_idx
             self.name_edit.setText(self.data_model.get_column_name(col_idx))
+            self.formula_edit.setText(self.data_model.get_column_expression(col_idx))
 
     def add_column(self):
         self.data_model.insertColumn(self.data_model.columnCount())
@@ -37,6 +39,12 @@ class UserInterface(QtWidgets.QMainWindow):
     def rename_column(self, name):
         if self._selected_col_idx is not None:
             self.data_model.rename_column(self._selected_col_idx, name)
+
+    def recalculate_column(self):
+        if self._selected_col_idx is not None:
+            self.data_model.recalculate_column(
+                self._selected_col_idx, self.formula_edit.text()
+            )
 
 
 class DataModel(QtCore.QAbstractTableModel):
@@ -47,7 +55,7 @@ class DataModel(QtCore.QAbstractTableModel):
         y = x ** 2
         self._data = pd.DataFrame.from_dict({"x": x, "y": y})
 
-        self._calculated_columns = []
+        self._calculated_columns = {}
 
     def rowCount(self, parent=None):
         return len(self._data)
@@ -93,14 +101,33 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data.insert(column, column_name, np.nan)
         self.endInsertColumns()
 
-        self._calculated_columns.append(column_name)
+        self._calculated_columns[column_name] = None
 
     def rename_column(self, col_idx, new_name):
         old_name = self._data.columns[col_idx]
         self._data.rename(columns={old_name: new_name}, inplace=True)
-        self._calculated_columns.remove(old_name)
-        self._calculated_columns.append(new_name)
+        try:
+            self._calculated_columns[new_name] = self._calculated_columns.pop(old_name)
+        except KeyError:
+            pass
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
+
+    def recalculate_column(self, col_idx, expression):
+        col_name = self.get_column_name(col_idx)
+        if col_name in self._calculated_columns:
+            objects = {
+                k: self._data[k] for k in self._data.columns if k is not col_name
+            }
+            try:
+                output = eval(expression, {"__builtins__": {}}, objects)
+            except NameError:
+                pass
+            else:
+                self._calculated_columns[col_name] = expression
+                self._data[col_name] = output
+                top_left = self.createIndex(0, col_idx)
+                bottom_right = self.createIndex(len(self._data), col_idx)
+                self.dataChanged.emit(top_left, bottom_right)
 
     def flags(self, index):
         flags = super().flags(index)
@@ -108,6 +135,13 @@ class DataModel(QtCore.QAbstractTableModel):
 
     def get_column_name(self, idx):
         return self._data.columns[idx]
+
+    def get_column_expression(self, idx):
+        col_name = self.get_column_name(idx)
+        try:
+            return self._calculated_columns[col_name]
+        except KeyError:
+            return None
 
 
 def main():
