@@ -2,7 +2,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-from PyQt5 import uic, QtCore, QtWidgets
+from PyQt5 import uic, QtCore, QtGui, QtWidgets
 
 
 class UserInterface(QtWidgets.QMainWindow):
@@ -46,7 +46,8 @@ class DataModel(QtCore.QAbstractTableModel):
         x = np.linspace(0, 10, 11)
         y = x ** 2
         self._data = pd.DataFrame.from_dict({"x": x, "y": y})
-        pass
+
+        self._calculated_columns = []
 
     def rowCount(self, parent=None):
         return len(self._data)
@@ -55,10 +56,14 @@ class DataModel(QtCore.QAbstractTableModel):
         return len(self._data.columns)
 
     def data(self, index, role):
+        row = index.row()
+        col = index.column()
+
         if role == QtCore.Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
             return float(self._data.iat[row, col])
+        elif role == QtCore.Qt.BackgroundRole:
+            if self.get_column_name(col) in self._calculated_columns:
+                return QtGui.QBrush(QtGui.QColor(255, 255, 200))
         return QtCore.QVariant()
 
     def setData(self, index, value, role):
@@ -82,13 +87,19 @@ class DataModel(QtCore.QAbstractTableModel):
         return QtCore.QVariant()
 
     def insertColumn(self, column, parent=None):
+        column_name = "y" + str(column)
+
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
-        self._data.insert(column, "y" + str(column), np.nan)
+        self._data.insert(column, column_name, np.nan)
         self.endInsertColumns()
 
-    def rename_column(self, col_idx, name):
+        self._calculated_columns.append(column_name)
+
+    def rename_column(self, col_idx, new_name):
         old_name = self._data.columns[col_idx]
-        self._data.rename(columns={old_name: name}, inplace=True)
+        self._data.rename(columns={old_name: new_name}, inplace=True)
+        self._calculated_columns.remove(old_name)
+        self._calculated_columns.append(new_name)
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
 
     def flags(self, index):
