@@ -24,6 +24,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_column_button.clicked.connect(self.add_column)
         self.name_edit.textEdited.connect(self.rename_column)
         self.recalculate_button.clicked.connect(self.recalculate_column)
+        self.create_plot_button.clicked.connect(self.create_plot)
 
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():
@@ -45,6 +46,11 @@ class UserInterface(QtWidgets.QMainWindow):
             self.data_model.recalculate_column(
                 self._selected_col_idx, self.formula_edit.text()
             )
+
+    def create_plot(self):
+        plot_tab = QtWidgets.QWidget()
+        uic.loadUi("plot_tab.ui", plot_tab)
+        self.tabWidget.addTab(plot_tab, "T1")
 
 
 class DataModel(QtCore.QAbstractTableModel):
