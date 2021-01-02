@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="PlotWidget" name="graphicsView"/>
+    <widget class="PlotWidget" name="plot_widget"/>
    </item>
   </layout>
  </widget>

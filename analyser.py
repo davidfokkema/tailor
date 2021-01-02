@@ -32,6 +32,8 @@ class UserInterface(QtWidgets.QMainWindow):
         self.recalculate_button.clicked.connect(self.recalculate_column)
         self.create_plot_button.clicked.connect(self.create_plot_dialog)
 
+        # self.create_plot("U", "I", "dU", "dI")
+
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():
             first_selection = selected.first()
@@ -56,14 +58,40 @@ class UserInterface(QtWidgets.QMainWindow):
     def create_plot_dialog(self):
         create_dialog = QtWidgets.QDialog(parent=self)
         uic.loadUi("create_plot_dialog.ui", create_dialog)
-        if create_dialog.exec() == QtWidgets.QDialog.Accepted:
-            self.create_plot()
+        choices = [None] + self.data_model.get_column_names()
+        create_dialog.x_axis_box.addItems(choices)
+        create_dialog.y_axis_box.addItems(choices)
+        create_dialog.x_err_box.addItems(choices)
+        create_dialog.y_err_box.addItems(choices)
 
-    def create_plot(self):
+        if create_dialog.exec() == QtWidgets.QDialog.Accepted:
+            x_var = create_dialog.x_axis_box.currentText()
+            y_var = create_dialog.y_axis_box.currentText()
+            x_err = create_dialog.x_err_box.currentText()
+            y_err = create_dialog.y_err_box.currentText()
+            if x_var and y_var:
+                self.create_plot(x_var, y_var, x_err, y_err)
+
+    def create_plot(self, x_var, y_var, x_err, y_err):
         tab_count = self.tabWidget.count()
         plot_tab = QtWidgets.QWidget()
         uic.loadUi("plot_tab.ui", plot_tab)
         self.tabWidget.addTab(plot_tab, f"Plot {tab_count}")
+        x = self.data_model._data[x_var]
+        y = self.data_model._data[y_var]
+        if x_err:
+            width = 2 * self.data_model._data[x_err]
+        else:
+            width = None
+        if y_err:
+            height = 2 * self.data_model._data[y_err]
+        else:
+            height = None
+        plot_tab.plot_widget.plot(
+            x, y, symbol="o", pen=None, symbolSize=5, symbolPen="k", symbolBrush="k",
+        )
+        error_bars = pg.ErrorBarItem(x=x, y=y, width=width, height=height)
+        plot_tab.plot_widget.addItem(error_bars)
 
 
 class DataModel(QtCore.QAbstractTableModel):
@@ -71,8 +99,8 @@ class DataModel(QtCore.QAbstractTableModel):
         super().__init__()
 
         x = np.linspace(0, 10, 11)
-        y = x ** 2
-        self._data = pd.DataFrame.from_dict({"x": x, "y": y})
+        y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
+        self._data = pd.DataFrame.from_dict({"U": x, "I": y})
 
         self._calculated_columns = {}
 
@@ -154,6 +182,9 @@ class DataModel(QtCore.QAbstractTableModel):
 
     def get_column_name(self, idx):
         return self._data.columns[idx]
+
+    def get_column_names(self):
+        return list(self._data.columns)
 
     def get_column_expression(self, idx):
         col_name = self.get_column_name(idx)
