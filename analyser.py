@@ -4,6 +4,12 @@ import numpy as np
 import pandas as pd
 from PyQt5 import uic, QtCore, QtGui, QtWidgets
 
+import pyqtgraph as pg
+
+
+pg.setConfigOption("background", "w")
+pg.setConfigOption("foreground", "k")
+
 
 class UserInterface(QtWidgets.QMainWindow):
 
@@ -48,9 +54,10 @@ class UserInterface(QtWidgets.QMainWindow):
             )
 
     def create_plot(self):
+        tab_count = self.tabWidget.count()
         plot_tab = QtWidgets.QWidget()
         uic.loadUi("plot_tab.ui", plot_tab)
-        self.tabWidget.addTab(plot_tab, "T1")
+        self.tabWidget.addTab(plot_tab, f"Plot {tab_count}")
 
 
 class DataModel(QtCore.QAbstractTableModel):
