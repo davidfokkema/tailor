@@ -30,7 +30,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_column_button.clicked.connect(self.add_column)
         self.name_edit.textEdited.connect(self.rename_column)
         self.recalculate_button.clicked.connect(self.recalculate_column)
-        self.create_plot_button.clicked.connect(self.create_plot)
+        self.create_plot_button.clicked.connect(self.create_plot_dialog)
 
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():
@@ -52,6 +52,12 @@ class UserInterface(QtWidgets.QMainWindow):
             self.data_model.recalculate_column(
                 self._selected_col_idx, self.formula_edit.text()
             )
+
+    def create_plot_dialog(self):
+        create_dialog = QtWidgets.QDialog(parent=self)
+        uic.loadUi("create_plot_dialog.ui", create_dialog)
+        if create_dialog.exec() == QtWidgets.QDialog.Accepted:
+            self.create_plot()
 
     def create_plot(self):
         tab_count = self.tabWidget.count()
