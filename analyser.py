@@ -82,6 +82,8 @@ class UserInterface(QtWidgets.QMainWindow):
         plot_tab = QtWidgets.QWidget()
         uic.loadUi("plot_tab.ui", plot_tab)
         self.tabWidget.addTab(plot_tab, f"Plot {tab_count}")
+        plot_tab.model_func.textEdited.connect(lambda: self.update_fit_params(plot_tab))
+
         x, y = self.data_model.get_columns([x_var, y_var])
         if x_err:
             width = 2 * self.data_model.get_column(x_err)
@@ -96,6 +98,17 @@ class UserInterface(QtWidgets.QMainWindow):
         )
         error_bars = pg.ErrorBarItem(x=x, y=y, width=width, height=height)
         plot_tab.plot_widget.addItem(error_bars)
+        plot_tab.plot_widget.setLabel("left", y_var)
+        plot_tab.plot_widget.setLabel("bottom", x_var)
+
+    def update_fit_params(self, tab):
+        try:
+            code = compile(tab.model_func.text(), "<string>", "eval")
+        except SyntaxError:
+            return
+        else:
+            params = code.co_names
+            tab.result_box.setPlainText(", ".join(params))
 
 
 class DataModel(QtCore.QAbstractTableModel):
