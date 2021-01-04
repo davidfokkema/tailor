@@ -36,7 +36,8 @@ class UserInterface(QtWidgets.QMainWindow):
         self.recalculate_button.clicked.connect(self.recalculate_column)
         self.create_plot_button.clicked.connect(self.create_plot_dialog)
 
-        # self.create_plot("U", "I", "dU", "dI")
+        # tests
+        self.create_plot("U", "I", "dU", "dI")
 
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():
@@ -104,7 +105,9 @@ class DataModel(QtCore.QAbstractTableModel):
 
         x = np.linspace(0, 10, 11)
         y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
-        self._data = pd.DataFrame.from_dict({"U": x, "I": y})
+        self._data = pd.DataFrame.from_dict(
+            {"U": x, "I": y, "dU": 0.1 * x, "dI": 0.1 * y}
+        )
 
         self._calculated_columns = {}
 
