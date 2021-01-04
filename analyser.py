@@ -82,14 +82,13 @@ class UserInterface(QtWidgets.QMainWindow):
         plot_tab = QtWidgets.QWidget()
         uic.loadUi("plot_tab.ui", plot_tab)
         self.tabWidget.addTab(plot_tab, f"Plot {tab_count}")
-        x = self.data_model._data[x_var]
-        y = self.data_model._data[y_var]
+        x, y = self.data_model.get_columns([x_var, y_var])
         if x_err:
-            width = 2 * self.data_model._data[x_err]
+            width = 2 * self.data_model.get_column(x_err)
         else:
             width = None
         if y_err:
-            height = 2 * self.data_model._data[y_err]
+            height = 2 * self.data_model.get_column(y_err)
         else:
             height = None
         plot_tab.plot_widget.plot(
@@ -199,6 +198,12 @@ class DataModel(QtCore.QAbstractTableModel):
             return self._calculated_columns[col_name]
         except KeyError:
             return None
+
+    def get_column(self, col_name):
+        return self._data[col_name]
+
+    def get_columns(self, col_names):
+        return [self._data[c] for c in col_names]
 
 
 def main():
