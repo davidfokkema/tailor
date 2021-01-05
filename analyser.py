@@ -18,10 +18,14 @@ pg.setConfigOption("foreground", "k")
 class UserInterface(QtWidgets.QMainWindow):
 
     _selected_col_idx = None
+    plot_tabs = None
+    plot_num = 1
 
     def __init__(self):
         # roep de __init__() aan van de parent class
         super().__init__()
+
+        self.plot_tabs = []
 
         uic.loadUi(open("analyser.ui"), self)
 
@@ -34,10 +38,10 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_column_button.clicked.connect(self.add_column)
         self.name_edit.textEdited.connect(self.rename_column)
         self.recalculate_button.clicked.connect(self.recalculate_column)
-        self.create_plot_button.clicked.connect(self.create_plot_dialog)
+        self.create_plot_button.clicked.connect(self.create_plot_tab)
 
         # tests
-        self.create_plot("U", "I", "dU", "dI")
+        # self.create_plot_tab()
 
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():
@@ -60,8 +64,21 @@ class UserInterface(QtWidgets.QMainWindow):
                 self._selected_col_idx, self.formula_edit.text()
             )
 
+    def create_plot_tab(self):
+        plot_tab = PlotTab(self.data_model, parent=self)
+        self.plot_tabs.append(plot_tab)
+        self.tabWidget.addTab(plot_tab.tab, f"Plot {self.plot_num}")
+        self.plot_num += 1
+
+
+class PlotTab:
+    def __init__(self, data_model, parent):
+        self.data_model = data_model
+        self.parent = parent
+        self.create_plot_dialog()
+
     def create_plot_dialog(self):
-        create_dialog = QtWidgets.QDialog(parent=self)
+        create_dialog = QtWidgets.QDialog(parent=self.parent)
         uic.loadUi("create_plot_dialog.ui", create_dialog)
         choices = [None] + self.data_model.get_column_names()
         create_dialog.x_axis_box.addItems(choices)
@@ -78,10 +95,9 @@ class UserInterface(QtWidgets.QMainWindow):
                 self.create_plot(x_var, y_var, x_err, y_err)
 
     def create_plot(self, x_var, y_var, x_err, y_err):
-        tab_count = self.tabWidget.count()
         plot_tab = QtWidgets.QWidget()
+        self.tab = plot_tab
         uic.loadUi("plot_tab.ui", plot_tab)
-        self.tabWidget.addTab(plot_tab, f"Plot {tab_count}")
         plot_tab.model_func.textEdited.connect(lambda: self.update_fit_params(plot_tab))
 
         x, y = self.data_model.get_columns([x_var, y_var])
