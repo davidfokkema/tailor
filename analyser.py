@@ -65,41 +65,39 @@ class UserInterface(QtWidgets.QMainWindow):
             )
 
     def create_plot_tab(self):
-        plot_tab = PlotTab(self.data_model, parent=self)
-        self.plot_tabs.append(plot_tab)
-        self.tabWidget.addTab(plot_tab.tab, f"Plot {self.plot_num}")
-        self.plot_num += 1
-
-
-class PlotTab:
-    def __init__(self, data_model, parent):
-        self.data_model = data_model
-        self.parent = parent
-        self.create_plot_dialog()
+        dialog = self.create_plot_dialog()
+        if dialog.exec() == QtWidgets.QDialog.Accepted:
+            x_var = dialog.x_axis_box.currentText()
+            y_var = dialog.y_axis_box.currentText()
+            x_err = dialog.x_err_box.currentText()
+            y_err = dialog.y_err_box.currentText()
+            if x_var and y_var:
+                plot_tab = PlotTab(self.data_model)
+                self.plot_tabs.append(plot_tab)
+                self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
+                self.plot_num += 1
+                plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
     def create_plot_dialog(self):
-        create_dialog = QtWidgets.QDialog(parent=self.parent)
+        create_dialog = QtWidgets.QDialog(parent=self)
         uic.loadUi("create_plot_dialog.ui", create_dialog)
         choices = [None] + self.data_model.get_column_names()
         create_dialog.x_axis_box.addItems(choices)
         create_dialog.y_axis_box.addItems(choices)
         create_dialog.x_err_box.addItems(choices)
         create_dialog.y_err_box.addItems(choices)
+        return create_dialog
 
-        if create_dialog.exec() == QtWidgets.QDialog.Accepted:
-            x_var = create_dialog.x_axis_box.currentText()
-            y_var = create_dialog.y_axis_box.currentText()
-            x_err = create_dialog.x_err_box.currentText()
-            y_err = create_dialog.y_err_box.currentText()
-            if x_var and y_var:
-                self.create_plot(x_var, y_var, x_err, y_err)
+
+class PlotTab(QtWidgets.QWidget):
+    def __init__(self, data_model):
+        super().__init__()
+
+        self.data_model = data_model
+        uic.loadUi("plot_tab.ui", self)
+        self.model_func.textEdited.connect(lambda: self.update_fit_params())
 
     def create_plot(self, x_var, y_var, x_err, y_err):
-        plot_tab = QtWidgets.QWidget()
-        self.tab = plot_tab
-        uic.loadUi("plot_tab.ui", plot_tab)
-        plot_tab.model_func.textEdited.connect(lambda: self.update_fit_params(plot_tab))
-
         x, y = self.data_model.get_columns([x_var, y_var])
         if x_err:
             width = 2 * self.data_model.get_column(x_err)
@@ -109,22 +107,22 @@ class PlotTab:
             height = 2 * self.data_model.get_column(y_err)
         else:
             height = None
-        plot_tab.plot_widget.plot(
+        self.plot_widget.plot(
             x, y, symbol="o", pen=None, symbolSize=5, symbolPen="k", symbolBrush="k",
         )
         error_bars = pg.ErrorBarItem(x=x, y=y, width=width, height=height)
-        plot_tab.plot_widget.addItem(error_bars)
-        plot_tab.plot_widget.setLabel("left", y_var)
-        plot_tab.plot_widget.setLabel("bottom", x_var)
+        self.plot_widget.addItem(error_bars)
+        self.plot_widget.setLabel("left", y_var)
+        self.plot_widget.setLabel("bottom", x_var)
 
-    def update_fit_params(self, tab):
+    def update_fit_params(self):
         try:
-            code = compile(tab.model_func.text(), "<string>", "eval")
+            code = compile(self.model_func.text(), "<string>", "eval")
         except SyntaxError:
             return
         else:
             params = code.co_names
-            tab.result_box.setPlainText(", ".join(params))
+            self.result_box.setPlainText(", ".join(params))
 
 
 class DataModel(QtCore.QAbstractTableModel):
