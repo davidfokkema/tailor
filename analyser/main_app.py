@@ -2,9 +2,7 @@ import os
 
 import sys
 
-import numpy as np
-import pandas as pd
-from PyQt5 import uic, QtCore, QtGui, QtWidgets
+from PyQt5 import uic, QtWidgets
 import pyqtgraph as pg
 import pkg_resources
 
