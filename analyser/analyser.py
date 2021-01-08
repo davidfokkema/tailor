@@ -1,7 +1,5 @@
 import os
 
-os.environ["QT_MAC_WANTS_LAYER"] = "1"
-
 import sys
 
 import numpy as np
@@ -10,9 +8,10 @@ from PyQt5 import uic, QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
 import pkg_resources
 
-from data_model import DataModel
-from plot_tab import PlotTab
+from analyser.data_model import DataModel
+from analyser.plot_tab import PlotTab
 
+os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
