@@ -10,6 +10,8 @@ from PyQt5 import uic, QtCore, QtGui, QtWidgets
 
 import pyqtgraph as pg
 
+import pkg_resources
+
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -27,7 +29,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
         self.plot_tabs = []
 
-        uic.loadUi(open("analyser/analyser.ui"), self)
+        uic.loadUi(pkg_resources.resource_stream("analyser", "analyser.ui"), self)
 
         self.data_model = DataModel()
         self.data_view.setModel(self.data_model)
@@ -80,7 +82,10 @@ class UserInterface(QtWidgets.QMainWindow):
 
     def create_plot_dialog(self):
         create_dialog = QtWidgets.QDialog(parent=self)
-        uic.loadUi("analyser/create_plot_dialog.ui", create_dialog)
+        uic.loadUi(
+            pkg_resources.resource_stream("analyser", "create_plot_dialog.ui"),
+            create_dialog,
+        )
         choices = [None] + self.data_model.get_column_names()
         create_dialog.x_axis_box.addItems(choices)
         create_dialog.y_axis_box.addItems(choices)
@@ -94,7 +99,7 @@ class PlotTab(QtWidgets.QWidget):
         super().__init__()
 
         self.data_model = data_model
-        uic.loadUi("analyser/plot_tab.ui", self)
+        uic.loadUi(pkg_resources.resource_stream("analyser", "plot_tab.ui"), self)
         self.model_func.textEdited.connect(lambda: self.update_fit_params())
 
     def create_plot(self, x_var, y_var, x_err, y_err):
