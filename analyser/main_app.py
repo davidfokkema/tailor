@@ -38,10 +38,10 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_column_button.clicked.connect(self.add_column)
         self.name_edit.textEdited.connect(self.rename_column)
         self.recalculate_button.clicked.connect(self.recalculate_column)
-        self.create_plot_button.clicked.connect(self.create_plot_tab)
+        self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # tests
-        # self.create_plot_tab()
+        self.create_plot_tab("U", "I", "dU", "dI")
 
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():
@@ -64,7 +64,7 @@ class UserInterface(QtWidgets.QMainWindow):
                 self._selected_col_idx, self.formula_edit.text()
             )
 
-    def create_plot_tab(self):
+    def ask_and_create_plot_tab(self):
         dialog = self.create_plot_dialog()
         if dialog.exec() == QtWidgets.QDialog.Accepted:
             x_var = dialog.x_axis_box.currentText()
@@ -72,11 +72,14 @@ class UserInterface(QtWidgets.QMainWindow):
             x_err = dialog.x_err_box.currentText()
             y_err = dialog.y_err_box.currentText()
             if x_var and y_var:
-                plot_tab = PlotTab(self.data_model)
-                self.plot_tabs.append(plot_tab)
-                self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
-                self.plot_num += 1
-                plot_tab.create_plot(x_var, y_var, x_err, y_err)
+                self.create_plot_tab(x_var, y_var, x_err, y_err)
+
+    def create_plot_tab(self, x_var, y_var, x_err, y_err):
+        plot_tab = PlotTab(self.data_model)
+        self.plot_tabs.append(plot_tab)
+        self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
+        self.plot_num += 1
+        plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
     def create_plot_dialog(self):
         create_dialog = QtWidgets.QDialog(parent=self)
