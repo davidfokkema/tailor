@@ -3,6 +3,10 @@ import pyqtgraph as pg
 import pkg_resources
 
 
+class VariableError(RuntimeError):
+    pass
+
+
 class PlotTab(QtWidgets.QWidget):
     def __init__(self, data_model):
         super().__init__()
@@ -40,14 +44,19 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_fit_params(self):
         try:
-            code = compile(self.model_func.text(), "<string>", "eval")
-        except SyntaxError:
-            # FIXME: error
-            self.result_box.setPlainText("")
+            params = self.get_params_from_model()
+        except (SyntaxError, VariableError) as exc:
+            print(exc)
+            return
         else:
-            params = set(code.co_names) - set(self._x_var)
-            if self._y_var in params:
-                # FIXME: error
-                self.result_box.setPlainText("")
-            else:
-                self.result_box.setPlainText(", ".join(params))
+            self.result_box.setPlainText(", ".join(params))
+
+    def get_params_from_model(self):
+        code = compile(self.model_func.text(), "<string>", "eval")
+        params = set(code.co_names) - set(self._x_var)
+        if self._y_var in params:
+            raise VariableError(
+                f"Dependent variable {self._y_var} must not be in function definition"
+            )
+        else:
+            return params
