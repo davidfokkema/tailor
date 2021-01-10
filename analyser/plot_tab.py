@@ -1,6 +1,9 @@
 from PyQt5 import uic, QtWidgets
 import pyqtgraph as pg
 import pkg_resources
+import numpy as np
+from lmfit import models
+import asteval
 
 
 class VariableError(RuntimeError):
@@ -17,6 +20,9 @@ class PlotTab(QtWidgets.QWidget):
         self.param_layout = QtWidgets.QFormLayout()
         self.parameter_box.setLayout(self.param_layout)
         self._params = {}
+        self._symbols = set(asteval.Interpreter().symtable.keys())
+
+        self._initial_param_plot = self.plot_widget.plot(symbol=None, pen="b")
 
         self.model_func.textEdited.connect(lambda: self.update_fit_params())
 
@@ -57,15 +63,18 @@ class PlotTab(QtWidgets.QWidget):
             old_params = set(self._params)
             self.add_params_to_layout(params - old_params)
             self.remove_params_from_layout(old_params - params)
+            self.plot_initial_model()
 
     def get_params_from_model(self):
-        code = compile(self.model_func.text(), "<string>", "eval")
-        params = set(code.co_names) - set(self._x_var)
+        model_expr = self.model_func.text()
+        code = compile(model_expr, "<string>", "eval")
+        params = set(code.co_names) - set(self._x_var) - self._symbols
         if self._y_var in params:
             raise VariableError(
                 f"Dependent variable {self._y_var} must not be in function definition"
             )
         else:
+            self.model = models.ExpressionModel(model_expr, list(params))
             return params
 
     def add_params_to_layout(self, params):
@@ -82,4 +91,10 @@ class PlotTab(QtWidgets.QWidget):
             del self._params[p]
 
     def plot_initial_model(self):
-        print("J")
+        # FIXME Problem for constants like y = a
+        x = np.linspace(0, 10, 100)
+        kwargs = {k: v.value() for k, v in self._params.items()}
+        kwargs[self._x_var] = x
+        y = self.model.eval(**kwargs)
+
+        self._initial_param_plot.setData(x, y)

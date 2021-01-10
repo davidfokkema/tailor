@@ -42,8 +42,9 @@ class UserInterface(QtWidgets.QMainWindow):
 
         # tests
         self.create_plot_tab("U", "I", "dU", "dI")
-        self.plot_tabs[0].model_func.setText("a * x + b")
+        self.plot_tabs[0].model_func.setText("a * U + b")
         self.plot_tabs[0].model_func.textEdited.emit("")
+        self.tabWidget.setCurrentIndex(1)
 
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():
