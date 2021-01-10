@@ -13,6 +13,11 @@ class PlotTab(QtWidgets.QWidget):
 
         self.data_model = data_model
         uic.loadUi(pkg_resources.resource_stream("analyser", "plot_tab.ui"), self)
+
+        self.param_layout = QtWidgets.QFormLayout()
+        self.parameter_box.setLayout(self.param_layout)
+        self._params = {}
+
         self.model_func.textEdited.connect(lambda: self.update_fit_params())
 
     def create_plot(self, x_var, y_var, x_err, y_err):
@@ -49,7 +54,9 @@ class PlotTab(QtWidgets.QWidget):
             print(exc)
             return
         else:
-            self.result_box.setPlainText(", ".join(params))
+            old_params = set(self._params)
+            self.add_params_to_layout(params - old_params)
+            self.remove_params_from_layout(old_params - params)
 
     def get_params_from_model(self):
         code = compile(self.model_func.text(), "<string>", "eval")
@@ -60,3 +67,19 @@ class PlotTab(QtWidgets.QWidget):
             )
         else:
             return params
+
+    def add_params_to_layout(self, params):
+        for p in params:
+            spinbox = QtWidgets.QDoubleSpinBox()
+            spinbox.setValue(1.0)
+            spinbox.valueChanged.connect(self.plot_initial_model)
+            self._params[p] = spinbox
+            self.param_layout.addRow(p, spinbox)
+
+    def remove_params_from_layout(self, params):
+        for p in params:
+            self.param_layout.removeRow(self._params[p])
+            del self._params[p]
+
+    def plot_initial_model(self):
+        print("J")

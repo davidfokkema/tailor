@@ -39,11 +39,10 @@
       </widget>
      </item>
      <item>
-      <widget class="QGroupBox" name="groupBox_2">
+      <widget class="QGroupBox" name="parameter_box">
        <property name="title">
         <string>Starting values</string>
        </property>
-       <layout class="QFormLayout" name="formLayout_3"/>
       </widget>
      </item>
      <item>
