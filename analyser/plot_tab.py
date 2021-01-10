@@ -28,12 +28,26 @@ class PlotTab(QtWidgets.QWidget):
         self.plot_widget.addItem(error_bars)
         self.plot_widget.setLabel("left", y_var)
         self.plot_widget.setLabel("bottom", x_var)
+        self.update_function_label(y_var)
+        self._y_var = y_var
+        self._x_var = x_var
+
+    def update_function_label(self, variable):
+        label_text = self.model_func_label.text()
+        title, _, _ = label_text.partition(":")
+        new_label_text = f"{title}:  {variable} ="
+        self.model_func_label.setText(new_label_text)
 
     def update_fit_params(self):
         try:
             code = compile(self.model_func.text(), "<string>", "eval")
         except SyntaxError:
-            return
+            # FIXME: error
+            self.result_box.setPlainText("")
         else:
-            params = code.co_names
-            self.result_box.setPlainText(", ".join(params))
+            params = set(code.co_names) - set(self._x_var)
+            if self._y_var in params:
+                # FIXME: error
+                self.result_box.setPlainText("")
+            else:
+                self.result_box.setPlainText(", ".join(params))
