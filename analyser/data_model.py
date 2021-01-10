@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import asteval
 
 from PyQt5 import QtCore, QtGui
 
@@ -78,7 +79,8 @@ class DataModel(QtCore.QAbstractTableModel):
                 k: self._data[k] for k in self._data.columns if k is not col_name
             }
             try:
-                output = eval(expression, {"__builtins__": {}}, objects)
+                aeval = asteval.Interpreter(usersyms=objects)
+                output = aeval(expression)
             except NameError:
                 pass
             else:
