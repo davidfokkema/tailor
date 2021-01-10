@@ -45,6 +45,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.plot_tabs[0].model_func.setText("a * U + b")
         self.plot_tabs[0].model_func.textEdited.emit("")
         self.tabWidget.setCurrentIndex(1)
+        self.plot_tabs[0].fit_button.clicked.emit()
 
     def selection_changed(self, selected, deselected):
         if not selected.isEmpty():

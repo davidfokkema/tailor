@@ -58,7 +58,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="fit_button">
        <property name="text">
         <string>(Re)Fit model</string>
        </property>

@@ -22,12 +22,19 @@ class PlotTab(QtWidgets.QWidget):
         self._params = {}
         self._symbols = set(asteval.Interpreter().symtable.keys())
 
-        self._initial_param_plot = self.plot_widget.plot(symbol=None, pen="b")
+        self._initial_param_plot = self.plot_widget.plot(
+            symbol=None, pen=pg.mkPen(color="b", width=2)
+        )
+        self._fit_plot = self.plot_widget.plot(
+            symbol=None, pen=pg.mkPen(color="r", width=2)
+        )
 
-        self.model_func.textEdited.connect(lambda: self.update_fit_params())
+        self.model_func.textEdited.connect(self.update_fit_params)
+        self.fit_button.clicked.connect(self.perform_fit)
 
     def create_plot(self, x_var, y_var, x_err, y_err):
         x, y = self.data_model.get_columns([x_var, y_var])
+        self.x, self.y = x, y
         if x_err:
             width = 2 * self.data_model.get_column(x_err)
         else:
@@ -74,7 +81,9 @@ class PlotTab(QtWidgets.QWidget):
                 f"Dependent variable {self._y_var} must not be in function definition"
             )
         else:
-            self.model = models.ExpressionModel(model_expr, list(params))
+            self.model = models.ExpressionModel(
+                model_expr, independent_vars=[self._x_var]
+            )
             return params
 
     def add_params_to_layout(self, params):
@@ -98,3 +107,15 @@ class PlotTab(QtWidgets.QWidget):
         y = self.model.eval(**kwargs)
 
         self._initial_param_plot.setData(x, y)
+
+    def perform_fit(self):
+        kwargs = {k: v.value() for k, v in self._params.items()}
+        params = self.model.make_params(**kwargs)
+        xkwarg = {self._x_var: self.x}
+
+        fit = self.model.fit(self.y, params=params, **xkwarg)
+        self.result_box.setPlainText(fit.fit_report())
+
+        x = np.linspace(0, 10, 100)
+        y = fit.eval(**{self._x_var: x})
+        self._fit_plot.setData(x, y)
