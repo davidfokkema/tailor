@@ -11,6 +11,7 @@ from analyser.plot_tab import PlotTab
 
 os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
+pg.setConfigOptions(antialias=True)
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
