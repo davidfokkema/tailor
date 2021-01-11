@@ -1,0 +1,14 @@
+name: analyser
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python
+  - lmfit
+  - pandas
+  - conda-forge::numpy
+  - conda-forge::pyqt
+  - pyqtgraph
+  - ipython
+  - jedi[version='<0.18']
+  - pyinstaller
