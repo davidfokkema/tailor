@@ -1,0 +1,53 @@
+[tool.briefcase]
+project_name = "Analyser"
+bundle = "com.phys-pract-amsterdam"
+version = "0.0.1"
+url = "https://example.com"
+license = "GNU General Public License v3 (GPLv3)"
+author = 'David Fokkema'
+author_email = "d.b.r.a.fokkema@vu.nl"
+
+[tool.briefcase.app.analyser]
+formal_name = "Analyser"
+description = "My first application"
+icon = "src/analyser/resources/analyser"
+sources = ['src/analyser']
+requires = [
+    'asteval==0.9.16',
+    'certifi==2020.12.5',
+    'future==0.18.2',
+    'lmfit==1.0.1',
+    'numpy==1.19.5',
+    'pandas==1.2.0',
+    'pip==20.3.3',
+    'PyQt5==5.12.3',
+    'PyQt5-sip==4.19.18',
+    'PyQtChart==5.12',
+    'pyqtgraph==0.11.0',
+    'PyQtWebEngine==5.12.1',
+    'python-dateutil==2.8.1',
+    'pytz==2020.5',
+    'scipy==1.5.2',
+    'setuptools==51.1.2',
+    'six==1.15.0',
+    'uncertainties==3.1.5',
+    'wheel==0.36.2',]
+
+
+
+[tool.briefcase.app.analyser.macOS]
+requires = []
+
+[tool.briefcase.app.analyser.linux]
+requires = []
+system_requires = []
+
+[tool.briefcase.app.analyser.windows]
+requires = []
+
+# Mobile deployments
+[tool.briefcase.app.analyser.iOS]
+requires = []
+
+[tool.briefcase.app.analyser.android]
+requires = []
