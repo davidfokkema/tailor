@@ -10,8 +10,8 @@ author_email = "d.b.r.a.fokkema@vu.nl"
 [tool.briefcase.app.analyser]
 formal_name = "Analyser"
 description = "My first application"
-icon = "src/analyser/resources/analyser"
-sources = ['src/analyser']
+icon = "analyser/resources/analyser"
+sources = ['analyser']
 requires = [
     'asteval==0.9.16',
     'certifi==2020.12.5',
