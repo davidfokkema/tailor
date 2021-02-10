@@ -13,12 +13,12 @@ description = "My first application"
 icon = "src/analyser/resources/analyser"
 sources = ['src/analyser']
 requires = [
-    'setuptools==52.0.0',
-    'numpy==1.19.5',
-    'pandas==1.2.0',
-    'lmfit==1.0.1',
-    'PyQt5==5.12.3',
-    'pyqtgraph==0.11.0',]
+    'setuptools==53.0.0',
+    'numpy==1.20.1',
+    'pandas==1.2.2',
+    'lmfit==1.0.2',
+    'PyQt5==5.15.2',
+    'pyqtgraph==0.11.1',]
 
 [tool.briefcase.app.analyser.macOS]
 requires = []
