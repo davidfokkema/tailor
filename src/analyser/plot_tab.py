@@ -44,7 +44,13 @@ class PlotTab(QtWidgets.QWidget):
         else:
             height = None
         self.plot_widget.plot(
-            x, y, symbol="o", pen=None, symbolSize=5, symbolPen="k", symbolBrush="k",
+            x,
+            y,
+            symbol="o",
+            pen=None,
+            symbolSize=5,
+            symbolPen="k",
+            symbolBrush="k",
         )
         error_bars = pg.ErrorBarItem(x=x, y=y, width=width, height=height)
         self.plot_widget.addItem(error_bars)
