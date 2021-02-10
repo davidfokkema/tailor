@@ -1,7 +1,7 @@
 [tool.briefcase]
 project_name = "Analyser"
-bundle = "com.phys-pract-amsterdam"
-version = "0.0.1"
+bundle = "com.amsphyslab"
+version = "0.1.0"
 url = "https://example.com"
 license = "GNU General Public License v3 (GPLv3)"
 author = 'David Fokkema'
@@ -9,7 +9,7 @@ author_email = "d.b.r.a.fokkema@vu.nl"
 
 [tool.briefcase.app.analyser]
 formal_name = "Analyser"
-description = "My first application"
+description = "Explore datasets and fit models."
 icon = "src/analyser/resources/analyser"
 sources = ['src/analyser']
 requires = [

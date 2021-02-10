@@ -5,6 +5,8 @@ Analyser
 `The BeeWare Project`_. **If you want to see more tools like Briefcase, please
 consider** `becoming a financial member of BeeWare`_.
 
+Explore datasets and fit models.
+
 Development
 -----------
 
