@@ -5,7 +5,26 @@ Analyser
 `The BeeWare Project`_. **If you want to see more tools like Briefcase, please
 consider** `becoming a financial member of BeeWare`_.
 
-My first application
+Development
+-----------
+
+Set up a development environment with::
+
+    $ conda create -n analyser python=3.8
+    $ conda activate analyser
+    $ pip install briefcase
+
+Then, for installing dependencies and running the app in the dev environment::
+
+    $ briefcase dev
+
+For creating a (clean) application::
+
+    $ briefcase create
+
+And running the application::
+
+    $ briefcase run
 
 .. _`Briefcase`: https://github.com/beeware/briefcase
 .. _`The BeeWare Project`: https://beeware.org/
