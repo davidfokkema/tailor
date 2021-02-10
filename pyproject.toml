@@ -1,8 +1,8 @@
 [tool.briefcase]
 project_name = "Analyser"
-bundle = "com.amsphyslab"
+bundle = "com.amsphyslab.analyser"
 version = "0.1.0"
-url = "https://example.com"
+url = "https://github.com/davidfokkema/analyser"
 license = "GNU General Public License v3 (GPLv3)"
 author = 'David Fokkema'
 author_email = "d.b.r.a.fokkema@vu.nl"
