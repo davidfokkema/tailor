@@ -28,6 +28,22 @@ And running the application::
 
     $ briefcase run
 
+Updating the application can be quickly done with::
+
+    $ briefcase update
+
+or update and run in one go::
+
+    $ briefcase run -u
+
+If you need to install extra (!) dependencies::
+
+    $ briefcase update -d
+
+Mind that this does not *remove* dependencies. You must recreate the application to do that. Creating installers for the application::
+
+    $ briefcase package --no-sign
+
 .. _`Briefcase`: https://github.com/beeware/briefcase
 .. _`The BeeWare Project`: https://beeware.org/
 .. _`becoming a financial member of BeeWare`: https://beeware.org/contributing/membership
