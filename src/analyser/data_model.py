@@ -9,10 +9,11 @@ class DataModel(QtCore.QAbstractTableModel):
     def __init__(self):
         super().__init__()
 
+        # FIXME: test data
         x = np.linspace(0, 10, 11)
         y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
         self._data = pd.DataFrame.from_dict(
-            {"U": x, "I": y, "dU": 0.1 * x, "dI": 0.1 * y}
+            {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
         )
 
         self._calculated_columns = {}

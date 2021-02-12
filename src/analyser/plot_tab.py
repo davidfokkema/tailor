@@ -11,6 +11,12 @@ class VariableError(RuntimeError):
 
 
 class PlotTab(QtWidgets.QWidget):
+
+    x = None
+    y = None
+    x_err = None
+    y_err = None
+
     def __init__(self, data_model):
         super().__init__()
 
@@ -36,21 +42,17 @@ class PlotTab(QtWidgets.QWidget):
         x, y = self.data_model.get_columns([x_var, y_var])
         self.x, self.y = x, y
         if x_err:
-            width = 2 * self.data_model.get_column(x_err)
+            self.x_err = self.data_model.get_column(x_err)
+            width = 2 * self.x_err
         else:
             width = None
         if y_err:
-            height = 2 * self.data_model.get_column(y_err)
+            self.y_err = self.data_model.get_column(y_err)
+            height = 2 * self.y_err
         else:
             height = None
         self.plot_widget.plot(
-            x,
-            y,
-            symbol="o",
-            pen=None,
-            symbolSize=5,
-            symbolPen="k",
-            symbolBrush="k",
+            x, y, symbol="o", pen=None, symbolSize=5, symbolPen="k", symbolBrush="k",
         )
         error_bars = pg.ErrorBarItem(x=x, y=y, width=width, height=height)
         self.plot_widget.addItem(error_bars)
@@ -117,9 +119,11 @@ class PlotTab(QtWidgets.QWidget):
     def perform_fit(self):
         kwargs = {k: v.value() for k, v in self._params.items()}
         params = self.model.make_params(**kwargs)
-        xkwarg = {self._x_var: self.x}
 
-        fit = self.model.fit(self.y, params=params, **xkwarg)
+        kwargs = {self._x_var: self.x}
+        if self.y_err is not None:
+            kwargs["weights"] = 1 / self.y_err
+        fit = self.model.fit(self.y, params=params, **kwargs)
         self.result_box.setPlainText(fit.fit_report())
 
         x = np.linspace(0, 10, 100)
