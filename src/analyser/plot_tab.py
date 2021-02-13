@@ -21,7 +21,9 @@ class PlotTab(QtWidgets.QWidget):
         super().__init__()
 
         self.data_model = data_model
-        uic.loadUi(pkg_resources.resource_stream("analyser", "plot_tab.ui"), self)
+        uic.loadUi(
+            pkg_resources.resource_stream("analyser.resources", "plot_tab.ui"), self
+        )
 
         self.param_layout = QtWidgets.QFormLayout()
         self.parameter_box.setLayout(self.param_layout)

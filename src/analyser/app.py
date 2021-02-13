@@ -29,7 +29,9 @@ class UserInterface(QtWidgets.QMainWindow):
 
         self.plot_tabs = []
 
-        uic.loadUi(pkg_resources.resource_stream("analyser", "analyser.ui"), self)
+        uic.loadUi(
+            pkg_resources.resource_stream("analyser.resources", "analyser.ui"), self
+        )
 
         self.data_model = DataModel()
         self.data_view.setModel(self.data_model)
@@ -91,7 +93,9 @@ class UserInterface(QtWidgets.QMainWindow):
     def create_plot_dialog(self):
         create_dialog = QtWidgets.QDialog(parent=self)
         uic.loadUi(
-            pkg_resources.resource_stream("analyser", "create_plot_dialog.ui"),
+            pkg_resources.resource_stream(
+                "analyser.resources", "create_plot_dialog.ui"
+            ),
             create_dialog,
         )
         choices = [None] + self.data_model.get_column_names()
