@@ -9,7 +9,8 @@ import pkg_resources
 from analyser.data_model import DataModel
 from analyser.plot_tab import PlotTab
 
-os.environ["QT_MAC_WANTS_LAYER"] = "1"
+# Fix for Big Sur bug in Qt >=5.15, <15.15.2
+# os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
 pg.setConfigOptions(antialias=True)
 pg.setConfigOption("background", "w")
@@ -32,6 +33,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
         self.data_model = DataModel()
         self.data_view.setModel(self.data_model)
+        self.data_view.setDragDropMode(self.data_view.InternalMove)
 
         self.selection = self.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
