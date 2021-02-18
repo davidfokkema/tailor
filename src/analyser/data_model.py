@@ -177,17 +177,20 @@ class DataModel(QtCore.QAbstractTableModel):
             objects = {
                 k: self._data[k] for k in self._data.columns if k is not col_name
             }
-            try:
-                aeval = asteval.Interpreter(usersyms=objects)
-                output = aeval(expression)
-            except NameError:
-                pass
-            else:
+            aeval = asteval.Interpreter(usersyms=objects)
+            output = aeval(expression)
+            if aeval.error:
+                for err in aeval.error:
+                    exc, msg = err.get_error()
+                    print(f"Evaluation of mathematical expression raised {exc}: {msg}")
+            elif output is not None:
                 self._calculated_columns[col_name] = expression
                 self._data[col_name] = output
                 top_left = self.createIndex(0, col_idx)
                 bottom_right = self.createIndex(len(self._data), col_idx)
                 self.dataChanged.emit(top_left, bottom_right)
+            else:
+                print("No evaluation error but no output.")
 
     def flags(self, index):
         """Returns item flags.

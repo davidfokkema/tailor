@@ -116,13 +116,6 @@
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="recalculate_button">
-               <property name="text">
-                <string>Recalculate</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
            <item>

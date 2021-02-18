@@ -56,15 +56,21 @@ class UserInterface(QtWidgets.QMainWindow):
 
         self.add_column_button.clicked.connect(self.add_column)
         self.name_edit.textEdited.connect(self.rename_column)
-        self.recalculate_button.clicked.connect(self.recalculate_column)
+        self.formula_edit.textEdited.connect(self.recalculate_column)
         self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # tests
         self.create_plot_tab("U", "I", "dU", "dI")
         self.plot_tabs[0].model_func.setText("a * U + b")
         self.plot_tabs[0].model_func.textEdited.emit("")
-        self.tabWidget.setCurrentIndex(1)
+        # self.tabWidget.setCurrentIndex(1)
         self.plot_tabs[0].fit_button.clicked.emit()
+
+        # test: create column, select, fill in 'a' and recalculate
+        self.add_column_button.clicked.emit()
+        self.selection.select(self.data_model.createIndex(0, 4), self.selection.Select)
+        self.formula_edit.setText("a")
+        self.formula_edit.textEdited.emit("")
 
     def selection_changed(self, selected, deselected):
         """Handles selectionChanged events in the data view.
