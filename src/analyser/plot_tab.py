@@ -158,8 +158,13 @@ class PlotTab(QtWidgets.QWidget):
             params: a list of parameter names to add to the user interface.
         """
         for p in params:
-            spinbox = QtWidgets.QDoubleSpinBox()
-            spinbox.setValue(1.0)
+            spinbox = QtWidgets.QDoubleSpinBox(
+                value=1.0,
+                decimals=6,
+                minimum=-1e6,
+                maximum=1e6,
+                stepType=QtWidgets.QDoubleSpinBox.AdaptiveDecimalStepType,
+            )
             spinbox.valueChanged.connect(self.plot_initial_model)
             self._params[p] = spinbox
             self.param_layout.addRow(p, spinbox)
