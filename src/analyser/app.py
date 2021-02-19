@@ -8,7 +8,7 @@ import os
 
 import sys
 
-from PyQt5 import uic, QtWidgets
+from PyQt5 import uic, QtWidgets, QtCore
 import pyqtgraph as pg
 import pkg_resources
 
@@ -59,6 +59,10 @@ class UserInterface(QtWidgets.QMainWindow):
         self.formula_edit.textEdited.connect(self.recalculate_column)
         self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
+        # Create shortcut for return/enter keys
+        for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
+            QtWidgets.QShortcut(key, self.data_view, self.edit_or_move_down)
+
         # tests
         self.create_plot_tab("U", "I", "dU", "dI")
         self.plot_tabs[0].model_func.setText("a * U + b")
@@ -71,6 +75,22 @@ class UserInterface(QtWidgets.QMainWindow):
         self.selection.select(self.data_model.createIndex(0, 4), self.selection.Select)
         self.formula_edit.setText("a")
         self.formula_edit.textEdited.emit("")
+
+    def edit_or_move_down(self):
+        """Edit cell or move cursor down a row.
+        
+        Start editing a cell. If the cell was already being edited, move the cursor down a row, stopping the edit in the process.
+
+        FIXME: when on last row, create a new row
+        """
+        index = self.data_view.currentIndex()
+        if not self.data_view.isPersistentEditorOpen(index):
+            self.data_view.edit(index)
+        else:
+            index = self.data_view.moveCursor(
+                self.data_view.MoveDown, QtCore.Qt.NoModifier
+            )
+            self.data_view.setCurrentIndex(index)
 
     def selection_changed(self, selected, deselected):
         """Handles selectionChanged events in the data view.
