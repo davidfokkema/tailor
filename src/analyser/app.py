@@ -72,7 +72,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
         # test: create column, select, fill in 'a' and recalculate
         self.add_column_button.clicked.emit()
-        self.selection.select(self.data_model.createIndex(0, 4), self.selection.Select)
+        self.data_view.setCurrentIndex(self.data_model.createIndex(0, 4))
         self.formula_edit.setText("a")
         self.formula_edit.textEdited.emit("")
 
@@ -80,17 +80,26 @@ class UserInterface(QtWidgets.QMainWindow):
         """Edit cell or move cursor down a row.
         
         Start editing a cell. If the cell was already being edited, move the cursor down a row, stopping the edit in the process.
-
-        FIXME: when on last row, create a new row
         """
-        index = self.data_view.currentIndex()
-        if not self.data_view.isPersistentEditorOpen(index):
-            self.data_view.edit(index)
+        cur_index = self.data_view.currentIndex()
+        if not self.data_view.isPersistentEditorOpen(cur_index):
+            # is not yet editing, so start an edit
+            self.data_view.edit(cur_index)
         else:
-            index = self.data_view.moveCursor(
+            # is already editing, what index is below?
+            new_index = self.data_view.moveCursor(
                 self.data_view.MoveDown, QtCore.Qt.NoModifier
             )
-            self.data_view.setCurrentIndex(index)
+            if new_index != cur_index:
+                # a new one, so move to it (finishing editing in the process)
+                self.data_view.setCurrentIndex(new_index)
+            else:
+                # already on bottom row, have to manually save and close the editor
+                widget = self.data_view.indexWidget(cur_index)
+                self.data_view.commitData(widget)
+                self.data_view.closeEditor(
+                    widget, QtWidgets.QAbstractItemDelegate.NoHint
+                )
 
     def selection_changed(self, selected, deselected):
         """Handles selectionChanged events in the data view.
