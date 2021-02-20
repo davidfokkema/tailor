@@ -55,6 +55,8 @@ class UserInterface(QtWidgets.QMainWindow):
         self.selection.selectionChanged.connect(self.selection_changed)
 
         self.add_column_button.clicked.connect(self.add_column)
+        self.actionAdd_column.triggered.connect(self.add_column)
+
         self.name_edit.textEdited.connect(self.rename_column)
         self.formula_edit.textEdited.connect(self.recalculate_column)
         self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
@@ -122,7 +124,7 @@ class UserInterface(QtWidgets.QMainWindow):
             self.formula_edit.setText(self.data_model.get_column_expression(col_idx))
 
     def add_column(self):
-        """Add column to date model."""
+        """Add column to data model."""
         self.data_model.insertColumn(self.data_model.columnCount())
 
     def rename_column(self, name):

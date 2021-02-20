@@ -143,8 +143,45 @@
      <height>24</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuTable">
+    <property name="title">
+     <string>Table</string>
+    </property>
+    <addaction name="actionAdd_column"/>
+    <addaction name="actionAdd_calculated_column"/>
+    <addaction name="actionAdd_row"/>
+    <addaction name="separator"/>
+    <addaction name="actionDelete_column"/>
+    <addaction name="actionDelete_row"/>
+   </widget>
+   <addaction name="menuTable"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionAdd_column">
+   <property name="text">
+    <string>Add column</string>
+   </property>
+  </action>
+  <action name="actionAdd_calculated_column">
+   <property name="text">
+    <string>Add calculated column</string>
+   </property>
+  </action>
+  <action name="actionAdd_row">
+   <property name="text">
+    <string>Add row</string>
+   </property>
+  </action>
+  <action name="actionDelete_column">
+   <property name="text">
+    <string>Delete column</string>
+   </property>
+  </action>
+  <action name="actionDelete_row">
+   <property name="text">
+    <string>Delete row</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
