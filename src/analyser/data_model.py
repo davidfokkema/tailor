@@ -18,6 +18,8 @@ class DataModel(QtCore.QAbstractTableModel):
     table view used in the app.
     """
 
+    _new_col_num = 0
+
     def __init__(self):
         """Instantiate the class."""
         super().__init__()
@@ -139,7 +141,7 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             True if the insertion was succesful, False otherwise.
         """
-        column_name = "y" + str(column)
+        column_name = self._create_new_column_name()
 
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, column_name, np.nan)
@@ -158,7 +160,7 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             True if the insertion was succesful, False otherwise.
         """
-        column_name = "y" + str(column)
+        column_name = self._create_new_column_name()
 
         if self.insertColumn(column) is True:
             self._calculated_columns[column_name] = None
@@ -287,3 +289,19 @@ class DataModel(QtCore.QAbstractTableModel):
             A list of pandas.Series containing the column values.
         """
         return [self._data[c] for c in col_names]
+
+    def _create_new_column_name(self):
+        """Create a name for a new column.
+
+        Creates column names like new1, new2, etc. while making sure the new
+        name is not yet taken.
+
+        Returns:
+            A string containing the new name.
+        """
+        col_names = self.get_column_names()
+        while True:
+            self._new_col_num += 1
+            new_name = f"new{self._new_col_num}"
+            if new_name not in col_names:
+                return new_name

@@ -143,7 +143,9 @@ class UserInterface(QtWidgets.QMainWindow):
             name: a QString containing the new name.
         """
         if self._selected_col_idx is not None:
-            self.data_model.rename_column(self._selected_col_idx, name)
+            if name and name not in self.data_model.get_column_names():
+                # Do not allow empty names or duplicate column names
+                self.data_model.rename_column(self._selected_col_idx, name)
 
     def recalculate_column(self):
         """Recalculate column values.
