@@ -125,7 +125,7 @@ class DataModel(QtCore.QAbstractTableModel):
             if orientation == QtCore.Qt.Horizontal:
                 return self._data.columns[section]
             else:
-                return self._data.index[section]
+                return str(self._data.index[section])
         return QtCore.QVariant()
 
     def insertColumn(self, column, parent=None, column_name=None):
@@ -147,6 +147,27 @@ class DataModel(QtCore.QAbstractTableModel):
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, column_name, np.nan)
         self.endInsertColumns()
+        return True
+
+    def insertRow(self, row, parent=None):
+        """Insert a single row.
+
+        Append a row to the table, ignoring the specified row number. Returns
+        True if the insertion was succesful.
+
+        Args:
+            row: an integer row number to indicate the place of insertion
+                (ignored).
+            parent: a QModelIndex pointing to the model (ignored).
+
+        Returns:
+            True if the insertion was succesful, False otherwise.
+        """
+        row = self.rowCount()
+        self.beginInsertRows(QtCore.QModelIndex(), row, row)
+        num_col = len(self._data.columns)
+        self._data.loc[row] = num_col * [np.nan]
+        self.endInsertRows()
         return True
 
     def insert_calculated_column(self, column):

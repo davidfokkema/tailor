@@ -59,6 +59,7 @@ class UserInterface(QtWidgets.QMainWindow):
         # connect menu items
         self.actionAdd_column.triggered.connect(self.add_column)
         self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
+        self.actionAdd_row.triggered.connect(self.add_row)
 
         self.name_edit.textEdited.connect(self.rename_column)
         self.formula_edit.textEdited.connect(self.recalculate_column)
@@ -133,6 +134,10 @@ class UserInterface(QtWidgets.QMainWindow):
     def add_calculated_column(self):
         """Add a calculated column to data model."""
         self.data_model.insert_calculated_column(self.data_model.columnCount())
+
+    def add_row(self):
+        """Add row to data model."""
+        self.data_model.insertRow(self.data_model.rowCount())
 
     def rename_column(self, name):
         """Rename a column.
