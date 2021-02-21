@@ -224,8 +224,12 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             The requested flags.
         """
-        flags = super().flags(index)
-        return flags | QtCore.Qt.ItemIsEditable
+        flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        col = index.column()
+        if self.get_column_name(col) not in self._calculated_columns:
+            # You can only edit data if the column values are not calculated
+            flags |= QtCore.Qt.ItemIsEditable
+        return flags
 
     def get_column_name(self, col_idx):
         """Get column name.
