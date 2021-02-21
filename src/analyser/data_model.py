@@ -135,15 +135,36 @@ class DataModel(QtCore.QAbstractTableModel):
         Args:
             column: an integer column number to indicate the place of insertion.
             parent: a QModelIndex pointing to the model (ignored).
+
+        Returns:
+            True if the insertion was succesful, False otherwise.
         """
         column_name = "y" + str(column)
 
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, column_name, np.nan)
         self.endInsertColumns()
-
-        self._calculated_columns[column_name] = None
         return True
+
+    def insert_calculated_column(self, column):
+        """Insert a calculated column.
+
+        Insert a column *before* the specified column number. Returns True if
+        the insertion was succesful.
+
+        Args:
+            column: an integer column number to indicate the place of insertion.
+
+        Returns:
+            True if the insertion was succesful, False otherwise.
+        """
+        column_name = "y" + str(column)
+
+        if self.insertColumn(column) is True:
+            self._calculated_columns[column_name] = None
+            return True
+        else:
+            return False
 
     def rename_column(self, col_idx, new_name):
         """Rename a column.
