@@ -128,7 +128,7 @@ class DataModel(QtCore.QAbstractTableModel):
                 return self._data.index[section]
         return QtCore.QVariant()
 
-    def insertColumn(self, column, parent=None):
+    def insertColumn(self, column, parent=None, column_name=None):
         """Insert a single column.
 
         Insert a column *before* the specified column number. Returns True if
@@ -141,7 +141,8 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             True if the insertion was succesful, False otherwise.
         """
-        column_name = self._create_new_column_name()
+        if column_name is None:
+            column_name = self._create_new_column_name()
 
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, column_name, np.nan)
@@ -162,7 +163,7 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         column_name = self._create_new_column_name()
 
-        if self.insertColumn(column) is True:
+        if self.insertColumn(column, column_name=column_name) is True:
             self._calculated_columns[column_name] = None
             return True
         else:
