@@ -185,6 +185,7 @@ class DataModel(QtCore.QAbstractTableModel):
         print(row, index)
         self.beginRemoveRows(QtCore.QModelIndex(), row, row)
         self._data.drop(index, axis=0, inplace=True)
+        self._data.reset_index(drop=True, inplace=True)
         self.endRemoveRows()
         return True
 
