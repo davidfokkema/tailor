@@ -67,7 +67,15 @@ class DataModel(QtCore.QAbstractTableModel):
 
         if role == QtCore.Qt.DisplayRole:
             # request for the data itself
-            return float(self._data.iat[row, col])
+            value = float(self._data.iat[row, col])
+            if (
+                np.isnan(value)
+                and self.get_column_name(col) not in self._calculated_columns
+            ):
+                # NaN in a data column, show as empty
+                return ""
+            else:
+                return value
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell
             if self.get_column_name(col) in self._calculated_columns:
