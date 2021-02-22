@@ -60,6 +60,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.actionAdd_column.triggered.connect(self.add_column)
         self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
         self.actionAdd_row.triggered.connect(self.add_row)
+        self.actionRemove_column.triggered.connect(self.remove_column)
 
         self.name_edit.textEdited.connect(self.rename_column)
         self.formula_edit.textEdited.connect(self.recalculate_column)
@@ -81,6 +82,9 @@ class UserInterface(QtWidgets.QMainWindow):
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 4))
         self.formula_edit.setText("a")
         self.formula_edit.textEdited.emit("")
+
+        # test: remove column
+        self.remove_column()
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
@@ -138,6 +142,17 @@ class UserInterface(QtWidgets.QMainWindow):
     def add_row(self):
         """Add row to data model."""
         self.data_model.insertRow(self.data_model.rowCount())
+
+    def remove_column(self):
+        """Remove selected column(s) from data model."""
+        selected_columns = [s.column() for s in self.selection.selectedColumns()]
+        if selected_columns:
+            for column in selected_columns:
+                self.data_model.removeColumn(column)
+        else:
+            error_msg = QtWidgets.QMessageBox()
+            error_msg.setText("You must select one or more columns.")
+            error_msg.exec()
 
     def rename_column(self, name):
         """Rename a column.

@@ -149,6 +149,25 @@ class DataModel(QtCore.QAbstractTableModel):
         self.endInsertColumns()
         return True
 
+    def removeColumn(self, column, parent=None):
+        """Remove a single column.
+
+        Removes a column at the specified column number. Returns True if the
+        removal was succesful.
+
+        Args:
+            column: an integer column number to indicate the place of removal.
+            parent: a QModelIndex pointing to the model (ignored).
+
+        Returns:
+            True if the removal was succesful, False otherwise.
+        """
+        column_name = self.get_column_names()[column]
+        self.beginRemoveColumns(QtCore.QModelIndex(), column, column)
+        del self._data[column_name]
+        self.endRemoveColumns()
+        return True
+
     def insertRow(self, row, parent=None):
         """Insert a single row.
 

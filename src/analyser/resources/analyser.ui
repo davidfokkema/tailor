@@ -151,8 +151,8 @@
     <addaction name="actionAdd_calculated_column"/>
     <addaction name="actionAdd_row"/>
     <addaction name="separator"/>
-    <addaction name="actionDelete_column"/>
-    <addaction name="actionDelete_row"/>
+    <addaction name="actionRemove_column"/>
+    <addaction name="actionRemove_row"/>
    </widget>
    <addaction name="menuTable"/>
   </widget>
@@ -172,14 +172,14 @@
     <string>Add row</string>
    </property>
   </action>
-  <action name="actionDelete_column">
+  <action name="actionRemove_column">
    <property name="text">
-    <string>Delete column</string>
+    <string>Remove column</string>
    </property>
   </action>
-  <action name="actionDelete_row">
+  <action name="actionRemove_row">
    <property name="text">
-    <string>Delete row</string>
+    <string>Remove row</string>
    </property>
   </action>
  </widget>
