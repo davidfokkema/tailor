@@ -164,8 +164,28 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         column_name = self.get_column_names()[column]
         self.beginRemoveColumns(QtCore.QModelIndex(), column, column)
-        del self._data[column_name]
+        self._data.drop(column_name, axis=1, inplace=True)
         self.endRemoveColumns()
+        return True
+
+    def removeRow(self, row, parent=None):
+        """Remove a single row.
+
+        Removes a row at the specified row number. Returns True if the
+        removal was succesful.
+
+        Args:
+            row: an integer row number to indicate the place of removal.
+            parent: a QModelIndex pointing to the model (ignored).
+
+        Returns:
+            True if the removal was succesful, False otherwise.
+        """
+        index = self._data.index[row]
+        print(row, index)
+        self.beginRemoveRows(QtCore.QModelIndex(), row, row)
+        self._data.drop(index, axis=0, inplace=True)
+        self.endRemoveRows()
         return True
 
     def insertRow(self, row, parent=None):

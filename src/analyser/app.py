@@ -61,6 +61,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
         self.actionAdd_row.triggered.connect(self.add_row)
         self.actionRemove_column.triggered.connect(self.remove_column)
+        self.actionRemove_row.triggered.connect(self.remove_row)
 
         self.name_edit.textEdited.connect(self.rename_column)
         self.formula_edit.textEdited.connect(self.recalculate_column)
@@ -152,6 +153,17 @@ class UserInterface(QtWidgets.QMainWindow):
         else:
             error_msg = QtWidgets.QMessageBox()
             error_msg.setText("You must select one or more columns.")
+            error_msg.exec()
+
+    def remove_row(self):
+        """Remove selected row(s) from data model."""
+        selected_rows = [s.row() for s in self.selection.selectedRows()]
+        if selected_rows:
+            for row in selected_rows:
+                self.data_model.removeRow(row)
+        else:
+            error_msg = QtWidgets.QMessageBox()
+            error_msg.setText("You must select one or more rows.")
             error_msg.exec()
 
     def rename_column(self, name):
