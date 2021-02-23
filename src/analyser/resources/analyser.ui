@@ -67,6 +67,9 @@
            </property>
            <item>
             <layout class="QFormLayout" name="formLayout">
+             <property name="fieldGrowthPolicy">
+              <enum>QFormLayout::ExpandingFieldsGrow</enum>
+             </property>
              <property name="leftMargin">
               <number>4</number>
              </property>
@@ -112,7 +115,14 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>Add Column</string>
+                <string>Add column</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="add_calculated_column_button">
+               <property name="text">
+                <string>Add calculated column</string>
                </property>
               </widget>
              </item>
@@ -121,7 +131,7 @@
            <item>
             <widget class="QPushButton" name="create_plot_button">
              <property name="text">
-              <string>Create Plot</string>
+              <string>Create plot</string>
              </property>
             </widget>
            </item>
@@ -183,6 +193,15 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>data_view</tabstop>
+  <tabstop>name_edit</tabstop>
+  <tabstop>formula_edit</tabstop>
+  <tabstop>add_column_button</tabstop>
+  <tabstop>add_calculated_column_button</tabstop>
+  <tabstop>create_plot_button</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

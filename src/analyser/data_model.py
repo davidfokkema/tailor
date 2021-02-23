@@ -190,7 +190,6 @@ class DataModel(QtCore.QAbstractTableModel):
             True if the removal was succesful, False otherwise.
         """
         index = self._data.index[row]
-        print(row, index)
         self.beginRemoveRows(QtCore.QModelIndex(), row, row)
         self._data.drop(index, axis=0, inplace=True)
         self._data.reset_index(drop=True, inplace=True)
@@ -359,6 +358,22 @@ class DataModel(QtCore.QAbstractTableModel):
             A list of pandas.Series containing the column values.
         """
         return [self._data[c] for c in col_names]
+
+    def is_column_calculated(self, col_idx=None, col_name=None):
+        """Check if column is calculated.
+
+        Supplied with either a column index or a column name (index takes precedence), checks whether the column is calculated from a mathematical expression.
+
+        Args:
+            col_idx: an integer column index (takes precedence over name).
+            col_name: a string containing the column name.
+
+        Returns:
+            True if the column is calculated, False otherwise.
+        """
+        if col_idx is not None:
+            col_name = self.get_column_name(col_idx)
+        return col_name in self._calculated_columns
 
     def _create_new_column_name(self):
         """Create a name for a new column.

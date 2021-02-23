@@ -55,6 +55,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.selection.selectionChanged.connect(self.selection_changed)
 
         self.add_column_button.clicked.connect(self.add_column)
+        self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
         self.actionAdd_column.triggered.connect(self.add_column)
@@ -77,15 +78,6 @@ class UserInterface(QtWidgets.QMainWindow):
         self.plot_tabs[0].model_func.textEdited.emit("")
         # self.tabWidget.setCurrentIndex(1)
         self.plot_tabs[0].fit_button.clicked.emit()
-
-        # test: create column, select, fill in 'a' and recalculate
-        self.add_column_button.clicked.emit()
-        self.data_view.setCurrentIndex(self.data_model.createIndex(0, 4))
-        self.formula_edit.setText("a")
-        self.formula_edit.textEdited.emit("")
-
-        # test: remove column
-        self.remove_column()
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
@@ -131,6 +123,12 @@ class UserInterface(QtWidgets.QMainWindow):
             self._selected_col_idx = col_idx
             self.name_edit.setText(self.data_model.get_column_name(col_idx))
             self.formula_edit.setText(self.data_model.get_column_expression(col_idx))
+            if self.data_model.is_column_calculated(col_idx):
+                self.formulaLabel.setEnabled(True)
+                self.formula_edit.setEnabled(True)
+            else:
+                self.formulaLabel.setEnabled(False)
+                self.formula_edit.setEnabled(False)
 
     def add_column(self):
         """Add column to data model."""
