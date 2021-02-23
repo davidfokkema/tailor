@@ -68,17 +68,14 @@ class DataModel(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.DisplayRole:
             # request for the data itself
             value = float(self._data.iat[row, col])
-            if (
-                np.isnan(value)
-                and self.get_column_name(col) not in self._calculated_columns
-            ):
+            if np.isnan(value) and not self.is_calculated_column(col):
                 # NaN in a data column, show as empty
                 return ""
             else:
                 return value
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell
-            if self.get_column_name(col) in self._calculated_columns:
+            if self.is_calculated_column(col):
                 return QtGui.QBrush(QtGui.QColor(255, 255, 200))
         # not implemented, return an invalid QVariant per the docs
         return QtCore.QVariant()
@@ -265,7 +262,7 @@ class DataModel(QtCore.QAbstractTableModel):
                 calculate the column values.
         """
         col_name = self.get_column_name(col_idx)
-        if col_name in self._calculated_columns:
+        if self.is_calculated_column(col_idx):
             objects = {
                 k: self._data[k] for k in self._data.columns if k is not col_name
             }
@@ -297,7 +294,7 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
         col = index.column()
-        if self.get_column_name(col) not in self._calculated_columns:
+        if not self.is_calculated_column(col):
             # You can only edit data if the column values are not calculated
             flags |= QtCore.Qt.ItemIsEditable
         return flags
@@ -359,7 +356,7 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         return [self._data[c] for c in col_names]
 
-    def is_column_calculated(self, col_idx=None, col_name=None):
+    def is_calculated_column(self, col_idx=None, col_name=None):
         """Check if column is calculated.
 
         Supplied with either a column index or a column name (index takes precedence), checks whether the column is calculated from a mathematical expression.

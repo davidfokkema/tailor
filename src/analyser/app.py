@@ -123,7 +123,7 @@ class UserInterface(QtWidgets.QMainWindow):
             self._selected_col_idx = col_idx
             self.name_edit.setText(self.data_model.get_column_name(col_idx))
             self.formula_edit.setText(self.data_model.get_column_expression(col_idx))
-            if self.data_model.is_column_calculated(col_idx):
+            if self.data_model.is_calculated_column(col_idx):
                 self.formulaLabel.setEnabled(True)
                 self.formula_edit.setEnabled(True)
             else:
