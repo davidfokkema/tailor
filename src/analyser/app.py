@@ -72,12 +72,12 @@ class UserInterface(QtWidgets.QMainWindow):
         for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
             QtWidgets.QShortcut(key, self.data_view, self.edit_or_move_down)
 
-        # tests
-        self.create_plot_tab("U", "I", "dU", "dI")
-        self.plot_tabs[0].model_func.setText("a * U + b")
-        self.plot_tabs[0].model_func.textEdited.emit("")
-        # self.tabWidget.setCurrentIndex(1)
-        self.plot_tabs[0].fit_button.clicked.emit()
+        # # tests
+        # self.create_plot_tab("U", "I", "dU", "dI")
+        # self.plot_tabs[0].model_func.setText("a * U + b")
+        # self.plot_tabs[0].model_func.textEdited.emit("")
+        # # self.tabWidget.setCurrentIndex(1)
+        # self.plot_tabs[0].fit_button.clicked.emit()
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
