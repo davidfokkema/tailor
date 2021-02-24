@@ -146,6 +146,10 @@ class UserInterface(QtWidgets.QMainWindow):
         """Remove selected column(s) from data model."""
         selected_columns = [s.column() for s in self.selection.selectedColumns()]
         if selected_columns:
+            # Remove columns in reverse order to avoid index shifting during
+            # removal. WIP: It would be more efficient to merge ranges of
+            # contiguous columns since they can be removed in one fell swoop.
+            selected_columns.sort(reverse=True)
             for column in selected_columns:
                 self.data_model.removeColumn(column)
         else:
@@ -157,6 +161,10 @@ class UserInterface(QtWidgets.QMainWindow):
         """Remove selected row(s) from data model."""
         selected_rows = [s.row() for s in self.selection.selectedRows()]
         if selected_rows:
+            # Remove rows in reverse order to avoid index shifting during
+            # removal. WIP: It would be more efficient to merge ranges of
+            # contiguous rows since they can be removed in one fell swoop.
+            selected_rows.sort(reverse=True)
             for row in selected_rows:
                 self.data_model.removeRow(row)
         else:

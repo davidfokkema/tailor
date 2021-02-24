@@ -167,7 +167,7 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             True if the removal was succesful, False otherwise.
         """
-        column_name = self.get_column_names()[column]
+        column_name = self.get_column_name(column)
         self.beginRemoveColumns(QtCore.QModelIndex(), column, column)
         self._data.drop(column_name, axis=1, inplace=True)
         self.endRemoveColumns()
