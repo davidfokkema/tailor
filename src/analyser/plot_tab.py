@@ -27,6 +27,8 @@ class PlotTab(QtWidgets.QWidget):
     y = None
     x_err = None
     y_err = None
+    err_width = None
+    err_height = None
 
     def __init__(self, data_model):
         """Initialize the widget.
@@ -74,24 +76,31 @@ class PlotTab(QtWidgets.QWidget):
         self.x, self.y = x, y
         if x_err:
             self.x_err = self.data_model.get_column(x_err)
-            width = 2 * self.x_err
-        else:
-            width = None
+            self.err_width = 2 * self.x_err
         if y_err:
             self.y_err = self.data_model.get_column(y_err)
-            height = 2 * self.y_err
-        else:
-            height = None
-        self.plot_widget.plot(
-            x, y, symbol="o", pen=None, symbolSize=5, symbolPen="k", symbolBrush="k",
+            self.err_height = 2 * self.y_err
+        self.plot = self.plot_widget.plot(
+            symbol="o", pen=None, symbolSize=5, symbolPen="k", symbolBrush="k",
         )
-        error_bars = pg.ErrorBarItem(x=x, y=y, width=width, height=height)
-        self.plot_widget.addItem(error_bars)
+        self.error_bars = pg.ErrorBarItem()
+        self.plot_widget.addItem(self.error_bars)
         self.plot_widget.setLabel("left", y_var)
         self.plot_widget.setLabel("bottom", x_var)
         self.update_function_label(y_var)
         self._y_var = y_var
         self._x_var = x_var
+
+    def update_plot(self):
+        """Update plot to reflect any data changes."""
+        self.plot.setData(self.x, self.y)
+        if self.x_err is not None:
+            self.err_width = 2 * self.x_err
+        if self.y_err is not None:
+            self.err_height = 2 * self.y_err
+        self.error_bars.setData(
+            x=self.x, y=self.y, width=self.err_width, height=self.err_height
+        )
 
     def update_function_label(self, variable):
         """Update function label.

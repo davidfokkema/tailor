@@ -54,6 +54,9 @@ class UserInterface(QtWidgets.QMainWindow):
         self.selection = self.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
 
+        self.tabWidget.currentChanged.connect(self.tab_changed)
+
+        # buttons
         self.add_column_button.clicked.connect(self.add_column)
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
@@ -74,6 +77,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
         # # tests
         # self.create_plot_tab("U", "I", "dU", "dI")
+        self.create_plot_tab("U", "I", None, "dI")
         # self.plot_tabs[0].model_func.setText("a * U + b")
         # self.plot_tabs[0].model_func.textEdited.emit("")
         # # self.tabWidget.setCurrentIndex(1)
@@ -103,7 +107,7 @@ class UserInterface(QtWidgets.QMainWindow):
         return self.data_view.moveCursor(self.data_view.MoveDown, QtCore.Qt.NoModifier)
 
     def selection_changed(self, selected, deselected):
-        """Handles selectionChanged events in the data view.
+        """Handle selectionChanged events in the data view.
 
         When the selection is changed, the column index of the left-most cell in
         the first selection is used to identify the column name and the
@@ -127,6 +131,22 @@ class UserInterface(QtWidgets.QMainWindow):
             else:
                 self.formulaLabel.setEnabled(False)
                 self.formula_edit.setEnabled(False)
+
+    def tab_changed(self, idx):
+        """Handle currentChanged events of the tab widget.
+
+        When the tab widget changes to a plot tab, update the plot to reflect
+        any changes to the data that might have occured.
+
+        Args:
+            idx: an integer index of the now-focused tab.
+        """
+        plot_widget = self.tabWidget.currentWidget()
+        try:
+            plot_widget.update_plot()
+        except AttributeError:
+            # no update_plot() method, current tab is apparently the table view
+            pass
 
     def add_column(self):
         """Add column to data model and select it."""
@@ -217,6 +237,8 @@ class UserInterface(QtWidgets.QMainWindow):
     def create_plot_tab(self, x_var, y_var, x_err, y_err):
         """Create a new tab with a plot.
 
+        After creating the plot, the tab containing the plot is focused.
+
         Args:
             x_var: the name of the variable to plot on the x-axis.
             y_var: the name of the variable to plot on the y-axis.
@@ -226,9 +248,10 @@ class UserInterface(QtWidgets.QMainWindow):
         plot_tab = PlotTab(self.data_model)
         self.plot_tabs.append(plot_tab)
         idx = self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
-        self.tabWidget.setCurrentIndex(idx)
         self.plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
+
+        self.tabWidget.setCurrentIndex(idx)
 
     def create_plot_dialog(self):
         """Create a dialog to request variables for creating a plot."""
