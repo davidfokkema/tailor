@@ -59,6 +59,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
+        self.actionExport_CSV.triggered.connect(self.export_csv)
         self.actionAdd_column.triggered.connect(self.add_column)
         self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
         self.actionAdd_row.triggered.connect(self.add_row)
@@ -271,6 +272,19 @@ class UserInterface(QtWidgets.QMainWindow):
         create_dialog.x_err_box.addItems(choices)
         create_dialog.y_err_box.addItems(choices)
         return create_dialog
+
+    def export_csv(self):
+        """Export all data as CSV.
+
+        Export all data in the table as a comma-separated values file.
+        """
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self,
+            filter="CSV-files (*.csv)",
+            # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+        )
+        if filename:
+            self.data_model.write_csv(filename)
 
 
 def main():

@@ -414,3 +414,11 @@ class DataModel(QtCore.QAbstractTableModel):
             new_name = f"new{self._new_col_num}"
             if new_name not in col_names:
                 return new_name
+
+    def write_csv(self, filename):
+        """Write all data to CSV file.
+
+        Args:
+            filename: a string containing the full filename.
+        """
+        self._data.to_csv(filename, index=False)
