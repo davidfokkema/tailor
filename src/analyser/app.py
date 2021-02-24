@@ -54,8 +54,6 @@ class UserInterface(QtWidgets.QMainWindow):
         self.selection = self.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
 
-        self.tabWidget.currentChanged.connect(self.tab_changed)
-
         # buttons
         self.add_column_button.clicked.connect(self.add_column)
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
@@ -67,8 +65,10 @@ class UserInterface(QtWidgets.QMainWindow):
         self.actionRemove_column.triggered.connect(self.remove_column)
         self.actionRemove_row.triggered.connect(self.remove_row)
 
+        # user interface events
+        self.tabWidget.currentChanged.connect(self.tab_changed)
         self.name_edit.textEdited.connect(self.rename_column)
-        self.formula_edit.textEdited.connect(self.recalculate_column)
+        self.formula_edit.textEdited.connect(self.update_column_expression)
         self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # Create shortcut for return/enter keys
@@ -86,7 +86,9 @@ class UserInterface(QtWidgets.QMainWindow):
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
         
-        Start editing a cell. If the cell was already being edited, move the cursor down a row, stopping the edit in the process.
+        Start editing a cell. If the cell was already being edited, move the
+        cursor down a row, stopping the edit in the process. Trigger a
+        recalculation of all calculated columns.
         """
         cur_index = self.data_view.currentIndex()
         if not self.data_view.isPersistentEditorOpen(cur_index):
@@ -101,6 +103,7 @@ class UserInterface(QtWidgets.QMainWindow):
                 new_index = self.get_index_below_selected_cell()
             # move to it (finishing editing in the process)
             self.data_view.setCurrentIndex(new_index)
+            self.data_model.recalculate_all_columns()
 
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""
@@ -207,14 +210,14 @@ class UserInterface(QtWidgets.QMainWindow):
                 # Do not allow empty names or duplicate column names
                 self.data_model.rename_column(self._selected_col_idx, name)
 
-    def recalculate_column(self):
-        """Recalculate column values.
+    def update_column_expression(self):
+        """Update a column expression.
 
         Tries to recalculate the values of the currently selected column in the
         data model.
         """
         if self._selected_col_idx is not None:
-            self.data_model.recalculate_column(
+            self.data_model.update_column_expression(
                 self._selected_col_idx, self.formula_edit.text()
             )
 

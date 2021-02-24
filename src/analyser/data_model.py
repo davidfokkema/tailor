@@ -252,10 +252,8 @@ class DataModel(QtCore.QAbstractTableModel):
             pass
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
 
-    def recalculate_column(self, col_idx, expression):
-        """Recalculate column values.
-
-        Calculate column values bases on some mathematical expression.
+    def update_column_expression(self, col_idx, expression):
+        """Update a calculated column with a new expression.
 
         Args:
             col_idx: an integer column number.
@@ -264,23 +262,51 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         col_name = self.get_column_name(col_idx)
         if self.is_calculated_column(col_idx):
-            objects = {
-                k: self._data[k] for k in self._data.columns if k is not col_name
-            }
-            aeval = asteval.Interpreter(usersyms=objects)
-            output = aeval(expression)
-            if aeval.error:
-                for err in aeval.error:
-                    exc, msg = err.get_error()
-                    print(f"Evaluation of mathematical expression raised {exc}: {msg}")
-            elif output is not None:
+            if self.recalculate_column(col_name, expression):
+                # calculation was successful
                 self._calculated_columns[col_name] = expression
-                self._data[col_name] = output
                 top_left = self.createIndex(0, col_idx)
                 bottom_right = self.createIndex(len(self._data), col_idx)
                 self.dataChanged.emit(top_left, bottom_right)
-            else:
-                print("No evaluation error but no output.")
+
+    def recalculate_column(self, col_name, expression=None):
+        """Recalculate column values.
+
+        Calculate column values based on its expression.
+
+        Args:
+            col_name: a string containing the column name.
+            expression: an optional string that contains the mathematical
+                expression. If None (the default) the expression is taken from the
+                column information.
+
+        Returns:
+            True if the calculation was successful, False otherwise.
+        """
+        if expression is None:
+            expression = self._calculated_columns[col_name]
+        objects = {k: self._data[k] for k in self._data.columns if k is not col_name}
+        aeval = asteval.Interpreter(usersyms=objects)
+        output = aeval(expression)
+        if aeval.error:
+            for err in aeval.error:
+                exc, msg = err.get_error()
+                print(f"Evaluation of mathematical expression raised {exc}: {msg}")
+        elif output is not None:
+            self._data[col_name] = output
+            return True
+        else:
+            print("No evaluation error but no output.")
+        return False
+
+    def recalculate_all_columns(self):
+        """Recalculate all columns.
+
+        If data is entered or changed, the calculated column values must be
+        update. This method will manually recalculate all column values.
+        """
+        for col_name in self._calculated_columns:
+            self.recalculate_column(col_name)
 
     def flags(self, index):
         """Returns item flags.
