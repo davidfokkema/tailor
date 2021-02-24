@@ -51,6 +51,14 @@ class UserInterface(QtWidgets.QMainWindow):
         self.selection = self.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
 
+        # Enable close buttons...
+        self.tabWidget.setTabsClosable(True)
+        # ...but remove them for the table view
+        for pos in QtWidgets.QTabBar.LeftSide, QtWidgets.QTabBar.RightSide:
+            widget = self.tabWidget.tabBar().tabButton(0, pos)
+            if widget:
+                widget.close()
+
         # buttons
         self.add_column_button.clicked.connect(self.add_column)
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
