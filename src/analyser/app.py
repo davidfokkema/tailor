@@ -225,7 +225,8 @@ class UserInterface(QtWidgets.QMainWindow):
         """
         plot_tab = PlotTab(self.data_model)
         self.plot_tabs.append(plot_tab)
-        self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
+        idx = self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
+        self.tabWidget.setCurrentIndex(idx)
         self.plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
