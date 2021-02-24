@@ -209,7 +209,7 @@ class PlotTab(QtWidgets.QWidget):
         kwargs = {self._x_var: self.x}
         if self.y_err is not None:
             kwargs["weights"] = 1 / self.y_err
-        fit = self.model.fit(self.y, params=params, **kwargs)
+        fit = self.model.fit(self.y, params=params, **kwargs, nan_policy="omit")
         self.result_box.setPlainText(fit.fit_report())
 
         x = np.linspace(0, 10, 100)
