@@ -32,7 +32,6 @@ class UserInterface(QtWidgets.QMainWindow):
     """
 
     _selected_col_idx = None
-    plot_tabs = None
     plot_num = 1
 
     def __init__(self):
@@ -40,8 +39,6 @@ class UserInterface(QtWidgets.QMainWindow):
 
         # roep de __init__() aan van de parent class
         super().__init__()
-
-        self.plot_tabs = []
 
         uic.loadUi(
             pkg_resources.resource_stream("analyser.resources", "analyser.ui"), self
@@ -59,6 +56,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
+        self.actionImport_CSV.triggered.connect(self.import_csv)
         self.actionExport_CSV.triggered.connect(self.export_csv)
         self.actionAdd_column.triggered.connect(self.add_column)
         self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
@@ -81,8 +79,11 @@ class UserInterface(QtWidgets.QMainWindow):
         self.create_plot_tab("U", "I", None, "dI")
         # self.plot_tabs[0].model_func.setText("a * U + b")
         # self.plot_tabs[0].model_func.textEdited.emit("")
-        # # self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         # self.plot_tabs[0].fit_button.clicked.emit()
+        # for tab in self.plot_tabs:
+        #     print(f"Closing tab {tab}")
+        #     tab.close()
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
@@ -250,7 +251,6 @@ class UserInterface(QtWidgets.QMainWindow):
             y_err: the name of the variable to use for the y-error bars.
         """
         plot_tab = PlotTab(self.data_model)
-        self.plot_tabs.append(plot_tab)
         idx = self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
         self.plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
@@ -285,6 +285,22 @@ class UserInterface(QtWidgets.QMainWindow):
         )
         if filename:
             self.data_model.write_csv(filename)
+
+    def import_csv(self):
+        """Import data from a CSV file.
+
+        Erase all data and import from a comma-separated values file.
+        """
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self,
+            filter="CSV-files (*.csv)",
+            # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+        )
+        if filename:
+            for idx in range(1, self.tabWidget.count()):
+                # close all plot tabs, they are no longer valid
+                self.tabWidget.removeTab(idx)
+            self.data_model.read_csv(filename)
 
 
 def main():
