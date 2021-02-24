@@ -90,19 +90,17 @@ class UserInterface(QtWidgets.QMainWindow):
             self.data_view.edit(cur_index)
         else:
             # is already editing, what index is below?
-            new_index = self.data_view.moveCursor(
-                self.data_view.MoveDown, QtCore.Qt.NoModifier
-            )
-            if new_index != cur_index:
-                # a new one, so move to it (finishing editing in the process)
-                self.data_view.setCurrentIndex(new_index)
-            else:
-                # already on bottom row, have to manually save and close the editor
-                widget = self.data_view.indexWidget(cur_index)
-                self.data_view.commitData(widget)
-                self.data_view.closeEditor(
-                    widget, QtWidgets.QAbstractItemDelegate.NoHint
-                )
+            new_index = self.get_index_below_selected_cell()
+            if new_index == cur_index:
+                # already on bottom row, create a new row and take that index
+                self.add_row()
+                new_index = self.get_index_below_selected_cell()
+            # move to it (finishing editing in the process)
+            self.data_view.setCurrentIndex(new_index)
+
+    def get_index_below_selected_cell(self):
+        """Get index directly below the selected cell."""
+        return self.data_view.moveCursor(self.data_view.MoveDown, QtCore.Qt.NoModifier)
 
     def selection_changed(self, selected, deselected):
         """Handles selectionChanged events in the data view.
