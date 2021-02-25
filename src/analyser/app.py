@@ -305,8 +305,8 @@ class UserInterface(QtWidgets.QMainWindow):
             # options=QtWidgets.QFileDialog.DontUseNativeDialog,
         )
         if filename:
-            for idx in range(1, self.tabWidget.count()):
-                # close all plot tabs, they are no longer valid
+            for idx in range(self.tabWidget.count(), 0, -1):
+                # close all plot tabs in reverse order, they are no longer valid
                 self.tabWidget.removeTab(idx)
             self.data_model.read_csv(filename)
 
