@@ -192,12 +192,12 @@
   </action>
   <action name="actionRemove_column">
    <property name="text">
-    <string>Remove column</string>
+    <string>Remove columns</string>
    </property>
   </action>
   <action name="actionRemove_row">
    <property name="text">
-    <string>Remove row</string>
+    <string>Remove rows</string>
    </property>
   </action>
   <action name="actionImport_CSV">
