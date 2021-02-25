@@ -74,6 +74,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
         # user interface events
         self.tabWidget.currentChanged.connect(self.tab_changed)
+        self.tabWidget.tabCloseRequested.connect(self.close_tab)
         self.name_edit.textEdited.connect(self.rename_column)
         self.formula_edit.textEdited.connect(self.update_column_expression)
         self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
@@ -95,7 +96,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
-        
+
         Start editing a cell. If the cell was already being edited, move the
         cursor down a row, stopping the edit in the process. Trigger a
         recalculation of all calculated columns.
@@ -280,6 +281,18 @@ class UserInterface(QtWidgets.QMainWindow):
         create_dialog.x_err_box.addItems(choices)
         create_dialog.y_err_box.addItems(choices)
         return create_dialog
+
+    def close_tab(self, idx):
+        """Close a plot tab.
+
+        Closes the requested tab, but do not close the table view.
+
+        Args:
+            idx: an integer tab index
+        """
+        if idx > 0:
+            # Don't close the table view, only close plot tabs
+            self.tabWidget.removeTab(idx)
 
     def export_csv(self):
         """Export all data as CSV.
