@@ -24,7 +24,7 @@ class DataModel(QtCore.QAbstractTableModel):
         """Instantiate the class."""
         super().__init__()
 
-        self._data = pd.DataFrame.from_dict({"x": [np.nan], "y": [np.nan]})
+        self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
         self._calculated_columns = {}
 
         # FIXME: test data
@@ -131,7 +131,7 @@ class DataModel(QtCore.QAbstractTableModel):
             if orientation == QtCore.Qt.Horizontal:
                 return self._data.columns[section]
             else:
-                return str(self._data.index[section])
+                return str(self._data.index[section] + 1)
         return QtCore.QVariant()
 
     def insertColumn(self, column, parent=None, column_name=None):
