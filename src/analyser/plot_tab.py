@@ -48,6 +48,7 @@ class PlotTab(QtWidgets.QWidget):
         self._params = {}
         self._symbols = set(asteval.Interpreter().symtable.keys())
 
+        # FIXME move this to create_plot, or vice versa?
         self._initial_param_plot = self.plot_widget.plot(
             symbol=None, pen=pg.mkPen(color="b", width=2)
         )
@@ -81,7 +82,11 @@ class PlotTab(QtWidgets.QWidget):
             self.y_err = self.data_model.get_column(y_err)
             self.err_height = 2 * self.y_err
         self.plot = self.plot_widget.plot(
-            symbol="o", pen=None, symbolSize=5, symbolPen="k", symbolBrush="k",
+            symbol="o",
+            pen=None,
+            symbolSize=5,
+            symbolPen="k",
+            symbolBrush="k",
         )
         self.error_bars = pg.ErrorBarItem()
         self.plot_widget.addItem(self.error_bars)
@@ -162,7 +167,7 @@ class PlotTab(QtWidgets.QWidget):
 
         When the model function is changed and certain parameters are now part
         of the expression, they need to be added to the user interface.
-        
+
         Args:
             params: a list of parameter names to add to the user interface.
         """
@@ -219,8 +224,62 @@ class PlotTab(QtWidgets.QWidget):
         if self.y_err is not None:
             kwargs["weights"] = 1 / self.y_err
         fit = self.model.fit(self.y, params=params, **kwargs, nan_policy="omit")
-        self.result_box.setPlainText(fit.fit_report())
+        self.show_fit_results(fit)
 
         x = np.linspace(0, 10, 100)
         y = fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
+
+    def show_fit_results(self, fit):
+        """Show the results of the fit in the user interface.
+
+        Args:
+            fit: an lmfit.ModelResult object with the result of the fit.
+        """
+        results = make_header("Fit statistics")
+        results += make_table([("# func. eval.", fit.nfev), ("red. chisq", fit.redchi)])
+
+        results += "\n\n"
+        results += make_header("Fit parameters")
+        results += make_param_table(fit.params)
+
+        self.result_box.setPlainText(results)
+
+
+def make_header(text):
+    """Make header text with underlined with dashed."""
+    return text + "\n" + len(text) * "-" + "\n"
+
+
+def make_table(data):
+    """Format numerical data in a table.
+
+    Calculates the width of the first-column description texts and assumes numerical values for the second column and displays them with precision 4.
+
+    Args:
+        data: list of (text, value) tuples.
+    """
+    width = max([len(u[0]) for u in data])
+    text = ""
+    fmt = "{:" + str(width) + "s} = {:<9.4g}\n"
+    for u, v in data:
+        text += fmt.format(u, v)
+    return text
+
+
+def make_param_table(params):
+    """Format parameter values in a table.
+
+    Calculates the width of the first column based on parameter names. Formats the parameter values and uncertainties in a general format with precision 4.
+
+    Args:
+        params: a lmfit.Parameters object.
+    """
+    width = max([len(p) for p in params])
+    text = ""
+    fmt = "{:" + str(width) + "s} = {:< 10.4g} +/- {:< 10.4g}\n"
+    for p in params:
+        value = params[p].value
+        stderr = params[p].stderr
+        text += fmt.format(p, value, stderr)
+    return text
