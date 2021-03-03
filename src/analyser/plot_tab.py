@@ -231,6 +231,26 @@ class PlotTab(QtWidgets.QWidget):
             for k, v in self._params.items()
         }
 
+    def get_parameter_hints(self):
+        """Get current parameter hints.
+
+        Return not only the current value of parameters, but also the bounds and
+        whether to vary the parameter or fix it.
+
+        Returns:
+            A dictionary with the parameter names as keys, and a tuple (min,
+            value, max, fixed) as values.
+        """
+        return {
+            k: (
+                v.itemAt(self._idx_min_value_box).widget().value(),
+                v.itemAt(self._idx_value_box).widget().value(),
+                v.itemAt(self._idx_max_value_box).widget().value(),
+                v.itemAt(self._idx_fixed_checkbox).widget().checkState(),
+            )
+            for k, v in self._params.items()
+        }
+
     def plot_initial_model(self):
         """Plot model with initial parameters.
 
@@ -252,13 +272,16 @@ class PlotTab(QtWidgets.QWidget):
         When the fit is successful, the results are given in the result box and
         the best fit is plotted on top of the data.
         """
-        kwargs = self.get_parameter_values()
-        params = self.model.make_params(**kwargs)
+        param_hints = self.get_parameter_hints()
+        for p, (min_, value, max_, is_fixed) in param_hints.items():
+            self.model.set_param_hint(
+                p, min=min_, value=value, max=max_, vary=not is_fixed
+            )
 
         kwargs = {self._x_var: self.x}
         if self.y_err is not None:
             kwargs["weights"] = 1 / self.y_err
-        fit = self.model.fit(self.y, params=params, **kwargs, nan_policy="omit")
+        fit = self.model.fit(self.y, **kwargs, nan_policy="omit")
         self.show_fit_results(fit)
 
         x = np.linspace(0, 10, 100)
@@ -316,5 +339,7 @@ def make_param_table(params):
     for p in params:
         value = params[p].value
         stderr = params[p].stderr
+        if stderr is None:
+            stderr = 0
         text += fmt.format(p, value, stderr)
     return text
