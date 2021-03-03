@@ -44,6 +44,7 @@ class PlotTab(QtWidgets.QWidget):
         )
 
         self.param_layout = QtWidgets.QVBoxLayout()
+        self.param_layout.setContentsMargins(4, 0, 0, 0)
         self.parameter_box.setLayout(self.param_layout)
         self._params = {}
         self._symbols = set(asteval.Interpreter().symtable.keys())
@@ -173,20 +174,31 @@ class PlotTab(QtWidgets.QWidget):
         """
         for p in params:
             layout = QtWidgets.QHBoxLayout()
-
+            layout.addWidget(QtWidgets.QLabel(f"{p}: "))
+            min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
+            min_box.setMaximumWidth(75)
+            layout.addWidget(min_box)
+            self._idx_min_value_box = layout.count() - 1
+            layout.addWidget(QtWidgets.QLabel("≤"))
             value_box = pg.SpinBox(
-                value=1.0, dec=True, step=0.1, minStep=0, finite=True
+                value=1.0,
+                dec=True,
+                step=0.1,
+                minStep=0,
+                finite=True,
+                compactHeight=False,
             )
             value_box.sigValueChanging.connect(self.plot_initial_model)
-
-            layout.addWidget(QtWidgets.QLabel(f"{p}: "))
-            layout.addWidget(pg.SpinBox(value=-np.inf, finite=False))
-            layout.addWidget(QtWidgets.QLabel("≤"))
+            value_box.setMaximumWidth(75)
             layout.addWidget(value_box)
-            # save idx to value box
             self._idx_value_box = layout.count() - 1
             layout.addWidget(QtWidgets.QLabel("≤"))
-            layout.addWidget(pg.SpinBox(value=+np.inf, finite=False))
+            max_box = pg.SpinBox(value=+np.inf, finite=False, compactHeight=False)
+            max_box.setMaximumWidth(75)
+            layout.addWidget(max_box)
+            self._idx_max_value_box = layout.count() - 1
+            layout.addWidget(QtWidgets.QCheckBox("Fixed"))
+            self._idx_fixed_checkbox = layout.count() - 1
 
             self._params[p] = layout
             self.param_layout.addLayout(layout)
