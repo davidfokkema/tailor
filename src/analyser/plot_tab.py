@@ -198,7 +198,7 @@ class PlotTab(QtWidgets.QWidget):
         """
         # FIXME Problem for constants like y = a
         x = np.linspace(0, 10, 100)
-        kwargs = {k: v.value() for k, v in self._params.items()}
+        kwargs = self.get_parameter_values()
         kwargs[self._x_var] = x
         y = self.model.eval(**kwargs)
 
@@ -211,7 +211,7 @@ class PlotTab(QtWidgets.QWidget):
         When the fit is successful, the results are given in the result box and
         the best fit is plotted on top of the data.
         """
-        kwargs = {k: v.value() for k, v in self._params.items()}
+        kwargs = self.get_parameter_values()
         params = self.model.make_params(**kwargs)
 
         kwargs = {self._x_var: self.x}
@@ -223,6 +223,10 @@ class PlotTab(QtWidgets.QWidget):
         x = np.linspace(0, 10, 100)
         y = fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
+
+    def get_parameter_values(self):
+        """Get current parameter values."""
+        return {k: v.value() for k, v in self._params.items()}
 
     def show_fit_results(self, fit):
         """Show the results of the fit in the user interface.
