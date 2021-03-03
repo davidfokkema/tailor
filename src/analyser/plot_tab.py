@@ -190,6 +190,10 @@ class PlotTab(QtWidgets.QWidget):
             self.param_layout.removeRow(self._params[p])
             del self._params[p]
 
+    def get_parameter_values(self):
+        """Get current parameter values."""
+        return {k: v.value() for k, v in self._params.items()}
+
     def plot_initial_model(self):
         """Plot model with initial parameters.
 
@@ -223,10 +227,6 @@ class PlotTab(QtWidgets.QWidget):
         x = np.linspace(0, 10, 100)
         y = fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
-
-    def get_parameter_values(self):
-        """Get current parameter values."""
-        return {k: v.value() for k, v in self._params.items()}
 
     def show_fit_results(self, fit):
         """Show the results of the fit in the user interface.
