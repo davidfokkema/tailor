@@ -43,7 +43,7 @@ class PlotTab(QtWidgets.QWidget):
             pkg_resources.resource_stream("analyser.resources", "plot_tab.ui"), self
         )
 
-        self.param_layout = QtWidgets.QFormLayout()
+        self.param_layout = QtWidgets.QVBoxLayout()
         self.parameter_box.setLayout(self.param_layout)
         self._params = {}
         self._symbols = set(asteval.Interpreter().symtable.keys())
@@ -172,10 +172,24 @@ class PlotTab(QtWidgets.QWidget):
             params: a list of parameter names to add to the user interface.
         """
         for p in params:
-            spinbox = pg.SpinBox(value=1.0, dec=True, step=0.1, minStep=0, finite=True)
-            spinbox.sigValueChanging.connect(self.plot_initial_model)
-            self._params[p] = spinbox
-            self.param_layout.addRow(p, spinbox)
+            layout = QtWidgets.QHBoxLayout()
+
+            value_box = pg.SpinBox(
+                value=1.0, dec=True, step=0.1, minStep=0, finite=True
+            )
+            value_box.sigValueChanging.connect(self.plot_initial_model)
+
+            layout.addWidget(QtWidgets.QLabel(f"{p}: "))
+            layout.addWidget(pg.SpinBox(value=-np.inf, finite=False))
+            layout.addWidget(QtWidgets.QLabel("≤"))
+            layout.addWidget(value_box)
+            # save idx to value box
+            self._idx_value_box = layout.count() - 1
+            layout.addWidget(QtWidgets.QLabel("≤"))
+            layout.addWidget(pg.SpinBox(value=+np.inf, finite=False))
+
+            self._params[p] = layout
+            self.param_layout.addLayout(layout)
 
     def remove_params_from_ui(self, params):
         """Remove parameters from user interface.
@@ -187,12 +201,23 @@ class PlotTab(QtWidgets.QWidget):
             params: a list of parameter names to remove from the user interface.
         """
         for p in params:
-            self.param_layout.removeRow(self._params[p])
+            layout = self._params[p]
+            # delete all widgets from the parameter row
+            for _ in range(layout.count()):
+                item = layout.takeAt(0)
+                item.widget().deleteLater()
+            # remove and delete the parameter row
+            self.param_layout.removeItem(layout)
+            layout.deleteLater()
+            # remove the reference to the parameter
             del self._params[p]
 
     def get_parameter_values(self):
         """Get current parameter values."""
-        return {k: v.value() for k, v in self._params.items()}
+        return {
+            k: v.itemAt(self._idx_value_box).widget().value()
+            for k, v in self._params.items()
+        }
 
     def plot_initial_model(self):
         """Plot model with initial parameters.
