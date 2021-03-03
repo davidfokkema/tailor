@@ -60,6 +60,8 @@ class PlotTab(QtWidgets.QWidget):
         self.model_func.textEdited.connect(self.update_fit_params)
         self.fit_button.clicked.connect(self.perform_fit)
 
+        self.plot_widget.setMenuEnabled(False)
+
     def create_plot(self, x_var, y_var, x_err, y_err):
         """Create a plot in the widget.
 
