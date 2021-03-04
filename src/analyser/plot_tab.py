@@ -59,6 +59,13 @@ class PlotTab(QtWidgets.QWidget):
 
         self.model_func.textEdited.connect(self.update_fit_params)
         self.fit_button.clicked.connect(self.perform_fit)
+        self.xlabel.textChanged.connect(self.update_xlabel)
+        self.ylabel.textChanged.connect(self.update_ylabel)
+        self.xmin.textEdited.connect(self.update_limits)
+        self.xmax.textEdited.connect(self.update_limits)
+        self.ymin.textEdited.connect(self.update_limits)
+        self.ymax.textEdited.connect(self.update_limits)
+        self.set_limits_button.clicked.connect(self.update_limits)
 
         self.plot_widget.setMenuEnabled(False)
 
@@ -93,9 +100,10 @@ class PlotTab(QtWidgets.QWidget):
         )
         self.error_bars = pg.ErrorBarItem()
         self.plot_widget.addItem(self.error_bars)
-        self.plot_widget.setLabel("left", y_var)
-        self.plot_widget.setLabel("bottom", x_var)
         self.update_function_label(y_var)
+        self.xlabel.setText(x_var)
+        self.ylabel.setText(y_var)
+
         self._y_var = y_var
         self._x_var = x_var
 
@@ -109,6 +117,56 @@ class PlotTab(QtWidgets.QWidget):
         self.error_bars.setData(
             x=self.x, y=self.y, width=self.err_width, height=self.err_height
         )
+        self.update_limits()
+
+    def update_xlabel(self):
+        """Update the x-axis label of the plot."""
+        self.plot_widget.setLabel("bottom", self.xlabel.text())
+
+    def update_ylabel(self):
+        """Update the y-axis label of the plot."""
+        self.plot_widget.setLabel("left", self.ylabel.text())
+
+    def update_limits(self):
+        """Update the axis limits of the plot."""
+        xmin, xmax, ymin, ymax = self.get_limits_from_data()
+        print(xmin, xmax, ymin, ymax)
+        xmin = self.update_value_from_text(xmin, self.xmin)
+        xmax = self.update_value_from_text(xmax, self.xmax)
+        ymin = self.update_value_from_text(ymin, self.ymin)
+        ymax = self.update_value_from_text(ymax, self.ymax)
+        self.plot_widget.setRange(xRange=(xmin, xmax), yRange=(ymin, ymax))
+
+    def get_limits_from_data(self):
+        """Get plot limits from the data points.
+
+        Return the minimum and maximum values of the data points, taking the
+        error bars into account.
+
+        Returns:
+            Tuple of four float values (xmin, xmax, ymin, ymax).
+        """
+        xmin = min(self.x - self.x_err)
+        xmax = max(self.x + self.x_err)
+        ymin = min(self.y - self.y_err)
+        ymax = max(self.y + self.y_err)
+        return xmin, xmax, ymin, ymax
+
+    def update_value_from_text(self, value, widget):
+        """Update value from using a widget's text.
+
+        Args:
+            value: the original value, if update fails.
+            widget: the widget containing the updated value.
+
+        Returns:
+            The updated value, or the original value if the update fails.
+        """
+        try:
+            value = float(widget.text())
+        except ValueError:
+            pass
+        return value
 
     def update_function_label(self, variable):
         """Update function label.
