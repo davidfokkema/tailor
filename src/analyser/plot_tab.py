@@ -157,10 +157,19 @@ class PlotTab(QtWidgets.QWidget):
         Returns:
             Tuple of four float values (xmin, xmax, ymin, ymax).
         """
-        xmin = min(self.x - self.x_err)
-        xmax = max(self.x + self.x_err)
-        ymin = min(self.y - self.y_err)
-        ymax = max(self.y + self.y_err)
+        if self.x_err is not None:
+            x_err = self.x_err
+        else:
+            x_err = 0
+        if self.y_err is not None:
+            y_err = self.y_err
+        else:
+            y_err = 0
+            
+        xmin = min(self.x - x_err)
+        xmax = max(self.x + x_err)
+        ymin = min(self.y - y_err)
+        ymax = max(self.y + y_err)
 
         xrange = xmax - xmin
         yrange = ymax - ymin
