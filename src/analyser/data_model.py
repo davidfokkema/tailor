@@ -11,6 +11,9 @@ import asteval
 from PyQt5 import QtCore, QtGui
 
 
+MSG_TIMEOUT = 5000
+
+
 class DataModel(QtCore.QAbstractTableModel):
     """Data model for the analyser app.
 
@@ -20,9 +23,11 @@ class DataModel(QtCore.QAbstractTableModel):
 
     _new_col_num = 0
 
-    def __init__(self):
+    def __init__(self, main_window):
         """Instantiate the class."""
         super().__init__()
+
+        self.main_window = main_window
 
         self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
         self._calculated_columns = {}
@@ -93,7 +98,7 @@ class DataModel(QtCore.QAbstractTableModel):
             value: the value to set.
             role: an ItemDataRole to indicate what type of information is
                 requested.
-        
+
         Returns:
             True if the data could be set. False otherwise.
         """
@@ -251,6 +256,7 @@ class DataModel(QtCore.QAbstractTableModel):
         except KeyError:
             pass
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
+        self.main_window.statusbar.showMessage("Renamed column.", msecs=MSG_TIMEOUT)
 
     def update_column_expression(self, col_idx, expression):
         """Update a calculated column with a new expression.
@@ -268,6 +274,9 @@ class DataModel(QtCore.QAbstractTableModel):
                 top_left = self.createIndex(0, col_idx)
                 bottom_right = self.createIndex(len(self._data), col_idx)
                 self.dataChanged.emit(top_left, bottom_right)
+                self.main_window.statusbar.showMessage(
+                    "Updated column values.", msecs=MSG_TIMEOUT
+                )
 
     def recalculate_column(self, col_name, expression=None):
         """Recalculate column values.
@@ -291,7 +300,9 @@ class DataModel(QtCore.QAbstractTableModel):
         if aeval.error:
             for err in aeval.error:
                 exc, msg = err.get_error()
-                print(f"Evaluation of mathematical expression raised {exc}: {msg}")
+                self.main_window.statusbar.showMessage(
+                    f"ERROR: {exc}: {msg}.", msecs=MSG_TIMEOUT
+                )
         elif output is not None:
             self._data[col_name] = output
             return True

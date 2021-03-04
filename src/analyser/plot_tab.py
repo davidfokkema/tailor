@@ -12,6 +12,9 @@ from lmfit import models
 import asteval
 
 
+MSG_TIMEOUT = 5000
+
+
 class VariableError(RuntimeError):
     pass
 
@@ -30,7 +33,7 @@ class PlotTab(QtWidgets.QWidget):
     err_width = None
     err_height = None
 
-    def __init__(self, data_model):
+    def __init__(self, data_model, main_window):
         """Initialize the widget.
 
         Args:
@@ -42,6 +45,8 @@ class PlotTab(QtWidgets.QWidget):
         uic.loadUi(
             pkg_resources.resource_stream("analyser.resources", "plot_tab.ui"), self
         )
+
+        self.main_window = main_window
 
         self.param_layout = QtWidgets.QVBoxLayout()
         self.param_layout.setContentsMargins(4, 0, 0, 0)
@@ -122,10 +127,12 @@ class PlotTab(QtWidgets.QWidget):
     def update_xlabel(self):
         """Update the x-axis label of the plot."""
         self.plot_widget.setLabel("bottom", self.xlabel.text())
+        self.main_window.statusbar.showMessage("Updated label.", msecs=MSG_TIMEOUT)
 
     def update_ylabel(self):
         """Update the y-axis label of the plot."""
         self.plot_widget.setLabel("left", self.ylabel.text())
+        self.main_window.statusbar.showMessage("Updated label.", msecs=MSG_TIMEOUT)
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -135,6 +142,7 @@ class PlotTab(QtWidgets.QWidget):
         ymin = self.update_value_from_text(ymin, self.ymin)
         ymax = self.update_value_from_text(ymax, self.ymax)
         self.plot_widget.setRange(xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0)
+        self.main_window.statusbar.showMessage("Updated limits.", msecs=MSG_TIMEOUT)
 
     def get_limits_from_data(self, padding=0.05):
         """Get plot limits from the data points.
@@ -204,13 +212,16 @@ class PlotTab(QtWidgets.QWidget):
         try:
             params = self.get_params_from_model()
         except (SyntaxError, VariableError) as exc:
-            print(exc)
+            self.main_window.statusbar.showMessage(
+                "ERROR: " + str(exc), msecs=MSG_TIMEOUT
+            )
             return
         else:
             old_params = set(self._params)
             self.add_params_to_ui(params - old_params)
             self.remove_params_from_ui(old_params - params)
             self.plot_initial_model()
+            self.main_window.statusbar.showMessage("Updated model.", msecs=MSG_TIMEOUT)
 
     def get_params_from_model(self):
         """Get parameter names from the model function.
@@ -359,6 +370,7 @@ class PlotTab(QtWidgets.QWidget):
         x = np.linspace(0, 10, 100)
         y = fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
+        self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
 
     def show_fit_results(self, fit):
         """Show the results of the fit in the user interface.

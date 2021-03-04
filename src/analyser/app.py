@@ -44,7 +44,7 @@ class UserInterface(QtWidgets.QMainWindow):
             pkg_resources.resource_stream("analyser.resources", "analyser.ui"), self
         )
 
-        self.data_model = DataModel()
+        self.data_model = DataModel(main_window=self)
         self.data_view.setModel(self.data_model)
         self.data_view.setDragDropMode(self.data_view.InternalMove)
 
@@ -259,7 +259,7 @@ class UserInterface(QtWidgets.QMainWindow):
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(self.data_model)
+        plot_tab = PlotTab(self.data_model, main_window=self)
         idx = self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
         self.plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
