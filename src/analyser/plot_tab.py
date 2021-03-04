@@ -130,18 +130,21 @@ class PlotTab(QtWidgets.QWidget):
     def update_limits(self):
         """Update the axis limits of the plot."""
         xmin, xmax, ymin, ymax = self.get_limits_from_data()
-        print(xmin, xmax, ymin, ymax)
         xmin = self.update_value_from_text(xmin, self.xmin)
         xmax = self.update_value_from_text(xmax, self.xmax)
         ymin = self.update_value_from_text(ymin, self.ymin)
         ymax = self.update_value_from_text(ymax, self.ymax)
-        self.plot_widget.setRange(xRange=(xmin, xmax), yRange=(ymin, ymax))
+        self.plot_widget.setRange(xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0)
 
-    def get_limits_from_data(self):
+    def get_limits_from_data(self, padding=0.05):
         """Get plot limits from the data points.
 
         Return the minimum and maximum values of the data points, taking the
         error bars into account.
+
+        Args:
+            padding: the relative amount of padding to add to the axis limits.
+                Default is .05.
 
         Returns:
             Tuple of four float values (xmin, xmax, ymin, ymax).
@@ -150,6 +153,15 @@ class PlotTab(QtWidgets.QWidget):
         xmax = max(self.x + self.x_err)
         ymin = min(self.y - self.y_err)
         ymax = max(self.y + self.y_err)
+
+        xrange = xmax - xmin
+        yrange = ymax - ymin
+
+        xmin -= padding * xrange
+        xmax += padding * xrange
+        ymin -= padding * yrange
+        ymax += padding * yrange
+
         return xmin, xmax, ymin, ymax
 
     def update_value_from_text(self, value, widget):
