@@ -66,6 +66,7 @@ class UserInterface(QtWidgets.QMainWindow):
         # connect menu items
         self.actionImport_CSV.triggered.connect(self.import_csv)
         self.actionExport_CSV.triggered.connect(self.export_csv)
+        self.actionExport_graph.triggered.connect(self.export_graph)
         self.actionAdd_column.triggered.connect(self.add_column)
         self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
         self.actionAdd_row.triggered.connect(self.add_row)
@@ -326,6 +327,22 @@ class UserInterface(QtWidgets.QMainWindow):
                 self.tabWidget.removeTab(idx)
             self.data_model.read_csv(filename)
             self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+
+    def export_graph(self):
+        """Export a graph to a file."""
+        tab = self.tabWidget.currentWidget()
+        if type(tab) == PlotTab:
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                parent=self,
+                filter="Graphics (*.png *.pdf)",
+                # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+            )
+            if filename:
+                tab.export_graph(filename)
+        else:
+            error_msg = QtWidgets.QMessageBox()
+            error_msg.setText("You must select a plot tab first.")
+            error_msg.exec()
 
 
 def main():

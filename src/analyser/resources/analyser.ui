@@ -170,6 +170,8 @@
     </property>
     <addaction name="actionImport_CSV"/>
     <addaction name="actionExport_CSV"/>
+    <addaction name="separator"/>
+    <addaction name="actionExport_graph"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTable"/>
@@ -208,6 +210,11 @@
   <action name="actionExport_CSV">
    <property name="text">
     <string>Export CSV</string>
+   </property>
+  </action>
+  <action name="actionExport_graph">
+   <property name="text">
+    <string>Export graph</string>
    </property>
   </action>
  </widget>

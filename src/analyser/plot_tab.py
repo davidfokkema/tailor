@@ -8,6 +8,7 @@ from PyQt5 import uic, QtWidgets
 import pyqtgraph as pg
 import pkg_resources
 import numpy as np
+import matplotlib.pyplot as plt
 from lmfit import models
 import asteval
 
@@ -136,13 +137,26 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_limits(self):
         """Update the axis limits of the plot."""
+        xmin, xmax, ymin, ymax = self.get_adjusted_limits()
+        self.plot_widget.setRange(xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0)
+        self.main_window.statusbar.showMessage("Updated limits.", msecs=MSG_TIMEOUT)
+
+    def get_adjusted_limits(self):
+        """Get adjusted plot limits from the data points and text fields.
+
+        Return the minimum and maximum values of the data points, taking the
+        error bars into account and adjust those values using the text fields
+        for manual limits in the UI.
+
+        Returns:
+            Tuple of four float values (xmin, xmax, ymin, ymax).
+        """
         xmin, xmax, ymin, ymax = self.get_limits_from_data()
         xmin = self.update_value_from_text(xmin, self.xmin)
         xmax = self.update_value_from_text(xmax, self.xmax)
         ymin = self.update_value_from_text(ymin, self.ymin)
         ymax = self.update_value_from_text(ymax, self.ymax)
-        self.plot_widget.setRange(xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0)
-        self.main_window.statusbar.showMessage("Updated limits.", msecs=MSG_TIMEOUT)
+        return xmin, xmax, ymin, ymax
 
     def get_limits_from_data(self, padding=0.05):
         """Get plot limits from the data points.
@@ -165,7 +179,7 @@ class PlotTab(QtWidgets.QWidget):
             y_err = self.y_err
         else:
             y_err = 0
-            
+
         xmin = min(self.x - x_err)
         xmax = max(self.x + x_err)
         ymin = min(self.y - y_err)
@@ -376,11 +390,11 @@ class PlotTab(QtWidgets.QWidget):
         kwargs = {self._x_var: self.x}
         if self.y_err is not None:
             kwargs["weights"] = 1 / self.y_err
-        fit = self.model.fit(self.y, **kwargs, nan_policy="omit")
-        self.show_fit_results(fit)
+        self.fit = self.model.fit(self.y, **kwargs, nan_policy="omit")
+        self.show_fit_results(self.fit)
 
         x = np.linspace(0, 10, 100)
-        y = fit.eval(**{self._x_var: x})
+        y = self.fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
         self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
 
@@ -398,6 +412,25 @@ class PlotTab(QtWidgets.QWidget):
         results += make_param_table(fit.params)
 
         self.result_box.setPlainText(results)
+
+    def export_graph(self, filename):
+        """Export graph to a file.
+
+        Args:
+            filename: path to the file.
+        """
+        xmin, xmax, ymin, ymax = self.get_adjusted_limits()
+
+        plt.figure()
+        plt.errorbar(self.x, self.y, xerr=self.x_err, yerr=self.y_err, fmt="o")
+        x = np.linspace(0, 10, 100)
+        y = self.fit.eval(**{self._x_var: x})
+        plt.plot(x, y, "r-")
+        plt.xlabel(self.xlabel.text())
+        plt.ylabel(self.ylabel.text())
+        plt.xlim(xmin, xmax)
+        plt.ylim(ymin, ymax)
+        plt.savefig(filename)
 
 
 def make_header(text):
