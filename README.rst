@@ -24,7 +24,7 @@ For creating a (clean) application::
 
     $ briefcase create
 
-And running the application::
+And running the application (don't panic if it doesn't work on MacOS; simply try again)::
 
     $ briefcase run
 
