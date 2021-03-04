@@ -241,9 +241,12 @@ class PlotTab(QtWidgets.QWidget):
                 f"Dependent variable {self._y_var} must not be in function definition"
             )
         else:
-            self.model = models.ExpressionModel(
-                model_expr, independent_vars=[self._x_var]
-            )
+            try:
+                self.model = models.ExpressionModel(
+                    model_expr, independent_vars=[self._x_var]
+                )
+            except ValueError as exc:
+                raise VariableError(exc)
             return params
 
     def add_params_to_ui(self, params):
