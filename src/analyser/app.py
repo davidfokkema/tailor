@@ -5,6 +5,7 @@ You can fit custom models to your data to estimate best-fit parameters.
 """
 
 import os
+import pathlib
 
 import sys
 
@@ -334,11 +335,17 @@ class UserInterface(QtWidgets.QMainWindow):
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self,
-                filter="Graphics (*.png *.pdf)",
+                # filter="Graphics (*.png *.pdf)",
                 # options=QtWidgets.QFileDialog.DontUseNativeDialog,
             )
             if filename:
-                tab.export_graph(filename)
+                path = pathlib.Path(filename)
+                if path.suffix in [".png", ".pdf"]:
+                    tab.export_graph(path)
+                else:
+                    error_msg = QtWidgets.QMessageBox()
+                    error_msg.setText("Only .png and .pdf files are supported.")
+                    error_msg.exec()
         else:
             error_msg = QtWidgets.QMessageBox()
             error_msg.setText("You must select a plot tab first.")
