@@ -83,6 +83,9 @@ class UserInterface(QtWidgets.QMainWindow):
         for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
             QtWidgets.QShortcut(key, self.data_view, self.edit_or_move_down)
 
+        # Start at (0, 0)
+        self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+
         # # tests
         # self.create_plot_tab("U", "I", "dU", "dI")
         # self.create_plot_tab("U", "I", None, "dI")
@@ -322,6 +325,7 @@ class UserInterface(QtWidgets.QMainWindow):
                 # close all plot tabs in reverse order, they are no longer valid
                 self.tabWidget.removeTab(idx)
             self.data_model.read_csv(filename)
+            self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
 
 def main():
