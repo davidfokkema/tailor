@@ -100,8 +100,7 @@
          <widget class="QPlainTextEdit" name="result_box">
           <property name="font">
            <font>
-            <family>Courier</family>
-            <pointsize>12</pointsize>
+            <family>Courier New</family>
            </font>
           </property>
           <property name="lineWrapMode">
