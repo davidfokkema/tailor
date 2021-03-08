@@ -19,7 +19,8 @@ from analyser.plot_tab import PlotTab
 # Fix for Big Sur bug in Qt >=5.15, <15.15.2
 # os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
-pg.setConfigOptions(antialias=True)
+# FIXME: antialiasing is EXTREMELY slow. Why?
+# pg.setConfigOptions(antialias=True)
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
