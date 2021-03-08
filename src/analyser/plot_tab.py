@@ -367,7 +367,7 @@ class PlotTab(QtWidgets.QWidget):
         interface.
         """
         # FIXME Problem for constants like y = a
-        x = np.linspace(0, 10, 100)
+        x = np.linspace(min(self.x), max(self.x), 100)
         kwargs = self.get_parameter_values()
         kwargs[self._x_var] = x
         y = self.model.eval(**kwargs)
@@ -393,7 +393,7 @@ class PlotTab(QtWidgets.QWidget):
         self.fit = self.model.fit(self.y, **kwargs, nan_policy="omit")
         self.show_fit_results(self.fit)
 
-        x = np.linspace(0, 10, 100)
+        x = np.linspace(min(self.x), max(self.x), 100)
         y = self.fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
         self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
