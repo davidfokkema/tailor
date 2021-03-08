@@ -258,7 +258,7 @@ class PlotTab(QtWidgets.QWidget):
         """
         model_expr = self.model_func.text()
         code = compile(model_expr, "<string>", "eval")
-        params = set(code.co_names) - set(self._x_var) - self._symbols
+        params = set(code.co_names) - set([self._x_var]) - self._symbols
         if self._y_var in params:
             raise VariableError(
                 f"Dependent variable {self._y_var} must not be in function definition"
