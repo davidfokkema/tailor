@@ -1,5 +1,5 @@
 .vscode/
-analyser.dist-info/
+tailor.dist-info/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

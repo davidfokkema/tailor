@@ -1,11 +1,11 @@
 """Explore datasets and fit models.
 
-:mod:`~analyser.app`
+:mod:`~tailor.app`
     The main app.
 
-:mod:`~analyser.data_model`
+:mod:`~tailor.data_model`
     Data model powering the table view.
 
-:mod:`~analyser.plot_tab`
+:mod:`~tailor.plot_tab`
     Tabs containing a plot and optionally a fit to a model.
 """

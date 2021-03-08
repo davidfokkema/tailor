@@ -1,4 +1,4 @@
-"""Data model for the analyser app.
+"""Data model for the tailor app.
 
 Implements a QAbstractDataModel to contain the data values as a backend for the
 table view used in the app.
@@ -15,7 +15,7 @@ MSG_TIMEOUT = 5000
 
 
 class DataModel(QtCore.QAbstractTableModel):
-    """Data model for the analyser app.
+    """Data model for the tailor app.
 
     Implements a QAbstractDataModel to contain the data values as a backend for the
     table view used in the app.

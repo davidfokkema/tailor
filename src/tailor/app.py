@@ -1,4 +1,4 @@
-"""Analyser app.
+"""Tailor app.
 
 Import datasets or enter data by hand and create plots to explore correlations.
 You can fit custom models to your data to estimate best-fit parameters.
@@ -13,8 +13,8 @@ from PyQt5 import uic, QtWidgets, QtCore
 import pyqtgraph as pg
 import pkg_resources
 
-from analyser.data_model import DataModel
-from analyser.plot_tab import PlotTab
+from tailor.data_model import DataModel
+from tailor.plot_tab import PlotTab
 
 # Fix for Big Sur bug in Qt >=5.15, <15.15.2
 # os.environ["QT_MAC_WANTS_LAYER"] = "1"
@@ -26,7 +26,7 @@ pg.setConfigOption("foreground", "k")
 
 
 class UserInterface(QtWidgets.QMainWindow):
-    """Main user interface for the analyser app.
+    """Main user interface for the tailor app.
 
     The user interface centers on the table containing the data values. A single
     DataModel is instantiated to hold the data.
@@ -42,9 +42,7 @@ class UserInterface(QtWidgets.QMainWindow):
         # roep de __init__() aan van de parent class
         super().__init__()
 
-        uic.loadUi(
-            pkg_resources.resource_stream("analyser.resources", "analyser.ui"), self
-        )
+        uic.loadUi(pkg_resources.resource_stream("tailor.resources", "tailor.ui"), self)
 
         self.data_model = DataModel(main_window=self)
         self.data_view.setModel(self.data_model)
@@ -273,9 +271,7 @@ class UserInterface(QtWidgets.QMainWindow):
         """Create a dialog to request variables for creating a plot."""
         create_dialog = QtWidgets.QDialog(parent=self)
         uic.loadUi(
-            pkg_resources.resource_stream(
-                "analyser.resources", "create_plot_dialog.ui"
-            ),
+            pkg_resources.resource_stream("tailor.resources", "create_plot_dialog.ui"),
             create_dialog,
         )
         choices = [None] + self.data_model.get_column_names()

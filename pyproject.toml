@@ -1,17 +1,17 @@
 [tool.briefcase]
-project_name = "Analyser"
-bundle = "com.amsphyslab.analyser"
-version = "0.1.0"
-url = "https://github.com/davidfokkema/analyser"
+project_name = "Tailor"
+bundle = "com.amsphyslab.tailor"
+version = "0.8.0"
+url = "https://github.com/davidfokkema/tailor"
 license = "GNU General Public License v3 (GPLv3)"
 author = 'David Fokkema'
 author_email = "d.b.r.a.fokkema@vu.nl"
 
-[tool.briefcase.app.analyser]
-formal_name = "Analyser"
+[tool.briefcase.app.tailor]
+formal_name = "Tailor"
 description = "Explore datasets and fit models."
-icon = "src/analyser/resources/analyser"
-sources = ['src/analyser']
+icon = "src/tailor/resources/tailor"
+sources = ['src/tailor']
 requires = [
     'setuptools==53.0.0',
     'numpy==1.20.1',
@@ -21,19 +21,19 @@ requires = [
     'pyqtgraph==0.11.1',
     'matplotlib==3.3.4']
 
-[tool.briefcase.app.analyser.macOS]
+[tool.briefcase.app.tailor.macOS]
 requires = []
 
-[tool.briefcase.app.analyser.linux]
+[tool.briefcase.app.tailor.linux]
 requires = []
 system_requires = []
 
-[tool.briefcase.app.analyser.windows]
+[tool.briefcase.app.tailor.windows]
 requires = []
 
 # Mobile deployments
-[tool.briefcase.app.analyser.iOS]
+[tool.briefcase.app.tailor.iOS]
 requires = []
 
-[tool.briefcase.app.analyser.android]
+[tool.briefcase.app.tailor.android]
 requires = []

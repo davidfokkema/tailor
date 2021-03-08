@@ -45,7 +45,7 @@ class PlotTab(QtWidgets.QWidget):
 
         self.data_model = data_model
         uic.loadUi(
-            pkg_resources.resource_stream("analyser.resources", "plot_tab.ui"), self
+            pkg_resources.resource_stream("tailor.resources", "plot_tab.ui"), self
         )
 
         self.main_window = main_window

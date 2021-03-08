@@ -1,5 +1,5 @@
-Analyser
-========
+Tailor
+======
 
 Explore datasets and fit models.
 
@@ -8,8 +8,8 @@ Development
 
 Set up a development environment with::
 
-    $ conda create -n analyser python=3.8
-    $ conda activate analyser
+    $ conda create -n tailor python=3.8
+    $ conda activate tailor
     $ pip install briefcase
 
 Then, for installing dependencies and running the app in the dev environment::
