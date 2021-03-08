@@ -13,6 +13,7 @@ from lmfit import models
 import asteval
 
 
+NUM_POINTS = 1000
 MSG_TIMEOUT = 5000
 
 
@@ -367,7 +368,7 @@ class PlotTab(QtWidgets.QWidget):
         interface.
         """
         # FIXME Problem for constants like y = a
-        x = np.linspace(min(self.x), max(self.x), 100)
+        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
         kwargs = self.get_parameter_values()
         kwargs[self._x_var] = x
         y = self.model.eval(**kwargs)
@@ -393,7 +394,7 @@ class PlotTab(QtWidgets.QWidget):
         self.fit = self.model.fit(self.y, **kwargs, nan_policy="omit")
         self.show_fit_results(self.fit)
 
-        x = np.linspace(min(self.x), max(self.x), 100)
+        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
         y = self.fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
         self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
@@ -423,7 +424,7 @@ class PlotTab(QtWidgets.QWidget):
 
         plt.figure()
         plt.errorbar(self.x, self.y, xerr=self.x_err, yerr=self.y_err, fmt="o")
-        x = np.linspace(0, 10, 100)
+        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
         y = self.fit.eval(**{self._x_var: x})
         plt.plot(x, y, "r-")
         plt.xlabel(self.xlabel.text())
