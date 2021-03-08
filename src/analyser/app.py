@@ -91,14 +91,11 @@ class UserInterface(QtWidgets.QMainWindow):
 
         # # tests
         # self.create_plot_tab("U", "I", "dU", "dI")
-        # self.create_plot_tab("U", "I", None, "dI")
-        # self.plot_tabs[0].model_func.setText("a * U + b")
-        # self.plot_tabs[0].model_func.textEdited.emit("")
+        # plot_tab = self.tabWidget.currentWidget()
+        # plot_tab.model_func.setText("a * U + b")
+        # plot_tab.model_func.textEdited.emit("")
+        # plot_tab.fit_button.clicked.emit()
         # self.tabWidget.setCurrentIndex(0)
-        # self.plot_tabs[0].fit_button.clicked.emit()
-        # for tab in self.plot_tabs:
-        #     print(f"Closing tab {tab}")
-        #     tab.close()
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
