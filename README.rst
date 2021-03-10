@@ -3,6 +3,25 @@ Tailor
 
 Explore datasets and fit models.
 
+Features
+--------
+
+* Spreadsheet-like editing of data
+* Import and export of CSV files
+* Add / remove columns or rows
+* Add columns based on mathematical expressions
+* Create multiple scatter plots with X/Y error bars
+* Fit custom models to data based on mathematical expressions
+* Models can include a wide range of Python operators and mathematical functions
+* Parameters are automatically deduced from the model expression and displayed in the user interface
+* Start values can be easily changes and an initial fit is updated in the plot window
+* Bounds on parameters and the ability to fix a parameter to a particular value
+* Fit results include reduced chi-square statistic and parameter value and error estimations
+* Easily adjustable axis labels and ranges
+* Zooming and panning of the plot
+* Export plot as PNG (bitmap) or PDF (vector) images
+
+
 Development
 -----------
 
