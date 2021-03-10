@@ -69,6 +69,7 @@ class PlotTab(QtWidgets.QWidget):
         )
 
         self.model_func.textEdited.connect(self.update_fit_params)
+        self.show_initial_fit.stateChanged.connect(self.plot_initial_model)
         self.fit_button.clicked.connect(self.perform_fit)
         self.xlabel.textChanged.connect(self.update_xlabel)
         self.ylabel.textChanged.connect(self.update_ylabel)
@@ -310,6 +311,9 @@ class PlotTab(QtWidgets.QWidget):
                 finite=True,
                 compactHeight=False,
             )
+            value_box.sigValueChanging.connect(
+                lambda: self.show_initial_fit.setChecked(True)
+            )
             value_box.sigValueChanging.connect(self.plot_initial_model)
             value_box.setMaximumWidth(75)
             layout.addWidget(value_box)
@@ -385,7 +389,10 @@ class PlotTab(QtWidgets.QWidget):
         kwargs[self._x_var] = x
         y = self.model.eval(**kwargs)
 
-        self._initial_param_plot.setData(x, y)
+        if self.show_initial_fit.isChecked():
+            self._initial_param_plot.setData(x, y)
+        else:
+            self._initial_param_plot.setData([], [])
 
     def perform_fit(self):
         """Perform fit and plot best fit model.
@@ -409,6 +416,7 @@ class PlotTab(QtWidgets.QWidget):
         x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
         y = self.fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
+        self.show_initial_fit.setChecked(False)
         self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
 
     def show_fit_results(self, fit):
