@@ -29,9 +29,13 @@ class PlotTab(QtWidgets.QWidget):
     """
 
     x = None
+    x_var = None
     y = None
+    y_var = None
     x_err = None
+    x_err_var = None
     y_err = None
+    y_err_var = None
     err_width = None
     err_height = None
 
@@ -90,14 +94,13 @@ class PlotTab(QtWidgets.QWidget):
             y_err: a string containing the name of the column with y error
                 values.
         """
-        x, y = self.data_model.get_columns([x_var, y_var])
-        self.x, self.y = x, y
+        self._x_var = x_var
+        self._y_var = y_var
         if x_err:
-            self.x_err = self.data_model.get_column(x_err)
-            self.err_width = 2 * self.x_err
+            self.x_err_var = x_err
         if y_err:
-            self.y_err = self.data_model.get_column(y_err)
-            self.err_height = 2 * self.y_err
+            self.y_err_var = y_err
+
         self.plot = self.plot_widget.plot(
             symbol="o",
             pen=None,
@@ -111,11 +114,11 @@ class PlotTab(QtWidgets.QWidget):
         self.xlabel.setText(x_var)
         self.ylabel.setText(y_var)
 
-        self._y_var = y_var
-        self._x_var = x_var
-
     def update_plot(self):
         """Update plot to reflect any data changes."""
+        self.update_data()
+
+        # set data for scatter plot and error bars
         self.plot.setData(self.x, self.y)
         if self.x_err is not None:
             self.err_width = 2 * self.x_err
@@ -124,7 +127,16 @@ class PlotTab(QtWidgets.QWidget):
         self.error_bars.setData(
             x=self.x, y=self.y, width=self.err_width, height=self.err_height
         )
+
         self.update_limits()
+
+    def update_data(self):
+        """Update data values from model."""
+        self.x, self.y = self.data_model.get_columns([self._x_var, self._y_var])
+        if self.x_err_var is not None:
+            self.x_err = self.data_model.get_column(self.x_err_var)
+        if self.y_err_var is not None:
+            self.y_err = self.data_model.get_column(self.y_err_var)
 
     def update_xlabel(self):
         """Update the x-axis label of the plot."""
