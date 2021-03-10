@@ -156,12 +156,9 @@ class UserInterface(QtWidgets.QMainWindow):
         Args:
             idx: an integer index of the now-focused tab.
         """
-        plot_widget = self.tabWidget.currentWidget()
-        try:
-            plot_widget.update_plot()
-        except AttributeError:
-            # no update_plot() method, current tab is apparently the table view
-            pass
+        tab = self.tabWidget.currentWidget()
+        if type(tab) == PlotTab:
+            tab.update_plot()
 
     def add_column(self):
         """Add column to data model and select it."""
