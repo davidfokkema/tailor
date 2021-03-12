@@ -39,6 +39,7 @@ class PlotTab(QtWidgets.QWidget):
     err_width = None
     err_height = None
     fit = None
+    fit_domain = None, None
 
     def __init__(self, data_model, main_window):
         """Initialize the widget.
@@ -68,7 +69,7 @@ class PlotTab(QtWidgets.QWidget):
         self._fit_plot = self.plot_widget.plot(
             symbol=None, pen=pg.mkPen(color="r", width=2)
         )
-        self.fit_domain_area = pg.LinearRegionItem(movable=False)
+        self.fit_domain_area = pg.LinearRegionItem(movable=True)
 
         # Set options affecting the UI
         self.fit_start_box.setOpts(
@@ -84,6 +85,7 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
         self.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
         self.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
+        self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
         self.fit_button.clicked.connect(self.perform_fit)
         self.xlabel.textChanged.connect(self.update_xlabel)
         self.ylabel.textChanged.connect(self.update_ylabel)
@@ -408,6 +410,16 @@ class PlotTab(QtWidgets.QWidget):
             self.update_fit_domain()
         else:
             self.plot_widget.removeItem(self.fit_domain_area)
+
+    def fit_domain_region_changed(self):
+        """Update the fit domain values.
+
+        When the fit domain region is dragged by the user, the values in the
+        start and end boxes need to be updated.
+        """
+        xmin, xmax = self.fit_domain_area.getRegion()
+        self.fit_start_box.setValue(xmin)
+        self.fit_end_box.setValue(xmax)
 
     def update_fit_domain(self):
         """Update the fit domain and indicate with vertical lines."""
