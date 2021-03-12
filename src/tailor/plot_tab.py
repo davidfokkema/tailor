@@ -534,6 +534,8 @@ class PlotTab(QtWidgets.QWidget):
             x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
             y = self.fit.eval(**{self._x_var: x})
             plt.plot(x, y, "r-")
+        if self.use_fit_domain.isChecked():
+            plt.axvspan(*self.fit_domain, facecolor="k", alpha=0.1)
         plt.xlabel(self.xlabel.text())
         plt.ylabel(self.ylabel.text())
         plt.xlim(xmin, xmax)
