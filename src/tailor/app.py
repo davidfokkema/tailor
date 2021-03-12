@@ -222,16 +222,17 @@ class UserInterface(QtWidgets.QMainWindow):
                 # Do not allow empty names or duplicate column names
                 self.data_model.rename_column(self._selected_col_idx, name)
 
-    def update_column_expression(self):
+    def update_column_expression(self, expression):
         """Update a column expression.
 
         Tries to recalculate the values of the currently selected column in the
         data model.
+
+        Args:
+            expression: a QString containing the mathematical expression.
         """
         if self._selected_col_idx is not None:
-            self.data_model.update_column_expression(
-                self._selected_col_idx, self.formula_edit.text()
-            )
+            self.data_model.update_column_expression(self._selected_col_idx, expression)
 
     def ask_and_create_plot_tab(self):
         """Opens a dialog and create a new tab with a plot.
