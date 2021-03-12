@@ -4,6 +4,8 @@ Import datasets or enter data by hand and create plots to explore correlations.
 You can fit custom models to your data to estimate best-fit parameters.
 """
 
+import gzip
+import json
 import os
 import pathlib
 
@@ -293,6 +295,21 @@ class UserInterface(QtWidgets.QMainWindow):
         if idx > 0:
             # Don't close the table view, only close plot tabs
             self.tabWidget.removeTab(idx)
+
+    def save_project(self, filename):
+        """Save a Tailor project.
+
+        Save all data and program state (i.e. plot tabs, fit parameters, etc.)
+        to a Tailor project file.
+
+        Args:
+            filename: a string containing the filename to save to.
+        """
+        save_obj = {}
+        self.data_model.save_state_to_obj(save_obj)
+        print(save_obj)
+        with gzip.open(filename, "w") as f:
+            f.write(json.dumps(save_obj).encode("utf-8"))
 
     def export_csv(self):
         """Export all data as CSV.

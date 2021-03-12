@@ -22,6 +22,8 @@ class DataModel(QtCore.QAbstractTableModel):
     """
 
     _new_col_num = 0
+    _data = None
+    _calculated_columns = None
 
     def __init__(self, main_window):
         """Instantiate the class."""
@@ -432,6 +434,18 @@ class DataModel(QtCore.QAbstractTableModel):
             new_name = f"new{self._new_col_num}"
             if new_name not in col_names:
                 return new_name
+
+    def save_state_to_obj(self, save_obj):
+        """Save all data and state to save object.
+
+        Args:
+            save_obj: a dictionary to store the data and state.
+        """
+        save_obj["data_model"] = {
+            "data": self._data.to_dict(),
+            "calculated_columns": self._calculated_columns,
+            "new_col_num": self._new_col_num,
+        }
 
     def write_csv(self, filename):
         """Write all data to CSV file.
