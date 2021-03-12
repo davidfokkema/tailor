@@ -4,7 +4,7 @@ A widget containing a scatter plot of some data columns with user interface
 elements to specify a mathematical model to fit to the model.
 """
 
-from PyQt5 import uic, QtWidgets
+from PyQt5 import uic, QtWidgets, QtCore
 import pyqtgraph as pg
 import pkg_resources
 import numpy as np
@@ -67,9 +67,22 @@ class PlotTab(QtWidgets.QWidget):
         self._fit_plot = self.plot_widget.plot(
             symbol=None, pen=pg.mkPen(color="r", width=2)
         )
+        self.fit_domain_area = pg.LinearRegionItem(movable=False)
 
+        # Set options affecting the UI
+        self.fit_start_box.setOpts(
+            value=-np.inf, dec=True, step=0.1, finite=True, compactHeight=False
+        )
+        self.fit_end_box.setOpts(
+            value=np.inf, dec=True, step=0.1, finite=True, compactHeight=False
+        )
+
+        # Connect signals
         self.model_func.textEdited.connect(self.update_fit_params)
         self.show_initial_fit.stateChanged.connect(self.plot_initial_model)
+        self.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
+        self.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
+        self.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
         self.fit_button.clicked.connect(self.perform_fit)
         self.xlabel.textChanged.connect(self.update_xlabel)
         self.ylabel.textChanged.connect(self.update_ylabel)
@@ -114,6 +127,12 @@ class PlotTab(QtWidgets.QWidget):
         self.update_function_label(y_var)
         self.xlabel.setText(x_var)
         self.ylabel.setText(y_var)
+
+        self.update_plot()
+
+        # set fit domain
+        self.fit_start_box.setValue(self.x.min())
+        self.fit_end_box.setValue(self.x.max())
 
     def update_plot(self):
         """Update plot to reflect any data changes."""
@@ -377,6 +396,30 @@ class PlotTab(QtWidgets.QWidget):
             for k, v in self._params.items()
         }
 
+    def toggle_use_fit_domain(self, state):
+        """Enable or disable use of fit domain.
+
+        Args:
+            state: integer (enum Qt::CheckState) with the checkbox state.
+        """
+        if state == QtCore.Qt.Checked:
+            self.plot_widget.addItem(self.fit_domain_area)
+            self.update_fit_domain()
+        else:
+            self.plot_widget.removeItem(self.fit_domain_area)
+
+    def update_fit_domain(self):
+        """Update the fit domain and indicate with vertical lines."""
+        start = self.fit_start_box.value()
+        end = self.fit_end_box.value()
+        if start <= end:
+            self.fit_domain = start, end
+            self.fit_domain_area.setRegion((start, end))
+        else:
+            self.main_window.statusbar.showMessage(
+                "ERROR: domain start is larger than end.", msecs=MSG_TIMEOUT
+            )
+
     def plot_initial_model(self):
         """Plot model with initial parameters.
 
@@ -401,22 +444,44 @@ class PlotTab(QtWidgets.QWidget):
         When the fit is successful, the results are given in the result box and
         the best fit is plotted on top of the data.
         """
+        # set model parameter hints
         param_hints = self.get_parameter_hints()
         for p, (min_, value, max_, is_fixed) in param_hints.items():
             self.model.set_param_hint(
                 p, min=min_, value=value, max=max_, vary=not is_fixed
             )
 
-        kwargs = {self._x_var: self.x}
-        if self.y_err is not None:
-            kwargs["weights"] = 1 / self.y_err
-        self.fit = self.model.fit(self.y, **kwargs, nan_policy="omit")
+        # select data for fit
+        if self.use_fit_domain.checkState() == QtCore.Qt.Checked:
+            xmin = self.fit_start_box.value()
+            xmax = self.fit_end_box.value()
+            if xmin > xmax:
+                self.main_window.statusbar.showMessage(
+                    "ERROR: domain start is larger than end.", msecs=MSG_TIMEOUT
+                )
+                return
+            condition = (xmin <= self.x) & (self.x <= xmax)
+            x = self.x[condition]
+            y = self.y[condition]
+            y_err = self.y_err[condition]
+        else:
+            x = self.x
+            y = self.y
+            y_err = self.y_err
+
+        # perform fit
+        kwargs = {self._x_var: x}
+        if y_err is not None:
+            kwargs["weights"] = 1 / y_err
+        self.fit = self.model.fit(y, **kwargs, nan_policy="omit")
         self.show_fit_results(self.fit)
 
+        # plot best-fit model
         x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
         y = self.fit.eval(**{self._x_var: x})
         self._fit_plot.setData(x, y)
         self.show_initial_fit.setChecked(False)
+
         self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
 
     def show_fit_results(self, fit):
