@@ -38,6 +38,7 @@ class PlotTab(QtWidgets.QWidget):
     y_err_var = None
     err_width = None
     err_height = None
+    fit = None
 
     def __init__(self, data_model, main_window):
         """Initialize the widget.
@@ -508,10 +509,19 @@ class PlotTab(QtWidgets.QWidget):
         xmin, xmax, ymin, ymax = self.get_adjusted_limits()
 
         plt.figure()
-        plt.errorbar(self.x, self.y, xerr=self.x_err, yerr=self.y_err, fmt="o")
-        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
-        y = self.fit.eval(**{self._x_var: x})
-        plt.plot(x, y, "r-")
+        plt.errorbar(
+            self.x,
+            self.y,
+            xerr=self.x_err,
+            yerr=self.y_err,
+            fmt="ko",
+            ms=3,
+            elinewidth=0.5,
+        )
+        if self.fit:
+            x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
+            y = self.fit.eval(**{self._x_var: x})
+            plt.plot(x, y, "r-")
         plt.xlabel(self.xlabel.text())
         plt.ylabel(self.ylabel.text())
         plt.xlim(xmin, xmax)
