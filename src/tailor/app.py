@@ -88,8 +88,11 @@ class UserInterface(QtWidgets.QMainWindow):
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
         # # tests
-        # self.create_plot_tab("U", "I", "dU", "dI")
+        # self.create_plot_tab("U", "Usq", "dU", "dUsq")
+        # self.create_plot_tab("U", "Usq")
         # plot_tab = self.tabWidget.currentWidget()
+        # plot_tab.export_graph("test.png")
+        # plot_tab.export_graph("test.pdf")
         # plot_tab.model_func.setText("a * U + b")
         # plot_tab.model_func.textEdited.emit("")
         # plot_tab.fit_button.clicked.emit()
@@ -246,7 +249,7 @@ class UserInterface(QtWidgets.QMainWindow):
             if x_var and y_var:
                 self.create_plot_tab(x_var, y_var, x_err, y_err)
 
-    def create_plot_tab(self, x_var, y_var, x_err, y_err):
+    def create_plot_tab(self, x_var, y_var, x_err=None, y_err=None):
         """Create a new tab with a plot.
 
         After creating the plot, the tab containing the plot is focused.
