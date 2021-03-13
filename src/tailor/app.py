@@ -331,6 +331,7 @@ class UserInterface(QtWidgets.QMainWindow):
             "data_model": {},
             "tabs": [],
             "plot_num": self._plot_num,
+            "current_tab": self.tabWidget.currentIndex(),
         }
 
         # save data for the data model
@@ -371,6 +372,8 @@ class UserInterface(QtWidgets.QMainWindow):
                 idx = self.tabWidget.addTab(plot_tab, tab_data["label"])
                 plot_tab.load_state_from_obj(tab_data)
             self._plot_num = save_obj["plot_num"]
+
+        self.tabWidget.setCurrentIndex(save_obj["current_tab"])
 
     def export_csv(self):
         """Export all data as CSV.
