@@ -611,7 +611,7 @@ class PlotTab(QtWidgets.QWidget):
             widget.textEdited.emit(text)
 
         # load checkbox state
-        for name in ["show_initial_fit", "use_fit_domain"]:
+        for name in ["use_fit_domain"]:
             state = save_obj[name]
             getattr(self, name).setCheckState(state)
 
@@ -655,6 +655,9 @@ class PlotTab(QtWidgets.QWidget):
             x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
             y = self.fit.eval(**{self.x_var: x})
             self._fit_plot.setData(x, y)
+
+        # set state of show_initial_fit, will have changed when setting parameters
+        self.show_initial_fit.setCheckState(save_obj["show_initial_fit"])
 
     def export_graph(self, filename):
         """Export graph to a file.
