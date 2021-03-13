@@ -443,11 +443,23 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         save_obj.update(
             {
-                "data": self._data.to_dict(),
+                "data": self._data.to_dict("list"),
                 "calculated_columns": self._calculated_columns,
                 "new_col_num": self._new_col_num,
             }
         )
+
+    def load_state_from_obj(self, save_obj):
+        """Load all data and state from save object.
+
+        Args:
+            save_obj: a dictionary that contains the saved data and state.
+        """
+        self.beginResetModel()
+        self._data = pd.DataFrame.from_dict(save_obj["data"])
+        self._calculated_columns = save_obj["calculated_columns"]
+        self._new_col_num = save_obj["new_col_num"]
+        self.endResetModel()
 
     def write_csv(self, filename):
         """Write all data to CSV file.

@@ -342,8 +342,27 @@ class UserInterface(QtWidgets.QMainWindow):
             tab.save_state_to_obj(tab_data)
             save_obj["tabs"].append(tab_data)
 
+        # save data to disk
         with gzip.open(filename, "w") as f:
             f.write(json.dumps(save_obj).encode("utf-8"))
+
+    def load_project(self, filename):
+        """Load a Tailor project.
+
+        Load all data and program state (i.e. plot tabs, fit parameters, etc.)
+        from a Tailor project file.
+
+        Args:
+            filename: a string containing the filename to load from.
+        """
+        with gzip.open(filename) as f:
+            save_obj = json.loads(f.read().decode("utf-8"))
+
+        if save_obj["application"] == __name__:
+            self.clear_all()
+
+            # load data for the data model
+            self.data_model.load_state_from_obj(save_obj["data_model"])
 
     def export_csv(self):
         """Export all data as CSV.
