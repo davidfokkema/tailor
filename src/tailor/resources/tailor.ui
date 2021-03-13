@@ -168,13 +168,16 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpen_project"/>
-    <addaction name="actionSave_project"/>
+    <addaction name="actionNew"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSave_As"/>
     <addaction name="separator"/>
     <addaction name="actionImport_CSV"/>
     <addaction name="actionExport_CSV"/>
     <addaction name="separator"/>
-    <addaction name="actionExport_graph"/>
+    <addaction name="actionExport_Graph_to_PDF"/>
+    <addaction name="actionExport_Graph_to_PNG"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTable"/>
@@ -215,19 +218,39 @@
     <string>Export CSV</string>
    </property>
   </action>
-  <action name="actionExport_graph">
+  <action name="actionExport_Graph_to_PDF">
    <property name="text">
-    <string>Export graph</string>
+    <string>Export Graph to PDF</string>
    </property>
   </action>
-  <action name="actionOpen_project">
+  <action name="actionOpen">
    <property name="text">
-    <string>Open project</string>
+    <string>Open...</string>
    </property>
   </action>
-  <action name="actionSave_project">
+  <action name="actionSave">
    <property name="text">
-    <string>Save project</string>
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_As">
+   <property name="text">
+    <string>Save As...</string>
+   </property>
+  </action>
+  <action name="actionExport_Graph_to_PNG">
+   <property name="text">
+    <string>Export Graph to PNG</string>
+   </property>
+  </action>
+  <action name="actionType_Strange_Things">
+   <property name="text">
+    <string>Type Strange Things</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
    </property>
   </action>
  </widget>

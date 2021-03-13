@@ -39,6 +39,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
     """
 
+    _project_filename = None
     _selected_col_idx = None
     _plot_num = 1
 
@@ -66,11 +67,18 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
-        self.actionOpen_project.triggered.connect(self.open_project_dialog)
-        self.actionSave_project.triggered.connect(self.save_project_dialog)
+        self.actionNew.triggered.connect(self.clear_all)
+        self.actionOpen.triggered.connect(self.open_project_dialog)
+        self.actionSave.triggered.connect(self.save_project_or_dialog)
+        self.actionSave_As.triggered.connect(self.save_as_project_dialog)
         self.actionImport_CSV.triggered.connect(self.import_csv)
         self.actionExport_CSV.triggered.connect(self.export_csv)
-        self.actionExport_graph.triggered.connect(self.export_graph)
+        self.actionExport_Graph_to_PDF.triggered.connect(
+            lambda: self.export_graph(".pdf")
+        )
+        self.actionExport_Graph_to_PNG.triggered.connect(
+            lambda: self.export_graph(".png")
+        )
         self.actionAdd_column.triggered.connect(self.add_column)
         self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
         self.actionAdd_row.triggered.connect(self.add_row)
@@ -335,8 +343,21 @@ class UserInterface(QtWidgets.QMainWindow):
         self.data_model = DataModel(main_window=self)
         self._set_view_and_selection_model()
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self._set_project_path(None)
 
-    def save_project_dialog(self):
+    def save_project_or_dialog(self):
+        """Save project or present a dialog.
+
+        When you first save a project, present a dialog to select a filename. If
+        you previously opened or saved this project, just save it without
+        presenting the dialog.
+        """
+        if self._project_filename is None:
+            self.save_as_project_dialog()
+        else:
+            self.save_project(self._project_filename)
+
+    def save_as_project_dialog(self):
         """Present save project dialog and save project."""
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             parent=self,
@@ -378,6 +399,9 @@ class UserInterface(QtWidgets.QMainWindow):
         with gzip.open(filename, "w") as f:
             f.write(json.dumps(save_obj).encode("utf-8"))
 
+        # remember filename for subsequent call to "Save"
+        self._set_project_path(filename)
+
     def open_project_dialog(self):
         """Present open project dialog and load project."""
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -403,6 +427,9 @@ class UserInterface(QtWidgets.QMainWindow):
         if save_obj["application"] == __name__:
             self.clear_all()
 
+            # remember filename for subsequent call to "Save"
+            self._set_project_path(filename)
+
             # load data for the data model
             self.data_model.load_state_from_obj(save_obj["data_model"])
 
@@ -413,7 +440,7 @@ class UserInterface(QtWidgets.QMainWindow):
                 plot_tab.load_state_from_obj(tab_data)
             self._plot_num = save_obj["plot_num"]
 
-        self.tabWidget.setCurrentIndex(save_obj["current_tab"])
+            self.tabWidget.setCurrentIndex(save_obj["current_tab"])
 
     def export_csv(self):
         """Export all data as CSV.
@@ -443,27 +470,41 @@ class UserInterface(QtWidgets.QMainWindow):
             self.data_model.read_csv(filename)
             self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
-    def export_graph(self):
-        """Export a graph to a file."""
+    def export_graph(self, suffix):
+        """Export a graph to a file.
+
+        If the user specifies a name with a different suffix an error will be displayed.
+
+        Args:
+            suffix: the required suffix of the file.
+        """
         tab = self.tabWidget.currentWidget()
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self,
-                # filter="Graphics (*.png *.pdf)",
+                filter=f"Graphics (*{suffix})",
                 # options=QtWidgets.QFileDialog.DontUseNativeDialog,
             )
             if filename:
                 path = pathlib.Path(filename)
-                if path.suffix in [".png", ".pdf"]:
+                if path.suffix == suffix:
                     tab.export_graph(path)
                 else:
                     error_msg = QtWidgets.QMessageBox()
-                    error_msg.setText("Only .png and .pdf files are supported.")
+                    error_msg.setText(f"You didn't select a {suffix} file.")
                     error_msg.exec()
         else:
             error_msg = QtWidgets.QMessageBox()
             error_msg.setText("You must select a plot tab first.")
             error_msg.exec()
+
+    def _set_project_path(self, filename):
+        """Set window title and project name."""
+        self._project_filename = filename
+        if filename is not None:
+            self.setWindowTitle(f"Tailor: {pathlib.Path(filename).stem}")
+        else:
+            self.setWindowTitle("Tailor")
 
 
 def main():
