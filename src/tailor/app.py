@@ -5,10 +5,10 @@ You can fit custom models to your data to estimate best-fit parameters.
 """
 
 import gzip
+from importlib import metadata as importlib_metadata
 import json
 import os
 import pathlib
-
 import sys
 
 from PyQt5 import uic, QtWidgets, QtCore
@@ -18,8 +18,12 @@ import pkg_resources
 from tailor.data_model import DataModel
 from tailor.plot_tab import PlotTab
 
-# Fix for Big Sur bug in Qt >=5.15, <15.15.2
-# os.environ["QT_MAC_WANTS_LAYER"] = "1"
+
+app_module = sys.modules["__main__"].__package__
+metadata = importlib_metadata.metadata(app_module)
+__name__ = metadata["name"]
+__version__ = metadata["version"]
+
 
 # FIXME: antialiasing is EXTREMELY slow. Why?
 # pg.setConfigOptions(antialias=True)
@@ -305,7 +309,7 @@ class UserInterface(QtWidgets.QMainWindow):
         Args:
             filename: a string containing the filename to save to.
         """
-        save_obj = {}
+        save_obj = {"application": __name__, "version": __version__}
         self.data_model.save_state_to_obj(save_obj)
         print(save_obj)
         with gzip.open(filename, "w") as f:
