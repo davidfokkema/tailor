@@ -40,7 +40,7 @@ class UserInterface(QtWidgets.QMainWindow):
     """
 
     _selected_col_idx = None
-    plot_num = 1
+    _plot_num = 1
 
     def __init__(self):
         """Initialize the class."""
@@ -268,8 +268,8 @@ class UserInterface(QtWidgets.QMainWindow):
             y_err: the name of the variable to use for the y-error bars.
         """
         plot_tab = PlotTab(self.data_model, main_window=self)
-        idx = self.tabWidget.addTab(plot_tab, f"Plot {self.plot_num}")
-        self.plot_num += 1
+        idx = self.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
+        self._plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
         self.tabWidget.setCurrentIndex(idx)
@@ -300,6 +300,18 @@ class UserInterface(QtWidgets.QMainWindow):
             # Don't close the table view, only close plot tabs
             self.tabWidget.removeTab(idx)
 
+    def clear_all(self):
+        """Clear all program state.
+
+        Closes all tabs and data.
+        """
+        for idx in range(self.tabWidget.count(), 0, -1):
+            # close all plot tabs in reverse order, they are no longer valid
+            self.tabWidget.removeTab(idx)
+        self._plot_num = 1
+        self.data_model = DataModel(main_window=self)
+        self.data_view.setModel(self.data_model)
+
     def save_project(self, filename):
         """Save a Tailor project.
 
@@ -311,7 +323,7 @@ class UserInterface(QtWidgets.QMainWindow):
         """
         save_obj = {"application": __name__, "version": __version__}
         self.data_model.save_state_to_obj(save_obj)
-        print(save_obj)
+
         with gzip.open(filename, "w") as f:
             f.write(json.dumps(save_obj).encode("utf-8"))
 
@@ -339,9 +351,7 @@ class UserInterface(QtWidgets.QMainWindow):
             # options=QtWidgets.QFileDialog.DontUseNativeDialog,
         )
         if filename:
-            for idx in range(self.tabWidget.count(), 0, -1):
-                # close all plot tabs in reverse order, they are no longer valid
-                self.tabWidget.removeTab(idx)
+            self.clear_all()
             self.data_model.read_csv(filename)
             self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
