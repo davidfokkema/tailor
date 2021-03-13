@@ -390,12 +390,12 @@ class PlotTab(QtWidgets.QWidget):
             value, max, fixed) as values.
         """
         return {
-            k: (
-                v.itemAt(self._idx_min_value_box).widget().value(),
-                v.itemAt(self._idx_value_box).widget().value(),
-                v.itemAt(self._idx_max_value_box).widget().value(),
-                v.itemAt(self._idx_fixed_checkbox).widget().checkState(),
-            )
+            k: {
+                "min": v.itemAt(self._idx_min_value_box).widget().value(),
+                "value": v.itemAt(self._idx_value_box).widget().value(),
+                "max": v.itemAt(self._idx_max_value_box).widget().value(),
+                "vary": not v.itemAt(self._idx_fixed_checkbox).widget().checkState(),
+            }
             for k, v in self._params.items()
         }
 
@@ -459,10 +459,8 @@ class PlotTab(QtWidgets.QWidget):
         """
         # set model parameter hints
         param_hints = self.get_parameter_hints()
-        for p, (min_, value, max_, is_fixed) in param_hints.items():
-            self.model.set_param_hint(
-                p, min=min_, value=value, max=max_, vary=not is_fixed
-            )
+        for p, hints in param_hints.items():
+            self.model.set_param_hint(p, **hints)
 
         # select data for fit
         if self.use_fit_domain.checkState() == QtCore.Qt.Checked:
