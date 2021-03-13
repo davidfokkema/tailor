@@ -487,16 +487,20 @@ class PlotTab(QtWidgets.QWidget):
         kwargs = {self.x_var: x}
         if y_err is not None:
             kwargs["weights"] = 1 / y_err
-        self.fit = self.model.fit(y, **kwargs, nan_policy="omit")
-        self.show_fit_results(self.fit)
+        try:
+            self.fit = self.model.fit(y, **kwargs, nan_policy="omit")
+        except Exception as exc:
+            self.main_window.statusbar.showMessage(f"FIT FAILED: {exc}")
+        else:
+            self.show_fit_results(self.fit)
 
-        # plot best-fit model
-        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
-        y = self.fit.eval(**{self.x_var: x})
-        self._fit_plot.setData(x, y)
-        self.show_initial_fit.setChecked(False)
+            # plot best-fit model
+            x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
+            y = self.fit.eval(**{self.x_var: x})
+            self._fit_plot.setData(x, y)
+            self.show_initial_fit.setChecked(False)
 
-        self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
+            self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
 
     def show_fit_results(self, fit):
         """Show the results of the fit in the user interface.
