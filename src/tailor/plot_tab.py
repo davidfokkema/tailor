@@ -561,15 +561,15 @@ class PlotTab(QtWidgets.QWidget):
 
         # save (possibly outdated) fit
         if self.fit.weights is not None:
-            weights = self.fit.weights.to_list()
+            weights = list(self.fit.weights)
         else:
             weights = None
         saved_fit = {
             "model": self.fit.model.expr,
             "param_hints": self.fit.model.param_hints,
-            "data": self.fit.data.to_list(),
+            "data": list(self.fit.data),
             "weights": weights,
-            "xdata": self.fit.userkws[self.x_var].to_list(),
+            "xdata": list(self.fit.userkws[self.x_var]),
         }
         save_obj["saved_fit"] = saved_fit
 
