@@ -441,11 +441,13 @@ class DataModel(QtCore.QAbstractTableModel):
         Args:
             save_obj: a dictionary to store the data and state.
         """
-        save_obj["data_model"] = {
-            "data": self._data.to_dict(),
-            "calculated_columns": self._calculated_columns,
-            "new_col_num": self._new_col_num,
-        }
+        save_obj.update(
+            {
+                "data": self._data.to_dict(),
+                "calculated_columns": self._calculated_columns,
+                "new_col_num": self._new_col_num,
+            }
+        )
 
     def write_csv(self, filename):
         """Write all data to CSV file.

@@ -321,8 +321,22 @@ class UserInterface(QtWidgets.QMainWindow):
         Args:
             filename: a string containing the filename to save to.
         """
-        save_obj = {"application": __name__, "version": __version__}
-        self.data_model.save_state_to_obj(save_obj)
+        save_obj = {
+            "application": __name__,
+            "version": __version__,
+            "data_model": {},
+            "tabs": [],
+        }
+
+        # save data for the data model
+        self.data_model.save_state_to_obj(save_obj["data_model"])
+
+        for idx in range(1, self.tabWidget.count()):
+            # save data for each tab
+            tab = self.tabWidget.widget(idx)
+            tab_data = {}
+            tab.save_state_to_obj(tab_data)
+            save_obj["tabs"].append(tab_data)
 
         with gzip.open(filename, "w") as f:
             f.write(json.dumps(save_obj).encode("utf-8"))

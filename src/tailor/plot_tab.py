@@ -111,8 +111,8 @@ class PlotTab(QtWidgets.QWidget):
             y_err: a string containing the name of the column with y error
                 values.
         """
-        self._x_var = x_var
-        self._y_var = y_var
+        self.x_var = x_var
+        self.y_var = y_var
         if x_err:
             self.x_err_var = x_err
         if y_err:
@@ -155,7 +155,7 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_data(self):
         """Update data values from model."""
-        self.x, self.y = self.data_model.get_columns([self._x_var, self._y_var])
+        self.x, self.y = self.data_model.get_columns([self.x_var, self.y_var])
         if self.x_err_var is not None:
             self.x_err = self.data_model.get_column(self.x_err_var)
         if self.y_err_var is not None:
@@ -294,15 +294,15 @@ class PlotTab(QtWidgets.QWidget):
         """
         model_expr = self.model_func.text()
         code = compile(model_expr, "<string>", "eval")
-        params = set(code.co_names) - set([self._x_var]) - self._symbols
-        if self._y_var in params:
+        params = set(code.co_names) - set([self.x_var]) - self._symbols
+        if self.y_var in params:
             raise VariableError(
-                f"Dependent variable {self._y_var} must not be in function definition"
+                f"Dependent variable {self.y_var} must not be in function definition"
             )
         else:
             try:
                 self.model = models.ExpressionModel(
-                    model_expr, independent_vars=[self._x_var]
+                    model_expr, independent_vars=[self.x_var]
                 )
             except ValueError as exc:
                 raise VariableError(exc)
@@ -442,7 +442,7 @@ class PlotTab(QtWidgets.QWidget):
         # FIXME Problem for constants like y = a
         x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
         kwargs = self.get_parameter_values()
-        kwargs[self._x_var] = x
+        kwargs[self.x_var] = x
         y = self.model.eval(**kwargs)
 
         if self.show_initial_fit.isChecked():
@@ -483,7 +483,7 @@ class PlotTab(QtWidgets.QWidget):
             y_err = self.y_err
 
         # perform fit
-        kwargs = {self._x_var: x}
+        kwargs = {self.x_var: x}
         if y_err is not None:
             kwargs["weights"] = 1 / y_err
         self.fit = self.model.fit(y, **kwargs, nan_policy="omit")
@@ -491,7 +491,7 @@ class PlotTab(QtWidgets.QWidget):
 
         # plot best-fit model
         x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
-        y = self.fit.eval(**{self._x_var: x})
+        y = self.fit.eval(**{self.x_var: x})
         self._fit_plot.setData(x, y)
         self.show_initial_fit.setChecked(False)
 
@@ -511,6 +511,48 @@ class PlotTab(QtWidgets.QWidget):
         results += make_param_table(fit.params)
 
         self.result_box.setPlainText(results)
+
+    def save_state_to_obj(self, save_obj):
+        """Save all data and state to save object.
+
+        Args:
+            save_obj: a dictionary to store the data and state.
+        """
+        # save objects
+        save_obj.update(
+            {
+                name: getattr(self, name)
+                for name in [
+                    "x_var",
+                    "y_var",
+                    "x_err_var",
+                    "y_err_var",
+                    "fit_domain",
+                ]
+            }
+        )
+        # save checkbox state
+        save_obj.update(
+            {
+                name: getattr(self, name).checkState()
+                for name in ["show_initial_fit", "use_fit_domain"]
+            }
+        )
+        # save lineedit strings
+        save_obj.update(
+            {
+                name: getattr(self, name).text()
+                for name in [
+                    "model_func",
+                    "xlabel",
+                    "xmin",
+                    "xmax",
+                    "ylabel",
+                    "ymin",
+                    "ymax",
+                ]
+            }
+        )
 
     def export_graph(self, filename):
         """Export graph to a file.
@@ -532,7 +574,7 @@ class PlotTab(QtWidgets.QWidget):
         )
         if self.fit:
             x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
-            y = self.fit.eval(**{self._x_var: x})
+            y = self.fit.eval(**{self.x_var: x})
             plt.plot(x, y, "r-")
         if self.use_fit_domain.isChecked():
             plt.axvspan(*self.fit_domain, facecolor="k", alpha=0.1)
