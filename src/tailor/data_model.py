@@ -35,6 +35,7 @@ class DataModel(QtCore.QAbstractTableModel):
         self._calculated_columns = {}
 
         # FIXME: test data
+        # np.random.seed(1)
         # x = np.linspace(0, 10, 11)
         # y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
         # self._data = pd.DataFrame.from_dict(

@@ -105,18 +105,20 @@ class UserInterface(QtWidgets.QMainWindow):
         # plot_tab.use_fit_domain.setChecked(True)
         # plot_tab.model_func.setText("a * U + b")
         # plot_tab.model_func.textEdited.emit("")
+        # for row in plot_tab._params.values():
+        #     row.itemAt(plot_tab._idx_value_box).widget().setValue(20)
         # plot_tab.fit_button.clicked.emit()
         # # plot_tab.use_fit_domain.setChecked(False)
         # # plot_tab.export_graph("test.png")
         # # plot_tab.export_graph("test.pdf")
         # # self.tabWidget.setCurrentIndex(0)
-        # self.data_model._data["I"] /= 2
-        # plot_tab.update_plot()
-        # plot_tab.model_func.setText("a * U ** 2 + c")
-        # plot_tab.model_func.textEdited.emit("")
-        # self.save_project("test.tlr")
+        # # self.data_model._data["I"] /= 2
+        # # plot_tab.update_plot()
+        # # plot_tab.model_func.setText("a * U ** 2 + c")
+        # # plot_tab.model_func.textEdited.emit("")
+        # # self.save_project("test.tlr")
         # self.clear_all()
-        # self.load_project("test.tlr")
+        # self.load_project("tester.tlr")
 
     def _set_view_and_selection_model(self):
         self.data_view.setModel(self.data_model)

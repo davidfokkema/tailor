@@ -557,6 +557,8 @@ class PlotTab(QtWidgets.QWidget):
             }
         )
 
+        save_obj["parameters"] = self.get_parameter_hints()
+
         # save (possibly outdated) fit
         if self.fit.weights is not None:
             weights = self.fit.weights.to_list()
@@ -607,6 +609,18 @@ class PlotTab(QtWidgets.QWidget):
         for name in ["show_initial_fit", "use_fit_domain"]:
             state = save_obj[name]
             getattr(self, name).setCheckState(state)
+
+        # set parameter hints
+        for p, hints in save_obj["parameters"].items():
+            if hints["vary"]:
+                fixed_state = QtCore.Qt.Unchecked
+            else:
+                fixed_state = QtCore.Qt.Checked
+            layout = self._params[p]
+            layout.itemAt(self._idx_min_value_box).widget().setValue(hints["min"])
+            layout.itemAt(self._idx_value_box).widget().setValue(hints["value"])
+            layout.itemAt(self._idx_max_value_box).widget().setValue(hints["max"])
+            layout.itemAt(self._idx_fixed_checkbox).widget().setCheckState(fixed_state)
 
         # manually recreate (possibly outdated!) fit
         saved_fit = save_obj["saved_fit"]
