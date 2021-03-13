@@ -560,18 +560,19 @@ class PlotTab(QtWidgets.QWidget):
         save_obj["parameters"] = self.get_parameter_hints()
 
         # save (possibly outdated) fit
-        if self.fit.weights is not None:
-            weights = list(self.fit.weights)
-        else:
-            weights = None
-        saved_fit = {
-            "model": self.fit.model.expr,
-            "param_hints": self.fit.model.param_hints,
-            "data": list(self.fit.data),
-            "weights": weights,
-            "xdata": list(self.fit.userkws[self.x_var]),
-        }
-        save_obj["saved_fit"] = saved_fit
+        if self.fit:
+            if self.fit.weights is not None:
+                weights = list(self.fit.weights)
+            else:
+                weights = None
+            saved_fit = {
+                "model": self.fit.model.expr,
+                "param_hints": self.fit.model.param_hints,
+                "data": list(self.fit.data),
+                "weights": weights,
+                "xdata": list(self.fit.userkws[self.x_var]),
+            }
+            save_obj["saved_fit"] = saved_fit
 
     def load_state_from_obj(self, save_obj):
         """Load all data and state from save object.
@@ -623,32 +624,33 @@ class PlotTab(QtWidgets.QWidget):
             layout.itemAt(self._idx_fixed_checkbox).widget().setCheckState(fixed_state)
 
         # manually recreate (possibly outdated!) fit
-        saved_fit = save_obj["saved_fit"]
-        model = models.ExpressionModel(
-            saved_fit["model"], independent_vars=[self.x_var]
-        )
+        if "saved_fit" in save_obj:
+            saved_fit = save_obj["saved_fit"]
+            model = models.ExpressionModel(
+                saved_fit["model"], independent_vars=[self.x_var]
+            )
 
-        for param, hint in saved_fit["param_hints"].items():
-            model.set_param_hint(param, **hint)
+            for param, hint in saved_fit["param_hints"].items():
+                model.set_param_hint(param, **hint)
 
-        xdata = {save_obj["x_var"]: saved_fit["xdata"]}
-        weights = saved_fit["weights"]
-        if weights is not None:
-            weights = np.array(weights)
-        self.fit = model.fit(
-            saved_fit["data"],
-            **xdata,
-            # weights MUST BE an NumPy array or calculations will fail
-            weights=weights,
-            nan_policy="omit",
-        )
+            xdata = {save_obj["x_var"]: saved_fit["xdata"]}
+            weights = saved_fit["weights"]
+            if weights is not None:
+                weights = np.array(weights)
+            self.fit = model.fit(
+                saved_fit["data"],
+                **xdata,
+                # weights MUST BE an NumPy array or calculations will fail
+                weights=weights,
+                nan_policy="omit",
+            )
 
-        self.show_fit_results(self.fit)
+            self.show_fit_results(self.fit)
 
-        # plot best-fit model
-        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
-        y = self.fit.eval(**{self.x_var: x})
-        self._fit_plot.setData(x, y)
+            # plot best-fit model
+            x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
+            y = self.fit.eval(**{self.x_var: x})
+            self._fit_plot.setData(x, y)
 
     def export_graph(self, filename):
         """Export graph to a file.
