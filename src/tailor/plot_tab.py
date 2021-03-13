@@ -531,6 +531,7 @@ class PlotTab(QtWidgets.QWidget):
                 ]
             }
         )
+
         # save checkbox state
         save_obj.update(
             {
@@ -538,6 +539,7 @@ class PlotTab(QtWidgets.QWidget):
                 for name in ["show_initial_fit", "use_fit_domain"]
             }
         )
+
         # save lineedit strings
         save_obj.update(
             {
@@ -553,6 +555,16 @@ class PlotTab(QtWidgets.QWidget):
                 ]
             }
         )
+
+        # save (possibly outdated) fit
+        saved_fit = {
+            "model": self.fit.model.expr,
+            "param_hints": self.fit.model.param_hints,
+            "data": self.fit.data.to_list(),
+            "weights": self.fit.weights.to_list(),
+            "xdata": self.fit.userkws[self.x_var].to_list(),
+        }
+        save_obj["saved_fit"] = saved_fit
 
     def load_state_from_obj(self, save_obj):
         """Load all data and state from save object.
@@ -590,6 +602,31 @@ class PlotTab(QtWidgets.QWidget):
         for name in ["show_initial_fit", "use_fit_domain"]:
             state = save_obj[name]
             getattr(self, name).setCheckState(state)
+
+        # manually recreate (possibly outdated!) fit
+        saved_fit = save_obj["saved_fit"]
+        model = models.ExpressionModel(
+            saved_fit["model"], independent_vars=[self.x_var]
+        )
+
+        for param, hint in saved_fit["param_hints"].items():
+            model.set_param_hint(param, **hint)
+
+        xdata = {save_obj["x_var"]: saved_fit["xdata"]}
+        self.fit = model.fit(
+            saved_fit["data"],
+            **xdata,
+            # weights MUST BE an NumPy array or calculations will fail
+            weights=np.array(saved_fit["weights"]),
+            nan_policy="omit",
+        )
+
+        self.show_fit_results(self.fit)
+
+        # plot best-fit model
+        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
+        y = self.fit.eval(**{self.x_var: x})
+        self._fit_plot.setData(x, y)
 
     def export_graph(self, filename):
         """Export graph to a file.
