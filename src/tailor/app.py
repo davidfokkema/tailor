@@ -330,6 +330,7 @@ class UserInterface(QtWidgets.QMainWindow):
             "version": __version__,
             "data_model": {},
             "tabs": [],
+            "plot_num": self._plot_num,
         }
 
         # save data for the data model
@@ -338,7 +339,7 @@ class UserInterface(QtWidgets.QMainWindow):
         for idx in range(1, self.tabWidget.count()):
             # save data for each tab
             tab = self.tabWidget.widget(idx)
-            tab_data = {}
+            tab_data = {"label": self.tabWidget.tabBar().tabText(idx)}
             tab.save_state_to_obj(tab_data)
             save_obj["tabs"].append(tab_data)
 
@@ -363,6 +364,13 @@ class UserInterface(QtWidgets.QMainWindow):
 
             # load data for the data model
             self.data_model.load_state_from_obj(save_obj["data_model"])
+
+            # create a tab and load data for each plot
+            for tab_data in save_obj["tabs"]:
+                plot_tab = PlotTab(self.data_model, main_window=self)
+                idx = self.tabWidget.addTab(plot_tab, tab_data["label"])
+                plot_tab.load_state_from_obj(tab_data)
+            self._plot_num = save_obj["plot_num"]
 
     def export_csv(self):
         """Export all data as CSV.

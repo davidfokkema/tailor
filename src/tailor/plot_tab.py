@@ -554,6 +554,43 @@ class PlotTab(QtWidgets.QWidget):
             }
         )
 
+    def load_state_from_obj(self, save_obj):
+        """Load all data and state from save object.
+
+        Args:
+            save_obj: a dictionary that contains the saved data and state.
+        """
+        self.create_plot(
+            save_obj["x_var"],
+            save_obj["y_var"],
+            save_obj["x_err_var"],
+            save_obj["y_err_var"],
+        )
+
+        start, end = save_obj["fit_domain"]
+        self.fit_start_box.setValue(start)
+        self.fit_end_box.setValue(end)
+
+        # load linedit strings
+        for name in [
+            "model_func",
+            "xlabel",
+            "xmin",
+            "xmax",
+            "ylabel",
+            "ymin",
+            "ymax",
+        ]:
+            text = save_obj[name]
+            widget = getattr(self, name)
+            widget.setText(text)
+            widget.textEdited.emit(text)
+
+        # load checkbox state
+        for name in ["show_initial_fit", "use_fit_domain"]:
+            state = save_obj[name]
+            getattr(self, name).setCheckState(state)
+
     def export_graph(self, filename):
         """Export graph to a file.
 
