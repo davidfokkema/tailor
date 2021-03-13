@@ -51,11 +51,7 @@ class UserInterface(QtWidgets.QMainWindow):
         uic.loadUi(pkg_resources.resource_stream("tailor.resources", "tailor.ui"), self)
 
         self.data_model = DataModel(main_window=self)
-        self.data_view.setModel(self.data_model)
-        self.data_view.setDragDropMode(self.data_view.InternalMove)
-
-        self.selection = self.data_view.selectionModel()
-        self.selection.selectionChanged.connect(self.selection_changed)
+        self._set_view_and_selection_model()
 
         # Enable close buttons...
         self.tabWidget.setTabsClosable(True)
@@ -103,6 +99,13 @@ class UserInterface(QtWidgets.QMainWindow):
         # plot_tab.model_func.textEdited.emit("")
         # plot_tab.fit_button.clicked.emit()
         # self.tabWidget.setCurrentIndex(0)
+
+    def _set_view_and_selection_model(self):
+        self.data_view.setModel(self.data_model)
+        self.data_view.setDragDropMode(self.data_view.InternalMove)
+
+        self.selection = self.data_view.selectionModel()
+        self.selection.selectionChanged.connect(self.selection_changed)
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
@@ -310,7 +313,8 @@ class UserInterface(QtWidgets.QMainWindow):
             self.tabWidget.removeTab(idx)
         self._plot_num = 1
         self.data_model = DataModel(main_window=self)
-        self.data_view.setModel(self.data_model)
+        self._set_view_and_selection_model()
+        self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
     def save_project(self, filename):
         """Save a Tailor project.
