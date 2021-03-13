@@ -168,6 +168,9 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionOpen_project"/>
+    <addaction name="actionSave_project"/>
+    <addaction name="separator"/>
     <addaction name="actionImport_CSV"/>
     <addaction name="actionExport_CSV"/>
     <addaction name="separator"/>
@@ -215,6 +218,16 @@
   <action name="actionExport_graph">
    <property name="text">
     <string>Export graph</string>
+   </property>
+  </action>
+  <action name="actionOpen_project">
+   <property name="text">
+    <string>Open project</string>
+   </property>
+  </action>
+  <action name="actionSave_project">
+   <property name="text">
+    <string>Save project</string>
    </property>
   </action>
  </widget>

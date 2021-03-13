@@ -66,6 +66,8 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
+        self.actionOpen_project.triggered.connect(self.open_project_dialog)
+        self.actionSave_project.triggered.connect(self.save_project_dialog)
         self.actionImport_CSV.triggered.connect(self.import_csv)
         self.actionExport_CSV.triggered.connect(self.export_csv)
         self.actionExport_graph.triggered.connect(self.export_graph)
@@ -332,6 +334,16 @@ class UserInterface(QtWidgets.QMainWindow):
         self._set_view_and_selection_model()
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
+    def save_project_dialog(self):
+        """Present save project dialog and save project."""
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self,
+            filter="Tailor project files (*.tlr)",
+            # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+        )
+        if filename:
+            self.save_project(filename)
+
     def save_project(self, filename):
         """Save a Tailor project.
 
@@ -363,6 +375,16 @@ class UserInterface(QtWidgets.QMainWindow):
         # save data to disk
         with gzip.open(filename, "w") as f:
             f.write(json.dumps(save_obj).encode("utf-8"))
+
+    def open_project_dialog(self):
+        """Present open project dialog and load project."""
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self,
+            filter="Tailor project files (*.tlr)",
+            # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+        )
+        if filename:
+            self.load_project(filename)
 
     def load_project(self, filename):
         """Load a Tailor project.
