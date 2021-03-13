@@ -38,14 +38,7 @@ class DataModel(QtCore.QAbstractTableModel):
         # x = np.linspace(0, 10, 11)
         # y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
         # self._data = pd.DataFrame.from_dict(
-        #     {
-        #         "U": x,
-        #         "I": y,
-        #         "dU": 0.1 * x + 0.01,
-        #         "dI": 0.1 * y + 0.01,
-        #         "Usq": x ** 2,
-        #         "dUsq": 0.1 * x ** 2,
-        #     }
+        #     {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
         # )
 
     def rowCount(self, parent=None):
