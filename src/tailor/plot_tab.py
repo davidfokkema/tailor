@@ -476,7 +476,10 @@ class PlotTab(QtWidgets.QWidget):
             condition = (xmin <= self.x) & (self.x <= xmax)
             x = self.x[condition]
             y = self.y[condition]
-            y_err = self.y_err[condition]
+            if self.y_err is not None:
+                y_err = self.y_err[condition]
+            else:
+                y_err = None
         else:
             x = self.x
             y = self.y
@@ -557,11 +560,15 @@ class PlotTab(QtWidgets.QWidget):
         )
 
         # save (possibly outdated) fit
+        if self.fit.weights is not None:
+            weights = self.fit.weights.to_list()
+        else:
+            weights = None
         saved_fit = {
             "model": self.fit.model.expr,
             "param_hints": self.fit.model.param_hints,
             "data": self.fit.data.to_list(),
-            "weights": self.fit.weights.to_list(),
+            "weights": weights,
             "xdata": self.fit.userkws[self.x_var].to_list(),
         }
         save_obj["saved_fit"] = saved_fit
@@ -613,11 +620,14 @@ class PlotTab(QtWidgets.QWidget):
             model.set_param_hint(param, **hint)
 
         xdata = {save_obj["x_var"]: saved_fit["xdata"]}
+        weights = saved_fit["weights"]
+        if weights is not None:
+            weights = np.array(weights)
         self.fit = model.fit(
             saved_fit["data"],
             **xdata,
             # weights MUST BE an NumPy array or calculations will fail
-            weights=np.array(saved_fit["weights"]),
+            weights=weights,
             nan_policy="omit",
         )
 
