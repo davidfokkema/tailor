@@ -205,12 +205,16 @@ class UserInterface(QtWidgets.QMainWindow):
         col_index = self.data_model.columnCount()
         self.data_model.insertColumn(col_index)
         self.data_view.selectColumn(col_index)
+        self.name_edit.selectAll()
+        self.name_edit.setFocus()
 
     def add_calculated_column(self):
         """Add a calculated column to data model and select it."""
         col_index = self.data_model.columnCount()
         self.data_model.insert_calculated_column(col_index)
         self.data_view.selectColumn(col_index)
+        self.name_edit.selectAll()
+        self.name_edit.setFocus()
 
     def add_row(self):
         """Add row to data model."""
