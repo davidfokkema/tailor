@@ -721,7 +721,7 @@ def make_param_table(params):
     """
     width = max([len(p) for p in params])
     text = ""
-    fmt = "{:" + str(width) + "s} = {:< 10.4g} +/- {:< 10.4g}\n"
+    fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g}\n"
     for p in params:
         value = params[p].value
         stderr = params[p].stderr
