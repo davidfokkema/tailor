@@ -78,6 +78,8 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_end_box.setOpts(
             value=np.inf, dec=True, step=0.1, finite=True, compactHeight=False
         )
+        self.fit_start_box.setMaximumWidth(75)
+        self.fit_end_box.setMaximumWidth(75)
 
         # Connect signals
         self.model_func.textEdited.connect(self.update_fit_params)
@@ -319,12 +321,16 @@ class PlotTab(QtWidgets.QWidget):
         """
         for p in params:
             layout = QtWidgets.QHBoxLayout()
-            layout.addWidget(QtWidgets.QLabel(f"{p}: "))
+            layout.addWidget(QtWidgets.QLabel(f"{p}: ", minimumWidth=30))
             min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
             min_box.setMaximumWidth(75)
             layout.addWidget(min_box)
             self._idx_min_value_box = layout.count() - 1
-            layout.addWidget(QtWidgets.QLabel("≤"))
+            layout.addWidget(
+                QtWidgets.QLabel(
+                    "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+                )
+            )
             value_box = pg.SpinBox(
                 value=1.0,
                 dec=True,
@@ -340,7 +346,11 @@ class PlotTab(QtWidgets.QWidget):
             value_box.setMaximumWidth(75)
             layout.addWidget(value_box)
             self._idx_value_box = layout.count() - 1
-            layout.addWidget(QtWidgets.QLabel("≤"))
+            layout.addWidget(
+                QtWidgets.QLabel(
+                    "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+                )
+            )
             max_box = pg.SpinBox(value=+np.inf, finite=False, compactHeight=False)
             max_box.setMaximumWidth(75)
             layout.addWidget(max_box)
