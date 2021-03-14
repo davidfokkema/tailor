@@ -11,7 +11,7 @@ import asteval
 from PyQt5 import QtCore, QtGui
 
 
-MSG_TIMEOUT = 5000
+MSG_TIMEOUT = 0
 
 
 class DataModel(QtCore.QAbstractTableModel):

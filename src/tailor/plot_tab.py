@@ -14,7 +14,7 @@ import asteval
 
 
 NUM_POINTS = 1000
-MSG_TIMEOUT = 5000
+MSG_TIMEOUT = 0
 
 
 class VariableError(RuntimeError):
