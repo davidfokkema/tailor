@@ -81,7 +81,7 @@ class DataModel(QtCore.QAbstractTableModel):
                 # NaN in a data column, show as empty
                 return ""
             else:
-                return value
+                return str(value)
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell
             if self.is_calculated_column(col):
