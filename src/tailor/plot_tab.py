@@ -509,7 +509,13 @@ class PlotTab(QtWidgets.QWidget):
             fit: an lmfit.ModelResult object with the result of the fit.
         """
         results = make_header("Fit statistics")
-        results += make_table([("# func. eval.", fit.nfev), ("red. chisq", fit.redchi)])
+        results += make_table(
+            [
+                ("function evaluations", fit.nfev),
+                ("reduced chisquare", fit.redchi),
+                ("degrees of freedom", fit.nfree),
+            ]
+        )
 
         results += "\n\n"
         results += make_header("Fit parameters")
@@ -721,11 +727,11 @@ def make_param_table(params):
     """
     width = max([len(p) for p in params])
     text = ""
-    fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g}\n"
+    fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g} ({:.1f} %)\n"
     for p in params:
         value = params[p].value
         stderr = params[p].stderr
         if stderr is None:
             stderr = 0
-        text += fmt.format(p, value, stderr)
+        text += fmt.format(p, value, stderr, abs(stderr / value * 100))
     return text
