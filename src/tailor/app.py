@@ -10,6 +10,7 @@ import json
 import os
 import pathlib
 import sys
+import traceback
 
 from PyQt5 import uic, QtWidgets, QtCore
 import pyqtgraph as pg
@@ -381,24 +382,31 @@ class UserInterface(QtWidgets.QMainWindow):
         Args:
             filename: a string containing the filename to save to.
         """
-        save_obj = {
-            "application": __name__,
-            "version": __version__,
-            "data_model": {},
-            "tabs": [],
-            "plot_num": self._plot_num,
-            "current_tab": self.tabWidget.currentIndex(),
-        }
+        try:
+            save_obj = {
+                "application": __name__,
+                "version": __version__,
+                "data_model": {},
+                "tabs": [],
+                "plot_num": self._plot_num,
+                "current_tab": self.tabWidget.currentIndex(),
+            }
 
-        # save data for the data model
-        self.data_model.save_state_to_obj(save_obj["data_model"])
+            # save data for the data model
+            self.data_model.save_state_to_obj(save_obj["data_model"])
 
-        for idx in range(1, self.tabWidget.count()):
-            # save data for each tab
-            tab = self.tabWidget.widget(idx)
-            tab_data = {"label": self.tabWidget.tabBar().tabText(idx)}
-            tab.save_state_to_obj(tab_data)
-            save_obj["tabs"].append(tab_data)
+            for idx in range(1, self.tabWidget.count()):
+                # save data for each tab
+                tab = self.tabWidget.widget(idx)
+                tab_data = {"label": self.tabWidget.tabBar().tabText(idx)}
+                tab.save_state_to_obj(tab_data)
+                save_obj["tabs"].append(tab_data)
+        except Exception as exc:
+            self._show_exception(
+                exc,
+                title="Unable to save project.",
+                text="This is a bug in the application.",
+            )
 
         # save data to disk
         with gzip.open(filename, "w") as f:
@@ -430,22 +438,28 @@ class UserInterface(QtWidgets.QMainWindow):
             save_obj = json.loads(f.read().decode("utf-8"))
 
         if save_obj["application"] == __name__:
-            self.clear_all()
+            try:
+                self.clear_all()
 
-            # remember filename for subsequent call to "Save"
-            self._set_project_path(filename)
+                # remember filename for subsequent call to "Save"
+                self._set_project_path(filename)
 
-            # load data for the data model
-            self.data_model.load_state_from_obj(save_obj["data_model"])
+                # load data for the data model
+                self.data_model.load_state_from_obj(save_obj["data_model"])
 
-            # create a tab and load data for each plot
-            for tab_data in save_obj["tabs"]:
-                plot_tab = PlotTab(self.data_model, main_window=self)
-                idx = self.tabWidget.addTab(plot_tab, tab_data["label"])
-                plot_tab.load_state_from_obj(tab_data)
-            self._plot_num = save_obj["plot_num"]
-
-            self.tabWidget.setCurrentIndex(save_obj["current_tab"])
+                # create a tab and load data for each plot
+                for tab_data in save_obj["tabs"]:
+                    plot_tab = PlotTab(self.data_model, main_window=self)
+                    idx = self.tabWidget.addTab(plot_tab, tab_data["label"])
+                    plot_tab.load_state_from_obj(tab_data)
+                self._plot_num = save_obj["plot_num"]
+                self.tabWidget.setCurrentIndex(save_obj["current_tab"])
+            except Exception as exc:
+                self._show_exception(
+                    exc,
+                    title="Unable to open project.",
+                    text="This can happen if the file is corrupt or if there is a bug in the application.",
+                )
 
     def export_csv(self):
         """Export all data as CSV.
@@ -510,6 +524,21 @@ class UserInterface(QtWidgets.QMainWindow):
             self.setWindowTitle(f"Tailor: {pathlib.Path(filename).stem}")
         else:
             self.setWindowTitle("Tailor")
+
+    def _show_exception(self, exc, title, text):
+        """Show a messagebox with detailed exception information.
+
+        Args:
+            exc: the exception.
+            title: short header text.
+            text: longer informative text describing the problem.
+        """
+        msg = QtWidgets.QMessageBox(parent=self)
+        msg.setText(title)
+        msg.setInformativeText(text)
+        msg.setDetailedText(traceback.format_exc())
+        msg.setStyleSheet("QLabel{min-width: 400px;}")
+        msg.exec()
 
 
 def main():
