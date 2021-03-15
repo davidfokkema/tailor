@@ -528,21 +528,31 @@ class PlotTab(QtWidgets.QWidget):
     def update_best_fit_plot(self):
         """Update the plot of the best-fit model curve."""
         if self.fit:
-            option_idx = self.draw_curve_option.currentIndex()
-            if option_idx == DRAW_CURVE_ON_DATA:
-                xmin, xmax = min(self.x), max(self.x)
-            elif option_idx == DRAW_CURVE_ON_DOMAIN:
-                xmin, xmax = self.fit_domain
-            elif option_idx == DRAW_CURVE_ON_AXIS:
-                [[xmin, xmax], _] = self.plot_widget.viewRange()
-            else:
-                raise NotImplementedError(
-                    f"Draw curve option {option_idx} not implemented."
-                )
-
+            xmin, xmax = self.get_fit_curve_x_limits()
             x = np.linspace(xmin, xmax, NUM_POINTS)
             y = self.fit.eval(**{self.x_var: x})
             self._fit_plot.setData(x, y)
+
+    def get_fit_curve_x_limits(self):
+        """Get x-axis limits for fit curve.
+
+        This method respects the choice in the 'Draw curve' option box.
+
+        Returns:
+            xmin, xmax: tuple of floats with the x-axis limits
+        """
+        option_idx = self.draw_curve_option.currentIndex()
+        if option_idx == DRAW_CURVE_ON_DATA:
+            xmin, xmax = min(self.x), max(self.x)
+        elif option_idx == DRAW_CURVE_ON_DOMAIN:
+            xmin, xmax = self.fit_domain
+        elif option_idx == DRAW_CURVE_ON_AXIS:
+            [[xmin, xmax], _] = self.plot_widget.viewRange()
+        else:
+            raise NotImplementedError(
+                f"Draw curve option {option_idx} not implemented."
+            )
+        return xmin, xmax
 
     def show_fit_results(self, fit):
         """Show the results of the fit in the user interface.
@@ -732,7 +742,8 @@ class PlotTab(QtWidgets.QWidget):
             elinewidth=0.5,
         )
         if self.fit:
-            x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
+            fit_xmin, fit_xmax = self.get_fit_curve_x_limits()
+            x = np.linspace(fit_xmin, fit_xmax, NUM_POINTS)
             y = self.fit.eval(**{self.x_var: x})
             plt.plot(x, y, "r-")
         if self.use_fit_domain.isChecked():
