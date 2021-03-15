@@ -16,6 +16,11 @@ import asteval
 NUM_POINTS = 1000
 MSG_TIMEOUT = 0
 
+DRAW_CURVE_ON_DATA = 0
+DRAW_CURVE_ON_DOMAIN = 1
+DRAW_CURVE_ON_AXIS = 2
+DRAW_CURVE_OPTIONS = ["On data points", "Only on fit domain", "On full axis"]
+
 
 class VariableError(RuntimeError):
     pass
@@ -80,6 +85,8 @@ class PlotTab(QtWidgets.QWidget):
         )
         self.fit_start_box.setMaximumWidth(75)
         self.fit_end_box.setMaximumWidth(75)
+        self.draw_curve_option.addItems(DRAW_CURVE_OPTIONS)
+        self.draw_curve_option.currentIndexChanged.connect(self.update_best_fit_plot)
 
         # Connect signals
         self.model_func.textEdited.connect(self.update_fit_params)
@@ -96,6 +103,7 @@ class PlotTab(QtWidgets.QWidget):
         self.ymin.textEdited.connect(self.update_limits)
         self.ymax.textEdited.connect(self.update_limits)
         self.set_limits_button.clicked.connect(self.update_limits)
+        self.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
 
         self.plot_widget.setMenuEnabled(False)
 
@@ -430,6 +438,7 @@ class PlotTab(QtWidgets.QWidget):
         xmin, xmax = self.fit_domain_area.getRegion()
         self.fit_start_box.setValue(xmin)
         self.fit_end_box.setValue(xmax)
+        self.update_best_fit_plot()
 
     def update_fit_domain(self):
         """Update the fit domain and indicate with vertical lines."""
@@ -503,14 +512,37 @@ class PlotTab(QtWidgets.QWidget):
             self.main_window.statusbar.showMessage(f"FIT FAILED: {exc}")
         else:
             self.show_fit_results(self.fit)
+            self.update_best_fit_plot()
+            self.show_initial_fit.setChecked(False)
+            self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
 
-            # plot best-fit model
-            x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
+    def updated_plot_range(self):
+        """Handle updated plot range.
+
+        If the fitted curves are drawn on the full axis, they need to be updated
+        when the plot range is changed.
+        """
+        if self.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
+            self.update_best_fit_plot()
+
+    def update_best_fit_plot(self):
+        """Update the plot of the best-fit model curve."""
+        if self.fit:
+            option_idx = self.draw_curve_option.currentIndex()
+            if option_idx == DRAW_CURVE_ON_DATA:
+                xmin, xmax = min(self.x), max(self.x)
+            elif option_idx == DRAW_CURVE_ON_DOMAIN:
+                xmin, xmax = self.fit_domain
+            elif option_idx == DRAW_CURVE_ON_AXIS:
+                [[xmin, xmax], _] = self.plot_widget.viewRange()
+            else:
+                raise NotImplementedError(
+                    f"Draw curve option {option_idx} not implemented."
+                )
+
+            x = np.linspace(xmin, xmax, NUM_POINTS)
             y = self.fit.eval(**{self.x_var: x})
             self._fit_plot.setData(x, y)
-            self.show_initial_fit.setChecked(False)
-
-            self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
 
     def show_fit_results(self, fit):
         """Show the results of the fit in the user interface.
@@ -559,6 +591,11 @@ class PlotTab(QtWidgets.QWidget):
                 name: getattr(self, name).checkState()
                 for name in ["show_initial_fit", "use_fit_domain"]
             }
+        )
+
+        # save combobox state
+        save_obj.update(
+            {name: getattr(self, name).currentIndex() for name in ["draw_curve_option"]}
         )
 
         # save lineedit strings
@@ -631,6 +668,11 @@ class PlotTab(QtWidgets.QWidget):
             state = save_obj[name]
             getattr(self, name).setCheckState(state)
 
+        # load combobox state
+        for name in ["draw_curve_option"]:
+            state = save_obj[name]
+            getattr(self, name).setCurrentIndex(state)
+
         # set parameter hints
         for p, hints in save_obj["parameters"].items():
             if hints["vary"]:
@@ -666,11 +708,7 @@ class PlotTab(QtWidgets.QWidget):
             )
 
             self.show_fit_results(self.fit)
-
-            # plot best-fit model
-            x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
-            y = self.fit.eval(**{self.x_var: x})
-            self._fit_plot.setData(x, y)
+            self.update_best_fit_plot()
 
         # set state of show_initial_fit, will have changed when setting parameters
         self.show_initial_fit.setCheckState(save_obj["show_initial_fit"])
