@@ -7,6 +7,7 @@ Features
 --------
 
 * Spreadsheet-like editing of data
+* Open and save project files
 * Import and export of CSV files
 * Add / remove columns or rows
 * Add columns based on mathematical expressions
@@ -16,6 +17,7 @@ Features
 * Parameters are automatically deduced from the model expression and displayed in the user interface
 * Start values can be easily changes and an initial fit is updated in the plot window
 * Bounds on parameters and the ability to fix a parameter to a particular value
+* Fits can be restricted to a subset of the data by specifying a fit domain
 * Fit results include reduced chi-square statistic and parameter value and error estimations
 * Easily adjustable axis labels and ranges
 * Zooming and panning of the plot
