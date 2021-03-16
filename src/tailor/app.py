@@ -52,8 +52,7 @@ class UserInterface(QtWidgets.QMainWindow):
 
         uic.loadUi(pkg_resources.resource_stream("tailor.resources", "tailor.ui"), self)
 
-        self.data_model = DataModel(main_window=self)
-        self._set_view_and_selection_model()
+        self.clear_all()
 
         # Enable close buttons...
         self.tabWidget.setTabsClosable(True)
