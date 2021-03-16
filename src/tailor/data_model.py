@@ -34,14 +34,6 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
         self._calculated_columns = {}
 
-        # FIXME: test data
-        # np.random.seed(1)
-        # x = np.linspace(0, 10, 11)
-        # y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
-        # self._data = pd.DataFrame.from_dict(
-        #     {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
-        # )
-
     def rowCount(self, parent=None):
         """Return the number of rows in the data."""
         return len(self._data)

@@ -100,6 +100,17 @@ class UserInterface(QtWidgets.QMainWindow):
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
         # # tests
+        # import numpy as np
+        # import pandas as pd
+
+        # np.random.seed(1)
+        # x = np.linspace(0, 10, 11)
+        # y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
+        # self.data_model.beginResetModel()
+        # self.data_model._data = pd.DataFrame.from_dict(
+        #     {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
+        # )
+        # self.data_model.endResetModel()
         # self.create_plot_tab("U", "I", "dU", "dI")
         # self.add_calculated_column()
         # self.name_edit.setText("P")
