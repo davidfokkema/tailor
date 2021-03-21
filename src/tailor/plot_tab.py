@@ -69,7 +69,7 @@ class PlotTab(QtWidgets.QWidget):
 
         # FIXME move this to create_plot, or vice versa?
         self._initial_param_plot = self.plot_widget.plot(
-            symbol=None, pen=pg.mkPen(color="b", width=4)
+            symbol=None, pen=pg.mkPen(color="00F4", width=4)
         )
         self._fit_plot = self.plot_widget.plot(
             symbol=None, pen=pg.mkPen(color="r", width=4)
