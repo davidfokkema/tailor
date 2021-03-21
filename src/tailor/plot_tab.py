@@ -184,10 +184,13 @@ class PlotTab(QtWidgets.QWidget):
     def update_limits(self):
         """Update the axis limits of the plot."""
         xmin, xmax, ymin, ymax = self.get_adjusted_limits()
+        # BUGFIX:
         # disableAutoRange=False is necessary to prevent triggering a ranging
         # bug for large y-values (> 1e6)
+        # However, that will break setting the axis limits manually. Setting to
+        # True for now.
         self.plot_widget.setRange(
-            xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=False
+            xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
         self.main_window.statusbar.showMessage("Updated limits.", msecs=MSG_TIMEOUT)
 
