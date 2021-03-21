@@ -69,12 +69,12 @@ class PlotTab(QtWidgets.QWidget):
 
         # FIXME move this to create_plot, or vice versa?
         self._initial_param_plot = self.plot_widget.plot(
-            symbol=None, pen=pg.mkPen(color="b", width=2)
+            symbol=None, pen=pg.mkPen(color="b", width=4)
         )
         self._fit_plot = self.plot_widget.plot(
-            symbol=None, pen=pg.mkPen(color="r", width=2)
+            symbol=None, pen=pg.mkPen(color="r", width=4)
         )
-        self.fit_domain_area = pg.LinearRegionItem(movable=True)
+        self.fit_domain_area = pg.LinearRegionItem(movable=True, brush="00F1")
 
         # Set options affecting the UI
         self.fit_start_box.setOpts(
