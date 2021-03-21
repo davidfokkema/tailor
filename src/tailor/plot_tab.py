@@ -759,7 +759,7 @@ class PlotTab(QtWidgets.QWidget):
         plt.ylabel(self.ylabel.text())
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
-        plt.savefig(filename)
+        plt.savefig(filename, dpi=300)
 
 
 def make_header(text):
