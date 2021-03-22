@@ -1,7 +1,8 @@
 Tailor
 ======
 
-Explore datasets and fit models.
+Tailor is an application for data analysis and curve fitting. You can fit custom models to your data, simply by entering the mathematical expression and choosing suitable initial values. The application is tailored to giving you an intuitive interface for entering or inspecting your data, calculating additional quantities and comparing different model curves to give you a best fit. Fashion and math do have a bit of shared vocabulary. Hence the name, *Tailor*. Also, at both the Vrije Universiteit Amsterdam and the University of Amsterdam we use the book "An Introduction to Error Analysis" by John R. Taylor in our inquiry-based physics labs for students. Taylor discusses least-squares fitting in chapter 8.
+
 
 Features
 --------
@@ -22,6 +23,27 @@ Features
 * Easily adjustable axis labels and ranges
 * Zooming and panning of the plot
 * Export plot as PNG (bitmap) or PDF (vector) images
+
+
+Screenshots
+-----------
+
+.. figure:: docs/images/screenshot-ui-table.png
+   :alt: screenshot showing the table user interface
+
+   Screenshot showing the main window with the spreadsheet-like user interface for entering and viewing data.
+
+
+.. figure:: docs/images/screenshot-ui-plot.png
+   :alt: screenshot showing the plot user interface
+
+   Screenshot showing the user interface for a diagram. In this screen you can zoom and pan the plot and enter a model expression to fit to the data. In this screenshot, an exponential decay model is fitted to data of the decay of a sample of the radon-220 isotope.
+
+
+.. figure:: docs/images/exponential-fit-radon220.png
+   :alt: exported graph of a decaying radon-220 sample
+
+   An example of an exported graph of the same dataset and fit as in the previous screenshot.
 
 
 Development
@@ -57,7 +79,7 @@ or update and run in one go::
 
     $ briefcase run -u
 
-If you need to install extra (!) dependencies::
+If you need to install extra dependencies::
 
     $ briefcase update -d
 
