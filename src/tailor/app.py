@@ -114,7 +114,7 @@ class UserInterface(QtWidgets.QMainWindow):
         # self.create_plot_tab("U", "I", None, None)  # , "dU", "dI")
 
         # plot_tab = self.tabWidget.currentWidget()
-        # plot_tab.model_func.setText("a * U + b")
+        # plot_tab.model_func.setText("U0 * U + b")
         # plot_tab.model_func.textEdited.emit("")
         # plot_tab.fit_button.clicked.emit()
 
@@ -309,13 +309,14 @@ class UserInterface(QtWidgets.QMainWindow):
                     if getattr(tab, var) == old_name:
                         needs_info_update = True
                         setattr(tab, var, new_name)
-                        if var == "x_var":
-                            # update model expression and model object
-                            expr = tab.model_func.text()
-                            new_expr = expr.replace(old_name, new_name)
-                            tab.model_func.setText(new_expr)
-                            tab.get_params_and_update_model()
-                        elif var == "y_var":
+                        # The following creates problems with partial matches
+                        # if var == "x_var":
+                        # update model expression and model object
+                        # expr = tab.model_func.text()
+                        # new_expr = expr.replace(old_name, new_name)
+                        # tab.model_func.setText(new_expr)
+                        # tab.get_params_and_update_model()
+                        if var == "y_var":
                             # update y-label for model expression
                             tab.update_function_label(new_name)
                 if needs_info_update:
