@@ -302,11 +302,19 @@ class PlotTab(QtWidgets.QWidget):
             )
             return
         else:
-            old_params = set(self._params)
-            self.add_params_to_ui(params - old_params)
-            self.remove_params_from_ui(old_params - params)
+            self.update_params_ui(params)
             self.plot_initial_model()
             self.main_window.statusbar.showMessage("Updated model.", msecs=MSG_TIMEOUT)
+
+    def update_params_ui(self, params):
+        """Add and/or remove parameters if necessary.
+
+        Args:
+            params: list of parameter names which should be in the user interface.
+        """
+        old_params = set(self._params)
+        self.add_params_to_ui(params - old_params)
+        self.remove_params_from_ui(old_params - params)
 
     def get_params_and_update_model(self):
         """Get parameter names and update the model function.
@@ -544,12 +552,21 @@ class PlotTab(QtWidgets.QWidget):
         if self.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
             self.update_best_fit_plot()
 
-    def update_best_fit_plot(self):
-        """Update the plot of the best-fit model curve."""
+    def update_best_fit_plot(self, x_var=None):
+        """Update the plot of the best-fit model curve.
+
+        Args:
+            x_var: optional name of the x-variable to use for the model. Only
+                useful for loading project files which have an outdated fit object
+                with an outdated x-variable name (i.e. shortly after renaming a
+                column and not updating the model function).
+        """
         if self.fit:
+            if x_var is None:
+                x_var = self.x_var
             xmin, xmax = self.get_fit_curve_x_limits()
             x = np.linspace(xmin, xmax, NUM_POINTS)
-            y = self.fit.eval(**{self.x_var: x})
+            y = self.fit.eval(**{x_var: x})
             self._fit_plot.setData(x, y)
 
     def get_fit_curve_x_limits(self):
@@ -667,12 +684,14 @@ class PlotTab(QtWidgets.QWidget):
                 weights = list(self.fit.weights)
             else:
                 weights = None
+            x_var = self.fit.model.independent_vars[0]
             saved_fit = {
                 "model": self.fit.model.expr,
                 "param_hints": self.fit.model.param_hints,
                 "data": list(self.fit.data),
                 "weights": weights,
-                "xdata": list(self.fit.userkws[self.x_var]),
+                "x_var": x_var,
+                "xdata": list(self.fit.userkws[x_var]),
             }
             save_obj["saved_fit"] = saved_fit
 
@@ -719,6 +738,8 @@ class PlotTab(QtWidgets.QWidget):
             getattr(self, name).setCurrentIndex(state)
 
         # set parameter hints
+        params = save_obj["parameters"].keys()
+        self.update_params_ui(params)
         for p, hints in save_obj["parameters"].items():
             if hints["vary"]:
                 fixed_state = QtCore.Qt.Unchecked
@@ -733,14 +754,20 @@ class PlotTab(QtWidgets.QWidget):
         # manually recreate (possibly outdated!) fit
         if "saved_fit" in save_obj:
             saved_fit = save_obj["saved_fit"]
-            model = models.ExpressionModel(
-                saved_fit["model"], independent_vars=[self.x_var]
-            )
+
+            # workaround for older projects which did not explicitly store the
+            # fit objects x-variable
+            if "x_var" in saved_fit:
+                x_var = saved_fit["x_var"]
+            else:
+                x_var = self.x_var
+
+            model = models.ExpressionModel(saved_fit["model"], independent_vars=[x_var])
 
             for param, hint in saved_fit["param_hints"].items():
                 model.set_param_hint(param, **hint)
 
-            xdata = {save_obj["x_var"]: saved_fit["xdata"]}
+            xdata = {x_var: saved_fit["xdata"]}
             weights = saved_fit["weights"]
             if weights is not None:
                 weights = np.array(weights)
@@ -753,7 +780,7 @@ class PlotTab(QtWidgets.QWidget):
             )
 
             self.update_info_box()
-            self.update_best_fit_plot()
+            self.update_best_fit_plot(x_var)
 
         # set state of show_initial_fit, will have changed when setting parameters
         self.show_initial_fit.setCheckState(save_obj["show_initial_fit"])
