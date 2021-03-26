@@ -140,6 +140,7 @@ class PlotTab(QtWidgets.QWidget):
         self.update_function_label(y_var)
         self.xlabel.setText(x_var)
         self.ylabel.setText(y_var)
+        self.update_info_box()
 
         self.update_plot()
 
@@ -180,6 +181,14 @@ class PlotTab(QtWidgets.QWidget):
         """Update the y-axis label of the plot."""
         self.plot_widget.setLabel("left", self.ylabel.text())
         self.main_window.statusbar.showMessage("Updated label.", msecs=MSG_TIMEOUT)
+
+    def update_info_box(self):
+        """Update the information box."""
+        msgs = []
+        if self.fit:
+            msgs.append(self.format_fit_results())
+        msgs.append(self.format_plot_info())
+        self.result_box.setPlainText("\n".join(msgs))
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -521,7 +530,7 @@ class PlotTab(QtWidgets.QWidget):
         except Exception as exc:
             self.main_window.statusbar.showMessage(f"FIT FAILED: {exc}")
         else:
-            self.show_fit_results(self.fit)
+            self.update_info_box()
             self.update_best_fit_plot()
             self.show_initial_fit.setChecked(False)
             self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
@@ -564,26 +573,42 @@ class PlotTab(QtWidgets.QWidget):
             )
         return xmin, xmax
 
-    def show_fit_results(self, fit):
-        """Show the results of the fit in the user interface.
+    def format_plot_info(self):
+        """Format basic plot information in the results box.
 
-        Args:
-            fit: an lmfit.ModelResult object with the result of the fit.
+        Returns:
+            A string containing the formatted plot information.
         """
-        results = make_header("Fit statistics")
-        results += make_table(
+        msg = make_header("Data sources")
+        msg += make_table(
             [
-                ("function evaluations", fit.nfev),
-                ("reduced chisquare", fit.redchi),
-                ("degrees of freedom", fit.nfree),
+                # make sure everything is a string, even None
+                ("X: ", str(self.x_var), " +- ", str(self.x_err_var)),
+                ("Y: ", str(self.y_var), " +- ", str(self.y_err_var)),
+            ]
+        )
+        return msg
+
+    def format_fit_results(self):
+        """Format the results of the fit in the user interface.
+
+        Returns:
+            A string containing the formatted fit results.
+        """
+        msg = make_header("Fit statistics")
+        msg += make_table(
+            [
+                ("function evaluations", " = ", f"{self.fit.nfev:<9.4g}"),
+                ("reduced chisquare", " = ", f"{self.fit.redchi:<9.4g}"),
+                ("degrees of freedom", " = ", f"{self.fit.nfree:<9.4g}"),
             ]
         )
 
-        results += "\n\n"
-        results += make_header("Fit parameters")
-        results += make_param_table(fit.params)
+        msg += "\n\n"
+        msg += make_header("Fit parameters")
+        msg += make_param_table(self.fit.params)
 
-        self.result_box.setPlainText(results)
+        return msg
 
     def save_state_to_obj(self, save_obj):
         """Save all data and state to save object.
@@ -727,7 +752,7 @@ class PlotTab(QtWidgets.QWidget):
                 nan_policy="omit",
             )
 
-            self.show_fit_results(self.fit)
+            self.update_info_box()
             self.update_best_fit_plot()
 
         # set state of show_initial_fit, will have changed when setting parameters
@@ -766,24 +791,34 @@ class PlotTab(QtWidgets.QWidget):
 
 
 def make_header(text):
-    """Make header text with underlined with dashed."""
+    """Make header text with underlined with dashed.
+
+    Returns:
+        A string with the formatted header text.
+    """
     return text + "\n" + len(text) * "-" + "\n"
 
 
 def make_table(data):
-    """Format numerical data in a table.
+    """Format data in a table.
 
-    Calculates the width of the first-column description texts and assumes numerical values for the second column and displays them with precision 4.
+    Calculates the width of the column texts to lay out the table. All values must be passed as string to make the layout work correctly.
 
     Args:
-        data: list of (text, value) tuples.
+        data: list of (text1, text2, ...) tuples of string values.
+
+    Returns:
+        A string with the formatted table text.
     """
-    width = max([len(u[0]) for u in data])
-    text = ""
-    fmt = "{:" + str(width) + "s} = {:<9.4g}\n"
-    for u, v in data:
-        text += fmt.format(u, v)
-    return text
+    cols = zip(*data)
+    widths = [max([len(row) for row in col]) for col in cols]
+    table = ""
+    for row in data:
+        for txt, col_width in zip(row, widths):
+            fmt = f"{{:{col_width}s}}"
+            table += fmt.format(txt)
+        table += "\n"
+    return table
 
 
 def make_param_table(params):
@@ -793,6 +828,9 @@ def make_param_table(params):
 
     Args:
         params: a lmfit.Parameters object.
+
+    Returns:
+        A string with the formatted table text.
     """
     width = max([len(p) for p in params])
     text = ""

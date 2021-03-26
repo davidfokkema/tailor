@@ -223,7 +223,7 @@
      <item>
       <widget class="QGroupBox" name="groupBox_3">
        <property name="title">
-        <string>Result</string>
+        <string>Information</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="leftMargin">

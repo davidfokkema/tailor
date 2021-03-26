@@ -111,7 +111,23 @@ class UserInterface(QtWidgets.QMainWindow):
         #     {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
         # )
         # self.data_model.endResetModel()
-        # self.create_plot_tab("U", "I", "dU", "dI")
+        # self.create_plot_tab("U", "I", None, None)  # , "dU", "dI")
+
+        # plot_tab = self.tabWidget.currentWidget()
+        # plot_tab.model_func.setText("a * U + b")
+        # plot_tab.model_func.textEdited.emit("")
+        # plot_tab.fit_button.clicked.emit()
+
+        # self.tabWidget.setCurrentIndex(0)
+        # self.data_view.selectColumn(0)
+        # self.name_edit.setText("U_0")
+        # self.name_edit.textEdited.emit("U_0")
+        # self.data_view.selectColumn(1)
+        # self.name_edit.setText("I_0")
+        # self.name_edit.textEdited.emit("I_0")
+        # self.tabWidget.setCurrentIndex(1)
+        # plot_tab.fit_button.clicked.emit()
+
         # self.add_calculated_column()
         # self.name_edit.setText("P")
         # self.name_edit.textEdited.emit("P")
@@ -288,8 +304,10 @@ class UserInterface(QtWidgets.QMainWindow):
         tabs = [self.tabWidget.widget(i) for i in range(num_tabs)]
         for tab in tabs:
             if type(tab) == PlotTab:
+                needs_info_update = False
                 for var in ["x_var", "y_var", "x_err_var", "y_err_var"]:
                     if getattr(tab, var) == old_name:
+                        needs_info_update = True
                         setattr(tab, var, new_name)
                         if var == "x_var":
                             # update model expression and model object
@@ -300,6 +318,8 @@ class UserInterface(QtWidgets.QMainWindow):
                         elif var == "y_var":
                             # update y-label for model expression
                             tab.update_function_label(new_name)
+                if needs_info_update:
+                    tab.update_info_box()
 
     def update_column_expression(self, expression):
         """Update a column expression.
