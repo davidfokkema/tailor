@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.0.0
+
+Ready for deployment in our student labs! (🤞)
+
+### Bugfixes
+
+* When editing a cell, the current value no longer disappears.
+* Recalculate column values whenever a data value changes. This did not happen
+  if you navigated away from the cell instead of pressing enter.
+* Better support saving and loading project files when a column gets renamed and
+  the fit object still has the old name.
+* When you write 1 * 10 ** 20 instead of 1e20 this is not a float but a very
+  large integer. This could result in calculated values being cast to dtype
+  'object' which caused problems (e.g. with fits). Now always casts to float64
+  after calculations.
+
+
+### Features
+
+* New custom icon. Handdrawn, so will probably be replaced with something nicer.
+* Lots of confirmation dialogs before closing files or tabs.
+* You can now rename columns without breaking plots and fits. You still need to
+  manually update the model expression, however.
+* The results box is now the information box. It also displays the data sources
+  which update when columns get renamed.
+* Export PNG files with a resolution of 300 DPI (much better!)
+* Show much more digits in table cells.
+* Now catches exceptions during opening and saving projects with details you can
+  copy/paste and send to the developer!
+* Lots of small UI tweaks and improvements.
+
+
 ## v0.9.0
 
 ### Bugfixes
@@ -20,9 +52,11 @@
 * Fit errors are now displayed in the statusbar.
 * Statusbar messages now stay visible indefinitely.
 * Improved displayed precision in table view (spreadsheet) and fit results.
-* When adding columns, the column name is selected and focused so you can immediately type a new column name.
+* When adding columns, the column name is selected and focused so you can
+  immediately type a new column name.
 * Added degrees of freedom and relative errors to fit results.
-* You now have several options for plotting best-fit curves: on data points, only on the fit domain, or on the full axis.
+* You now have several options for plotting best-fit curves: on data points,
+  only on the fit domain, or on the full axis.
 * Several UI tweaks.
 
 
