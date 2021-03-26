@@ -607,9 +607,10 @@ class UserInterface(QtWidgets.QMainWindow):
             # options=QtWidgets.QFileDialog.DontUseNativeDialog,
         )
         if filename:
-            self.clear_all()
-            self.data_model.read_csv(filename)
-            self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+            if self.confirm_close_dialog():
+                self.clear_all()
+                self.data_model.read_csv(filename)
+                self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
     def export_graph(self, suffix):
         """Export a graph to a file.
