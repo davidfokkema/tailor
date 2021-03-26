@@ -106,6 +106,9 @@ class DataModel(QtCore.QAbstractTableModel):
             except ValueError:
                 return False
             else:
+                # FIXME: data changed, recalculate all columns; better to only
+                # recalculate the current row
+                self.recalculate_all_columns()
                 return True
         # Role not implemented
         return False
@@ -309,7 +312,7 @@ class DataModel(QtCore.QAbstractTableModel):
         """Recalculate all columns.
 
         If data is entered or changed, the calculated column values must be
-        update. This method will manually recalculate all column values.
+        updated. This method will manually recalculate all column values.
         """
         for col_name in self._calculated_columns:
             self.recalculate_column(col_name)

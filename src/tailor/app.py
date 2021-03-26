@@ -183,7 +183,6 @@ class UserInterface(QtWidgets.QMainWindow):
                 new_index = self.get_index_below_selected_cell()
             # move to it (finishing editing in the process)
             self.data_view.setCurrentIndex(new_index)
-            self.data_model.recalculate_all_columns()
 
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""
