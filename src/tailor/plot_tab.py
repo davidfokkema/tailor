@@ -286,7 +286,7 @@ class PlotTab(QtWidgets.QWidget):
         model.
         """
         try:
-            params = self.get_params_from_model()
+            params = self.get_params_and_update_model()
         except (SyntaxError, VariableError) as exc:
             self.main_window.statusbar.showMessage(
                 "ERROR: " + str(exc), msecs=MSG_TIMEOUT
@@ -299,12 +299,15 @@ class PlotTab(QtWidgets.QWidget):
             self.plot_initial_model()
             self.main_window.statusbar.showMessage("Updated model.", msecs=MSG_TIMEOUT)
 
-    def get_params_from_model(self):
-        """Get parameter names from the model function.
+    def get_params_and_update_model(self):
+        """Get parameter names and update the model function.
 
-        Based on the mathematical expression for the model function, determine what are the parameters of the model.
+        Based on the mathematical expression for the model function, determine
+        what are the parameters of the model. If the model compiles, the model
+        object is updated as well.
 
-        Raises VariableError when the dependent variable is part of the model function.
+        Raises VariableError when the dependent variable is part of the model
+        function.
 
         Returns:
             A set of parameter names.

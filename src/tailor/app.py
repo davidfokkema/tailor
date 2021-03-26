@@ -291,7 +291,14 @@ class UserInterface(QtWidgets.QMainWindow):
                 for var in ["x_var", "y_var", "x_err_var", "y_err_var"]:
                     if getattr(tab, var) == old_name:
                         setattr(tab, var, new_name)
-                        if var == "y_var":
+                        if var == "x_var":
+                            # update model expression and model object
+                            expr = tab.model_func.text()
+                            new_expr = expr.replace(old_name, new_name)
+                            tab.model_func.setText(new_expr)
+                            tab.get_params_and_update_model()
+                        elif var == "y_var":
+                            # update y-label for model expression
                             tab.update_function_label(new_name)
 
     def update_column_expression(self, expression):
