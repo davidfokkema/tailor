@@ -271,9 +271,28 @@ class UserInterface(QtWidgets.QMainWindow):
             name: a QString containing the new name.
         """
         if self._selected_col_idx is not None:
+            # Do not allow empty names or duplicate column names
             if name and name not in self.data_model.get_column_names():
-                # Do not allow empty names or duplicate column names
+                old_name = self.data_model.get_column_name(self._selected_col_idx)
                 self.data_model.rename_column(self._selected_col_idx, name)
+                self.rename_plot_variables(old_name, name)
+
+    def rename_plot_variables(self, old_name, new_name):
+        """Rename any plotted variables
+
+        Args:
+            old_name: the name that may be currently in use.
+            new_name: the new column name
+        """
+        num_tabs = self.tabWidget.count()
+        tabs = [self.tabWidget.widget(i) for i in range(num_tabs)]
+        for tab in tabs:
+            if type(tab) == PlotTab:
+                for var in ["x_var", "y_var", "x_err_var", "y_err_var"]:
+                    if getattr(tab, var) == old_name:
+                        setattr(tab, var, new_name)
+                        if var == "y_var":
+                            tab.update_function_label(new_name)
 
     def update_column_expression(self, expression):
         """Update a column expression.
