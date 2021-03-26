@@ -10,9 +10,10 @@ import json
 import os
 import pathlib
 import sys
+from textwrap import dedent
 import traceback
 
-from PyQt5 import uic, QtWidgets, QtCore
+from PyQt5 import uic, QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import pkg_resources
 
@@ -51,6 +52,11 @@ class UserInterface(QtWidgets.QMainWindow):
         super().__init__()
 
         uic.loadUi(pkg_resources.resource_stream("tailor.resources", "tailor.ui"), self)
+        self.setWindowIcon(
+            QtGui.QIcon(
+                pkg_resources.resource_filename("tailor.resources", "tailor.png")
+            )
+        )
 
         self.clear_all()
 
@@ -67,6 +73,8 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
+        self.actionQuit.triggered.connect(self.close)
+        self.actionAbout_Tailor.triggered.connect(self.show_about_dialog)
         self.actionNew.triggered.connect(self.new_project)
         self.actionOpen.triggered.connect(self.open_project_dialog)
         self.actionSave.triggered.connect(self.save_project_or_dialog)
@@ -170,6 +178,24 @@ class UserInterface(QtWidgets.QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+    def show_about_dialog(self):
+        """Show about application dialog."""
+        box = QtWidgets.QMessageBox()
+        box.setIconPixmap(self.windowIcon().pixmap(64, 64))
+        box.setText("Tailor")
+        box.setInformativeText(
+            dedent(
+                f"""
+            Version {__version__}.
+
+            Tailor is written by David Fokkema for use in the physics lab courses at the Vrije Universiteit Amsterdam and the University of Amsterdam.
+
+            Tailor is free software licensed under the GNU General Public License v3.0 or later.
+        """
+            )
+        )
+        box.exec()
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.

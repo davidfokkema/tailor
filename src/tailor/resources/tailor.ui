@@ -180,9 +180,17 @@
     <addaction name="actionExport_Graph_to_PNG"/>
     <addaction name="separator"/>
     <addaction name="actionClose"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout_Tailor"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTable"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionAdd_column">
@@ -258,6 +266,16 @@
   <action name="actionClose">
    <property name="text">
     <string>Close</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionAbout_Tailor">
+   <property name="text">
+    <string>About Tailor</string>
    </property>
   </action>
  </widget>
