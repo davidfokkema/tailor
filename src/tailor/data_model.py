@@ -66,7 +66,7 @@ class DataModel(QtCore.QAbstractTableModel):
         row = index.row()
         col = index.column()
 
-        if role == QtCore.Qt.DisplayRole:
+        if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
             # request for the data itself
             value = float(self._data.iat[row, col])
             if np.isnan(value) and not self.is_calculated_column(col):
