@@ -178,6 +178,8 @@
     <addaction name="separator"/>
     <addaction name="actionExport_Graph_to_PDF"/>
     <addaction name="actionExport_Graph_to_PNG"/>
+    <addaction name="separator"/>
+    <addaction name="actionClose"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTable"/>
@@ -251,6 +253,11 @@
   <action name="actionNew">
    <property name="text">
     <string>New</string>
+   </property>
+  </action>
+  <action name="actionClose">
+   <property name="text">
+    <string>Close</string>
    </property>
   </action>
  </widget>

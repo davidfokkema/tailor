@@ -67,7 +67,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
-        self.actionNew.triggered.connect(self.clear_all)
+        self.actionNew.triggered.connect(self.new_project)
         self.actionOpen.triggered.connect(self.open_project_dialog)
         self.actionSave.triggered.connect(self.save_project_or_dialog)
         self.actionSave_As.triggered.connect(self.save_as_project_dialog)
@@ -79,6 +79,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.actionExport_Graph_to_PNG.triggered.connect(
             lambda: self.export_graph(".png")
         )
+        self.actionClose.triggered.connect(self.new_project)
         self.actionAdd_column.triggered.connect(self.add_column)
         self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
         self.actionAdd_row.triggered.connect(self.add_row)
@@ -111,7 +112,7 @@ class UserInterface(QtWidgets.QMainWindow):
         #     {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
         # )
         # self.data_model.endResetModel()
-        # self.create_plot_tab("U", "I", None, None)  # , "dU", "dI")
+        # self.create_plot_tab("U", "I", "dU", "dI")
 
         # plot_tab = self.tabWidget.currentWidget()
         # plot_tab.model_func.setText("U0 * U + b")
@@ -162,6 +163,13 @@ class UserInterface(QtWidgets.QMainWindow):
 
         self.selection = self.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
+
+    def closeEvent(self, event):
+        """Ask for confirmation before closing."""
+        if self.confirm_close_dialog():
+            event.accept()
+        else:
+            event.ignore()
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
@@ -391,7 +399,8 @@ class UserInterface(QtWidgets.QMainWindow):
         """
         if idx > 0:
             # Don't close the table view, only close plot tabs
-            self.tabWidget.removeTab(idx)
+            if self.confirm_close_dialog("Are you sure you want to close this plot?"):
+                self.tabWidget.removeTab(idx)
 
     def clear_all(self):
         """Clear all program state.
@@ -406,6 +415,11 @@ class UserInterface(QtWidgets.QMainWindow):
         self._set_view_and_selection_model()
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
         self._set_project_path(None)
+
+    def new_project(self):
+        """Close the current project and open a new one."""
+        if self.confirm_close_dialog():
+            self.clear_all()
 
     def save_project_or_dialog(self):
         """Save project or present a dialog.
@@ -479,7 +493,33 @@ class UserInterface(QtWidgets.QMainWindow):
             # options=QtWidgets.QFileDialog.DontUseNativeDialog,
         )
         if filename:
-            self.load_project(filename)
+            if self.confirm_close_dialog():
+                self.load_project(filename)
+
+    def confirm_close_dialog(self, msg=None):
+        """Present a confirmation dialog before closing.
+
+        Present a dialog to confirm that the user really wants to close a project and lose all changes.
+
+        Args:
+            msg: optional message to present to the user. If None, the default message asks for confirmation to discard the current project.
+
+        Returns:
+            A boolean. If True, the user confirms closing the project. If False, the user wants to cancel the action.
+        """
+        if msg is None:
+            msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
+        button = QtWidgets.QMessageBox.warning(
+            self,
+            "Please confirm",
+            msg,
+            buttons=QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
+            defaultButton=QtWidgets.QMessageBox.Cancel,
+        )
+        if button == QtWidgets.QMessageBox.Discard:
+            return True
+        else:
+            return False
 
     def load_project(self, filename):
         """Load a Tailor project.
