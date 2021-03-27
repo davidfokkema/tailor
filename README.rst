@@ -1,3 +1,5 @@
+.. image:: tailorx128.png
+
 Tailor
 ======
 
