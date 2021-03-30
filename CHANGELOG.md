@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.1
+
+### Bugfixes
+
+* When entering constants (like 0.8) in a calculated column, the single-valued
+  float type could not be cast using the .astype() method triggering an
+  exception.
+* When changing the draw curve region option (e.g. from 'On data point' to 'On
+  full axis') the plot was not updated correctly.
+
+
 ## v1.0.0
 
 Ready for deployment in our student labs! (🤞)
