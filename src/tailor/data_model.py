@@ -302,7 +302,12 @@ class DataModel(QtCore.QAbstractTableModel):
                     f"ERROR: {exc}: {msg}.", msecs=MSG_TIMEOUT
                 )
         elif output is not None:
-            self._data[col_name] = output.astype("float64")
+            print(type(output))
+            if isinstance(output, pd.Series):
+                output = output.astype("float64")
+            else:
+                output = float(output)
+            self._data[col_name] = output
             return True
         else:
             print("No evaluation error but no output.")
