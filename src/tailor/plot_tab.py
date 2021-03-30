@@ -86,7 +86,11 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_start_box.setMaximumWidth(75)
         self.fit_end_box.setMaximumWidth(75)
         self.draw_curve_option.addItems(DRAW_CURVE_OPTIONS)
-        self.draw_curve_option.currentIndexChanged.connect(self.update_best_fit_plot)
+        # lambda is necessary to gobble the 'index' parameter of the
+        # currentIndexChanged signal
+        self.draw_curve_option.currentIndexChanged.connect(
+            lambda index: self.update_best_fit_plot()
+        )
 
         # Connect signals
         self.model_func.textEdited.connect(self.update_fit_params)
