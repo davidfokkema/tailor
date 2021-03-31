@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.2
+
+### Bugfixes
+
+* Fixes a crash when calculating the relative error when the parameter value is zero.
+
+
 ## v1.0.1
 
 ### Bugfixes

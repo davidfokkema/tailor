@@ -865,11 +865,15 @@ def make_param_table(params):
     """
     width = max([len(p) for p in params])
     text = ""
-    fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g} ({:.1f} %)\n"
+    fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g} ({:s} %)\n"
     for p in params:
         value = params[p].value
         stderr = params[p].stderr
         if stderr is None:
             stderr = 0
-        text += fmt.format(p, value, stderr, abs(stderr / value * 100))
+        try:
+            rel_err = "{:.1f}".format(abs(stderr / value * 100))
+        except ZeroDivisionError:
+            rel_err = "--"
+        text += fmt.format(p, value, stderr, rel_err)
     return text
