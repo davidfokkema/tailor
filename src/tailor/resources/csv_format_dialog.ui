@@ -46,7 +46,11 @@
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="QCheckBox" name="use_header_box"/>
+        <widget class="QCheckBox" name="use_header_box">
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="headerRowLabel">

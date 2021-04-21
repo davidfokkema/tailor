@@ -619,6 +619,10 @@ class UserInterface(QtWidgets.QMainWindow):
                     decimal, thousands = NUM_FORMAT_CHOICES[
                         dialog.num_format_box.currentText()
                     ]
+                    if dialog.use_header_box.isChecked():
+                        header = dialog.header_row_box.value()
+                    else:
+                        header = None
 
                     self.clear_all()
                     self.data_model.read_csv(
@@ -626,6 +630,7 @@ class UserInterface(QtWidgets.QMainWindow):
                         delimiter=delimiter,
                         decimal=decimal,
                         thousands=thousands,
+                        header=header,
                     )
                     self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
