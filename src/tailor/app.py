@@ -513,13 +513,13 @@ class UserInterface(QtWidgets.QMainWindow):
 
     def open_project_dialog(self):
         """Present open project dialog and load project."""
-        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-            parent=self,
-            filter="Tailor project files (*.tlr)",
-            # options=QtWidgets.QFileDialog.DontUseNativeDialog,
-        )
-        if filename:
-            if self.confirm_close_dialog():
+        if self.confirm_close_dialog():
+            filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                parent=self,
+                filter="Tailor project files (*.tlr)",
+                # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+            )
+            if filename:
                 self.load_project(filename)
 
     def confirm_close_dialog(self, msg=None):
@@ -599,15 +599,16 @@ class UserInterface(QtWidgets.QMainWindow):
     def import_csv(self):
         """Import data from a CSV file.
 
-        Erase all data and import from a comma-separated values file.
+        After confirmation, erase all data and import from a comma-separated
+        values file.
         """
-        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-            parent=self,
-            filter="CSV-files (*.csv)",
-            # options=QtWidgets.QFileDialog.DontUseNativeDialog,
-        )
-        if filename:
-            if self.confirm_close_dialog():
+        if self.confirm_close_dialog():
+            filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                parent=self,
+                filter="CSV-files (*.csv)",
+                # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+            )
+            if filename:
                 self.clear_all()
                 self.data_model.read_csv(filename)
                 self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
@@ -615,7 +616,8 @@ class UserInterface(QtWidgets.QMainWindow):
     def export_graph(self, suffix):
         """Export a graph to a file.
 
-        If the user specifies a name with a different suffix an error will be displayed.
+        If the user specifies a name with a different suffix an error will be
+        displayed.
 
         Args:
             suffix: the required suffix of the file.
