@@ -27,6 +27,10 @@ __name__ = metadata["name"]
 __version__ = metadata["version"]
 
 
+DELIMITER_CHOICES = {"detect": None, "comma": ",", "tab": "\t", "space": " "}
+NUM_FORMAT_CHOICES = {"1,000.0": (".", ","), "1.000,0": (",", ".")}
+
+
 # FIXME: antialiasing is EXTREMELY slow. Why?
 # pg.setConfigOptions(antialias=True)
 pg.setConfigOption("background", "w")
@@ -609,9 +613,32 @@ class UserInterface(QtWidgets.QMainWindow):
                 # options=QtWidgets.QFileDialog.DontUseNativeDialog,
             )
             if filename:
-                self.clear_all()
-                self.data_model.read_csv(filename)
-                self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+                dialog = self.create_csv_format_dialog()
+                if dialog.exec() == QtWidgets.QDialog.Accepted:
+                    delimiter = DELIMITER_CHOICES[dialog.delimiter_box.currentText()]
+                    decimal, thousands = NUM_FORMAT_CHOICES[
+                        dialog.num_format_box.currentText()
+                    ]
+
+                    self.clear_all()
+                    self.data_model.read_csv(
+                        filename,
+                        delimiter=delimiter,
+                        decimal=decimal,
+                        thousands=thousands,
+                    )
+                    self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+
+    def create_csv_format_dialog(self):
+        """Create the CSV file format selection dialog."""
+        dialog = QtWidgets.QDialog(parent=self)
+        uic.loadUi(
+            pkg_resources.resource_stream("tailor.resources", "csv_format_dialog.ui"),
+            dialog,
+        )
+        dialog.delimiter_box.addItems(DELIMITER_CHOICES.keys())
+        dialog.num_format_box.addItems(NUM_FORMAT_CHOICES.keys())
+        return dialog
 
     def export_graph(self, suffix):
         """Export a graph to a file.
