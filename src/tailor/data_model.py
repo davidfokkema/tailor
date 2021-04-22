@@ -494,5 +494,7 @@ class DataModel(QtCore.QAbstractTableModel):
             header=header,
             skiprows=skiprows,
         )
+        # make sure column names are strings, even for numbered columns
+        self._data.columns = self._data.columns.astype(str)
         self._calculated_columns = {}
         self.endResetModel()
