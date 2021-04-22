@@ -19,16 +19,17 @@ import pkg_resources
 
 from tailor.data_model import DataModel
 from tailor.plot_tab import PlotTab
+from tailor.csv_format_dialog import (
+    CSVFormatDialog,
+    DELIMITER_CHOICES,
+    NUM_FORMAT_CHOICES,
+)
 
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
 __name__ = metadata["name"]
 __version__ = metadata["version"]
-
-
-DELIMITER_CHOICES = {"detect": None, "comma": ",", "tab": "\t", "space": " "}
-NUM_FORMAT_CHOICES = {"1,000.0": (".", ","), "1.000,0": (",", ".")}
 
 
 # FIXME: antialiasing is EXTREMELY slow. Why?
@@ -613,37 +614,50 @@ class UserInterface(QtWidgets.QMainWindow):
                 # options=QtWidgets.QFileDialog.DontUseNativeDialog,
             )
             if filename:
-                dialog = self.create_csv_format_dialog()
-                if dialog.exec() == QtWidgets.QDialog.Accepted:
-                    delimiter = DELIMITER_CHOICES[dialog.delimiter_box.currentText()]
-                    decimal, thousands = NUM_FORMAT_CHOICES[
-                        dialog.num_format_box.currentText()
-                    ]
-                    if dialog.use_header_box.isChecked():
-                        header = dialog.header_row_box.value()
-                    else:
-                        header = None
+                delimiter, decimal, thousands, header = self.select_csv_format_options(
+                    filename
+                )
+                self._do_import_csv(filename, delimiter, decimal, thousands, header)
 
-                    self.clear_all()
-                    self.data_model.read_csv(
-                        filename,
-                        delimiter=delimiter,
-                        decimal=decimal,
-                        thousands=thousands,
-                        header=header,
-                    )
-                    self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+    def select_csv_format_options(self, filename):
+        """Present a dialog to select CSV format options.
 
-    def create_csv_format_dialog(self):
-        """Create the CSV file format selection dialog."""
-        dialog = QtWidgets.QDialog(parent=self)
-        uic.loadUi(
-            pkg_resources.resource_stream("tailor.resources", "csv_format_dialog.ui"),
-            dialog,
+        Args:
+            filename: a string containing the path to the CSV file.
+
+        Returns:
+            delimiter, decimal, thousands, header: a tuple of format options.
+        """
+        dialog = CSVFormatDialog()
+        if dialog.exec() == QtWidgets.QDialog.Accepted:
+            delimiter = DELIMITER_CHOICES[dialog.delimiter_box.currentText()]
+            decimal, thousands = NUM_FORMAT_CHOICES[dialog.num_format_box.currentText()]
+            if dialog.use_header_box.isChecked():
+                header = dialog.header_row_box.value()
+            else:
+                header = None
+        return delimiter, decimal, thousands, header
+
+    def _do_import_csv(self, filename, delimiter, decimal, thousands, header):
+        """Import CSV data from file.
+
+        Args:
+            filename: a string containing the path to the CSV file
+            delimiter: a string containing the column delimiter
+            decimal: a string containing the decimal separator
+            thousands: a string containing the thousands separator
+            header: an integer with the row number containing the column names,
+                or None.
+        """
+        self.clear_all()
+        self.data_model.read_csv(
+            filename,
+            delimiter=delimiter,
+            decimal=decimal,
+            thousands=thousands,
+            header=header,
         )
-        dialog.delimiter_box.addItems(DELIMITER_CHOICES.keys())
-        dialog.num_format_box.addItems(NUM_FORMAT_CHOICES.keys())
-        return dialog
+        self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
     def export_graph(self, suffix):
         """Export a graph to a file.
