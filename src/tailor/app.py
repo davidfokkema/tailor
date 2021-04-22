@@ -122,8 +122,11 @@ class UserInterface(QtWidgets.QMainWindow):
                 decimal,
                 thousands,
                 header,
+                skiprows,
             ) = dialog.get_format_parameters()
-            self._do_import_csv(filename, delimiter, decimal, thousands, header)
+            self._do_import_csv(
+                filename, delimiter, decimal, thousands, header, skiprows
+            )
 
         # import numpy as np
         # import pandas as pd
@@ -635,7 +638,7 @@ class UserInterface(QtWidgets.QMainWindow):
                     ) = dialog.get_format_parameters()
                     self._do_import_csv(filename, delimiter, decimal, thousands, header)
 
-    def _do_import_csv(self, filename, delimiter, decimal, thousands, header):
+    def _do_import_csv(self, filename, delimiter, decimal, thousands, header, skiprows):
         """Import CSV data from file.
 
         Args:
@@ -645,6 +648,7 @@ class UserInterface(QtWidgets.QMainWindow):
             thousands: a string containing the thousands separator
             header: an integer with the row number containing the column names,
                 or None.
+            skiprows: an integer with the number of rows to skip at start of file
         """
         self.clear_all()
         self.data_model.read_csv(
@@ -653,6 +657,7 @@ class UserInterface(QtWidgets.QMainWindow):
             decimal=decimal,
             thousands=thousands,
             header=header,
+            skiprows=skiprows,
         )
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 

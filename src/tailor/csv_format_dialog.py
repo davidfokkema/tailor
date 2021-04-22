@@ -39,6 +39,7 @@ class CSVFormatDialog(QtWidgets.QDialog):
                 decimal,
                 thousands,
                 header,
+                skiprows,
             ) = self.get_format_parameters()
             try:
                 df = pd.read_csv(
@@ -47,6 +48,7 @@ class CSVFormatDialog(QtWidgets.QDialog):
                     decimal=decimal,
                     thousands=thousands,
                     header=header,
+                    skiprows=skiprows,
                 )
             except pd.errors.ParserError as exc:
                 text = f"Parse Error: {exc!s}"
@@ -67,6 +69,8 @@ class CSVFormatDialog(QtWidgets.QDialog):
         decimal, thousands = NUM_FORMAT_CHOICES[self.num_format_box.currentText()]
         if self.use_header_box.isChecked():
             header = self.header_row_box.value()
+            skiprows = 0
         else:
             header = None
-        return delimiter, decimal, thousands, header
+            skiprows = self.header_row_box.value()
+        return delimiter, decimal, thousands, header, skiprows

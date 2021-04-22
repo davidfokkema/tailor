@@ -464,14 +464,26 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data.to_csv(filename, index=False)
 
     def read_csv(
-        self, filename, delimiter=None, decimal=".", thousands=",", header=None
+        self,
+        filename,
+        delimiter=None,
+        decimal=".",
+        thousands=",",
+        header=None,
+        skiprows=0,
     ):
         """Read data from CSV file.
 
         Overwrites all existing data by importing a CSV file.
 
         Args:
-            filename: a string containing the full filename.
+            filename: a string containing the path to the CSV file
+            delimiter: a string containing the column delimiter
+            decimal: a string containing the decimal separator
+            thousands: a string containing the thousands separator
+            header: an integer with the row number containing the column names,
+                or None.
+            skiprows: an integer with the number of rows to skip at start of file
         """
         self.beginResetModel()
         self._data = pd.read_csv(
@@ -480,6 +492,7 @@ class DataModel(QtCore.QAbstractTableModel):
             decimal=decimal,
             thousands=thousands,
             header=header,
+            skiprows=skiprows,
         )
         self._calculated_columns = {}
         self.endResetModel()
