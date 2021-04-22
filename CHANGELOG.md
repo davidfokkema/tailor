@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.0
+
+### Features
+
+* Import not-quit-CSV-files (tabs, comments, etc.) with a nice preview window.
+* Icon size corrected for MacOS.
+* Ask for confirmation *before* opening or importing files or projects, not *after* selecting the file.
+
+
 ## v1.0.2
 
 ### Bugfixes
