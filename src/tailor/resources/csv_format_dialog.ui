@@ -65,7 +65,19 @@
       </layout>
      </item>
      <item>
-      <widget class="QPlainTextEdit" name="preview_box"/>
+      <widget class="QPlainTextEdit" name="preview_box">
+       <property name="font">
+        <font>
+         <family>Courier New</family>
+        </font>
+       </property>
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::NoWrap</enum>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

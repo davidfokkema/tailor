@@ -21,6 +21,11 @@ class CSVFormatDialog(QtWidgets.QDialog):
         self.delimiter_box.addItems(DELIMITER_CHOICES.keys())
         self.num_format_box.addItems(NUM_FORMAT_CHOICES.keys())
 
+        self.delimiter_box.currentIndexChanged.connect(self.show_preview)
+        self.num_format_box.currentIndexChanged.connect(self.show_preview)
+        self.use_header_box.stateChanged.connect(self.show_preview)
+        self.header_row_box.valueChanged.connect(self.show_preview)
+
         self.show_preview()
 
     def show_preview(self):
