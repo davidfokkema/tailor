@@ -636,8 +636,11 @@ class UserInterface(QtWidgets.QMainWindow):
                         decimal,
                         thousands,
                         header,
+                        skiprows,
                     ) = dialog.get_format_parameters()
-                    self._do_import_csv(filename, delimiter, decimal, thousands, header)
+                    self._do_import_csv(
+                        filename, delimiter, decimal, thousands, header, skiprows
+                    )
 
     def _do_import_csv(self, filename, delimiter, decimal, thousands, header, skiprows):
         """Import CSV data from file.
