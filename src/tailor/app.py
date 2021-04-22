@@ -113,7 +113,18 @@ class UserInterface(QtWidgets.QMainWindow):
         # Start at (0, 0)
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
-        # # tests
+        # tests
+        filename = "~/Desktop/test.csv"
+        dialog = CSVFormatDialog(filename)
+        if dialog.exec() == QtWidgets.QDialog.Accepted:
+            (
+                delimiter,
+                decimal,
+                thousands,
+                header,
+            ) = dialog.get_format_parameters()
+            self._do_import_csv(filename, delimiter, decimal, thousands, header)
+
         # import numpy as np
         # import pandas as pd
 
@@ -614,29 +625,15 @@ class UserInterface(QtWidgets.QMainWindow):
                 # options=QtWidgets.QFileDialog.DontUseNativeDialog,
             )
             if filename:
-                delimiter, decimal, thousands, header = self.select_csv_format_options(
-                    filename
-                )
-                self._do_import_csv(filename, delimiter, decimal, thousands, header)
-
-    def select_csv_format_options(self, filename):
-        """Present a dialog to select CSV format options.
-
-        Args:
-            filename: a string containing the path to the CSV file.
-
-        Returns:
-            delimiter, decimal, thousands, header: a tuple of format options.
-        """
-        dialog = CSVFormatDialog()
-        if dialog.exec() == QtWidgets.QDialog.Accepted:
-            delimiter = DELIMITER_CHOICES[dialog.delimiter_box.currentText()]
-            decimal, thousands = NUM_FORMAT_CHOICES[dialog.num_format_box.currentText()]
-            if dialog.use_header_box.isChecked():
-                header = dialog.header_row_box.value()
-            else:
-                header = None
-        return delimiter, decimal, thousands, header
+                dialog = CSVFormatDialog(filename)
+                if dialog.exec() == QtWidgets.QDialog.Accepted:
+                    (
+                        delimiter,
+                        decimal,
+                        thousands,
+                        header,
+                    ) = dialog.get_format_parameters()
+                    self._do_import_csv(filename, delimiter, decimal, thousands, header)
 
     def _do_import_csv(self, filename, delimiter, decimal, thousands, header):
         """Import CSV data from file.
