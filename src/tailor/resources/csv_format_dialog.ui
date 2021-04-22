@@ -65,6 +65,40 @@
       </layout>
      </item>
      <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Preview:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="preview_csv_button">
+         <property name="text">
+          <string>CSV import</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">preview_choice</string>
+         </attribute>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="preview_text_button">
+         <property name="text">
+          <string>Plain text</string>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">preview_choice</string>
+         </attribute>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
       <widget class="QPlainTextEdit" name="preview_box">
        <property name="font">
         <font>
@@ -128,4 +162,7 @@
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="preview_choice"/>
+ </buttongroups>
 </ui>

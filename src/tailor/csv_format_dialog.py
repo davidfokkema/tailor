@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pkg_resources
 from PyQt5 import uic, QtWidgets
 import pandas as pd
@@ -12,7 +14,7 @@ class CSVFormatDialog(QtWidgets.QDialog):
         """Create the CSV file format selection dialog."""
         super().__init__()
 
-        self.filename = filename
+        self.filename = Path(filename).expanduser()
 
         uic.loadUi(
             pkg_resources.resource_stream("tailor.resources", "csv_format_dialog.ui"),
@@ -25,25 +27,35 @@ class CSVFormatDialog(QtWidgets.QDialog):
         self.num_format_box.currentIndexChanged.connect(self.show_preview)
         self.use_header_box.stateChanged.connect(self.show_preview)
         self.header_row_box.valueChanged.connect(self.show_preview)
+        self.preview_choice.buttonClicked.connect(self.show_preview)
 
         self.show_preview()
 
     def show_preview(self):
         """Show a preview of the CSV data."""
-        (
-            delimiter,
-            decimal,
-            thousands,
-            header,
-        ) = self.get_format_parameters()
-        df = pd.read_csv(
-            self.filename,
-            delimiter=delimiter,
-            decimal=decimal,
-            thousands=thousands,
-            header=header,
-        )
-        self.preview_box.setPlainText(df.to_string())
+        if self.preview_choice.checkedButton() == self.preview_csv_button:
+            (
+                delimiter,
+                decimal,
+                thousands,
+                header,
+            ) = self.get_format_parameters()
+            try:
+                df = pd.read_csv(
+                    self.filename,
+                    delimiter=delimiter,
+                    decimal=decimal,
+                    thousands=thousands,
+                    header=header,
+                )
+            except pd.errors.ParserError as exc:
+                text = f"Parse Error: {exc!s}"
+            else:
+                text = df.to_string()
+        else:
+            with open(self.filename) as f:
+                text = "".join(f.readlines())
+        self.preview_box.setPlainText(text)
 
     def get_format_parameters(self):
         """Get CSV format parameters
