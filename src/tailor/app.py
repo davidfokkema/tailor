@@ -538,7 +538,14 @@ class UserInterface(QtWidgets.QMainWindow):
                 filter="Tailor project files (*.tlr);;All files (*)",
             )
             if filename:
-                self.load_project(filename)
+                try:
+                    self.load_project(filename)
+                except Exception as exc:
+                    self._show_exception(
+                        exc,
+                        title="Unable to open project.",
+                        text="This can happen if the file is corrupt or if there is a bug in the application.",
+                    )
 
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.
@@ -578,28 +585,21 @@ class UserInterface(QtWidgets.QMainWindow):
             save_obj = json.loads(f.read().decode("utf-8"))
 
         if save_obj["application"] == __name__:
-            try:
-                self.clear_all()
+            self.clear_all()
 
-                # remember filename for subsequent call to "Save"
-                self._set_project_path(filename)
+            # remember filename for subsequent call to "Save"
+            self._set_project_path(filename)
 
-                # load data for the data model
-                self.data_model.load_state_from_obj(save_obj["data_model"])
+            # load data for the data model
+            self.data_model.load_state_from_obj(save_obj["data_model"])
 
-                # create a tab and load data for each plot
-                for tab_data in save_obj["tabs"]:
-                    plot_tab = PlotTab(self.data_model, main_window=self)
-                    idx = self.tabWidget.addTab(plot_tab, tab_data["label"])
-                    plot_tab.load_state_from_obj(tab_data)
-                self._plot_num = save_obj["plot_num"]
-                self.tabWidget.setCurrentIndex(save_obj["current_tab"])
-            except Exception as exc:
-                self._show_exception(
-                    exc,
-                    title="Unable to open project.",
-                    text="This can happen if the file is corrupt or if there is a bug in the application.",
-                )
+            # create a tab and load data for each plot
+            for tab_data in save_obj["tabs"]:
+                plot_tab = PlotTab(self.data_model, main_window=self)
+                idx = self.tabWidget.addTab(plot_tab, tab_data["label"])
+                plot_tab.load_state_from_obj(tab_data)
+            self._plot_num = save_obj["plot_num"]
+            self.tabWidget.setCurrentIndex(save_obj["current_tab"])
 
     def export_csv(self):
         """Export all data as CSV.
