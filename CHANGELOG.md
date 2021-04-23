@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.1.1
+
+### Bugfixes
+
+* When a model function previously was correct but is now broken (e.g. missing
+  closing bracket) a fit would be performed with the old model function. This
+  hid the error message complaining about the model, which was not ideal... Now,
+  trying to perform a fit will really complain about the broken model.
+
+
+### Features
+
+* There are now several file filters available to import *.txt or other files.
+* Exceptions during the opening of Tailor projects are now better handled and reported.
+
+
 ## v1.1.0
 
 ### Features
