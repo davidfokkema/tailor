@@ -20,7 +20,7 @@
 
 ### Features
 
-* Import not-quit-CSV-files (tabs, comments, etc.) with a nice preview window.
+* Import not-quite-CSV-files (tabs, comments, etc.) with a nice preview window.
 * Icon size corrected for MacOS.
 * Ask for confirmation *before* opening or importing files or projects, not *after* selecting the file.
 
