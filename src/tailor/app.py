@@ -147,6 +147,10 @@ class UserInterface(QtWidgets.QMainWindow):
         # plot_tab.model_func.textEdited.emit("")
         # plot_tab.fit_button.clicked.emit()
 
+        # plot_tab.model_func.setText("(U0 * U + b")
+        # plot_tab.model_func.textEdited.emit("")
+        # plot_tab.fit_button.clicked.emit()
+
         # self.tabWidget.setCurrentIndex(0)
         # self.data_view.selectColumn(0)
         # self.name_edit.setText("U_0")

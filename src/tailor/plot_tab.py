@@ -45,6 +45,7 @@ class PlotTab(QtWidgets.QWidget):
     err_height = None
     fit = None
     fit_domain = None, None
+    model = None
 
     def __init__(self, data_model, main_window):
         """Initialize the widget.
@@ -301,10 +302,8 @@ class PlotTab(QtWidgets.QWidget):
         try:
             params = self.get_params_and_update_model()
         except (SyntaxError, VariableError) as exc:
-            self.main_window.statusbar.showMessage(
-                "ERROR: " + str(exc), msecs=MSG_TIMEOUT
-            )
-            return
+            self.main_window.statusbar.showMessage(f"ERROR: {exc!s}", msecs=MSG_TIMEOUT)
+            self.model = None
         else:
             self.update_params_ui(params)
             self.plot_initial_model()
@@ -507,6 +506,12 @@ class PlotTab(QtWidgets.QWidget):
         When the fit is successful, the results are given in the result box and
         the best fit is plotted on top of the data.
         """
+        if self.model is None:
+            self.main_window.statusbar.showMessage(
+                "FIT FAILED: please fix your model first."
+            )
+            return
+
         # set model parameter hints
         param_hints = self.get_parameter_hints()
         for p, hints in param_hints.items():
