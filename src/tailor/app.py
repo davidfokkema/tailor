@@ -483,8 +483,7 @@ class UserInterface(QtWidgets.QMainWindow):
         """Present save project dialog and save project."""
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             parent=self,
-            filter="Tailor project files (*.tlr)",
-            # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+            filter="Tailor project files (*.tlr);;All files (*)",
         )
         if filename:
             self.save_project(filename)
@@ -536,8 +535,7 @@ class UserInterface(QtWidgets.QMainWindow):
         if self.confirm_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self,
-                filter="Tailor project files (*.tlr)",
-                # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+                filter="Tailor project files (*.tlr);;All files (*)",
             )
             if filename:
                 self.load_project(filename)
@@ -610,8 +608,7 @@ class UserInterface(QtWidgets.QMainWindow):
         """
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             parent=self,
-            filter="CSV-files (*.csv)",
-            # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+            filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
         )
         if filename:
             self.data_model.write_csv(filename)
@@ -625,8 +622,7 @@ class UserInterface(QtWidgets.QMainWindow):
         if self.confirm_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self,
-                filter="CSV-files (*.csv)",
-                # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+                filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
             )
             if filename:
                 dialog = CSVFormatDialog(filename)
@@ -678,8 +674,7 @@ class UserInterface(QtWidgets.QMainWindow):
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self,
-                filter=f"Graphics (*{suffix})",
-                # options=QtWidgets.QFileDialog.DontUseNativeDialog,
+                filter=f"Graphics (*{suffix});;All files (*)",
             )
             if filename:
                 path = pathlib.Path(filename)
