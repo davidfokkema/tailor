@@ -5,7 +5,13 @@ from PyQt5 import uic, QtWidgets
 import pandas as pd
 
 
-DELIMITER_CHOICES = {"detect": None, "comma": ",", "tab": "\t", "space": " "}
+DELIMITER_CHOICES = {
+    "detect": None,
+    "comma": ",",
+    "semicolon": ";",
+    "tab": "\t",
+    "space": " ",
+}
 NUM_FORMAT_CHOICES = {"1,000.0": (".", ","), "1.000,0": (",", ".")}
 
 
