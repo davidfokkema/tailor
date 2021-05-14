@@ -114,8 +114,10 @@ class UserInterface(QtWidgets.QMainWindow):
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
         # tests
-        # filename = "~/Desktop/test.csv"
+        # filename = "~/Desktop/meting1.csv"
         # dialog = CSVFormatDialog(filename)
+        # dialog.exec()
+        # sys.exit()
         # if dialog.exec() == QtWidgets.QDialog.Accepted:
         #     (
         #         delimiter,

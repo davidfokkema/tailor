@@ -1,4 +1,5 @@
 from pathlib import Path
+import textwrap
 
 import pkg_resources
 from PyQt5 import uic, QtWidgets
@@ -57,12 +58,41 @@ class CSVFormatDialog(QtWidgets.QDialog):
                     skiprows=skiprows,
                 )
             except pd.errors.ParserError as exc:
-                text = f"Parse Error: {exc!s}"
+                text = textwrap.dedent(
+                    f"""\
+                    An error occured while parsing the data file. Most probably
+                    the format is different from what was expected. You can
+                    change the options in this screen to fix this. If you switch
+                    to a *Plain text* preview you will be able to inspect the
+                    literal text of the data file. Please check the column
+                    delimiter and numeric format. In the case of comments or
+                    introductory text at the start of the file you can skip a
+                    number of lines.
+
+                    The exception was:
+
+                    {exc!s}
+                    """
+                )
             else:
                 text = df.to_string()
         else:
-            with open(self.filename) as f:
-                text = "".join(f.readlines())
+            try:
+                with open(self.filename) as f:
+                    text = "".join(f.readlines())
+            except Exception as exc:
+                text = textwrap.dedent(
+                    f"""\
+                    An error occured while showing the literal text of the data
+                    file. This should not happen. Please file an issue at:
+
+                    https://github.com/davidfokkema/tailor/issues
+
+                    If possible, include the data file. The exception was:
+
+                    {exc!s}
+                    """
+                )
         self.preview_box.setPlainText(text)
 
     def get_format_parameters(self):
