@@ -6,6 +6,8 @@ jobs:
   build-and-upload-installer:
     runs-on: macos-latest
     steps:
+      # disable spotlight to let it not scan mounted disk images (prevents detaching)
+      - run: sudo mdutil -a -i off
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
