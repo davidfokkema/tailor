@@ -14,13 +14,13 @@ jobs:
             filename: windows/*.msi
     runs-on: ${{ matrix.os }}
     steps:
-      - if: ${{ matrix.os == 'macos-latest' }}
-        # disable spotlight to let it not scan mounted disk images (prevents detaching)
-        run: sudo mdutil -a -i off
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
           python-version: "3.8"
+      - if: ${{ matrix.os == 'macos-latest' }}
+        # temporarily use forked dmgbuild to prevent dmg detaching errors
+        run: python -m pip install git+https://github.com/davidfokkema/dmgbuild
       - run: python -m pip install briefcase
       - run: briefcase create
       - run: briefcase package --no-sign
