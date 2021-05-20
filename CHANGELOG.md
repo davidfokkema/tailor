@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.2.0
+
+### What’s Changed
+
+This is a minor update.
+
+### :rocket: Features
+
+* Added a semicolon to the list of CSV-like column delimiters
+* Improved error handling of CSV imports, including more useful help messages
+
+### :package: Build System
+
+* We now use GitHub Actions to build our MacOS and Windows installers
+
+
 ## v1.1.1
 
 ### Bugfixes
