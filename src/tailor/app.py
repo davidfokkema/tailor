@@ -707,7 +707,14 @@ class UserInterface(QtWidgets.QMainWindow):
             if filename:
                 path = pathlib.Path(filename)
                 if path.suffix == suffix:
-                    tab.export_graph(path)
+                    try:
+                        tab.export_graph(path)
+                    except Exception as exc:
+                        self._show_exception(
+                            exc,
+                            title="Unable to export graph.",
+                            text="This can happen if there is a bug in the application.",
+                        )
                 else:
                     error_msg = QtWidgets.QMessageBox()
                     error_msg.setText(f"You didn't select a {suffix} file.")
