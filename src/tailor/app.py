@@ -134,6 +134,16 @@ class UserInterface(QtWidgets.QMainWindow):
         # import numpy as np
         # import pandas as pd
 
+        # x = [1, 2, 3, 4, 5]
+        # y = [1, 4, np.nan, 8, 10]
+        # self.data_model.beginResetModel()
+        # self.data_model._data = pd.DataFrame.from_dict({"x": x, "y": y})
+        # self.data_model.endResetModel()
+        # self.create_plot_tab("x", "y")
+        # plot_tab = self.tabWidget.currentWidget()
+        # plot_tab.model_func.setText("a * x + b")
+        # plot_tab.fit_button.clicked.emit()
+
         # np.random.seed(1)
         # x = np.linspace(0, 10, 11)
         # y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
@@ -164,6 +174,10 @@ class UserInterface(QtWidgets.QMainWindow):
         # plot_tab.fit_button.clicked.emit()
 
         # self.add_calculated_column()
+        # self.name_edit.setText("inv_U")
+        # self.formula_edit.setText("1 / U")
+        # self.create_plot_tab("inv_U", "I")
+
         # self.name_edit.setText("P")
         # self.name_edit.textEdited.emit("P")
         # self.formula_edit.setText("U * I")
