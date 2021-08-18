@@ -108,12 +108,12 @@ class DataModel(QtCore.QAbstractTableModel):
             try:
                 self._data.iat[row, col] = value
             except ValueError:
-                return False
+                self._data.iat[row, col] = np.nan
             else:
                 # FIXME: data changed, recalculate all columns; better to only
                 # recalculate the current row
                 self.recalculate_all_columns()
-                return True
+            return True
         # Role not implemented
         return False
 
