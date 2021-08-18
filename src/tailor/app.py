@@ -284,6 +284,8 @@ class UserInterface(QtWidgets.QMainWindow):
             deselected, items.
         """
         if not selected.isEmpty():
+            self.nameLabel.setEnabled(True)
+            self.name_edit.setEnabled(True)
             first_selection = selected.first()
             col_idx = first_selection.left()
             self._selected_col_idx = col_idx
@@ -295,6 +297,13 @@ class UserInterface(QtWidgets.QMainWindow):
             else:
                 self.formulaLabel.setEnabled(False)
                 self.formula_edit.setEnabled(False)
+        else:
+            self.nameLabel.setEnabled(False)
+            self.name_edit.clear()
+            self.name_edit.setEnabled(False)
+            self.formulaLabel.setEnabled(False)
+            self.formula_edit.clear()
+            self.formula_edit.setEnabled(False)
 
     def tab_changed(self, idx):
         """Handle currentChanged events of the tab widget.
