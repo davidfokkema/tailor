@@ -178,6 +178,11 @@ class DataModel(QtCore.QAbstractTableModel):
         column_name = self.get_column_name(column)
         self.beginRemoveColumns(QtCore.QModelIndex(), column, column)
         self._data.drop(column_name, axis=1, inplace=True)
+        try:
+            del self._calculated_columns[column_name]
+        except KeyError:
+            # not a calculated column
+            pass
         self.endRemoveColumns()
         return True
 
