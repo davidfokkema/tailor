@@ -8,6 +8,7 @@ from PyQt5 import uic, QtWidgets, QtCore
 import pyqtgraph as pg
 import pkg_resources
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from lmfit import models
 import asteval
@@ -94,7 +95,7 @@ class PlotTab(QtWidgets.QWidget):
         )
 
         # Connect signals
-        self.model_func.textEdited.connect(self.update_fit_params)
+        self.model_func.textChanged.connect(self.update_fit_params)
         self.show_initial_fit.stateChanged.connect(self.plot_initial_model)
         self.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
         self.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
@@ -103,10 +104,10 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_button.clicked.connect(self.perform_fit)
         self.xlabel.textChanged.connect(self.update_xlabel)
         self.ylabel.textChanged.connect(self.update_ylabel)
-        self.xmin.textEdited.connect(self.update_limits)
-        self.xmax.textEdited.connect(self.update_limits)
-        self.ymin.textEdited.connect(self.update_limits)
-        self.ymax.textEdited.connect(self.update_limits)
+        self.xmin.textChanged.connect(self.update_limits)
+        self.xmax.textChanged.connect(self.update_limits)
+        self.ymin.textChanged.connect(self.update_limits)
+        self.ymax.textChanged.connect(self.update_limits)
         self.set_limits_button.clicked.connect(self.update_limits)
         self.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
 
@@ -171,11 +172,20 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_data(self):
         """Update data values from model."""
-        self.x, self.y = self.data_model.get_columns([self.x_var, self.y_var])
+        x, y = self.data_model.get_columns([self.x_var, self.y_var])
         if self.x_err_var is not None:
-            self.x_err = self.data_model.get_column(self.x_err_var)
+            x_err = self.data_model.get_column(self.x_err_var)
+        else:
+            x_err = 0
         if self.y_err_var is not None:
-            self.y_err = self.data_model.get_column(self.y_err_var)
+            y_err = self.data_model.get_column(self.y_err_var)
+        else:
+            y_err = 0
+
+        # Drop NaN and Inf values
+        df = pd.DataFrame.from_dict({"x": x, "y": y, "x_err": x_err, "y_err": y_err})
+        df.dropna(inplace=True)
+        self.x, self.y, self.x_err, self.y_err = df.to_numpy().T
 
     def update_xlabel(self):
         """Update the x-axis label of the plot."""
@@ -529,14 +539,17 @@ class PlotTab(QtWidgets.QWidget):
             condition = (xmin <= self.x) & (self.x <= xmax)
             x = self.x[condition]
             y = self.y[condition]
-            if self.y_err is not None:
+            if self.y_err_var is not None:
                 y_err = self.y_err[condition]
             else:
                 y_err = None
         else:
             x = self.x
             y = self.y
-            y_err = self.y_err
+            if self.y_err_var is not None:
+                y_err = self.y_err
+            else:
+                y_err = None
 
         # perform fit
         kwargs = {self.x_var: x}
@@ -734,7 +747,6 @@ class PlotTab(QtWidgets.QWidget):
             text = save_obj[name]
             widget = getattr(self, name)
             widget.setText(text)
-            widget.textEdited.emit(text)
 
         # load checkbox state
         for name in ["use_fit_domain"]:

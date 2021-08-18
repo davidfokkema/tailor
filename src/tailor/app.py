@@ -102,8 +102,8 @@ class UserInterface(QtWidgets.QMainWindow):
         # user interface events
         self.tabWidget.currentChanged.connect(self.tab_changed)
         self.tabWidget.tabCloseRequested.connect(self.close_tab)
-        self.name_edit.textEdited.connect(self.rename_column)
-        self.formula_edit.textEdited.connect(self.update_column_expression)
+        self.name_edit.textChanged.connect(self.rename_column)
+        self.formula_edit.textChanged.connect(self.update_column_expression)
         self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # Create shortcut for return/enter keys
@@ -133,6 +133,16 @@ class UserInterface(QtWidgets.QMainWindow):
 
         # import numpy as np
         # import pandas as pd
+
+        # x = [1, 2, 3, 4, 5]
+        # y = [1, 4, np.nan, 8, 10]
+        # self.data_model.beginResetModel()
+        # self.data_model._data = pd.DataFrame.from_dict({"x": x, "y": y})
+        # self.data_model.endResetModel()
+        # self.create_plot_tab("x", "y")
+        # plot_tab = self.tabWidget.currentWidget()
+        # plot_tab.model_func.setText("a * x + b")
+        # plot_tab.fit_button.clicked.emit()
 
         # np.random.seed(1)
         # x = np.linspace(0, 10, 11)
@@ -164,6 +174,10 @@ class UserInterface(QtWidgets.QMainWindow):
         # plot_tab.fit_button.clicked.emit()
 
         # self.add_calculated_column()
+        # self.name_edit.setText("inv_U")
+        # self.formula_edit.setText("1 / U")
+        # self.create_plot_tab("inv_U", "I")
+
         # self.name_edit.setText("P")
         # self.name_edit.textEdited.emit("P")
         # self.formula_edit.setText("U * I")
