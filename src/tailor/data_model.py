@@ -11,6 +11,10 @@ import asteval
 from PyQt5 import QtCore, QtGui
 
 
+# treat Inf and -Inf as missing values (e.g. when calling dropna())
+pd.options.mode.use_inf_as_na = True
+
+
 MSG_TIMEOUT = 0
 
 
@@ -302,7 +306,6 @@ class DataModel(QtCore.QAbstractTableModel):
                     f"ERROR: {exc}: {msg}.", msecs=MSG_TIMEOUT
                 )
         elif output is not None:
-            print(type(output))
             if isinstance(output, pd.Series):
                 output = output.astype("float64")
             else:
