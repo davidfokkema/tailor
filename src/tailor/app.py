@@ -102,8 +102,8 @@ class UserInterface(QtWidgets.QMainWindow):
         # user interface events
         self.tabWidget.currentChanged.connect(self.tab_changed)
         self.tabWidget.tabCloseRequested.connect(self.close_tab)
-        self.name_edit.textEdited.connect(self.rename_column)
-        self.formula_edit.textEdited.connect(self.update_column_expression)
+        self.name_edit.textChanged.connect(self.rename_column)
+        self.formula_edit.textChanged.connect(self.update_column_expression)
         self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # Create shortcut for return/enter keys

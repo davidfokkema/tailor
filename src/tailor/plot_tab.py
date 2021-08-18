@@ -95,7 +95,7 @@ class PlotTab(QtWidgets.QWidget):
         )
 
         # Connect signals
-        self.model_func.textEdited.connect(self.update_fit_params)
+        self.model_func.textChanged.connect(self.update_fit_params)
         self.show_initial_fit.stateChanged.connect(self.plot_initial_model)
         self.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
         self.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
@@ -104,10 +104,10 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_button.clicked.connect(self.perform_fit)
         self.xlabel.textChanged.connect(self.update_xlabel)
         self.ylabel.textChanged.connect(self.update_ylabel)
-        self.xmin.textEdited.connect(self.update_limits)
-        self.xmax.textEdited.connect(self.update_limits)
-        self.ymin.textEdited.connect(self.update_limits)
-        self.ymax.textEdited.connect(self.update_limits)
+        self.xmin.textChanged.connect(self.update_limits)
+        self.xmax.textChanged.connect(self.update_limits)
+        self.ymin.textChanged.connect(self.update_limits)
+        self.ymax.textChanged.connect(self.update_limits)
         self.set_limits_button.clicked.connect(self.update_limits)
         self.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
 
@@ -747,7 +747,6 @@ class PlotTab(QtWidgets.QWidget):
             text = save_obj[name]
             widget = getattr(self, name)
             widget.setText(text)
-            widget.textEdited.emit(text)
 
         # load checkbox state
         for name in ["use_fit_domain"]:
