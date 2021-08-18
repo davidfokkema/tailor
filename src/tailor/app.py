@@ -109,6 +109,9 @@ class UserInterface(QtWidgets.QMainWindow):
         # Create shortcut for return/enter keys
         for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
             QtWidgets.QShortcut(key, self.data_view, self.edit_or_move_down)
+        # Shortcut for backspace and delete: clear cell contents
+        for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
+            QtWidgets.QShortcut(key, self.data_view, self.clear_current_cell)
 
         # Start at (0, 0)
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
@@ -134,8 +137,8 @@ class UserInterface(QtWidgets.QMainWindow):
         # import numpy as np
         # import pandas as pd
 
-        # x = [1, 2, 3, 4, 5]
-        # y = [1, 4, np.nan, 8, 10]
+        # x = [1, 2, 3, 4, 5, np.nan]
+        # y = [1, 4, np.nan, 8, 10, np.nan]
         # self.data_model.beginResetModel()
         # self.data_model._data = pd.DataFrame.from_dict({"x": x, "y": y})
         # self.data_model.endResetModel()
@@ -257,6 +260,11 @@ class UserInterface(QtWidgets.QMainWindow):
                 new_index = self.get_index_below_selected_cell()
             # move to it (finishing editing in the process)
             self.data_view.setCurrentIndex(new_index)
+
+    def clear_current_cell(self):
+        """Clear contents of current cell."""
+        cur_index = self.data_view.currentIndex()
+        self.data_model.setData(cur_index, "")
 
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""

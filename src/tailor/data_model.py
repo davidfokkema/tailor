@@ -85,7 +85,7 @@ class DataModel(QtCore.QAbstractTableModel):
         # not implemented, return an invalid QVariant per the docs
         return QtCore.QVariant()
 
-    def setData(self, index, value, role):
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
         """Set (attributes of) data values.
 
         This method is used to set data values in the model. The role indicates
@@ -101,7 +101,6 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             True if the data could be set. False otherwise.
         """
-        # FIXME: a dataChanged signal should be emitted?
         if role == QtCore.Qt.EditRole:
             row = index.row()
             col = index.column()
@@ -113,6 +112,7 @@ class DataModel(QtCore.QAbstractTableModel):
                 # FIXME: data changed, recalculate all columns; better to only
                 # recalculate the current row
                 self.recalculate_all_columns()
+            self.dataChanged.emit(index, index)
             return True
         # Role not implemented
         return False
