@@ -318,7 +318,7 @@ class DataModel(QtCore.QAbstractTableModel):
             self._data[col_name] = output
             return True
         else:
-            print("No evaluation error but no output.")
+            print(f"No evaluation error but no output for expression {expression}.")
         return False
 
     def recalculate_all_columns(self):

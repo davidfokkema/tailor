@@ -102,8 +102,8 @@ class UserInterface(QtWidgets.QMainWindow):
         # user interface events
         self.tabWidget.currentChanged.connect(self.tab_changed)
         self.tabWidget.tabCloseRequested.connect(self.close_tab)
-        self.name_edit.textChanged.connect(self.rename_column)
-        self.formula_edit.textChanged.connect(self.update_column_expression)
+        self.name_edit.textEdited.connect(self.rename_column)
+        self.formula_edit.textEdited.connect(self.update_column_expression)
         self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # Create shortcut for return/enter keys
@@ -182,9 +182,14 @@ class UserInterface(QtWidgets.QMainWindow):
         # self.create_plot_tab("inv_U", "I")
 
         # self.name_edit.setText("P")
-        # self.name_edit.textEdited.emit("P")
         # self.formula_edit.setText("U * I")
+        # self.name_edit.textEdited.emit("P")
         # self.formula_edit.textEdited.emit("U * I")
+        # self.data_view.selectColumn(0)
+        # self.remove_column()
+        # self.add_column()
+        # self.name_edit.setText("P")
+        # self.data_view.selectColumn(0)
         # # self.create_plot_tab("U", "Usq")
         # plot_tab = self.tabWidget.currentWidget()
         # # plot_tab.fit_start_box.setValue(4.5)
