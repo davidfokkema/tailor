@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.3.0
+
+### What’s Changed
+
+This is a bugfix update with some minor new features.
+
+### :rocket: Features
+
+* You can now use backspace and delete keys to clear cell contents
+* Empty cells are now handled gracefully by plots, fits and in open/save projects
+* Column labels are now more consistently cleared when changing selections
+
+### :beetle: Fixes
+
+* Fix handling of Inf and NaN values (#8), fixes #5 and #7 
+* Exceptions when saving plots fail silently (#6)
+* Removing calculated column keeps name in memory (#1)
+
+### :package: Build System
+
+* No longer use fork of dmgbuild
+
+
 ## v1.2.0
 
 ### What’s Changed
