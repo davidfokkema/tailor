@@ -116,7 +116,7 @@ class UserInterface(QtWidgets.QMainWindow):
             QtWidgets.QShortcut(key, self.data_view, self.edit_or_move_down)
         # Shortcut for backspace and delete: clear cell contents
         for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
-            QtWidgets.QShortcut(key, self.data_view, self.clear_current_cell)
+            QtWidgets.QShortcut(key, self.data_view, self.clear_selected_cells)
 
         # Start at (0, 0)
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
@@ -272,10 +272,10 @@ class UserInterface(QtWidgets.QMainWindow):
             # move to it (finishing editing in the process)
             self.data_view.setCurrentIndex(new_index)
 
-    def clear_current_cell(self):
-        """Clear contents of current cell."""
-        cur_index = self.data_view.currentIndex()
-        self.data_model.setData(cur_index, "")
+    def clear_selected_cells(self):
+        """Clear contents of selected cells."""
+        for index in self.selection.selectedIndexes():
+            self.data_model.setData(index, "")
 
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""
