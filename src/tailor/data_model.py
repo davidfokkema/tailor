@@ -108,7 +108,7 @@ class DataModel(QtCore.QAbstractTableModel):
                 self._data.iat[row, col] = value
             except ValueError:
                 self._data.iat[row, col] = np.nan
-            else:
+            finally:
                 # FIXME: data changed, recalculate all columns; better to only
                 # recalculate the current row
                 self.recalculate_all_columns()
@@ -327,8 +327,10 @@ class DataModel(QtCore.QAbstractTableModel):
         If data is entered or changed, the calculated column values must be
         updated. This method will manually recalculate all column values.
         """
+        self.beginResetModel()
         for col_name in self._calculated_columns:
             self.recalculate_column(col_name)
+        self.endResetModel()
 
     def flags(self, index):
         """Returns item flags.

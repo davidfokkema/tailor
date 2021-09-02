@@ -185,6 +185,7 @@ class UserInterface(QtWidgets.QMainWindow):
         # self.formula_edit.setText("1 / U")
         # self.create_plot_tab("inv_U", "I")
 
+        # self.add_calculated_column()
         # self.name_edit.setText("P")
         # self.formula_edit.setText("U * I")
         # self.name_edit.textEdited.emit("P")
