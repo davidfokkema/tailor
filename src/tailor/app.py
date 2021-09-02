@@ -84,7 +84,9 @@ class UserInterface(QtWidgets.QMainWindow):
         self.actionOpen.triggered.connect(self.open_project_dialog)
         self.actionSave.triggered.connect(self.save_project_or_dialog)
         self.actionSave_As.triggered.connect(self.save_as_project_dialog)
-        self.actionImport_CSV.triggered.connect(self.import_csv)
+        self.actionImport_CSV.triggered.connect(
+            lambda: self.import_csv(create_new=True)
+        )
         self.actionImport_CSV_Into_Current_Project.triggered.connect(
             lambda: self.import_csv(create_new=False)
         )
