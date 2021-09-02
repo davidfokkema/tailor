@@ -85,6 +85,9 @@ class UserInterface(QtWidgets.QMainWindow):
         self.actionSave.triggered.connect(self.save_project_or_dialog)
         self.actionSave_As.triggered.connect(self.save_as_project_dialog)
         self.actionImport_CSV.triggered.connect(self.import_csv)
+        self.actionImport_CSV_Into_Current_Project.triggered.connect(
+            lambda: self.import_csv(create_new=False)
+        )
         self.actionExport_CSV.triggered.connect(self.export_csv)
         self.actionExport_Graph_to_PDF.triggered.connect(
             lambda: self.export_graph(".pdf")
@@ -134,8 +137,8 @@ class UserInterface(QtWidgets.QMainWindow):
         #     )
         # self._do_import_csv(filename, "\t", ".", ",", 3, 0)
 
-        # import numpy as np
-        # import pandas as pd
+        import numpy as np
+        import pandas as pd
 
         # x = [1, 2, 3, 4, 5, np.nan]
         # y = [1, 4, np.nan, 8, 10, np.nan]
@@ -147,26 +150,24 @@ class UserInterface(QtWidgets.QMainWindow):
         # plot_tab.model_func.setText("a * x + b")
         # plot_tab.fit_button.clicked.emit()
 
-        # np.random.seed(1)
-        # x = np.linspace(0, 10, 11)
-        # y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
-        # self.data_model.beginResetModel()
-        # self.data_model._data = pd.DataFrame.from_dict(
-        #     {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
-        # )
-        # self.data_model.endResetModel()
-        # self.create_plot_tab("U", "I", "dU", "dI")
+        np.random.seed(1)
+        x = np.linspace(0, 10, 11)
+        y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
+        self.data_model.beginResetModel()
+        self.data_model._data = pd.DataFrame.from_dict(
+            {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
+        )
+        self.data_model.endResetModel()
+        self.create_plot_tab("U", "I", "dU", "dI")
 
-        # plot_tab = self.tabWidget.currentWidget()
-        # plot_tab.model_func.setText("U0 * U + b")
-        # plot_tab.model_func.textEdited.emit("")
-        # plot_tab.fit_button.clicked.emit()
+        plot_tab = self.tabWidget.currentWidget()
+        plot_tab.model_func.setText("U0 * U + b")
+        plot_tab.fit_button.clicked.emit()
 
         # plot_tab.model_func.setText("(U0 * U + b")
-        # plot_tab.model_func.textEdited.emit("")
         # plot_tab.fit_button.clicked.emit()
 
-        # self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(0)
         # self.data_view.selectColumn(0)
         # self.name_edit.setText("U_0")
         # self.name_edit.textEdited.emit("U_0")
@@ -176,16 +177,16 @@ class UserInterface(QtWidgets.QMainWindow):
         # self.tabWidget.setCurrentIndex(1)
         # plot_tab.fit_button.clicked.emit()
 
-        # self.add_calculated_column()
+        self.add_calculated_column()
         # self.name_edit.setText("inv_U")
         # self.formula_edit.setText("1 / U")
         # self.create_plot_tab("inv_U", "I")
 
         # self.name_edit.setText("P")
         # self.formula_edit.setText("U * I")
-        # self.name_edit.textEdited.emit("P")
-        # self.formula_edit.textEdited.emit("U * I")
-        # self.data_view.selectColumn(0)
+        self.name_edit.textEdited.emit("P")
+        self.formula_edit.textEdited.emit("U * I")
+        self.data_view.selectColumn(0)
         # self.remove_column()
         # self.add_column()
         # self.name_edit.setText("P")
@@ -196,7 +197,6 @@ class UserInterface(QtWidgets.QMainWindow):
         # # plot_tab.fit_end_box.setValue(7.5)
         # # plot_tab.use_fit_domain.setChecked(True)
         # plot_tab.model_func.setText("a * U + b")
-        # plot_tab.model_func.textEdited.emit("")
         # # for row in plot_tab._params.values():
         # #     row.itemAt(plot_tab._idx_value_box).widget().setValue(20)
         # plot_tab.fit_button.clicked.emit()
@@ -212,6 +212,10 @@ class UserInterface(QtWidgets.QMainWindow):
         # self.save_project("test.tlr")
         # self.clear_all()
         # self.load_project("test.tlr")
+
+        self._do_import_csv(
+            "~/Desktop/importtest.csv", ",", ".", ",", 0, 0, create_new=False
+        )
 
     def _set_view_and_selection_model(self):
         self.data_view.setModel(self.data_model)
@@ -655,11 +659,15 @@ class UserInterface(QtWidgets.QMainWindow):
         if filename:
             self.data_model.write_csv(filename)
 
-    def import_csv(self):
+    def import_csv(self, create_new=True):
         """Import data from a CSV file.
 
         After confirmation, erase all data and import from a comma-separated
         values file.
+
+        Args:
+            create_new: a boolean indicating whether or not to create a new
+                project or import into the existing project.
         """
         if self.confirm_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -677,10 +685,18 @@ class UserInterface(QtWidgets.QMainWindow):
                         skiprows,
                     ) = dialog.get_format_parameters()
                     self._do_import_csv(
-                        filename, delimiter, decimal, thousands, header, skiprows
+                        filename,
+                        delimiter,
+                        decimal,
+                        thousands,
+                        header,
+                        skiprows,
+                        create_new,
                     )
 
-    def _do_import_csv(self, filename, delimiter, decimal, thousands, header, skiprows):
+    def _do_import_csv(
+        self, filename, delimiter, decimal, thousands, header, skiprows, create_new=True
+    ):
         """Import CSV data from file.
 
         Args:
@@ -691,9 +707,16 @@ class UserInterface(QtWidgets.QMainWindow):
             header: an integer with the row number containing the column names,
                 or None.
             skiprows: an integer with the number of rows to skip at start of file
+            create_new: a boolean indicating whether or not to create a new
+                project or import into the existing project.
         """
-        self.clear_all()
-        self.data_model.read_csv(
+        if create_new:
+            self.clear_all()
+            import_func = self.data_model.read_csv
+        else:
+            import_func = self.data_model.read_and_concat_csv
+
+        import_func(
             filename,
             delimiter=delimiter,
             decimal=decimal,

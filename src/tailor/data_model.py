@@ -506,3 +506,50 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data.columns = self._data.columns.astype(str)
         self._calculated_columns = {}
         self.endResetModel()
+
+    def read_and_concat_csv(
+        self,
+        filename,
+        delimiter=None,
+        decimal=".",
+        thousands=",",
+        header=None,
+        skiprows=0,
+    ):
+        """Read data from CSV file and concatenate with current data.
+
+        Overwrites all existing columns by importing a CSV file, but keeps other
+        columns.
+
+        Args:
+            filename: a string containing the path to the CSV file
+            delimiter: a string containing the column delimiter
+            decimal: a string containing the decimal separator
+            thousands: a string containing the thousands separator
+            header: an integer with the row number containing the column names,
+                or None.
+            skiprows: an integer with the number of rows to skip at start of file
+        """
+        self.beginResetModel()
+        import_data = pd.read_csv(
+            filename,
+            delimiter=delimiter,
+            decimal=decimal,
+            thousands=thousands,
+            header=header,
+            skiprows=skiprows,
+        )
+        # make sure column names are strings, even for numbered columns
+        import_data.columns = import_data.columns.astype(str)
+
+        # drop imported columns from existing data, ignore missing columns
+        old_data = self._data.drop(import_data.columns, axis="columns", errors="ignore")
+        # concatenate imported and old data
+        new_data = pd.concat([import_data, old_data], axis="columns")
+        # drop excess rows, if imported data is shorter than old data
+        final_data = new_data.iloc[: len(import_data)]
+
+        # save final data and recalculate values in calculated columns
+        self._data = final_data
+        self.recalculate_all_columns()
+        self.endResetModel()
