@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.4.0
+
+### What’s Changed
+
+Some enhancements for easier reuse of projects: import new data into current project and clear contents of selected cells.
+
+### :rocket: Features
+
+* Clear selected cells (#12)
+* Import CSV file into project (#11)
+
+
 ## v1.3.0
 
 ### What’s Changed
