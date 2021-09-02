@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.4.1
+
+### What’s Changed
+
+This is a minor bugfix update.
+
+### :beetle: Fixes
+
+* Fix: recalculate values when clearing cells
+
+
 ## v1.4.0
 
 ### What’s Changed
