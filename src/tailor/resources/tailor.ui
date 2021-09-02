@@ -163,6 +163,8 @@
     <addaction name="separator"/>
     <addaction name="actionRemove_column"/>
     <addaction name="actionRemove_row"/>
+    <addaction name="separator"/>
+    <addaction name="actionClear_Cell_Contents"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -196,27 +198,27 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionAdd_column">
    <property name="text">
-    <string>Add column</string>
+    <string>Add Column</string>
    </property>
   </action>
   <action name="actionAdd_calculated_column">
    <property name="text">
-    <string>Add calculated column</string>
+    <string>Add Calculated Column</string>
    </property>
   </action>
   <action name="actionAdd_row">
    <property name="text">
-    <string>Add row</string>
+    <string>Add Row</string>
    </property>
   </action>
   <action name="actionRemove_column">
    <property name="text">
-    <string>Remove columns</string>
+    <string>Remove Columns</string>
    </property>
   </action>
   <action name="actionRemove_row">
    <property name="text">
-    <string>Remove rows</string>
+    <string>Remove Rows</string>
    </property>
   </action>
   <action name="actionImport_CSV">
@@ -287,6 +289,11 @@
   <action name="actionImport_CSV_Into_Current_Project">
    <property name="text">
     <string>Import CSV Into Current Project</string>
+   </property>
+  </action>
+  <action name="actionClear_Cell_Contents">
+   <property name="text">
+    <string>Clear Cell Contents</string>
    </property>
   </action>
  </widget>

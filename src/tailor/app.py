@@ -103,6 +103,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.actionAdd_row.triggered.connect(self.add_row)
         self.actionRemove_column.triggered.connect(self.remove_column)
         self.actionRemove_row.triggered.connect(self.remove_row)
+        self.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
 
         # user interface events
         self.tabWidget.currentChanged.connect(self.tab_changed)
