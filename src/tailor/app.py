@@ -123,7 +123,7 @@ class UserInterface(QtWidgets.QMainWindow):
         self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
         # tests
-        # filename = "~/Desktop/meting1.csv"
+        filename = "~/Desktop/meting1.csv"
         # dialog = CSVFormatDialog(filename)
         # dialog.exec()
         # sys.exit()
@@ -138,7 +138,7 @@ class UserInterface(QtWidgets.QMainWindow):
         #     self._do_import_csv(
         #         filename, delimiter, decimal, thousands, header, skiprows
         #     )
-        # self._do_import_csv(filename, "\t", ".", ",", 3, 0)
+        self._do_import_csv(filename, ";", ",", ".", 0, 0)
 
         # import numpy as np
         # import pandas as pd

@@ -3,6 +3,7 @@
 Implements a QAbstractDataModel to contain the data values as a backend for the
 table view used in the app.
 """
+import re
 
 import numpy as np
 import pandas as pd
@@ -506,6 +507,10 @@ class DataModel(QtCore.QAbstractTableModel):
         )
         # make sure column names are strings, even for numbered columns
         self._data.columns = self._data.columns.astype(str)
+        # normalize column names to valid python variable names
+        self._data.columns = self._data.columns.map(
+            lambda s: re.sub("\W+|^(?=\d)", "_", s)
+        )
         self._calculated_columns = {}
         self.endResetModel()
 
