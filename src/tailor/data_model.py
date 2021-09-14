@@ -497,21 +497,12 @@ class DataModel(QtCore.QAbstractTableModel):
             skiprows: an integer with the number of rows to skip at start of file
         """
         self.beginResetModel()
-        self._data = pd.read_csv(
-            filename,
-            delimiter=delimiter,
-            decimal=decimal,
-            thousands=thousands,
-            header=header,
-            skiprows=skiprows,
-        )
-        # make sure column names are strings, even for numbered columns
-        self._data.columns = self._data.columns.astype(str)
-        # normalize column names to valid python variable names
-        self._data.columns = self._data.columns.map(
-            lambda s: re.sub("\W+|^(?=\d)", "_", s)
+
+        self._data = self._read_csv_into_dataframe(
+            filename, delimiter, decimal, thousands, header, skiprows
         )
         self._calculated_columns = {}
+
         self.endResetModel()
 
     def read_and_concat_csv(
@@ -538,17 +529,10 @@ class DataModel(QtCore.QAbstractTableModel):
             skiprows: an integer with the number of rows to skip at start of file
         """
         self.beginResetModel()
-        import_data = pd.read_csv(
-            filename,
-            delimiter=delimiter,
-            decimal=decimal,
-            thousands=thousands,
-            header=header,
-            skiprows=skiprows,
-        )
-        # make sure column names are strings, even for numbered columns
-        import_data.columns = import_data.columns.astype(str)
 
+        import_data = self._read_csv_into_dataframe(
+            filename, delimiter, decimal, thousands, header, skiprows
+        )
         # drop imported columns from existing data, ignore missing columns
         old_data = self._data.drop(import_data.columns, axis="columns", errors="ignore")
         # concatenate imported and old data
@@ -559,4 +543,23 @@ class DataModel(QtCore.QAbstractTableModel):
         # save final data and recalculate values in calculated columns
         self._data = final_data
         self.recalculate_all_columns()
+
         self.endResetModel()
+
+    def _read_csv_into_dataframe(
+        self, filename, delimiter, decimal, thousands, header, skiprows
+    ):
+        """Read CSV data into pandas DataFrame and normalize columns."""
+        df = pd.read_csv(
+            filename,
+            delimiter=delimiter,
+            decimal=decimal,
+            thousands=thousands,
+            header=header,
+            skiprows=skiprows,
+        )
+        # make sure column names are strings, even for numbered columns
+        df.columns = df.columns.astype(str)
+        # normalize column names to valid python variable names
+        df.columns = df.columns.map(lambda s: re.sub("\W+|^(?=\d)", "_", s))
+        return df
