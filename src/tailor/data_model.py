@@ -317,6 +317,12 @@ class DataModel(QtCore.QAbstractTableModel):
             else:
                 output = float(output)
             self._data[col_name] = output
+            # emit dataChanged on calculated columns
+            col = self._data.columns.to_list().index(col_name)
+            n_rows = len(self._data)
+            begin = self.createIndex(0, col)
+            end = self.createIndex(n_rows - 1, col)
+            self.dataChanged.emit(begin, end)
             return True
         else:
             print(f"No evaluation error but no output for expression {expression}.")
@@ -328,10 +334,8 @@ class DataModel(QtCore.QAbstractTableModel):
         If data is entered or changed, the calculated column values must be
         updated. This method will manually recalculate all column values.
         """
-        self.beginResetModel()
         for col_name in self._calculated_columns:
             self.recalculate_column(col_name)
-        self.endResetModel()
 
     def flags(self, index):
         """Returns item flags.
