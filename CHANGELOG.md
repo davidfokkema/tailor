@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.4.2
+
+### What’s Changed
+
+Minor update, but fixes a serious bug.
+
+### :rocket: Features
+
+* Normalise column names when importing CSV (#14)
+
+### :beetle: Fixes
+
+* Solves weird behaviour when editing cells caused by resetting the model when calculating values
+
+
 ## v1.4.1
 
 ### What’s Changed
