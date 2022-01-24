@@ -5,26 +5,26 @@ You can fit custom models to your data to estimate best-fit parameters.
 """
 
 import gzip
-from importlib import metadata as importlib_metadata
 import json
 import os
 import pathlib
 import sys
-from textwrap import dedent
 import traceback
+from importlib import metadata as importlib_metadata
+from textwrap import dedent
 
-from PyQt5 import uic, QtWidgets, QtCore, QtGui
-import pyqtgraph as pg
 import pkg_resources
+import pyqtgraph as pg
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtUiTools import QUiLoader
 
-from tailor.data_model import DataModel
-from tailor.plot_tab import PlotTab
 from tailor.csv_format_dialog import (
-    CSVFormatDialog,
     DELIMITER_CHOICES,
     NUM_FORMAT_CHOICES,
+    CSVFormatDialog,
 )
-
+from tailor.data_model import DataModel
+from tailor.plot_tab import PlotTab
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
