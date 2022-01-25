@@ -4,15 +4,14 @@ A widget containing a scatter plot of some data columns with user interface
 elements to specify a mathematical model to fit to the model.
 """
 
-from PyQt5 import uic, QtWidgets, QtCore
-import pyqtgraph as pg
-import pkg_resources
+import asteval
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import pkg_resources
+import pyqtgraph as pg
 from lmfit import models
-import asteval
-
+from PySide6 import QtCore, QtWidgets
 
 NUM_POINTS = 1000
 MSG_TIMEOUT = 0

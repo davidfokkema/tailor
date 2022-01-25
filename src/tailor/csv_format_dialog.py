@@ -1,10 +1,10 @@
-from pathlib import Path
 import textwrap
+from importlib import resources
+from pathlib import Path
 
-import pkg_resources
-from PyQt5 import uic, QtWidgets
 import pandas as pd
-
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import QUiLoader
 
 DELIMITER_CHOICES = {
     "detect": None,
