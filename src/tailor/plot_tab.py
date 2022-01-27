@@ -62,6 +62,8 @@ class PlotTab:
         loader.registerCustomWidget(pg.PlotWidget)
         loader.registerCustomWidget(pg.SpinBox)
         self.ui = loader.load(resources.path("tailor.resources", "plot_tab.ui"))
+        # store reference to this code in widget
+        self.ui.code = self
 
         self.main_window = main_window
 
@@ -678,20 +680,23 @@ class PlotTab:
         # save checkbox state
         save_obj.update(
             {
-                name: getattr(self, name).checkState()
+                name: int(getattr(self.ui, name).checkState())
                 for name in ["show_initial_fit", "use_fit_domain"]
             }
         )
 
         # save combobox state
         save_obj.update(
-            {name: getattr(self, name).currentIndex() for name in ["draw_curve_option"]}
+            {
+                name: getattr(self.ui, name).currentIndex()
+                for name in ["draw_curve_option"]
+            }
         )
 
         # save lineedit strings
         save_obj.update(
             {
-                name: getattr(self, name).text()
+                name: getattr(self.ui, name).text()
                 for name in [
                     "model_func",
                     "xlabel",

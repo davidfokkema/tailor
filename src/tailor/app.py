@@ -568,7 +568,7 @@ class Application:
                 # save data for each tab
                 tab = self.ui.tabWidget.widget(idx)
                 tab_data = {"label": self.ui.tabWidget.tabBar().tabText(idx)}
-                tab.save_state_to_obj(tab_data)
+                tab.code.save_state_to_obj(tab_data)
                 save_obj["tabs"].append(tab_data)
         except Exception as exc:
             self._show_exception(
