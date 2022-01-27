@@ -13,9 +13,9 @@ from importlib import metadata as importlib_metadata
 from importlib import resources
 from textwrap import dedent
 
-import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtUiTools import QUiLoader
+import pyqtgraph as pg
 
 from tailor.csv_format_dialog import (
     DELIMITER_CHOICES,
@@ -469,8 +469,8 @@ class Application:
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(self.data_model, main_window=self)
-        idx = self.ui.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
+        plot_tab = PlotTab(self.data_model, main_window=self.ui)
+        idx = self.ui.tabWidget.addTab(plot_tab.ui, f"Plot {self._plot_num}")
         self._plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
@@ -478,10 +478,9 @@ class Application:
 
     def create_plot_dialog(self):
         """Create a dialog to request variables for creating a plot."""
-        create_dialog = QtWidgets.QDialog(parent=self)
-        uic.loadUi(
-            pkg_resources.resource_stream("tailor.resources", "create_plot_dialog.ui"),
-            create_dialog,
+        create_dialog = QUiLoader().load(
+            resources.path("tailor.resources", "create_plot_dialog.ui"),
+            self.ui,
         )
         choices = [None] + self.data_model.get_column_names()
         create_dialog.x_axis_box.addItems(choices)
@@ -537,7 +536,7 @@ class Application:
     def save_as_project_dialog(self):
         """Present save project dialog and save project."""
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self,
+            parent=self.ui,
             filter="Tailor project files (*.tlr);;All files (*)",
         )
         if filename:
@@ -589,7 +588,7 @@ class Application:
         """Present open project dialog and load project."""
         if self.confirm_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self,
+                parent=self.ui,
                 filter="Tailor project files (*.tlr);;All files (*)",
             )
             if filename:
@@ -616,7 +615,7 @@ class Application:
         if msg is None:
             msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
         button = QtWidgets.QMessageBox.warning(
-            self,
+            self.ui,
             "Please confirm",
             msg,
             buttons=QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
@@ -650,7 +649,7 @@ class Application:
 
             # create a tab and load data for each plot
             for tab_data in save_obj["tabs"]:
-                plot_tab = PlotTab(self.data_model, main_window=self)
+                plot_tab = PlotTab(self.data_model, main_window=self.ui)
                 idx = self.ui.tabWidget.addTab(plot_tab, tab_data["label"])
                 plot_tab.load_state_from_obj(tab_data)
             self._plot_num = save_obj["plot_num"]
@@ -662,7 +661,7 @@ class Application:
         Export all data in the table as a comma-separated values file.
         """
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self,
+            parent=self.ui,
             filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
         )
         if filename:
@@ -680,7 +679,7 @@ class Application:
         """
         if self.confirm_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self,
+                parent=self.ui,
                 filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
             )
             if filename:
@@ -747,7 +746,7 @@ class Application:
         tab = self.ui.tabWidget.currentWidget()
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                parent=self,
+                parent=self.ui,
                 filter=f"Graphics (*{suffix});;All files (*)",
             )
             if filename:
@@ -786,7 +785,7 @@ class Application:
             title: short header text.
             text: longer informative text describing the problem.
         """
-        msg = QtWidgets.QMessageBox(parent=self)
+        msg = QtWidgets.QMessageBox(parent=self.ui)
         msg.setText(title)
         msg.setInformativeText(text)
         msg.setDetailedText(traceback.format_exc())

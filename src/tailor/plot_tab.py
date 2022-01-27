@@ -4,14 +4,17 @@ A widget containing a scatter plot of some data columns with user interface
 elements to specify a mathematical model to fit to the model.
 """
 
+from importlib import resources
+
 import asteval
 import matplotlib.pyplot as plt
+from matplotlib.quiver import Quiver
 import numpy as np
 import pandas as pd
-import pkg_resources
 import pyqtgraph as pg
 from lmfit import models
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtUiTools import QUiLoader
 
 NUM_POINTS = 1000
 MSG_TIMEOUT = 0
@@ -26,7 +29,7 @@ class VariableError(RuntimeError):
     pass
 
 
-class PlotTab(QtWidgets.QWidget):
+class PlotTab:
     """Tab widget containing plot with associated user interface.
 
     A widget containing a scatter plot of some data columns with user interface
@@ -53,64 +56,64 @@ class PlotTab(QtWidgets.QWidget):
         Args:
             data_model: the data model holding the data.
         """
-        super().__init__()
-
         self.data_model = data_model
-        uic.loadUi(
-            pkg_resources.resource_stream("tailor.resources", "plot_tab.ui"), self
-        )
+
+        loader = QUiLoader()
+        loader.registerCustomWidget(pg.PlotWidget)
+        loader.registerCustomWidget(pg.SpinBox)
+        self.ui = loader.load(resources.path("tailor.resources", "plot_tab.ui"))
 
         self.main_window = main_window
 
-        self.param_layout = QtWidgets.QVBoxLayout()
-        self.param_layout.setContentsMargins(4, 0, 0, 0)
-        self.parameter_box.setLayout(self.param_layout)
+        self.ui.param_layout = QtWidgets.QVBoxLayout()
+        self.ui.param_layout.setContentsMargins(4, 0, 0, 0)
+        self.ui.parameter_box.setLayout(self.ui.param_layout)
         self._params = {}
         self._symbols = set(asteval.Interpreter().symtable.keys())
 
         # FIXME move this to create_plot, or vice versa?
-        self._initial_param_plot = self.plot_widget.plot(
+        self._initial_param_plot = self.ui.plot_widget.plot(
             symbol=None, pen=pg.mkPen(color="00F4", width=4)
         )
-        self._fit_plot = self.plot_widget.plot(
+        self._fit_plot = self.ui.plot_widget.plot(
             symbol=None, pen=pg.mkPen(color="r", width=4)
         )
-        self.fit_domain_area = pg.LinearRegionItem(movable=True, brush="00F1")
+        self.ui.fit_domain_area = pg.LinearRegionItem(movable=True, brush="00F1")
 
         # Set options affecting the UI
-        self.fit_start_box.setOpts(
+        self.ui.fit_start_box.setOpts(
             value=-np.inf, dec=True, step=0.1, finite=True, compactHeight=False
         )
-        self.fit_end_box.setOpts(
+        self.ui.fit_end_box.setOpts(
             value=np.inf, dec=True, step=0.1, finite=True, compactHeight=False
         )
-        self.fit_start_box.setMaximumWidth(75)
-        self.fit_end_box.setMaximumWidth(75)
-        self.draw_curve_option.addItems(DRAW_CURVE_OPTIONS)
+        self.ui.fit_start_box.setMaximumWidth(75)
+        self.ui.fit_end_box.setMaximumWidth(75)
+        self.ui.draw_curve_option.addItems(DRAW_CURVE_OPTIONS)
         # lambda is necessary to gobble the 'index' parameter of the
         # currentIndexChanged signal
-        self.draw_curve_option.currentIndexChanged.connect(
+        self.ui.draw_curve_option.currentIndexChanged.connect(
             lambda index: self.update_best_fit_plot()
         )
 
         # Connect signals
-        self.model_func.textChanged.connect(self.update_fit_params)
-        self.show_initial_fit.stateChanged.connect(self.plot_initial_model)
-        self.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
-        self.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
-        self.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
-        self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
-        self.fit_button.clicked.connect(self.perform_fit)
-        self.xlabel.textChanged.connect(self.update_xlabel)
-        self.ylabel.textChanged.connect(self.update_ylabel)
-        self.xmin.textChanged.connect(self.update_limits)
-        self.xmax.textChanged.connect(self.update_limits)
-        self.ymin.textChanged.connect(self.update_limits)
-        self.ymax.textChanged.connect(self.update_limits)
-        self.set_limits_button.clicked.connect(self.update_limits)
-        self.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
+        self.ui.model_func.textChanged.connect(self.update_fit_params)
+        self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
+        self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
+        self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
+        self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
+        self.ui.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
+        self.ui.fit_button.clicked.connect(self.perform_fit)
+        self.ui.xlabel.textChanged.connect(self.update_xlabel)
+        self.ui.ylabel.textChanged.connect(self.update_ylabel)
+        self.ui.xmin.textChanged.connect(self.update_limits)
+        self.ui.xmax.textChanged.connect(self.update_limits)
+        self.ui.ymin.textChanged.connect(self.update_limits)
+        self.ui.ymax.textChanged.connect(self.update_limits)
+        self.ui.set_limits_button.clicked.connect(self.update_limits)
+        self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
 
-        self.plot_widget.setMenuEnabled(False)
+        self.ui.plot_widget.setMenuEnabled(False)
 
     def create_plot(self, x_var, y_var, x_err, y_err):
         """Create a plot in the widget.
@@ -133,7 +136,7 @@ class PlotTab(QtWidgets.QWidget):
         if y_err:
             self.y_err_var = y_err
 
-        self.plot = self.plot_widget.plot(
+        self.plot = self.ui.plot_widget.plot(
             symbol="o",
             pen=None,
             symbolSize=5,
@@ -141,17 +144,17 @@ class PlotTab(QtWidgets.QWidget):
             symbolBrush="k",
         )
         self.error_bars = pg.ErrorBarItem()
-        self.plot_widget.addItem(self.error_bars)
+        self.ui.plot_widget.addItem(self.error_bars)
         self.update_function_label(y_var)
-        self.xlabel.setText(x_var)
-        self.ylabel.setText(y_var)
+        self.ui.xlabel.setText(x_var)
+        self.ui.ylabel.setText(y_var)
         self.update_info_box()
 
         self.update_plot()
 
         # set fit domain
-        self.fit_start_box.setValue(self.x.min())
-        self.fit_end_box.setValue(self.x.max())
+        self.ui.fit_start_box.setValue(self.x.min())
+        self.ui.fit_end_box.setValue(self.x.max())
 
     def update_plot(self):
         """Update plot to reflect any data changes."""
@@ -188,13 +191,13 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_xlabel(self):
         """Update the x-axis label of the plot."""
-        self.plot_widget.setLabel("bottom", self.xlabel.text())
-        self.main_window.statusbar.showMessage("Updated label.", msecs=MSG_TIMEOUT)
+        self.ui.plot_widget.setLabel("bottom", self.ui.xlabel.text())
+        self.main_window.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
 
     def update_ylabel(self):
         """Update the y-axis label of the plot."""
-        self.plot_widget.setLabel("left", self.ylabel.text())
-        self.main_window.statusbar.showMessage("Updated label.", msecs=MSG_TIMEOUT)
+        self.ui.plot_widget.setLabel("left", self.ui.ylabel.text())
+        self.main_window.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
 
     def update_info_box(self):
         """Update the information box."""
@@ -202,7 +205,7 @@ class PlotTab(QtWidgets.QWidget):
         if self.fit:
             msgs.append(self.format_fit_results())
         msgs.append(self.format_plot_info())
-        self.result_box.setPlainText("\n".join(msgs))
+        self.ui.result_box.setPlainText("\n".join(msgs))
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -212,10 +215,10 @@ class PlotTab(QtWidgets.QWidget):
         # bug for large y-values (> 1e6)
         # However, that will break setting the axis limits manually. Setting to
         # True for now.
-        self.plot_widget.setRange(
+        self.ui.plot_widget.setRange(
             xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
-        self.main_window.statusbar.showMessage("Updated limits.", msecs=MSG_TIMEOUT)
+        self.main_window.statusbar.showMessage("Updated limits.", timeout=MSG_TIMEOUT)
 
     def get_adjusted_limits(self):
         """Get adjusted plot limits from the data points and text fields.
@@ -228,10 +231,10 @@ class PlotTab(QtWidgets.QWidget):
             Tuple of four float values (xmin, xmax, ymin, ymax).
         """
         xmin, xmax, ymin, ymax = self.get_limits_from_data()
-        xmin = self.update_value_from_text(xmin, self.xmin)
-        xmax = self.update_value_from_text(xmax, self.xmax)
-        ymin = self.update_value_from_text(ymin, self.ymin)
-        ymax = self.update_value_from_text(ymax, self.ymax)
+        xmin = self.update_value_from_text(xmin, self.ui.xmin)
+        xmax = self.update_value_from_text(xmax, self.ui.xmax)
+        ymin = self.update_value_from_text(ymin, self.ui.ymin)
+        ymax = self.update_value_from_text(ymax, self.ui.ymax)
         return xmin, xmax, ymin, ymax
 
     def get_limits_from_data(self, padding=0.05):
@@ -296,10 +299,10 @@ class PlotTab(QtWidgets.QWidget):
         Args:
             variable: a string containing the name of the dependent variable.
         """
-        label_text = self.model_func_label.text()
+        label_text = self.ui.model_func_label.text()
         title, _, _ = label_text.partition(":")
         new_label_text = f"{title}:  {variable} ="
-        self.model_func_label.setText(new_label_text)
+        self.ui.model_func_label.setText(new_label_text)
 
     def update_fit_params(self):
         """Update fit parameters.
@@ -311,12 +314,16 @@ class PlotTab(QtWidgets.QWidget):
         try:
             params = self.get_params_and_update_model()
         except (SyntaxError, VariableError) as exc:
-            self.main_window.statusbar.showMessage(f"ERROR: {exc!s}", msecs=MSG_TIMEOUT)
+            self.main_window.statusbar.showMessage(
+                f"ERROR: {exc!s}", timeout=MSG_TIMEOUT
+            )
             self.model = None
         else:
             self.update_params_ui(params)
             self.plot_initial_model()
-            self.main_window.statusbar.showMessage("Updated model.", msecs=MSG_TIMEOUT)
+            self.main_window.statusbar.showMessage(
+                "Updated model.", timeout=MSG_TIMEOUT
+            )
 
     def update_params_ui(self, params):
         """Add and/or remove parameters if necessary.
@@ -341,7 +348,7 @@ class PlotTab(QtWidgets.QWidget):
         Returns:
             A set of parameter names.
         """
-        model_expr = self.model_func.text()
+        model_expr = self.ui.model_func.text()
         code = compile(model_expr, "<string>", "eval")
         params = set(code.co_names) - set([self.x_var]) - self._symbols
         if self.y_var in params:
@@ -406,7 +413,7 @@ class PlotTab(QtWidgets.QWidget):
             self._idx_fixed_checkbox = layout.count() - 1
 
             self._params[p] = layout
-            self.param_layout.addLayout(layout)
+            self.ui.param_layout.addLayout(layout)
 
     def remove_params_from_ui(self, params):
         """Remove parameters from user interface.
@@ -424,7 +431,7 @@ class PlotTab(QtWidgets.QWidget):
                 item = layout.takeAt(0)
                 item.widget().deleteLater()
             # remove and delete the parameter row
-            self.param_layout.removeItem(layout)
+            self.ui.param_layout.removeItem(layout)
             layout.deleteLater()
             # remove the reference to the parameter
             del self._params[p]
@@ -463,10 +470,10 @@ class PlotTab(QtWidgets.QWidget):
             state: integer (enum Qt::CheckState) with the checkbox state.
         """
         if state == QtCore.Qt.Checked:
-            self.plot_widget.addItem(self.fit_domain_area)
+            self.ui.plot_widget.addItem(self.ui.fit_domain_area)
             self.update_fit_domain()
         else:
-            self.plot_widget.removeItem(self.fit_domain_area)
+            self.ui.plot_widget.removeItem(self.ui.fit_domain_area)
 
     def fit_domain_region_changed(self):
         """Update the fit domain values.
@@ -474,21 +481,21 @@ class PlotTab(QtWidgets.QWidget):
         When the fit domain region is dragged by the user, the values in the
         start and end boxes need to be updated.
         """
-        xmin, xmax = self.fit_domain_area.getRegion()
-        self.fit_start_box.setValue(xmin)
-        self.fit_end_box.setValue(xmax)
+        xmin, xmax = self.ui.fit_domain_area.getRegion()
+        self.ui.fit_start_box.setValue(xmin)
+        self.ui.fit_end_box.setValue(xmax)
         self.update_best_fit_plot()
 
     def update_fit_domain(self):
         """Update the fit domain and indicate with vertical lines."""
-        start = self.fit_start_box.value()
-        end = self.fit_end_box.value()
+        start = self.ui.fit_start_box.value()
+        end = self.ui.fit_end_box.value()
         if start <= end:
             self.fit_domain = start, end
-            self.fit_domain_area.setRegion((start, end))
+            self.ui.fit_domain_area.setRegion((start, end))
         else:
             self.main_window.statusbar.showMessage(
-                "ERROR: domain start is larger than end.", msecs=MSG_TIMEOUT
+                "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
             )
 
     def plot_initial_model(self):
@@ -528,11 +535,11 @@ class PlotTab(QtWidgets.QWidget):
 
         # select data for fit
         if self.use_fit_domain.checkState() == QtCore.Qt.Checked:
-            xmin = self.fit_start_box.value()
-            xmax = self.fit_end_box.value()
+            xmin = self.ui.fit_start_box.value()
+            xmax = self.ui.fit_end_box.value()
             if xmin > xmax:
                 self.main_window.statusbar.showMessage(
-                    "ERROR: domain start is larger than end.", msecs=MSG_TIMEOUT
+                    "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
                 )
                 return
             condition = (xmin <= self.x) & (self.x <= xmax)
@@ -562,7 +569,7 @@ class PlotTab(QtWidgets.QWidget):
             self.update_info_box()
             self.update_best_fit_plot()
             self.show_initial_fit.setChecked(False)
-            self.main_window.statusbar.showMessage("Updated fit.", msecs=MSG_TIMEOUT)
+            self.main_window.statusbar.showMessage("Updated fit.", timeout=MSG_TIMEOUT)
 
     def updated_plot_range(self):
         """Handle updated plot range.
@@ -570,7 +577,7 @@ class PlotTab(QtWidgets.QWidget):
         If the fitted curves are drawn on the full axis, they need to be updated
         when the plot range is changed.
         """
-        if self.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
+        if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
             self.update_best_fit_plot()
 
     def update_best_fit_plot(self, x_var=None):
@@ -598,13 +605,13 @@ class PlotTab(QtWidgets.QWidget):
         Returns:
             xmin, xmax: tuple of floats with the x-axis limits
         """
-        option_idx = self.draw_curve_option.currentIndex()
+        option_idx = self.ui.draw_curve_option.currentIndex()
         if option_idx == DRAW_CURVE_ON_DATA:
             xmin, xmax = min(self.x), max(self.x)
         elif option_idx == DRAW_CURVE_ON_DOMAIN:
             xmin, xmax = self.fit_domain
         elif option_idx == DRAW_CURVE_ON_AXIS:
-            [[xmin, xmax], _] = self.plot_widget.viewRange()
+            [[xmin, xmax], _] = self.ui.plot_widget.viewRange()
         else:
             raise NotImplementedError(
                 f"Draw curve option {option_idx} not implemented."
@@ -730,8 +737,8 @@ class PlotTab(QtWidgets.QWidget):
         )
 
         start, end = save_obj["fit_domain"]
-        self.fit_start_box.setValue(start)
-        self.fit_end_box.setValue(end)
+        self.ui.fit_start_box.setValue(start)
+        self.ui.fit_end_box.setValue(end)
 
         # load linedit strings
         for name in [
@@ -830,8 +837,8 @@ class PlotTab(QtWidgets.QWidget):
             plt.plot(x, y, "r-")
         if self.use_fit_domain.isChecked():
             plt.axvspan(*self.fit_domain, facecolor="k", alpha=0.1)
-        plt.xlabel(self.xlabel.text())
-        plt.ylabel(self.ylabel.text())
+        plt.xlabel(self.ui.xlabel.text())
+        plt.ylabel(self.ui.ylabel.text())
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
         plt.savefig(filename, dpi=300)
