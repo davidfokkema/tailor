@@ -71,7 +71,7 @@ class DataModel(QtCore.QAbstractTableModel):
 
         if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
             # request for the data itself
-            value = float(self._data.iat[row, col])
+            value = self._data.iat[row, col]
             if np.isnan(value) and not self.is_calculated_column(col):
                 # NaN in a data column, show as empty
                 return ""
@@ -105,7 +105,7 @@ class DataModel(QtCore.QAbstractTableModel):
             row = index.row()
             col = index.column()
             try:
-                self._data.iat[row, col] = value
+                self._data.iat[row, col] = float(value)
             except ValueError:
                 self._data.iat[row, col] = np.nan
             finally:
