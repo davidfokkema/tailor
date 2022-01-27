@@ -394,7 +394,7 @@ class PlotTab:
                 compactHeight=False,
             )
             value_box.sigValueChanging.connect(
-                lambda: self.show_initial_fit.setChecked(True)
+                lambda: self.ui.show_initial_fit.setChecked(True)
             )
             value_box.sigValueChanging.connect(self.plot_initial_model)
             value_box.setMaximumWidth(75)
@@ -510,7 +510,7 @@ class PlotTab:
         kwargs[self.x_var] = x
         y = self.model.eval(**kwargs)
 
-        if self.show_initial_fit.isChecked():
+        if self.ui.show_initial_fit.isChecked():
             self._initial_param_plot.setData(x, y)
         else:
             self._initial_param_plot.setData([], [])
@@ -534,7 +534,7 @@ class PlotTab:
             self.model.set_param_hint(p, **hints)
 
         # select data for fit
-        if self.use_fit_domain.checkState() == QtCore.Qt.Checked:
+        if self.ui.use_fit_domain.checkState() == QtCore.Qt.Checked:
             xmin = self.ui.fit_start_box.value()
             xmax = self.ui.fit_end_box.value()
             if xmin > xmax:
@@ -568,7 +568,7 @@ class PlotTab:
         else:
             self.update_info_box()
             self.update_best_fit_plot()
-            self.show_initial_fit.setChecked(False)
+            self.ui.show_initial_fit.setChecked(False)
             self.main_window.statusbar.showMessage("Updated fit.", timeout=MSG_TIMEOUT)
 
     def updated_plot_range(self):
@@ -810,7 +810,7 @@ class PlotTab:
             self.update_best_fit_plot(x_var)
 
         # set state of show_initial_fit, will have changed when setting parameters
-        self.show_initial_fit.setCheckState(save_obj["show_initial_fit"])
+        self.ui.show_initial_fit.setCheckState(save_obj["show_initial_fit"])
 
     def export_graph(self, filename):
         """Export graph to a file.
@@ -835,7 +835,7 @@ class PlotTab:
             x = np.linspace(fit_xmin, fit_xmax, NUM_POINTS)
             y = self.fit.eval(**{self.x_var: x})
             plt.plot(x, y, "r-")
-        if self.use_fit_domain.isChecked():
+        if self.ui.use_fit_domain.isChecked():
             plt.axvspan(*self.fit_domain, facecolor="k", alpha=0.1)
         plt.xlabel(self.ui.xlabel.text())
         plt.ylabel(self.ui.ylabel.text())
