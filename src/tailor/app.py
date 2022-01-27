@@ -650,7 +650,7 @@ class Application:
             # create a tab and load data for each plot
             for tab_data in save_obj["tabs"]:
                 plot_tab = PlotTab(self.data_model, main_window=self.ui)
-                idx = self.ui.tabWidget.addTab(plot_tab, tab_data["label"])
+                self.ui.tabWidget.addTab(plot_tab.ui, tab_data["label"])
                 plot_tab.load_state_from_obj(tab_data)
             self._plot_num = save_obj["plot_num"]
             self.ui.tabWidget.setCurrentIndex(save_obj["current_tab"])

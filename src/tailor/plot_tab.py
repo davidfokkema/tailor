@@ -751,18 +751,18 @@ class PlotTab:
             "ymax",
         ]:
             text = save_obj[name]
-            widget = getattr(self, name)
+            widget = getattr(self.ui, name)
             widget.setText(text)
 
         # load checkbox state
         for name in ["use_fit_domain"]:
-            state = save_obj[name]
-            getattr(self, name).setCheckState(state)
+            state = QtCore.Qt.CheckState(save_obj[name])
+            getattr(self.ui, name).setCheckState(state)
 
         # load combobox state
         for name in ["draw_curve_option"]:
-            state = save_obj[name]
-            getattr(self, name).setCurrentIndex(state)
+            state = QtCore.Qt.CheckState(save_obj[name])
+            getattr(self.ui, name).setCurrentIndex(state)
 
         # set parameter hints
         params = save_obj["parameters"].keys()
@@ -794,14 +794,14 @@ class PlotTab:
             for param, hint in saved_fit["param_hints"].items():
                 model.set_param_hint(param, **hint)
 
-            xdata = {x_var: saved_fit["xdata"]}
+            xdata = {x_var: np.array(saved_fit["xdata"])}
             weights = saved_fit["weights"]
             if weights is not None:
                 weights = np.array(weights)
             self.fit = model.fit(
-                saved_fit["data"],
+                np.array(saved_fit["data"]),
                 **xdata,
-                # weights MUST BE an NumPy array or calculations will fail
+                # weights MUST BE a NumPy array or calculations will fail
                 weights=weights,
                 nan_policy="omit",
             )
@@ -810,7 +810,8 @@ class PlotTab:
             self.update_best_fit_plot(x_var)
 
         # set state of show_initial_fit, will have changed when setting parameters
-        self.ui.show_initial_fit.setCheckState(save_obj["show_initial_fit"])
+        state = QtCore.Qt.CheckState(save_obj["show_initial_fit"])
+        self.ui.show_initial_fit.setCheckState(state)
 
     def export_graph(self, filename):
         """Export graph to a file.
