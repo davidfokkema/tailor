@@ -152,7 +152,7 @@ class Application:
         # self.data_model._data = pd.DataFrame.from_dict({"x": x, "y": y})
         # self.data_model.endResetModel()
         # self.create_plot_tab("x", "y")
-        # plot_tab = self.tabWidget.currentWidget()
+        # plot_tab = self.ui.tabWidget.currentWidget()
         # plot_tab.model_func.setText("a * x + b")
         # plot_tab.fit_button.clicked.emit()
 
@@ -216,6 +216,9 @@ class Application:
         # # plot_tab.update_plot()
         # # plot_tab.model_func.setText("a * U ** 2 + c")
         # # plot_tab.model_func.textEdited.emit("")
+        # self.save_project("test.tlr")
+        # self.clear_all()
+        # self.load_project(pathlib.Path.home() / "Desktop" / "analyse-radon220.tlr")
         # self.save_project("test.tlr")
         # self.clear_all()
         # self.load_project("test.tlr")
