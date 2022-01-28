@@ -36,3 +36,38 @@ requires = []
 
 [tool.briefcase.app.tailor.android]
 requires = []
+
+[tool.pruner]
+base_dirs = [
+    "macOS/app/*/*/Contents/Resources/app_packages",
+]
+exclude = [
+    "**/tests",
+    "**/examples",
+    "PySide6/*",
+    "PySide6/Qt/*",
+    "PySide6/Qt/lib/*",
+    "PySide6/Qt/plugins/*",
+]
+include = [
+    "PySide6/*.dylib",
+    "PySide6/__init__.py",
+    "PySide6/QtCore.*",
+    "PySide6/QtGui.*",
+    "PySide6/QtUiTools.*",
+    "PySide6/QtWidgets.*",
+    "PySide6/Qt",
+    "PySide6/Qt/lib",
+    "PySide6/Qt/lib/QtGui.framework",
+    "PySide6/Qt/lib/QtDBus.framework",
+    "PySide6/Qt/lib/QtCore.framework",
+    "PySide6/Qt/lib/QtQml.framework",
+    "PySide6/Qt/lib/QtOpenGL.framework",
+    "PySide6/Qt/lib/QtOpenGLWidgets.framework",
+    "PySide6/Qt/lib/QtUiTools.framework",
+    "PySide6/Qt/lib/QtWidgets.framework",
+    "PySide6/Qt/lib/QtNetwork.framework",
+    "PySide6/Qt/plugins",
+    "PySide6/Qt/plugins/platforms",
+    "PySide6/Qt/plugins/styles",
+]
