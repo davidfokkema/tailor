@@ -38,13 +38,12 @@ requires = []
 [tool.briefcase.app.tailor.android]
 requires = []
 
-[tool.pruner]
-base_dirs = [
-    "macOS/app/*/*/Contents/Resources/app_packages",
-]
+[tool.pruner.darwin]
+base_dir = "macOS/app/*/*/Contents/Resources/app_packages"
 exclude = [
     "**/tests",
     "**/examples",
+    "**/docs",
     "PySide6/*",
     "PySide6/Qt/*",
     "PySide6/Qt/lib/*",
@@ -71,4 +70,42 @@ include = [
     "PySide6/Qt/plugins",
     "PySide6/Qt/plugins/platforms",
     "PySide6/Qt/plugins/styles",
+]
+
+[tool.pruner.win32]
+base_dir = "windows/msi/*/src/app_packages"
+exclude = [
+    "**/tests",
+    "**/examples",
+    "**/docs",
+    "PySide6/*",
+    "PySide6/plugins/*",
+]
+include = [
+    "PySide6/*.py",
+    "PySide6/qt.conf",
+    "PySide6/pyside6.*",
+    "PySide6/concrt140.dll",
+    "PySide6/opengl32sw.dll",
+    "PySide6/d3d*.dll",
+    "PySide6/ucrtbase.dll",
+    "PySide6/msvc*.dll",
+    "PySide6/vc*.dll",
+    "PySide6/Qt6Core.dll",
+    "PySide6/Qt6Gui.dll",
+    "PySide6/Qt6Network.dll",
+    "PySide6/Qt6OpenGL*.dll",
+    "PySide6/Qt6Qml.dll",
+    "PySide6/Qt6UiTools.dll",
+    "PySide6/Qt6Widgets.dll",
+    "PySide6/QtCore.py*",
+    "PySide6/QtNetwork.py*",
+    "PySide6/QtOpenGL*.py*",
+    "PySide6/QtGui.py*",
+    "PySide6/QtQml.py*",
+    "PySide6/QtUiTools.py*",
+    "PySide6/QtWidgets.py*",
+    "PySide6/plugins",
+    "PySide6/plugins/platforms",
+    "PySide6/plugins/styles",
 ]

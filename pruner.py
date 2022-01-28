@@ -1,19 +1,19 @@
 import os
 import shutil
+import sys
 from glob import glob
 from pathlib import Path
 
 import toml
 
 
-def prune(base_dirs, exclude, include):
+def prune(base_dir, exclude, include):
     excludes = set()
-    for base in base_dirs:
-        base_path = Path(base).resolve()
-        for rule in exclude:
-            excludes |= set(glob(str(base_path / rule), recursive=True))
-        for rule in include:
-            excludes -= set(glob(str(base_path / rule), recursive=True))
+    base_path = Path(base_dir).resolve()
+    for rule in exclude:
+        excludes |= set(glob(str(base_path / rule), recursive=True))
+    for rule in include:
+        excludes -= set(glob(str(base_path / rule), recursive=True))
 
     cwd = Path.cwd()
     for path in excludes:
@@ -35,9 +35,9 @@ def prune(base_dirs, exclude, include):
 def main():
     with open("pyproject.toml") as f:
         config = toml.load(f)
-    pruner_config = config["tool"]["pruner"]
+    pruner_config = config["tool"]["pruner"][sys.platform]
     prune(
-        pruner_config["base_dirs"], pruner_config["exclude"], pruner_config["include"]
+        pruner_config["base_dir"], pruner_config["exclude"], pruner_config["include"]
     )
 
 
