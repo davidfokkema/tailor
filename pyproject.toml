@@ -21,6 +21,12 @@ requires = [
     'matplotlib>=3.5.1,<4.0.0',
 ]
 
+[tool.briefcase.app.tailor.document_type.document]
+extension = "tlr"
+description = "Tailor project"
+icon = "src/tailor/resources/document_icon"
+url = "https://github.com/davidfokkema/tailor"
+
 [tool.briefcase.app.tailor.macOS]
 requires = []
 
