@@ -686,8 +686,8 @@ class Application:
                 filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
             )
             if filename:
-                dialog = CSVFormatDialog(filename)
-                if dialog.exec() == QtWidgets.QDialog.Accepted:
+                dialog = CSVFormatDialog(filename, parent=self.ui)
+                if dialog.ui.exec() == QtWidgets.QDialog.Accepted:
                     (
                         delimiter,
                         decimal,
