@@ -59,6 +59,8 @@ class Application:
         self.ui.setWindowIcon(
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
+        # store reference to this code in data tab
+        self.ui.data.code = self
 
         self.clear_all()
 
@@ -336,8 +338,8 @@ class Application:
             idx: an integer index of the now-focused tab.
         """
         tab = self.ui.tabWidget.currentWidget()
-        if type(tab) == PlotTab:
-            tab.update_plot()
+        if type(tab.code) == PlotTab:
+            tab.code.update_plot()
 
     def add_column(self):
         """Add column to data model and select it."""
