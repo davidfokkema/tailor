@@ -5,12 +5,10 @@ table view used in the app.
 """
 import re
 
+import asteval
 import numpy as np
 import pandas as pd
-import asteval
-
-from PyQt5 import QtCore, QtGui
-
+from PySide6 import QtCore, QtGui
 
 # treat Inf and -Inf as missing values (e.g. when calling dropna())
 pd.options.mode.use_inf_as_na = True
@@ -58,22 +56,22 @@ class DataModel(QtCore.QAbstractTableModel):
         the cell is requested. You can use this to indicate different types of
         data, e.g. calculated or input data.
 
-        If a role is requested that is not implemented an invalid QVariant is
-        returned.
+        If a role is requested that is not implemented an invalid QVariant
+        (None) is returned.
 
         Args:
             index: a QModelIndex referencing the requested data item.
             role: an ItemDataRole to indicate what type of information is
                 requested.
 
-        Returns: The requested data or an invalid QVariant.
+        Returns: The requested data or an invalid QVariant (None).
         """
         row = index.row()
         col = index.column()
 
         if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
             # request for the data itself
-            value = float(self._data.iat[row, col])
+            value = self._data.iat[row, col]
             if np.isnan(value) and not self.is_calculated_column(col):
                 # NaN in a data column, show as empty
                 return ""
@@ -83,8 +81,9 @@ class DataModel(QtCore.QAbstractTableModel):
             # request for the background fill of the cell
             if self.is_calculated_column(col):
                 return QtGui.QBrush(QtGui.QColor(255, 255, 200))
-        # not implemented, return an invalid QVariant per the docs
-        return QtCore.QVariant()
+        # not implemented, return an invalid QVariant (None) per the docs
+        # See Qt for Python docs -> Considerations -> API Changes
+        return None
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         """Set (attributes of) data values.
@@ -106,7 +105,7 @@ class DataModel(QtCore.QAbstractTableModel):
             row = index.row()
             col = index.column()
             try:
-                self._data.iat[row, col] = value
+                self._data.iat[row, col] = float(value)
             except ValueError:
                 self._data.iat[row, col] = np.nan
             finally:
@@ -133,14 +132,15 @@ class DataModel(QtCore.QAbstractTableModel):
                 requested.
 
         Returns:
-            The data, if available, or an invalid QVariant.
+            The data, if available, or an invalid QVariant (None).
         """
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
                 return self._data.columns[section]
             else:
                 return str(self._data.index[section] + 1)
-        return QtCore.QVariant()
+        # See Qt for Python docs -> Considerations -> API Changes
+        return None
 
     def insertColumn(self, column, parent=None, column_name=None):
         """Insert a single column.

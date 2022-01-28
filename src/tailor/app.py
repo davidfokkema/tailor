@@ -5,26 +5,25 @@ You can fit custom models to your data to estimate best-fit parameters.
 """
 
 import gzip
-from importlib import metadata as importlib_metadata
 import json
-import os
 import pathlib
 import sys
-from textwrap import dedent
 import traceback
+from importlib import metadata as importlib_metadata
+from importlib import resources
+from textwrap import dedent
 
-from PyQt5 import uic, QtWidgets, QtCore, QtGui
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtUiTools import QUiLoader
 import pyqtgraph as pg
-import pkg_resources
 
-from tailor.data_model import DataModel
-from tailor.plot_tab import PlotTab
 from tailor.csv_format_dialog import (
-    CSVFormatDialog,
     DELIMITER_CHOICES,
     NUM_FORMAT_CHOICES,
+    CSVFormatDialog,
 )
-
+from tailor.data_model import DataModel
+from tailor.plot_tab import PlotTab
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
@@ -38,7 +37,7 @@ pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
 
-class UserInterface(QtWidgets.QMainWindow):
+class Application:
     """Main user interface for the tailor app.
 
     The user interface centers on the table containing the data values. A single
@@ -56,71 +55,77 @@ class UserInterface(QtWidgets.QMainWindow):
         # roep de __init__() aan van de parent class
         super().__init__()
 
-        uic.loadUi(pkg_resources.resource_stream("tailor.resources", "tailor.ui"), self)
-        self.setWindowIcon(
-            QtGui.QIcon(
-                pkg_resources.resource_filename("tailor.resources", "tailor.png")
-            )
+        self.ui = QUiLoader().load(resources.path("tailor.resources", "tailor.ui"))
+        self.ui.setWindowIcon(
+            QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
+        # store reference to this code in data tab
+        self.ui.data.code = self
 
         self.clear_all()
 
         # Enable close buttons...
-        self.tabWidget.setTabsClosable(True)
+        self.ui.tabWidget.setTabsClosable(True)
         # ...but remove them for the table view
         for pos in QtWidgets.QTabBar.LeftSide, QtWidgets.QTabBar.RightSide:
-            widget = self.tabWidget.tabBar().tabButton(0, pos)
+            widget = self.ui.tabWidget.tabBar().tabButton(0, pos)
             if widget:
                 widget.close()
 
         # buttons
-        self.add_column_button.clicked.connect(self.add_column)
-        self.add_calculated_column_button.clicked.connect(self.add_calculated_column)
+        self.ui.add_column_button.clicked.connect(self.add_column)
+        self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
-        self.actionQuit.triggered.connect(self.close)
-        self.actionAbout_Tailor.triggered.connect(self.show_about_dialog)
-        self.actionNew.triggered.connect(self.new_project)
-        self.actionOpen.triggered.connect(self.open_project_dialog)
-        self.actionSave.triggered.connect(self.save_project_or_dialog)
-        self.actionSave_As.triggered.connect(self.save_as_project_dialog)
-        self.actionImport_CSV.triggered.connect(
+        self.ui.actionQuit.triggered.connect(self.ui.close)
+        self.ui.actionAbout_Tailor.triggered.connect(self.show_about_dialog)
+        self.ui.actionNew.triggered.connect(self.new_project)
+        self.ui.actionOpen.triggered.connect(self.open_project_dialog)
+        self.ui.actionSave.triggered.connect(self.save_project_or_dialog)
+        self.ui.actionSave_As.triggered.connect(self.save_as_project_dialog)
+        self.ui.actionImport_CSV.triggered.connect(
             lambda: self.import_csv(create_new=True)
         )
-        self.actionImport_CSV_Into_Current_Project.triggered.connect(
+        self.ui.actionImport_CSV_Into_Current_Project.triggered.connect(
             lambda: self.import_csv(create_new=False)
         )
-        self.actionExport_CSV.triggered.connect(self.export_csv)
-        self.actionExport_Graph_to_PDF.triggered.connect(
+        self.ui.actionExport_CSV.triggered.connect(self.export_csv)
+        self.ui.actionExport_Graph_to_PDF.triggered.connect(
             lambda: self.export_graph(".pdf")
         )
-        self.actionExport_Graph_to_PNG.triggered.connect(
+        self.ui.actionExport_Graph_to_PNG.triggered.connect(
             lambda: self.export_graph(".png")
         )
-        self.actionClose.triggered.connect(self.new_project)
-        self.actionAdd_column.triggered.connect(self.add_column)
-        self.actionAdd_calculated_column.triggered.connect(self.add_calculated_column)
-        self.actionAdd_row.triggered.connect(self.add_row)
-        self.actionRemove_column.triggered.connect(self.remove_column)
-        self.actionRemove_row.triggered.connect(self.remove_row)
-        self.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
+        self.ui.actionClose.triggered.connect(self.new_project)
+        self.ui.actionAdd_column.triggered.connect(self.add_column)
+        self.ui.actionAdd_calculated_column.triggered.connect(
+            self.add_calculated_column
+        )
+        self.ui.actionAdd_row.triggered.connect(self.add_row)
+        self.ui.actionRemove_column.triggered.connect(self.remove_column)
+        self.ui.actionRemove_row.triggered.connect(self.remove_row)
+        self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
 
         # user interface events
-        self.tabWidget.currentChanged.connect(self.tab_changed)
-        self.tabWidget.tabCloseRequested.connect(self.close_tab)
-        self.name_edit.textEdited.connect(self.rename_column)
-        self.formula_edit.textEdited.connect(self.update_column_expression)
-        self.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
+        self.ui.tabWidget.currentChanged.connect(self.tab_changed)
+        self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
+        self.ui.name_edit.textEdited.connect(self.rename_column)
+        self.ui.formula_edit.textEdited.connect(self.update_column_expression)
+        self.ui.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # Create shortcut for return/enter keys
         for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
-            QtWidgets.QShortcut(key, self.data_view, self.edit_or_move_down)
+            QtGui.QShortcut(
+                QtGui.QKeySequence(key), self.ui.data_view, self.edit_or_move_down
+            )
         # Shortcut for backspace and delete: clear cell contents
         for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
-            QtWidgets.QShortcut(key, self.data_view, self.clear_selected_cells)
+            QtGui.QShortcut(
+                QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
+            )
 
         # Start at (0, 0)
-        self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
         # tests
         # filename = "~/Desktop/meting1.csv"
@@ -149,7 +154,7 @@ class UserInterface(QtWidgets.QMainWindow):
         # self.data_model._data = pd.DataFrame.from_dict({"x": x, "y": y})
         # self.data_model.endResetModel()
         # self.create_plot_tab("x", "y")
-        # plot_tab = self.tabWidget.currentWidget()
+        # plot_tab = self.ui.tabWidget.currentWidget()
         # plot_tab.model_func.setText("a * x + b")
         # plot_tab.fit_button.clicked.emit()
 
@@ -215,6 +220,9 @@ class UserInterface(QtWidgets.QMainWindow):
         # # plot_tab.model_func.textEdited.emit("")
         # self.save_project("test.tlr")
         # self.clear_all()
+        # self.load_project(pathlib.Path.home() / "Desktop" / "analyse-radon220.tlr")
+        # self.save_project("test.tlr")
+        # self.clear_all()
         # self.load_project("test.tlr")
 
         # self._do_import_csv(
@@ -222,10 +230,10 @@ class UserInterface(QtWidgets.QMainWindow):
         # )
 
     def _set_view_and_selection_model(self):
-        self.data_view.setModel(self.data_model)
-        self.data_view.setDragDropMode(self.data_view.InternalMove)
+        self.ui.data_view.setModel(self.data_model)
+        self.ui.data_view.setDragDropMode(self.ui.data_view.InternalMove)
 
-        self.selection = self.data_view.selectionModel()
+        self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
 
     def closeEvent(self, event):
@@ -238,7 +246,7 @@ class UserInterface(QtWidgets.QMainWindow):
     def show_about_dialog(self):
         """Show about application dialog."""
         box = QtWidgets.QMessageBox()
-        box.setIconPixmap(self.windowIcon().pixmap(64, 64))
+        box.setIconPixmap(self.ui.windowIcon().pixmap(64, 64))
         box.setText("Tailor")
         box.setInformativeText(
             dedent(
@@ -260,10 +268,10 @@ class UserInterface(QtWidgets.QMainWindow):
         cursor down a row, stopping the edit in the process. Trigger a
         recalculation of all calculated columns.
         """
-        cur_index = self.data_view.currentIndex()
-        if not self.data_view.isPersistentEditorOpen(cur_index):
+        cur_index = self.ui.data_view.currentIndex()
+        if not self.ui.data_view.isPersistentEditorOpen(cur_index):
             # is not yet editing, so start an edit
-            self.data_view.edit(cur_index)
+            self.ui.data_view.edit(cur_index)
         else:
             # is already editing, what index is below?
             new_index = self.get_index_below_selected_cell()
@@ -272,7 +280,7 @@ class UserInterface(QtWidgets.QMainWindow):
                 self.add_row()
                 new_index = self.get_index_below_selected_cell()
             # move to it (finishing editing in the process)
-            self.data_view.setCurrentIndex(new_index)
+            self.ui.data_view.setCurrentIndex(new_index)
 
     def clear_selected_cells(self):
         """Clear contents of selected cells."""
@@ -281,7 +289,9 @@ class UserInterface(QtWidgets.QMainWindow):
 
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""
-        return self.data_view.moveCursor(self.data_view.MoveDown, QtCore.Qt.NoModifier)
+        return self.ui.data_view.moveCursor(
+            self.ui.data_view.MoveDown, QtCore.Qt.NoModifier
+        )
 
     def selection_changed(self, selected, deselected):
         """Handle selectionChanged events in the data view.
@@ -297,26 +307,26 @@ class UserInterface(QtWidgets.QMainWindow):
             deselected, items.
         """
         if not selected.isEmpty():
-            self.nameLabel.setEnabled(True)
-            self.name_edit.setEnabled(True)
+            self.ui.nameLabel.setEnabled(True)
+            self.ui.name_edit.setEnabled(True)
             first_selection = selected.first()
             col_idx = first_selection.left()
             self._selected_col_idx = col_idx
-            self.name_edit.setText(self.data_model.get_column_name(col_idx))
-            self.formula_edit.setText(self.data_model.get_column_expression(col_idx))
+            self.ui.name_edit.setText(self.data_model.get_column_name(col_idx))
+            self.ui.formula_edit.setText(self.data_model.get_column_expression(col_idx))
             if self.data_model.is_calculated_column(col_idx):
-                self.formulaLabel.setEnabled(True)
-                self.formula_edit.setEnabled(True)
+                self.ui.formulaLabel.setEnabled(True)
+                self.ui.formula_edit.setEnabled(True)
             else:
-                self.formulaLabel.setEnabled(False)
-                self.formula_edit.setEnabled(False)
+                self.ui.formulaLabel.setEnabled(False)
+                self.ui.formula_edit.setEnabled(False)
         else:
-            self.nameLabel.setEnabled(False)
-            self.name_edit.clear()
-            self.name_edit.setEnabled(False)
-            self.formulaLabel.setEnabled(False)
-            self.formula_edit.clear()
-            self.formula_edit.setEnabled(False)
+            self.ui.nameLabel.setEnabled(False)
+            self.ui.name_edit.clear()
+            self.ui.name_edit.setEnabled(False)
+            self.ui.formulaLabel.setEnabled(False)
+            self.ui.formula_edit.clear()
+            self.ui.formula_edit.setEnabled(False)
 
     def tab_changed(self, idx):
         """Handle currentChanged events of the tab widget.
@@ -327,25 +337,25 @@ class UserInterface(QtWidgets.QMainWindow):
         Args:
             idx: an integer index of the now-focused tab.
         """
-        tab = self.tabWidget.currentWidget()
-        if type(tab) == PlotTab:
-            tab.update_plot()
+        tab = self.ui.tabWidget.currentWidget()
+        if type(tab.code) == PlotTab:
+            tab.code.update_plot()
 
     def add_column(self):
         """Add column to data model and select it."""
         col_index = self.data_model.columnCount()
         self.data_model.insertColumn(col_index)
-        self.data_view.selectColumn(col_index)
-        self.name_edit.selectAll()
-        self.name_edit.setFocus()
+        self.ui.data_view.selectColumn(col_index)
+        self.ui.name_edit.selectAll()
+        self.ui.name_edit.setFocus()
 
     def add_calculated_column(self):
         """Add a calculated column to data model and select it."""
         col_index = self.data_model.columnCount()
         self.data_model.insert_calculated_column(col_index)
-        self.data_view.selectColumn(col_index)
-        self.name_edit.selectAll()
-        self.name_edit.setFocus()
+        self.ui.data_view.selectColumn(col_index)
+        self.ui.name_edit.selectAll()
+        self.ui.name_edit.setFocus()
 
     def add_row(self):
         """Add row to data model."""
@@ -403,8 +413,8 @@ class UserInterface(QtWidgets.QMainWindow):
             old_name: the name that may be currently in use.
             new_name: the new column name
         """
-        num_tabs = self.tabWidget.count()
-        tabs = [self.tabWidget.widget(i) for i in range(num_tabs)]
+        num_tabs = self.ui.tabWidget.count()
+        tabs = [self.ui.tabWidget.widget(i) for i in range(num_tabs)]
         for tab in tabs:
             if type(tab) == PlotTab:
                 needs_info_update = False
@@ -464,19 +474,18 @@ class UserInterface(QtWidgets.QMainWindow):
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(self.data_model, main_window=self)
-        idx = self.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
+        plot_tab = PlotTab(self.data_model, main_window=self.ui)
+        idx = self.ui.tabWidget.addTab(plot_tab.ui, f"Plot {self._plot_num}")
         self._plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
-        self.tabWidget.setCurrentIndex(idx)
+        self.ui.tabWidget.setCurrentIndex(idx)
 
     def create_plot_dialog(self):
         """Create a dialog to request variables for creating a plot."""
-        create_dialog = QtWidgets.QDialog(parent=self)
-        uic.loadUi(
-            pkg_resources.resource_stream("tailor.resources", "create_plot_dialog.ui"),
-            create_dialog,
+        create_dialog = QUiLoader().load(
+            resources.path("tailor.resources", "create_plot_dialog.ui"),
+            self.ui,
         )
         choices = [None] + self.data_model.get_column_names()
         create_dialog.x_axis_box.addItems(choices)
@@ -496,20 +505,20 @@ class UserInterface(QtWidgets.QMainWindow):
         if idx > 0:
             # Don't close the table view, only close plot tabs
             if self.confirm_close_dialog("Are you sure you want to close this plot?"):
-                self.tabWidget.removeTab(idx)
+                self.ui.tabWidget.removeTab(idx)
 
     def clear_all(self):
         """Clear all program state.
 
         Closes all tabs and data.
         """
-        for idx in range(self.tabWidget.count(), 0, -1):
+        for idx in range(self.ui.tabWidget.count(), 0, -1):
             # close all plot tabs in reverse order, they are no longer valid
-            self.tabWidget.removeTab(idx)
+            self.ui.tabWidget.removeTab(idx)
         self._plot_num = 1
         self.data_model = DataModel(main_window=self)
         self._set_view_and_selection_model()
-        self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
         self._set_project_path(None)
 
     def new_project(self):
@@ -532,7 +541,7 @@ class UserInterface(QtWidgets.QMainWindow):
     def save_as_project_dialog(self):
         """Present save project dialog and save project."""
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self,
+            parent=self.ui,
             filter="Tailor project files (*.tlr);;All files (*)",
         )
         if filename:
@@ -554,17 +563,17 @@ class UserInterface(QtWidgets.QMainWindow):
                 "data_model": {},
                 "tabs": [],
                 "plot_num": self._plot_num,
-                "current_tab": self.tabWidget.currentIndex(),
+                "current_tab": self.ui.tabWidget.currentIndex(),
             }
 
             # save data for the data model
             self.data_model.save_state_to_obj(save_obj["data_model"])
 
-            for idx in range(1, self.tabWidget.count()):
+            for idx in range(1, self.ui.tabWidget.count()):
                 # save data for each tab
-                tab = self.tabWidget.widget(idx)
-                tab_data = {"label": self.tabWidget.tabBar().tabText(idx)}
-                tab.save_state_to_obj(tab_data)
+                tab = self.ui.tabWidget.widget(idx)
+                tab_data = {"label": self.ui.tabWidget.tabBar().tabText(idx)}
+                tab.code.save_state_to_obj(tab_data)
                 save_obj["tabs"].append(tab_data)
         except Exception as exc:
             self._show_exception(
@@ -584,7 +593,7 @@ class UserInterface(QtWidgets.QMainWindow):
         """Present open project dialog and load project."""
         if self.confirm_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self,
+                parent=self.ui,
                 filter="Tailor project files (*.tlr);;All files (*)",
             )
             if filename:
@@ -611,7 +620,7 @@ class UserInterface(QtWidgets.QMainWindow):
         if msg is None:
             msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
         button = QtWidgets.QMessageBox.warning(
-            self,
+            self.ui,
             "Please confirm",
             msg,
             buttons=QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
@@ -645,11 +654,11 @@ class UserInterface(QtWidgets.QMainWindow):
 
             # create a tab and load data for each plot
             for tab_data in save_obj["tabs"]:
-                plot_tab = PlotTab(self.data_model, main_window=self)
-                idx = self.tabWidget.addTab(plot_tab, tab_data["label"])
+                plot_tab = PlotTab(self.data_model, main_window=self.ui)
+                self.ui.tabWidget.addTab(plot_tab.ui, tab_data["label"])
                 plot_tab.load_state_from_obj(tab_data)
             self._plot_num = save_obj["plot_num"]
-            self.tabWidget.setCurrentIndex(save_obj["current_tab"])
+            self.ui.tabWidget.setCurrentIndex(save_obj["current_tab"])
 
     def export_csv(self):
         """Export all data as CSV.
@@ -657,7 +666,7 @@ class UserInterface(QtWidgets.QMainWindow):
         Export all data in the table as a comma-separated values file.
         """
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self,
+            parent=self.ui,
             filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
         )
         if filename:
@@ -675,12 +684,12 @@ class UserInterface(QtWidgets.QMainWindow):
         """
         if self.confirm_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self,
+                parent=self.ui,
                 filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
             )
             if filename:
-                dialog = CSVFormatDialog(filename)
-                if dialog.exec() == QtWidgets.QDialog.Accepted:
+                dialog = CSVFormatDialog(filename, parent=self.ui)
+                if dialog.ui.exec() == QtWidgets.QDialog.Accepted:
                     (
                         delimiter,
                         decimal,
@@ -728,7 +737,7 @@ class UserInterface(QtWidgets.QMainWindow):
             header=header,
             skiprows=skiprows,
         )
-        self.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
     def export_graph(self, suffix):
         """Export a graph to a file.
@@ -739,10 +748,10 @@ class UserInterface(QtWidgets.QMainWindow):
         Args:
             suffix: the required suffix of the file.
         """
-        tab = self.tabWidget.currentWidget()
+        tab = self.ui.tabWidget.currentWidget()
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                parent=self,
+                parent=self.ui,
                 filter=f"Graphics (*{suffix});;All files (*)",
             )
             if filename:
@@ -769,9 +778,9 @@ class UserInterface(QtWidgets.QMainWindow):
         """Set window title and project name."""
         self._project_filename = filename
         if filename is not None:
-            self.setWindowTitle(f"Tailor: {pathlib.Path(filename).stem}")
+            self.ui.setWindowTitle(f"Tailor: {pathlib.Path(filename).stem}")
         else:
-            self.setWindowTitle("Tailor")
+            self.ui.setWindowTitle("Tailor")
 
     def _show_exception(self, exc, title, text):
         """Show a messagebox with detailed exception information.
@@ -781,7 +790,7 @@ class UserInterface(QtWidgets.QMainWindow):
             title: short header text.
             text: longer informative text describing the problem.
         """
-        msg = QtWidgets.QMessageBox(parent=self)
+        msg = QtWidgets.QMessageBox(parent=self.ui)
         msg.setText(title)
         msg.setInformativeText(text)
         msg.setDetailedText(traceback.format_exc())
@@ -791,10 +800,10 @@ class UserInterface(QtWidgets.QMainWindow):
 
 def main():
     """Main entry point."""
-    app = QtWidgets.QApplication(sys.argv)
-    ui = UserInterface()
-    ui.show()
-    sys.exit(app.exec())
+    qapp = QtWidgets.QApplication(sys.argv)
+    app = Application()
+    app.ui.show()
+    sys.exit(qapp.exec())
 
 
 if __name__ == "__main__":

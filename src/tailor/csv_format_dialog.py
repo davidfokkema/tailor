@@ -1,10 +1,10 @@
-from pathlib import Path
 import textwrap
+from importlib import resources
+from pathlib import Path
 
-import pkg_resources
-from PyQt5 import uic, QtWidgets
 import pandas as pd
-
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import QUiLoader
 
 DELIMITER_CHOICES = {
     "detect": None,
@@ -16,31 +16,30 @@ DELIMITER_CHOICES = {
 NUM_FORMAT_CHOICES = {"1,000.0": (".", ","), "1.000,0": (",", ".")}
 
 
-class CSVFormatDialog(QtWidgets.QDialog):
-    def __init__(self, filename):
+class CSVFormatDialog:
+    def __init__(self, filename, parent):
         """Create the CSV file format selection dialog."""
         super().__init__()
 
         self.filename = Path(filename).expanduser()
 
-        uic.loadUi(
-            pkg_resources.resource_stream("tailor.resources", "csv_format_dialog.ui"),
-            self,
+        self.ui = QUiLoader().load(
+            resources.path("tailor.resources", "csv_format_dialog.ui"), parent
         )
-        self.delimiter_box.addItems(DELIMITER_CHOICES.keys())
-        self.num_format_box.addItems(NUM_FORMAT_CHOICES.keys())
+        self.ui.delimiter_box.addItems(DELIMITER_CHOICES.keys())
+        self.ui.num_format_box.addItems(NUM_FORMAT_CHOICES.keys())
 
-        self.delimiter_box.currentIndexChanged.connect(self.show_preview)
-        self.num_format_box.currentIndexChanged.connect(self.show_preview)
-        self.use_header_box.stateChanged.connect(self.show_preview)
-        self.header_row_box.valueChanged.connect(self.show_preview)
-        self.preview_choice.buttonClicked.connect(self.show_preview)
+        self.ui.delimiter_box.currentIndexChanged.connect(self.show_preview)
+        self.ui.num_format_box.currentIndexChanged.connect(self.show_preview)
+        self.ui.use_header_box.stateChanged.connect(self.show_preview)
+        self.ui.header_row_box.valueChanged.connect(self.show_preview)
+        self.ui.preview_choice.buttonClicked.connect(self.show_preview)
 
         self.show_preview()
 
     def show_preview(self):
         """Show a preview of the CSV data."""
-        if self.preview_choice.checkedButton() == self.preview_csv_button:
+        if self.ui.preview_choice.checkedButton() == self.ui.preview_csv_button:
             (
                 delimiter,
                 decimal,
@@ -93,7 +92,7 @@ class CSVFormatDialog(QtWidgets.QDialog):
                     {exc!s}
                     """
                 )
-        self.preview_box.setPlainText(text)
+        self.ui.preview_box.setPlainText(text)
 
     def get_format_parameters(self):
         """Get CSV format parameters
@@ -101,12 +100,12 @@ class CSVFormatDialog(QtWidgets.QDialog):
         Returns:
             delimiter, decimal, thousands, header: a tuple of format options.
         """
-        delimiter = DELIMITER_CHOICES[self.delimiter_box.currentText()]
-        decimal, thousands = NUM_FORMAT_CHOICES[self.num_format_box.currentText()]
-        if self.use_header_box.isChecked():
-            header = self.header_row_box.value()
+        delimiter = DELIMITER_CHOICES[self.ui.delimiter_box.currentText()]
+        decimal, thousands = NUM_FORMAT_CHOICES[self.ui.num_format_box.currentText()]
+        if self.ui.use_header_box.isChecked():
+            header = self.ui.header_row_box.value()
             skiprows = 0
         else:
             header = None
-            skiprows = self.header_row_box.value()
+            skiprows = self.ui.header_row_box.value()
         return delimiter, decimal, thousands, header, skiprows
