@@ -21,7 +21,7 @@ requires = [
     'matplotlib>=3.5.1,<4.0.0',
 ]
 
-[tool.briefcase.app.tailor.document_type.document]
+[tool.briefcase.app.tailor.document_type.tlr]
 extension = "tlr"
 description = "Tailor project"
 icon = "src/tailor/resources/document_icon"
