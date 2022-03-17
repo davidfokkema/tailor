@@ -14,9 +14,7 @@ from importlib import resources
 from pathlib import Path
 from textwrap import dedent
 
-import appdirs
 import pyqtgraph as pg
-import toml
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtUiTools import QUiLoader
 
@@ -27,14 +25,13 @@ from tailor.csv_format_dialog import (
 )
 from tailor.data_model import DataModel
 from tailor.plot_tab import PlotTab
+from tailor import config
+
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
 __name__ = metadata["name"]
 __version__ = metadata["version"]
-
-
-CONFIG_FILE = "config.toml"
 
 
 # FIXME: antialiasing is EXTREMELY slow. Why?
@@ -598,16 +595,16 @@ class Application:
     def open_project_dialog(self):
         """Present open project dialog and load project."""
         if self.confirm_close_dialog():
-            config = self.read_config()
+            cfg = config.read_config()
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self.ui,
-                dir=config.get("recent_dir"),
+                dir=cfg.get("recent_dir"),
                 filter="Tailor project files (*.tlr);;All files (*)",
             )
             if filename:
                 directory = Path(filename).parent
-                config["recent_dir"] = str(directory)
-                self.write_config(config)
+                cfg["recent_dir"] = str(directory)
+                config.write_config(cfg)
                 try:
                     self.load_project(filename)
                 except Exception as exc:
@@ -697,16 +694,16 @@ class Application:
                 project or import into the existing project.
         """
         if self.confirm_close_dialog():
-            config = self.read_config()
+            cfg = config.read_config()
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self.ui,
-                dir=config.get("recent_dir"),
+                dir=cfg.get("recent_dir"),
                 filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
             )
             if filename:
                 directory = Path(filename).parent
-                config["recent_dir"] = str(directory)
-                self.write_config(config)
+                cfg["recent_dir"] = str(directory)
+                config.write_config(cfg)
                 dialog = CSVFormatDialog(filename, parent=self.ui)
                 if dialog.ui.exec() == QtWidgets.QDialog.Accepted:
                     (
@@ -815,40 +812,6 @@ class Application:
         msg.setDetailedText(traceback.format_exc())
         msg.setStyleSheet("QLabel{min-width: 400px;}")
         msg.exec()
-
-    def read_config(self):
-        """Read configuration file."""
-        config_path = self.get_config_path()
-        if config_path.is_file():
-            with open(config_path) as f:
-                return toml.load(f)
-        else:
-            return {}
-
-    def write_config(self, config):
-        """Write configuration file.
-
-        Args:
-            config: a dictionary containing the configuration.
-        """
-        self.create_config_dir()
-        config_path = self.get_config_path()
-        toml_config = toml.dumps(config)
-        with open(config_path, "w") as f:
-            # separate TOML generation from writing to file, or an exception
-            # generating TOML will result in an empty file
-            f.write(toml_config)
-
-    def get_config_path(self):
-        """Get path of configuration file."""
-        config_dir = pathlib.Path(appdirs.user_config_dir(__name__))
-        config_path = config_dir / CONFIG_FILE
-        return config_path
-
-    def create_config_dir(self):
-        """Create configuration directory if necessary."""
-        config_path = self.get_config_path()
-        config_path.parent.mkdir(parents=True, exist_ok=True)
 
 
 def main():
