@@ -620,13 +620,16 @@ class Application:
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.
 
-        Present a dialog to confirm that the user really wants to close a project and lose all changes.
+        Present a dialog to confirm that the user really wants to close a
+        project and lose all changes.
 
         Args:
-            msg: optional message to present to the user. If None, the default message asks for confirmation to discard the current project.
+            msg: optional message to present to the user. If None, the default
+                message asks for confirmation to discard the current project.
 
         Returns:
-            A boolean. If True, the user confirms closing the project. If False, the user wants to cancel the action.
+            A boolean. If True, the user confirms closing the project. If False,
+            the user wants to cancel the action.
         """
         if msg is None:
             msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
