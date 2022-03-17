@@ -170,8 +170,16 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuOpen_Recent">
+     <property name="title">
+      <string>Open Recent</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="actionClear_Menu"/>
+    </widget>
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
+    <addaction name="menuOpen_Recent"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_As"/>
     <addaction name="separator"/>
@@ -294,6 +302,14 @@
   <action name="actionClear_Cell_Contents">
    <property name="text">
     <string>Clear Cell Contents</string>
+   </property>
+  </action>
+  <action name="actionClear_Menu">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Clear Menu</string>
    </property>
   </action>
  </widget>
