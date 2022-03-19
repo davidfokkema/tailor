@@ -109,6 +109,11 @@ class Application:
         self.ui.actionRemove_row.triggered.connect(self.remove_row)
         self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
 
+        # set up the open recent menu
+        self.update_recent_files()
+        self.ui.menuOpen_Recent.insertSeparator(self.ui.actionClear_Menu)
+        self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
+
         # user interface events
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
@@ -812,6 +817,47 @@ class Application:
         msg.setDetailedText(traceback.format_exc())
         msg.setStyleSheet("QLabel{min-width: 400px;}")
         msg.exec()
+
+    def update_recent_files(self, file=None):
+        """Update open recent files list.
+
+        Update open recent files list in menu and in configuration file.
+
+        Args:
+            file (Path or str): the most recent file which will be added to the list.
+        """
+        cfg = config.read_config()
+        recents = cfg.get("recent_files", [])
+
+        if file:
+            path = str(file)
+            if path in recents:
+                recents.remove(path)
+            recents.insert(0, path)
+            cfg["recent_files"] = recents
+            config.write_config(cfg)
+
+        self.populate_recent_files_menu(recents)
+
+    def populate_recent_files_menu(self, recents):
+        """Populate the open recent files menu.
+
+        Populate the recent files with a list of recent file names.
+
+        Args:
+            recents (list): A list of recent file names.
+        """
+        actions = [QtGui.QAction(f) for f in recents]
+        self.ui.menuOpen_Recent.insertActions(self.ui.actionClear_Menu, actions)
+        self._recent_files_actions = actions
+        self.ui.actionClear_Menu.setEnabled(True)
+
+    def clear_recent_files_menu(self):
+        """Clear the open recent files menu."""
+        for action in self._recent_files_actions:
+            self.ui.menuOpen_Recent.removeAction(action)
+        self._recent_files_actions = None
+        self.ui.actionClear_Menu.setEnabled(False)
 
 
 def main():

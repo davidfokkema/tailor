@@ -174,7 +174,6 @@
      <property name="title">
       <string>Open Recent</string>
      </property>
-     <addaction name="separator"/>
      <addaction name="actionClear_Menu"/>
     </widget>
     <addaction name="actionNew"/>
