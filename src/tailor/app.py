@@ -857,6 +857,9 @@ class Application:
         for action in self._recent_files_actions:
             self.ui.menuOpen_Recent.removeAction(action)
         self._recent_files_actions = None
+        cfg = config.read_config()
+        cfg["recent_files"] = []
+        config.write_config(cfg)
         self.ui.actionClear_Menu.setEnabled(False)
 
 
