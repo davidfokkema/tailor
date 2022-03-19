@@ -34,6 +34,9 @@ __name__ = metadata["name"]
 __version__ = metadata["version"]
 
 
+MAX_RECENT_FILES = 5
+
+
 # FIXME: antialiasing is EXTREMELY slow. Why?
 # pg.setConfigOptions(antialias=True)
 pg.setConfigOption("background", "w")
@@ -110,8 +113,10 @@ class Application:
         self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
 
         # set up the open recent menu
+        self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
+            self.ui.actionClear_Menu
+        )
         self.update_recent_files()
-        self.ui.menuOpen_Recent.insertSeparator(self.ui.actionClear_Menu)
         self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
         # user interface events
@@ -618,6 +623,8 @@ class Application:
                         title="Unable to open project.",
                         text="This can happen if the file is corrupt or if there is a bug in the application.",
                     )
+                else:
+                    self.update_recent_files(filename)
 
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.
@@ -828,15 +835,14 @@ class Application:
         """
         cfg = config.read_config()
         recents = cfg.get("recent_files", [])
-
         if file:
             path = str(file)
             if path in recents:
                 recents.remove(path)
             recents.insert(0, path)
+            recents = recents[:MAX_RECENT_FILES]
             cfg["recent_files"] = recents
             config.write_config(cfg)
-
         self.populate_recent_files_menu(recents)
 
     def populate_recent_files_menu(self, recents):
@@ -848,14 +854,15 @@ class Application:
             recents (list): A list of recent file names.
         """
         actions = [QtGui.QAction(f) for f in recents]
-        self.ui.menuOpen_Recent.insertActions(self.ui.actionClear_Menu, actions)
+        self.ui.menuOpen_Recent.insertActions(self.ui._recent_files_separator, actions)
+        if actions:
+            self.ui.actionClear_Menu.setEnabled(True)
         self._recent_files_actions = actions
-        self.ui.actionClear_Menu.setEnabled(True)
 
     def clear_recent_files_menu(self):
         """Clear the open recent files menu."""
-        for action in self._recent_files_actions:
-            self.ui.menuOpen_Recent.removeAction(action)
+        # You don't have to explicitly remove actions from the menu. Removing
+        # references to actions removes them from the menu automatically.
         self._recent_files_actions = None
         cfg = config.read_config()
         cfg["recent_files"] = []
