@@ -369,9 +369,9 @@ class Application:
         Args:
             idx: an integer index of the now-focused tab.
         """
-        tab = self.ui.tabWidget.currentWidget()
-        if type(tab.code) == PlotTab:
-            tab.code.update_plot()
+        tab = self.ui.tabWidget.currentWidget().code
+        if type(tab) == PlotTab:
+            tab.update_plot()
 
     def add_column(self):
         """Add column to data model and select it."""
@@ -446,7 +446,7 @@ class Application:
             new_name: the new column name
         """
         num_tabs = self.ui.tabWidget.count()
-        tabs = [self.ui.tabWidget.widget(i) for i in range(num_tabs)]
+        tabs = [self.ui.tabWidget.widget(i).code for i in range(num_tabs)]
         for tab in tabs:
             if type(tab) == PlotTab:
                 needs_info_update = False
@@ -455,6 +455,8 @@ class Application:
                         needs_info_update = True
                         setattr(tab, var, new_name)
                         # The following creates problems with partial matches
+                        # For now, the model function is *not* updated
+                        #
                         # if var == "x_var":
                         # update model expression and model object
                         # expr = tab.model_func.text()
@@ -548,7 +550,7 @@ class Application:
             # close all plot tabs in reverse order, they are no longer valid
             self.ui.tabWidget.removeTab(idx)
         self._plot_num = 1
-        self.data_model = DataModel(main_window=self)
+        self.data_model = DataModel(main_window=self.ui)
         self._set_view_and_selection_model()
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
         self._set_project_path(None)
@@ -603,9 +605,9 @@ class Application:
 
             for idx in range(1, self.ui.tabWidget.count()):
                 # save data for each tab
-                tab = self.ui.tabWidget.widget(idx)
+                tab = self.ui.tabWidget.widget(idx).code
                 tab_data = {"label": self.ui.tabWidget.tabBar().tabText(idx)}
-                tab.code.save_state_to_obj(tab_data)
+                tab.save_state_to_obj(tab_data)
                 save_obj["tabs"].append(tab_data)
         except Exception as exc:
             self._show_exception(
@@ -795,7 +797,7 @@ class Application:
         Args:
             suffix: the required suffix of the file.
         """
-        tab = self.ui.tabWidget.currentWidget()
+        tab = self.ui.tabWidget.currentWidget().code
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self.ui,
