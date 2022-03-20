@@ -43,7 +43,7 @@ pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
 
-class Application:
+class Application(QtCore.QObject):
     """Main user interface for the tailor app.
 
     The user interface centers on the table containing the data values. A single
@@ -59,7 +59,6 @@ class Application:
     def __init__(self):
         """Initialize the class."""
 
-        # roep de __init__() aan van de parent class
         super().__init__()
 
         self.ui = QUiLoader().load(resources.path("tailor.resources", "tailor.ui"))
@@ -79,7 +78,7 @@ class Application:
             if widget:
                 widget.close()
 
-        # buttons
+        # connect button signals
         self.ui.add_column_button.clicked.connect(self.add_column)
         self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
@@ -126,6 +125,10 @@ class Application:
         self.ui.name_edit.textEdited.connect(self.rename_column)
         self.ui.formula_edit.textEdited.connect(self.update_column_expression)
         self.ui.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
+
+        # install event filter to capture UI events (which are not signals)
+        # necessary to caputer closeEvent inside QMainWindow widget
+        self.ui.installEventFilter(self)
 
         # Set standard shortcuts for menu items
         self.ui.actionNew.setShortcut(QtGui.QKeySequence.New)
@@ -268,12 +271,29 @@ class Application:
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
 
-    def closeEvent(self, event):
-        """Ask for confirmation before closing."""
-        if self.confirm_close_dialog():
-            event.accept()
+    def eventFilter(self, watched, event):
+        """Catch PySide6 events.
+
+        Events are signals without slots. That is, signals which cannot be
+        connected to predefined endpoints. They can, however, be captured by an
+        event filter.
+
+        Args:
+            watched (QtCore.QObject): the object which generated the event.
+            event (QtCore.QEvent): the event object.
+
+        Returns:
+            boolean: True if the event is ignored, False otherwise.
+        """
+        if watched is self.ui and event.type() == QtCore.QEvent.Close:
+            if self.confirm_close_dialog():
+                event.accept()
+                return False
+            else:
+                event.ignore()
+                return True
         else:
-            event.ignore()
+            return super().eventFilter(watched, event)
 
     def show_about_dialog(self):
         """Show about application dialog."""
