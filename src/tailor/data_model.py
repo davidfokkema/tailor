@@ -258,6 +258,7 @@ class DataModel(QtCore.QAbstractTableModel):
             new_name: a string with the new column name.
         """
         old_name = self._data.columns[col_idx]
+        new_name = self.normalize_column_name(new_name)
         self._data.rename(columns={old_name: new_name}, inplace=True)
         try:
             self._calculated_column_expression[
@@ -267,6 +268,21 @@ class DataModel(QtCore.QAbstractTableModel):
             pass
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
         self.main_window.statusbar.showMessage("Renamed column.", timeout=MSG_TIMEOUT)
+        return new_name
+
+    def normalize_column_name(self, name):
+        """Normalize column name.
+
+        Change whitespace to underscores and add an underscore if the name
+        starts with a number.
+
+        Args:
+            name (str): the name to normalize.
+
+        Returns:
+            str: the normalized name.
+        """
+        return re.sub("\W+|^(?=\d)", "_", name)
 
     def update_column_expression(self, col_idx, expression):
         """Update a calculated column with a new expression.
@@ -567,5 +583,5 @@ class DataModel(QtCore.QAbstractTableModel):
         # make sure column names are strings, even for numbered columns
         df.columns = df.columns.astype(str)
         # normalize column names to valid python variable names
-        df.columns = df.columns.map(lambda s: re.sub("\W+|^(?=\d)", "_", s))
+        df.columns = df.columns.map(self.normalize_column_name)
         return df
