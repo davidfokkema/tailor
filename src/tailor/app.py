@@ -127,6 +127,24 @@ class Application:
         self.ui.formula_edit.textEdited.connect(self.update_column_expression)
         self.ui.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
+        # Set standard shortcuts for menu items
+        self.ui.actionNew.setShortcut(QtGui.QKeySequence.New)
+        self.ui.actionOpen.setShortcut(QtGui.QKeySequence.Open)
+        self.ui.actionClose.setShortcut(QtGui.QKeySequence.Close)
+        self.ui.actionSave.setShortcut(QtGui.QKeySequence.Save)
+        self.ui.actionSave_As.setShortcut(QtGui.QKeySequence.SaveAs)
+
+        # Set other shortcuts for menu items
+        self.ui.actionImport_CSV.setShortcut(QtGui.QKeySequence("Ctrl+I"))
+        self.ui.actionImport_CSV_Into_Current_Project.setShortcut(
+            QtGui.QKeySequence("Shift+Ctrl+I")
+        )
+        self.ui.actionExport_CSV.setShortcut(QtGui.QKeySequence("Ctrl+E"))
+        self.ui.actionExport_Graph_to_PDF.setShortcut(QtGui.QKeySequence("Ctrl+G"))
+        self.ui.actionExport_Graph_to_PNG.setShortcut(
+            QtGui.QKeySequence("Shift+Ctrl+G")
+        )
+
         # Create shortcut for return/enter keys
         for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
             QtGui.QShortcut(
