@@ -65,9 +65,6 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="model_func"/>
-        </item>
         <item row="1" column="0">
          <spacer name="horizontalSpacer">
           <property name="orientation">
@@ -88,6 +85,13 @@
           </property>
           <property name="checked">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPlainTextEdit" name="model_func">
+          <property name="lineWrapMode">
+           <enum>QPlainTextEdit::WidgetWidth</enum>
           </property>
          </widget>
         </item>
@@ -241,9 +245,7 @@
         <item>
          <widget class="QPlainTextEdit" name="result_box">
           <property name="font">
-           <font>
-            <family>Courier New</family>
-           </font>
+           <font/>
           </property>
           <property name="lineWrapMode">
            <enum>QPlainTextEdit::NoWrap</enum>
@@ -388,7 +390,6 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>model_func</tabstop>
   <tabstop>show_initial_fit</tabstop>
   <tabstop>fit_start_box</tabstop>
   <tabstop>fit_end_box</tabstop>

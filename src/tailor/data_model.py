@@ -266,7 +266,7 @@ class DataModel(QtCore.QAbstractTableModel):
         except KeyError:
             pass
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
-        self.main_window.statusbar.showMessage("Renamed column.", msecs=MSG_TIMEOUT)
+        self.main_window.statusbar.showMessage("Renamed column.", timeout=MSG_TIMEOUT)
 
     def update_column_expression(self, col_idx, expression):
         """Update a calculated column with a new expression.
@@ -285,7 +285,7 @@ class DataModel(QtCore.QAbstractTableModel):
                 bottom_right = self.createIndex(len(self._data), col_idx)
                 self.dataChanged.emit(top_left, bottom_right)
                 self.main_window.statusbar.showMessage(
-                    "Updated column values.", msecs=MSG_TIMEOUT
+                    "Updated column values.", timeout=MSG_TIMEOUT
                 )
 
     def recalculate_column(self, col_name, expression=None):
@@ -311,7 +311,7 @@ class DataModel(QtCore.QAbstractTableModel):
             for err in aeval.error:
                 exc, msg = err.get_error()
                 self.main_window.statusbar.showMessage(
-                    f"ERROR: {exc}: {msg}.", msecs=MSG_TIMEOUT
+                    f"ERROR: {exc}: {msg}.", timeout=MSG_TIMEOUT
                 )
         elif output is not None:
             if isinstance(output, pd.Series):
