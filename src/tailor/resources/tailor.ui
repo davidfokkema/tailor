@@ -179,6 +179,8 @@
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
     <addaction name="menuOpen_Recent"/>
+    <addaction name="separator"/>
+    <addaction name="actionClose"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_As"/>
     <addaction name="separator"/>
@@ -189,7 +191,6 @@
     <addaction name="actionExport_Graph_to_PDF"/>
     <addaction name="actionExport_Graph_to_PNG"/>
     <addaction name="separator"/>
-    <addaction name="actionClose"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
