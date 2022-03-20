@@ -9,6 +9,7 @@ import json
 import pathlib
 import sys
 import traceback
+from functools import partial
 from importlib import metadata as importlib_metadata
 from importlib import resources
 from pathlib import Path
@@ -18,6 +19,7 @@ import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtUiTools import QUiLoader
 
+from tailor import config
 from tailor.csv_format_dialog import (
     DELIMITER_CHOICES,
     NUM_FORMAT_CHOICES,
@@ -25,8 +27,6 @@ from tailor.csv_format_dialog import (
 )
 from tailor.data_model import DataModel
 from tailor.plot_tab import PlotTab
-from tailor import config
-
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
@@ -52,6 +52,7 @@ class Application:
     """
 
     _project_filename = None
+    _recent_files_actions = None
     _selected_col_idx = None
     _plot_num = 1
 
@@ -615,16 +616,7 @@ class Application:
                 directory = Path(filename).parent
                 cfg["recent_dir"] = str(directory)
                 config.write_config(cfg)
-                try:
-                    self.load_project(filename)
-                except Exception as exc:
-                    self._show_exception(
-                        exc,
-                        title="Unable to open project.",
-                        text="This can happen if the file is corrupt or if there is a bug in the application.",
-                    )
-                else:
-                    self.update_recent_files(filename)
+                self.load_project(filename)
 
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.
@@ -663,25 +655,34 @@ class Application:
         Args:
             filename: a string containing the filename to load from.
         """
-        with gzip.open(filename) as f:
-            save_obj = json.loads(f.read().decode("utf-8"))
+        try:
+            with gzip.open(filename) as f:
+                save_obj = json.loads(f.read().decode("utf-8"))
 
-        if save_obj["application"] == __name__:
-            self.clear_all()
+            if save_obj["application"] == __name__:
+                self.clear_all()
 
-            # remember filename for subsequent call to "Save"
-            self._set_project_path(filename)
+                # remember filename for subsequent call to "Save"
+                self._set_project_path(filename)
 
-            # load data for the data model
-            self.data_model.load_state_from_obj(save_obj["data_model"])
+                # load data for the data model
+                self.data_model.load_state_from_obj(save_obj["data_model"])
 
-            # create a tab and load data for each plot
-            for tab_data in save_obj["tabs"]:
-                plot_tab = PlotTab(self.data_model, main_window=self.ui)
-                self.ui.tabWidget.addTab(plot_tab.ui, tab_data["label"])
-                plot_tab.load_state_from_obj(tab_data)
-            self._plot_num = save_obj["plot_num"]
-            self.ui.tabWidget.setCurrentIndex(save_obj["current_tab"])
+                # create a tab and load data for each plot
+                for tab_data in save_obj["tabs"]:
+                    plot_tab = PlotTab(self.data_model, main_window=self.ui)
+                    self.ui.tabWidget.addTab(plot_tab.ui, tab_data["label"])
+                    plot_tab.load_state_from_obj(tab_data)
+                self._plot_num = save_obj["plot_num"]
+                self.ui.tabWidget.setCurrentIndex(save_obj["current_tab"])
+        except Exception as exc:
+            self._show_exception(
+                exc,
+                title="Unable to open project.",
+                text="This can happen if the file is corrupt or if there is a bug in the application.",
+            )
+        else:
+            self.update_recent_files(filename)
 
     def export_csv(self):
         """Export all data as CSV.
@@ -853,21 +854,34 @@ class Application:
         Args:
             recents (list): A list of recent file names.
         """
-        actions = [QtGui.QAction(f) for f in recents]
-        self.ui.menuOpen_Recent.insertActions(self.ui._recent_files_separator, actions)
-        if actions:
+        if self._recent_files_actions:
+            for action in self._recent_files_actions:
+                self.ui.menuOpen_Recent.removeAction(action)
+        if recents:
+            actions = [QtGui.QAction(f) for f in recents]
+            self.ui.menuOpen_Recent.insertActions(
+                self.ui._recent_files_separator, actions
+            )
+            for action in actions:
+                action.triggered.connect(
+                    partial(self.open_recent_project_action, action.text())
+                )
             self.ui.actionClear_Menu.setEnabled(True)
-        self._recent_files_actions = actions
+            self._recent_files_actions = actions
 
     def clear_recent_files_menu(self):
         """Clear the open recent files menu."""
-        # You don't have to explicitly remove actions from the menu. Removing
-        # references to actions removes them from the menu automatically.
+        for action in self._recent_files_actions:
+            self.ui.menuOpen_Recent.removeAction(action)
         self._recent_files_actions = None
         cfg = config.read_config()
         cfg["recent_files"] = []
         config.write_config(cfg)
         self.ui.actionClear_Menu.setEnabled(False)
+
+    def open_recent_project_action(self, filename):
+        if self.confirm_close_dialog():
+            self.load_project(filename)
 
 
 def main():
