@@ -455,8 +455,10 @@ class Application(QtCore.QObject):
             # Do not allow empty names or duplicate column names
             if name and name not in self.data_model.get_column_names():
                 old_name = self.data_model.get_column_name(self._selected_col_idx)
-                self.data_model.rename_column(self._selected_col_idx, name)
-                self.rename_plot_variables(old_name, name)
+                new_name = self.data_model.rename_column(self._selected_col_idx, name)
+                self.rename_plot_variables(old_name, new_name)
+                # set the normalized name to the name edit field
+                self.ui.name_edit.setText(new_name)
 
     def rename_plot_variables(self, old_name, new_name):
         """Rename any plotted variables
