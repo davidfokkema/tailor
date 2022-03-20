@@ -19,6 +19,7 @@ requires = [
     'PySide6>=6.2.1,<6.2.2',
     'pyqtgraph>=0.12.3,<0.13.0',
     'matplotlib>=3.5.1,<4.0.0',
+    'appdirs>=1.4.4,<2.0.0',
 ]
 
 [tool.briefcase.app.tailor.document_type.tlr]
