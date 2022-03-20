@@ -350,7 +350,7 @@ class PlotTab:
         Returns:
             A set of parameter names.
         """
-        model_expr = self.ui.model_func.text()
+        model_expr = self.ui.model_func.toPlainText()
         code = compile(model_expr, "<string>", "eval")
         params = set(code.co_names) - set([self.x_var]) - self._symbols
         if self.y_var in params:
@@ -698,7 +698,6 @@ class PlotTab:
             {
                 name: getattr(self.ui, name).text()
                 for name in [
-                    "model_func",
                     "xlabel",
                     "xmin",
                     "xmax",
@@ -708,6 +707,9 @@ class PlotTab:
                 ]
             }
         )
+
+        # save plaintext strings
+        save_obj["model_func"] = self.ui.model_func.toPlainText()
 
         save_obj["parameters"] = self.get_parameter_hints()
 
@@ -747,7 +749,6 @@ class PlotTab:
 
         # load linedit strings
         for name in [
-            "model_func",
             "xlabel",
             "xmin",
             "xmax",
@@ -758,6 +759,9 @@ class PlotTab:
             text = save_obj[name]
             widget = getattr(self.ui, name)
             widget.setText(text)
+
+        # load plaintext strings
+        self.ui.model_func.setPlainText(save_obj["model_func"])
 
         # load checkbox state
         for name in ["use_fit_domain"]:
