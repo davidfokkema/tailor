@@ -12,7 +12,6 @@ import traceback
 from functools import partial
 from importlib import metadata as importlib_metadata
 from importlib import resources
-from pathlib import Path
 from textwrap import dedent
 
 import pyqtgraph as pg
@@ -598,9 +597,11 @@ class Application(QtCore.QObject):
         """Present save project dialog and save project."""
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             parent=self.ui,
+            dir=self.get_recent_directory(),
             filter="Tailor project files (*.tlr);;All files (*)",
         )
         if filename:
+            self.set_recent_directory(pathlib.Path(filename).parent)
             self.save_project(filename)
 
     def save_project(self, filename):
@@ -648,17 +649,33 @@ class Application(QtCore.QObject):
     def open_project_dialog(self):
         """Present open project dialog and load project."""
         if self.confirm_close_dialog():
-            cfg = config.read_config()
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self.ui,
-                dir=cfg.get("recent_dir"),
+                dir=self.get_recent_directory(),
                 filter="Tailor project files (*.tlr);;All files (*)",
             )
             if filename:
-                directory = Path(filename).parent
-                cfg["recent_dir"] = str(directory)
-                config.write_config(cfg)
+                self.set_recent_directory(pathlib.Path(filename).parent)
                 self.load_project(filename)
+
+    def get_recent_directory(self):
+        """Get recent directory from config file.
+
+        Returns:
+            str: the most recently visited directory.
+        """
+        cfg = config.read_config()
+        return cfg["recent_dir"]
+
+    def set_recent_directory(self, directory):
+        """Save the most recently visited directory to the config file.
+
+        Args:
+            directory (str or pathlib.Path): the most recently visited directory.
+        """
+        cfg = config.read_config()
+        cfg["recent_dir"] = str(directory)
+        config.write_config(cfg)
 
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.
@@ -733,9 +750,11 @@ class Application(QtCore.QObject):
         """
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
             parent=self.ui,
+            dir=self.get_recent_directory(),
             filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
         )
         if filename:
+            self.set_recent_directory(pathlib.Path(filename).parent)
             self.data_model.write_csv(filename)
 
     def import_csv(self, create_new=True):
@@ -749,16 +768,13 @@ class Application(QtCore.QObject):
                 project or import into the existing project.
         """
         if self.confirm_close_dialog():
-            cfg = config.read_config()
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self.ui,
-                dir=cfg.get("recent_dir"),
+                dir=self.get_recent_directory(),
                 filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
             )
             if filename:
-                directory = Path(filename).parent
-                cfg["recent_dir"] = str(directory)
-                config.write_config(cfg)
+                self.set_recent_directory(pathlib.Path(filename).parent)
                 dialog = CSVFormatDialog(filename, parent=self.ui)
                 if dialog.ui.exec() == QtWidgets.QDialog.Accepted:
                     (
@@ -823,10 +839,12 @@ class Application(QtCore.QObject):
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self.ui,
+                dir=self.get_recent_directory(),
                 filter=f"Graphics (*{suffix});;All files (*)",
             )
             if filename:
                 path = pathlib.Path(filename)
+                self.set_recent_directory(path.parent)
                 if path.suffix == suffix:
                     try:
                         tab.export_graph(path)
@@ -874,7 +892,7 @@ class Application(QtCore.QObject):
         Update open recent files list in menu and in configuration file.
 
         Args:
-            file (Path or str): the most recent file which will be added to the list.
+            file (pathlib.Path or str): the most recent file which will be added to the list.
         """
         cfg = config.read_config()
         recents = cfg.get("recent_files", [])
