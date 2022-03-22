@@ -268,6 +268,8 @@ class Application(QtCore.QObject):
         self.ui.data_view.setDragDropMode(self.ui.data_view.NoDragDrop)
         header = self.ui.data_view.horizontalHeader()
         header.setSectionsMovable(True)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        header.setMinimumSectionSize(header.defaultSectionSize())
 
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
