@@ -116,6 +116,7 @@ class PlotTab:
         self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
 
         self.ui.plot_widget.setMenuEnabled(False)
+        self.ui.plot_widget.hideButtons()
 
     def create_plot(self, x_var, y_var, x_err, y_err):
         """Create a plot in the widget.
