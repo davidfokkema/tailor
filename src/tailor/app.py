@@ -265,7 +265,9 @@ class Application(QtCore.QObject):
 
     def _set_view_and_selection_model(self):
         self.ui.data_view.setModel(self.data_model)
-        self.ui.data_view.setDragDropMode(self.ui.data_view.InternalMove)
+        self.ui.data_view.setDragDropMode(self.ui.data_view.NoDragDrop)
+        header = self.ui.data_view.horizontalHeader()
+        header.setSectionsMovable(True)
 
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
