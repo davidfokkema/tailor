@@ -187,6 +187,52 @@ class DataModel(QtCore.QAbstractTableModel):
         self.endRemoveColumns()
         return True
 
+    def moveColumn(
+        self,
+        sourceParent=None,
+        sourceColumn=0,
+        destinationParent=None,
+        destinationChild=0,
+    ):
+        """Move a column from source to destination.
+
+        Args:
+            sourceParent (Union[PySide6.QtCore.QModelIndex,
+                PySide6.QtCore.QPersistentModelIndex]): a QModelIndex pointing
+                to the model (ignored).
+            sourceColumn (int): the index of the source column.
+            destinationParent (Union[PySide6.QtCore.QModelIndex,
+                PySide6.QtCore.QPersistentModelIndex]): a QModelIndex pointing to
+                the model (ignored).
+            destinationChild (int): the index of the destination column.
+
+        Returns:
+            bool: True if the column was succesfully moved.
+        """
+        if sourceParent is None:
+            sourceParent = QtCore.QModelIndex()
+        if destinationParent is None:
+            destinationParent = sourceParent
+        # signal that we are going to move the column
+        self.beginMoveColumns(
+            sourceParent,
+            sourceColumn,
+            sourceColumn,
+            destinationParent,
+            destinationChild,
+        )
+        columns = self._data.columns.to_list()
+        col_name = columns[sourceColumn]
+        # Delete column at source index
+        del columns[sourceColumn]
+        # And insert at destination index
+        columns.insert(destinationChild, col_name)
+        # get new dataframe in correct order
+        self._data = self._data[columns]
+        # we're done moving the column
+        self.endMoveColumns()
+        return True
+
     def removeRow(self, row, parent=None):
         """Remove a single row.
 
