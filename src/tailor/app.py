@@ -293,9 +293,15 @@ class Application(QtCore.QObject):
         header = self.ui.data_view.horizontalHeader()
         header.blockSignals(True)
         self.ui.data_view.horizontalHeader().moveSection(newidx, oldidx)
-        header.blockSignals(False)
         # Now, move the underlying data
         self.data_model.moveColumn(sourceColumn=oldidx, destinationChild=newidx)
+        # BUGFIX: a probable bug in Qt6 messes up the selection when moving
+        # columns. To prevent this, manually select the column at the new
+        # location.
+        self.ui.data_view.selectColumn(newidx)
+        # Unblock signals as late as possible. When you unblock to early, the
+        # Qt6 crashes without an error message.
+        header.blockSignals(False)
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
