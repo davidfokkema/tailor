@@ -565,7 +565,7 @@ class PlotTab:
         if y_err is not None:
             kwargs["weights"] = 1 / y_err
         try:
-            self.fit = self.model.fit(y, **kwargs, nan_policy="omit")
+            self.fit = self.model.fit(y, **kwargs)
         except Exception as exc:
             self.main_window.statusbar.showMessage(f"FIT FAILED: {exc}")
         else:
