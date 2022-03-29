@@ -119,7 +119,6 @@ class Application(QtCore.QObject):
         self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
         # user interface events
-        self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
         self.ui.name_edit.textEdited.connect(self.rename_column)
@@ -274,34 +273,6 @@ class Application(QtCore.QObject):
 
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
-
-    def column_moved(self, logidx, oldidx, newidx):
-        """Move column in reaction to UI signal.
-
-        Dragging a column to a new location triggers execution of this method.
-        Since the UI only reorders the column visually and does not change the
-        underlying data, we will first restore the visual ordering and then move
-        the column in the underlying data instead.
-
-        Args:
-            logidx (int): the logical column index (index in the dataframe)
-            oldidx (int): the old visual index
-            newidx (int): the new visual index
-        """
-        # Restore visual ordering (visually moving back the column)
-        # Prevent triggering this method while moving back the column
-        header = self.ui.data_view.horizontalHeader()
-        header.blockSignals(True)
-        self.ui.data_view.horizontalHeader().moveSection(newidx, oldidx)
-        # Now, move the underlying data
-        self.data_model.moveColumn(sourceColumn=oldidx, destinationChild=newidx)
-        # BUGFIX: a probable bug in Qt6 messes up the selection when moving
-        # columns. To prevent this, manually select the column at the new
-        # location.
-        self.ui.data_view.selectColumn(newidx)
-        # Unblock signals as late as possible. When you unblock to early, the
-        # Qt6 crashes without an error message.
-        header.blockSignals(False)
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
