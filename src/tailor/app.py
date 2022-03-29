@@ -24,7 +24,7 @@ from tailor.csv_format_dialog import (
     NUM_FORMAT_CHOICES,
     CSVFormatDialog,
 )
-from tailor.data_model import DataModel
+from tailor.data_model import MSG_TIMEOUT, DataModel
 from tailor.plot_tab import PlotTab
 
 app_module = sys.modules["__main__"].__package__
@@ -288,6 +288,7 @@ class Application(QtCore.QObject):
             newidx (int): the new visual index
         """
         self.data_model._column_order = self.get_column_ordering()
+        self.data_model.recalculate_all_columns()
 
     def get_column_ordering(self):
         """Return the logical order of columns in the table view."""
@@ -767,6 +768,9 @@ class Application(QtCore.QObject):
             )
         else:
             self.update_recent_files(filename)
+            self.ui.statusbar.showMessage(
+                "Finished loading project.", timeout=MSG_TIMEOUT
+            )
 
     def export_csv(self):
         """Export all data as CSV.
