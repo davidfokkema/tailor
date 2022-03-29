@@ -35,6 +35,8 @@ __version__ = metadata["version"]
 
 MAX_RECENT_FILES = 5
 
+DIRTY_TIMEOUT = 3000
+
 
 # FIXME: antialiasing is EXTREMELY slow. Why?
 # pg.setConfigOptions(antialias=True)
@@ -54,6 +56,8 @@ class Application(QtCore.QObject):
     _recent_files_actions = None
     _selected_col_idx = None
     _plot_num = 1
+
+    _is_dirty = False
 
     def __init__(self):
         """Initialize the class."""
@@ -274,6 +278,14 @@ class Application(QtCore.QObject):
 
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
+
+    def mark_project_dirty(self, is_dirty=True):
+        """Mark project as dirty"""
+        self._is_dirty = is_dirty
+        self.update_window_title()
+        if not is_dirty:
+            # FIXME: this can be implemented much better by actually detecting changes.
+            QtCore.QTimer.singleShot(DIRTY_TIMEOUT, self.mark_project_dirty)
 
     def column_moved(self, logidx, oldidx, newidx):
         """Move column in reaction to UI signal.
@@ -601,6 +613,7 @@ class Application(QtCore.QObject):
         self._set_view_and_selection_model()
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
         self._set_project_path(None)
+        self.mark_project_dirty(False)
 
     def new_project(self):
         """Close the current project and open a new one."""
@@ -773,6 +786,7 @@ class Application(QtCore.QObject):
             )
         else:
             self.update_recent_files(filename)
+            self.mark_project_dirty(False)
             self.ui.statusbar.showMessage(
                 "Finished loading project.", timeout=MSG_TIMEOUT
             )
@@ -900,10 +914,20 @@ class Application(QtCore.QObject):
     def _set_project_path(self, filename):
         """Set window title and project name."""
         self._project_filename = filename
+        self.update_window_title()
+
+    def update_window_title(self):
+        """Update window title.
+
+        Include project name and dirty flag in the title.
+        """
+        filename = self._project_filename
+        title = "Tailor"
         if filename is not None:
-            self.ui.setWindowTitle(f"Tailor: {pathlib.Path(filename).stem}")
-        else:
-            self.ui.setWindowTitle("Tailor")
+            title += f": {pathlib.Path(filename).stem}"
+        if self._is_dirty:
+            title += "*"
+        self.ui.setWindowTitle(title)
 
     def _show_exception(self, exc, title, text):
         """Show a messagebox with detailed exception information.
