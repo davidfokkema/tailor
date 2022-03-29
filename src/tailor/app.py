@@ -323,7 +323,7 @@ class Application(QtCore.QObject):
             boolean: True if the event is ignored, False otherwise.
         """
         if watched is self.ui and event.type() == QtCore.QEvent.Close:
-            if self.confirm_close_dialog():
+            if self.confirm_project_close_dialog():
                 event.accept()
                 return False
             else:
@@ -617,7 +617,7 @@ class Application(QtCore.QObject):
 
     def new_project(self):
         """Close the current project and open a new one."""
-        if self.confirm_close_dialog():
+        if self.confirm_project_close_dialog():
             self.clear_all()
 
     def save_project_or_dialog(self):
@@ -687,7 +687,7 @@ class Application(QtCore.QObject):
 
     def open_project_dialog(self):
         """Present open project dialog and load project."""
-        if self.confirm_close_dialog():
+        if self.confirm_project_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self.ui,
                 dir=self.get_recent_directory(),
@@ -716,22 +716,17 @@ class Application(QtCore.QObject):
         cfg["recent_dir"] = str(directory)
         config.write_config(cfg)
 
-    def confirm_close_dialog(self, msg=None):
-        """Present a confirmation dialog before closing.
+    def confirm_project_close_dialog(self):
+        """Present a confirmation dialog before closing a project.
 
         Present a dialog to confirm that the user really wants to close a
         project and lose possible changes.
-
-        Args:
-            msg: optional message to present to the user. If None, the default
-                message asks for confirmation to discard the current project.
 
         Returns:
             A boolean. If True, the user confirms closing the project. If False,
             the user wants to cancel the action.
         """
-        if msg is None:
-            msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
+        msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
         button = QtWidgets.QMessageBox.warning(
             self.ui,
             "Please confirm",
@@ -745,6 +740,34 @@ class Application(QtCore.QObject):
             return True
         elif button == QtWidgets.QMessageBox.Save:
             self.save_project_or_dialog()
+            return True
+        else:
+            return False
+
+    def confirm_close_dialog(self, msg=None):
+        """Present a confirmation dialog before closing.
+
+        Present a dialog to confirm that the user really wants to close an
+        object and lose possible changes.
+
+        Args:
+            msg: optional message to present to the user. If None, the default
+                message asks for confirmation to discard the current project.
+
+        Returns:
+            A boolean. If True, the user confirms closing the project. If False,
+            the user wants to cancel the action.
+        """
+        if msg is None:
+            msg = "You might lose changes."
+        button = QtWidgets.QMessageBox.warning(
+            self.ui,
+            "Please confirm",
+            msg,
+            buttons=QtWidgets.QMessageBox.Close | QtWidgets.QMessageBox.Cancel,
+            defaultButton=QtWidgets.QMessageBox.Cancel,
+        )
+        if button == QtWidgets.QMessageBox.Close:
             return True
         else:
             return False
@@ -815,7 +838,7 @@ class Application(QtCore.QObject):
             create_new: a boolean indicating whether or not to create a new
                 project or import into the existing project.
         """
-        if self.confirm_close_dialog():
+        if self.confirm_project_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self.ui,
                 dir=self.get_recent_directory(),
@@ -998,7 +1021,7 @@ class Application(QtCore.QObject):
         self.ui.actionClear_Menu.setEnabled(False)
 
     def open_recent_project_action(self, filename):
-        if self.confirm_close_dialog():
+        if self.confirm_project_close_dialog():
             self.load_project(filename)
 
 
