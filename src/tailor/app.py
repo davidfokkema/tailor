@@ -35,7 +35,7 @@ __version__ = metadata["version"]
 
 MAX_RECENT_FILES = 5
 
-DIRTY_TIMEOUT = 3000
+DIRTY_TIMEOUT = 10000  # 10 s
 
 
 # FIXME: antialiasing is EXTREMELY slow. Why?
@@ -726,23 +726,27 @@ class Application(QtCore.QObject):
             A boolean. If True, the user confirms closing the project. If False,
             the user wants to cancel the action.
         """
-        msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
-        button = QtWidgets.QMessageBox.warning(
-            self.ui,
-            "Please confirm",
-            msg,
-            buttons=QtWidgets.QMessageBox.Save
-            | QtWidgets.QMessageBox.Discard
-            | QtWidgets.QMessageBox.Cancel,
-            defaultButton=QtWidgets.QMessageBox.Cancel,
-        )
-        if button == QtWidgets.QMessageBox.Discard:
-            return True
-        elif button == QtWidgets.QMessageBox.Save:
-            self.save_project_or_dialog()
+        if not self._is_dirty:
+            # There are no changes, skip confirmation dialog
             return True
         else:
-            return False
+            msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
+            button = QtWidgets.QMessageBox.warning(
+                self.ui,
+                "Please confirm",
+                msg,
+                buttons=QtWidgets.QMessageBox.Save
+                | QtWidgets.QMessageBox.Discard
+                | QtWidgets.QMessageBox.Cancel,
+                defaultButton=QtWidgets.QMessageBox.Cancel,
+            )
+            if button == QtWidgets.QMessageBox.Discard:
+                return True
+            elif button == QtWidgets.QMessageBox.Save:
+                self.save_project_or_dialog()
+                return True
+            else:
+                return False
 
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.
