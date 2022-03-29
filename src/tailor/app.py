@@ -280,28 +280,20 @@ class Application(QtCore.QObject):
 
         Dragging a column to a new location triggers execution of this method.
         Since the UI only reorders the column visually and does not change the
-        underlying data, we will first restore the visual ordering and then move
-        the column in the underlying data instead.
+        underlying data, we will store the ordering in the data model.
 
         Args:
             logidx (int): the logical column index (index in the dataframe)
             oldidx (int): the old visual index
             newidx (int): the new visual index
         """
-        # Restore visual ordering (visually moving back the column)
-        # Prevent triggering this method while moving back the column
+        self.data_model._column_order = self.get_column_ordering()
+
+    def get_column_ordering(self):
+        """Return the logical order of columns in the table view."""
         header = self.ui.data_view.horizontalHeader()
-        header.blockSignals(True)
-        self.ui.data_view.horizontalHeader().moveSection(newidx, oldidx)
-        # Now, move the underlying data
-        self.data_model.moveColumn(sourceColumn=oldidx, destinationChild=newidx)
-        # BUGFIX: a probable bug in Qt6 messes up the selection when moving
-        # columns. To prevent this, manually select the column at the new
-        # location.
-        self.ui.data_view.selectColumn(newidx)
-        # Unblock signals as late as possible. When you unblock to early, the
-        # Qt6 crashes without an error message.
-        header.blockSignals(False)
+        n_columns = len(self.data_model.get_column_names())
+        return [header.logicalIndex(i) for i in range(n_columns)]
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
