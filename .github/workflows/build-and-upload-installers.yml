@@ -3,7 +3,7 @@ on:
   release:
     types: [published]
 jobs:
-  build-and-upload-mac-installer:
+  build-and-upload-installer:
     strategy:
       fail-fast: true
       matrix:
