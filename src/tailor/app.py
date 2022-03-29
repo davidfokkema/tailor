@@ -35,6 +35,8 @@ __version__ = metadata["version"]
 
 MAX_RECENT_FILES = 5
 
+DIRTY_TIMEOUT = 10000  # 10 s
+
 
 # FIXME: antialiasing is EXTREMELY slow. Why?
 # pg.setConfigOptions(antialias=True)
@@ -54,6 +56,8 @@ class Application(QtCore.QObject):
     _recent_files_actions = None
     _selected_col_idx = None
     _plot_num = 1
+
+    _is_dirty = False
 
     def __init__(self):
         """Initialize the class."""
@@ -275,6 +279,14 @@ class Application(QtCore.QObject):
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
 
+    def mark_project_dirty(self, is_dirty=True):
+        """Mark project as dirty"""
+        self._is_dirty = is_dirty
+        self.update_window_title()
+        if not is_dirty:
+            # FIXME: this can be implemented much better by actually detecting changes.
+            QtCore.QTimer.singleShot(DIRTY_TIMEOUT, self.mark_project_dirty)
+
     def column_moved(self, logidx, oldidx, newidx):
         """Move column in reaction to UI signal.
 
@@ -311,7 +323,7 @@ class Application(QtCore.QObject):
             boolean: True if the event is ignored, False otherwise.
         """
         if watched is self.ui and event.type() == QtCore.QEvent.Close:
-            if self.confirm_close_dialog():
+            if self.confirm_project_close_dialog():
                 event.accept()
                 return False
             else:
@@ -601,10 +613,11 @@ class Application(QtCore.QObject):
         self._set_view_and_selection_model()
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
         self._set_project_path(None)
+        self.mark_project_dirty(False)
 
     def new_project(self):
         """Close the current project and open a new one."""
-        if self.confirm_close_dialog():
+        if self.confirm_project_close_dialog():
             self.clear_all()
 
     def save_project_or_dialog(self):
@@ -674,7 +687,7 @@ class Application(QtCore.QObject):
 
     def open_project_dialog(self):
         """Present open project dialog and load project."""
-        if self.confirm_close_dialog():
+        if self.confirm_project_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self.ui,
                 dir=self.get_recent_directory(),
@@ -703,11 +716,43 @@ class Application(QtCore.QObject):
         cfg["recent_dir"] = str(directory)
         config.write_config(cfg)
 
+    def confirm_project_close_dialog(self):
+        """Present a confirmation dialog before closing a project.
+
+        Present a dialog to confirm that the user really wants to close a
+        project and lose possible changes.
+
+        Returns:
+            A boolean. If True, the user confirms closing the project. If False,
+            the user wants to cancel the action.
+        """
+        if not self._is_dirty:
+            # There are no changes, skip confirmation dialog
+            return True
+        else:
+            msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
+            button = QtWidgets.QMessageBox.warning(
+                self.ui,
+                "Please confirm",
+                msg,
+                buttons=QtWidgets.QMessageBox.Save
+                | QtWidgets.QMessageBox.Discard
+                | QtWidgets.QMessageBox.Cancel,
+                defaultButton=QtWidgets.QMessageBox.Cancel,
+            )
+            if button == QtWidgets.QMessageBox.Discard:
+                return True
+            elif button == QtWidgets.QMessageBox.Save:
+                self.save_project_or_dialog()
+                return True
+            else:
+                return False
+
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.
 
-        Present a dialog to confirm that the user really wants to close a
-        project and lose all changes.
+        Present a dialog to confirm that the user really wants to close an
+        object and lose possible changes.
 
         Args:
             msg: optional message to present to the user. If None, the default
@@ -718,15 +763,15 @@ class Application(QtCore.QObject):
             the user wants to cancel the action.
         """
         if msg is None:
-            msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
+            msg = "You might lose changes."
         button = QtWidgets.QMessageBox.warning(
             self.ui,
             "Please confirm",
             msg,
-            buttons=QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
+            buttons=QtWidgets.QMessageBox.Close | QtWidgets.QMessageBox.Cancel,
             defaultButton=QtWidgets.QMessageBox.Cancel,
         )
-        if button == QtWidgets.QMessageBox.Discard:
+        if button == QtWidgets.QMessageBox.Close:
             return True
         else:
             return False
@@ -768,6 +813,7 @@ class Application(QtCore.QObject):
             )
         else:
             self.update_recent_files(filename)
+            self.mark_project_dirty(False)
             self.ui.statusbar.showMessage(
                 "Finished loading project.", timeout=MSG_TIMEOUT
             )
@@ -796,7 +842,7 @@ class Application(QtCore.QObject):
             create_new: a boolean indicating whether or not to create a new
                 project or import into the existing project.
         """
-        if self.confirm_close_dialog():
+        if self.confirm_project_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
                 parent=self.ui,
                 dir=self.get_recent_directory(),
@@ -895,10 +941,20 @@ class Application(QtCore.QObject):
     def _set_project_path(self, filename):
         """Set window title and project name."""
         self._project_filename = filename
+        self.update_window_title()
+
+    def update_window_title(self):
+        """Update window title.
+
+        Include project name and dirty flag in the title.
+        """
+        filename = self._project_filename
+        title = "Tailor"
         if filename is not None:
-            self.ui.setWindowTitle(f"Tailor: {pathlib.Path(filename).stem}")
-        else:
-            self.ui.setWindowTitle("Tailor")
+            title += f": {pathlib.Path(filename).stem}"
+        if self._is_dirty:
+            title += "*"
+        self.ui.setWindowTitle(title)
 
     def _show_exception(self, exc, title, text):
         """Show a messagebox with detailed exception information.
@@ -969,7 +1025,7 @@ class Application(QtCore.QObject):
         self.ui.actionClear_Menu.setEnabled(False)
 
     def open_recent_project_action(self, filename):
-        if self.confirm_close_dialog():
+        if self.confirm_project_close_dialog():
             self.load_project(filename)
 
 
