@@ -24,7 +24,7 @@ from tailor.csv_format_dialog import (
     NUM_FORMAT_CHOICES,
     CSVFormatDialog,
 )
-from tailor.data_model import DataModel
+from tailor.data_model import MSG_TIMEOUT, DataModel
 from tailor.plot_tab import PlotTab
 
 app_module = sys.modules["__main__"].__package__
@@ -288,6 +288,7 @@ class Application(QtCore.QObject):
             newidx (int): the new visual index
         """
         self.data_model._column_order = self.get_column_ordering()
+        self.data_model.recalculate_all_columns()
 
     def get_column_ordering(self):
         """Return the logical order of columns in the table view."""
@@ -554,7 +555,7 @@ class Application(QtCore.QObject):
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(self.data_model, main_window=self.ui)
+        plot_tab = PlotTab(self.data_model, main_app=self)
         idx = self.ui.tabWidget.addTab(plot_tab.ui, f"Plot {self._plot_num}")
         self._plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
@@ -596,7 +597,7 @@ class Application(QtCore.QObject):
             # close all plot tabs in reverse order, they are no longer valid
             self.ui.tabWidget.removeTab(idx)
         self._plot_num = 1
-        self.data_model = DataModel(main_window=self.ui)
+        self.data_model = DataModel(main_app=self)
         self._set_view_and_selection_model()
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
         self._set_project_path(None)
@@ -754,7 +755,7 @@ class Application(QtCore.QObject):
 
                 # create a tab and load data for each plot
                 for tab_data in save_obj["tabs"]:
-                    plot_tab = PlotTab(self.data_model, main_window=self.ui)
+                    plot_tab = PlotTab(self.data_model, main_app=self)
                     self.ui.tabWidget.addTab(plot_tab.ui, tab_data["label"])
                     plot_tab.load_state_from_obj(tab_data)
                 self._plot_num = save_obj["plot_num"]
@@ -767,6 +768,9 @@ class Application(QtCore.QObject):
             )
         else:
             self.update_recent_files(filename)
+            self.ui.statusbar.showMessage(
+                "Finished loading project.", timeout=MSG_TIMEOUT
+            )
 
     def export_csv(self):
         """Export all data as CSV.

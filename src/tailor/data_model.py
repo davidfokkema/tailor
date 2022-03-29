@@ -27,17 +27,19 @@ class DataModel(QtCore.QAbstractTableModel):
     _new_col_num = 0
     _data = None
     _calculated_column_expression = None
+    _is_calculated_column_valid = None
     _column_order = []
 
-    def __init__(self, main_window):
+    def __init__(self, main_app):
         """Instantiate the class."""
         super().__init__()
 
-        self.main_window = main_window
+        self.main_app = main_app
 
         self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
         self._column_order = list(range(len(self._data.columns)))
         self._calculated_column_expression = {}
+        self._is_calculated_column_valid = {}
 
     def rowCount(self, parent=None):
         """Return the number of rows in the data."""
@@ -82,7 +84,12 @@ class DataModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell
             if self.is_calculated_column(col):
-                return QtGui.QBrush(QtGui.QColor(255, 255, 200))
+                if self.is_calculated_column_valid(col):
+                    # Yellow
+                    return QtGui.QBrush(QtGui.QColor(255, 255, 200))
+                else:
+                    # Red
+                    return QtGui.QBrush(QtGui.QColor(255, 200, 200))
         # not implemented, return an invalid QVariant (None) per the docs
         # See Qt for Python docs -> Considerations -> API Changes
         return None
@@ -164,7 +171,7 @@ class DataModel(QtCore.QAbstractTableModel):
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, column_name, np.nan)
         self.endInsertColumns()
-        self._column_order = self.main_window.get_column_ordering()
+        self._column_order = self.main_app.get_column_ordering()
         return True
 
     def removeColumn(self, column, parent=None):
@@ -189,7 +196,7 @@ class DataModel(QtCore.QAbstractTableModel):
             # not a calculated column
             pass
         self.endRemoveColumns()
-        self._column_order = self.main_window.get_column_ordering()
+        self._column_order = self.main_app.get_column_ordering()
         return True
 
     def removeRow(self, row, parent=None):
@@ -265,14 +272,14 @@ class DataModel(QtCore.QAbstractTableModel):
         old_name = self._data.columns[col_idx]
         new_name = self.normalize_column_name(new_name)
         self._data.rename(columns={old_name: new_name}, inplace=True)
-        try:
-            self._calculated_column_expression[
-                new_name
-            ] = self._calculated_column_expression.pop(old_name)
-        except KeyError:
-            pass
+        if self.is_calculated_column(col_name=old_name):
+            for d in (
+                self._calculated_column_expression,
+                self._is_calculated_column_valid,
+            ):
+                d[new_name] = d.pop(old_name, False)
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
-        self.main_window.statusbar.showMessage("Renamed column.", timeout=MSG_TIMEOUT)
+        self.main_app.ui.statusbar.showMessage("Renamed column.", timeout=MSG_TIMEOUT)
         return new_name
 
     def normalize_column_name(self, name):
@@ -302,17 +309,16 @@ class DataModel(QtCore.QAbstractTableModel):
             if self.recalculate_column(col_name, expression):
                 # calculation was successful
                 self._calculated_column_expression[col_name] = expression
-                top_left = self.createIndex(0, col_idx)
-                bottom_right = self.createIndex(len(self._data), col_idx)
-                self.dataChanged.emit(top_left, bottom_right)
-                self.main_window.statusbar.showMessage(
+                self.main_app.ui.statusbar.showMessage(
                     "Updated column values.", timeout=MSG_TIMEOUT
                 )
 
     def recalculate_column(self, col_name, expression=None):
         """Recalculate column values.
 
-        Calculate column values based on its expression.
+        Calculate column values based on its expression. Each column can use
+        values from columns to the left of itself. Those values can be accessed
+        by using the column name as a variable in the expression.
 
         Args:
             col_name: a string containing the column name.
@@ -325,31 +331,71 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         if expression is None:
             expression = self._calculated_column_expression[col_name]
-        objects = {k: self._data[k] for k in self._data.columns if k is not col_name}
+        objects = self._get_accessible_columns(col_name)
         aeval = asteval.Interpreter(usersyms=objects)
         output = aeval(expression)
         if aeval.error:
+            self._is_calculated_column_valid[col_name] = False
+            self.emit_column_changed(col_name)
             for err in aeval.error:
                 exc, msg = err.get_error()
-                self.main_window.statusbar.showMessage(
+                self.main_app.ui.statusbar.showMessage(
                     f"ERROR: {exc}: {msg}.", timeout=MSG_TIMEOUT
                 )
         elif output is not None:
+            self._is_calculated_column_valid[col_name] = True
             if isinstance(output, pd.Series):
                 output = output.astype("float64")
             else:
                 output = float(output)
             self._data[col_name] = output
-            # emit dataChanged on calculated columns
-            col = self._data.columns.to_list().index(col_name)
-            n_rows = len(self._data)
-            begin = self.createIndex(0, col)
-            end = self.createIndex(n_rows - 1, col)
-            self.dataChanged.emit(begin, end)
+            self.emit_column_changed(col_name)
+            self.main_app.ui.statusbar.showMessage(
+                f"Recalculated column values.", timeout=MSG_TIMEOUT
+            )
             return True
         else:
             print(f"No evaluation error but no output for expression {expression}.")
         return False
+
+    def emit_column_changed(self, col_name):
+        """Emit dataChanged signal for a given column.
+
+        Args:
+            col_name (str): name of the column that contains updated values.
+        """
+        col = self._data.columns.get_loc(col_name)
+        n_rows = len(self._data)
+        begin = self.createIndex(0, col)
+        end = self.createIndex(n_rows - 1, col)
+        self.dataChanged.emit(begin, end)
+
+    def _get_accessible_columns(self, col_name):
+        """Get accessible column data for use in expressions.
+
+        When calculating column values each column can access the values of the
+        columns to its left by using the column name as a variable. This method
+        returns the column data for the accessible columns.
+
+        Args:
+            col_name (str): the name of the column that wants to access data.
+
+        Returns:
+            dict: a dictionary of column_name, data pairs.
+        """
+        # logical column number in data
+        log_idx = self._data.columns.get_loc(col_name)
+        # visual column number in table view
+        vis_idx = self._column_order.index(log_idx)
+        # accessible columns to the left of current column
+        accessible_idx = self._column_order[:vis_idx]
+        accessible_columns = self._data.columns[accessible_idx]
+        data = {
+            k: self._data[k]
+            for k in accessible_columns
+            if self.is_calculated_column_valid(col_name=k)
+        }
+        return data
 
     def recalculate_all_columns(self):
         """Recalculate all columns.
@@ -357,8 +403,10 @@ class DataModel(QtCore.QAbstractTableModel):
         If data is entered or changed, the calculated column values must be
         updated. This method will manually recalculate all column values.
         """
-        for col_name in self._calculated_column_expression:
-            self.recalculate_column(col_name)
+        column_names = self.get_column_names()
+        for col_idx in self._column_order:
+            if self.is_calculated_column(col_idx):
+                self.recalculate_column(column_names[col_idx])
 
     def flags(self, index):
         """Returns item flags.
@@ -438,7 +486,9 @@ class DataModel(QtCore.QAbstractTableModel):
     def is_calculated_column(self, col_idx=None, col_name=None):
         """Check if column is calculated.
 
-        Supplied with either a column index or a column name (index takes precedence), checks whether the column is calculated from a mathematical expression.
+        Supplied with either a column index or a column name (index takes
+        precedence), checks whether the column is calculated from a mathematical
+        expression.
 
         Args:
             col_idx: an integer column index (takes precedence over name).
@@ -450,6 +500,29 @@ class DataModel(QtCore.QAbstractTableModel):
         if col_idx is not None:
             col_name = self.get_column_name(col_idx)
         return col_name in self._calculated_column_expression
+
+    def is_calculated_column_valid(self, col_idx=None, col_name=None):
+        """Check if a calculated column has valid values.
+
+        Supplied with either a column index or a column name (index takes
+        precedence), checks whether the column contains the results of a valid
+        calculation. When a calculation fails due to an invalid expression the
+        values are invalid.
+
+        Args:
+            col_idx: an integer column index (takes precedence over name).
+            col_name: a string containing the column name.
+
+        Returns:
+            True if the column values are valid, False otherwise.
+        """
+        if col_idx is not None:
+            col_name = self.get_column_name(col_idx)
+        if not self.is_calculated_column(col_name=col_name):
+            # values are not calculated, so are always valid
+            return True
+        else:
+            return self._is_calculated_column_valid.get(col_name, False)
 
     def _create_new_column_name(self):
         """Create a name for a new column.
@@ -494,6 +567,7 @@ class DataModel(QtCore.QAbstractTableModel):
         self._column_order = list(range(len(self._data.columns)))
         self._calculated_column_expression = save_obj["calculated_columns"]
         self._new_col_num = save_obj["new_col_num"]
+        self.recalculate_all_columns()
         self.endResetModel()
 
     def write_csv(self, filename):
