@@ -707,7 +707,7 @@ class Application(QtCore.QObject):
         """Present a confirmation dialog before closing.
 
         Present a dialog to confirm that the user really wants to close a
-        project and lose all changes.
+        project and lose possible changes.
 
         Args:
             msg: optional message to present to the user. If None, the default
@@ -723,10 +723,15 @@ class Application(QtCore.QObject):
             self.ui,
             "Please confirm",
             msg,
-            buttons=QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel,
+            buttons=QtWidgets.QMessageBox.Save
+            | QtWidgets.QMessageBox.Discard
+            | QtWidgets.QMessageBox.Cancel,
             defaultButton=QtWidgets.QMessageBox.Cancel,
         )
         if button == QtWidgets.QMessageBox.Discard:
+            return True
+        elif button == QtWidgets.QMessageBox.Save:
+            self.save_project_or_dialog()
             return True
         else:
             return False
