@@ -27,6 +27,7 @@ class DataModel(QtCore.QAbstractTableModel):
     _new_col_num = 0
     _data = None
     _calculated_column_expression = None
+    _column_order = []
 
     def __init__(self, main_window):
         """Instantiate the class."""
@@ -35,6 +36,7 @@ class DataModel(QtCore.QAbstractTableModel):
         self.main_window = main_window
 
         self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
+        self._column_order = list(range(len(self._data.columns)))
         self._calculated_column_expression = {}
 
     def rowCount(self, parent=None):
@@ -151,6 +153,7 @@ class DataModel(QtCore.QAbstractTableModel):
         Args:
             column: an integer column number to indicate the place of insertion.
             parent: a QModelIndex pointing to the model (ignored).
+            column_name: the name of the new column.
 
         Returns:
             True if the insertion was succesful, False otherwise.
@@ -161,6 +164,7 @@ class DataModel(QtCore.QAbstractTableModel):
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, column_name, np.nan)
         self.endInsertColumns()
+        self._column_order = self.main_window.get_column_ordering()
         return True
 
     def removeColumn(self, column, parent=None):
@@ -185,6 +189,7 @@ class DataModel(QtCore.QAbstractTableModel):
             # not a calculated column
             pass
         self.endRemoveColumns()
+        self._column_order = self.main_window.get_column_ordering()
         return True
 
     def removeRow(self, row, parent=None):
@@ -468,9 +473,11 @@ class DataModel(QtCore.QAbstractTableModel):
         Args:
             save_obj: a dictionary to store the data and state.
         """
+        columns = self._data.columns[self._column_order]
+        df = self._data[columns]
         save_obj.update(
             {
-                "data": self._data.to_dict("list"),
+                "data": df.to_dict("list"),
                 "calculated_columns": self._calculated_column_expression,
                 "new_col_num": self._new_col_num,
             }
@@ -484,6 +491,7 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         self.beginResetModel()
         self._data = pd.DataFrame.from_dict(save_obj["data"])
+        self._column_order = list(range(len(self._data.columns)))
         self._calculated_column_expression = save_obj["calculated_columns"]
         self._new_col_num = save_obj["new_col_num"]
         self.endResetModel()

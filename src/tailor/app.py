@@ -119,6 +119,7 @@ class Application(QtCore.QObject):
         self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
         # user interface events
+        self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
         self.ui.name_edit.textEdited.connect(self.rename_column)
@@ -273,6 +274,26 @@ class Application(QtCore.QObject):
 
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
+
+    def column_moved(self, logidx, oldidx, newidx):
+        """Move column in reaction to UI signal.
+
+        Dragging a column to a new location triggers execution of this method.
+        Since the UI only reorders the column visually and does not change the
+        underlying data, we will store the ordering in the data model.
+
+        Args:
+            logidx (int): the logical column index (index in the dataframe)
+            oldidx (int): the old visual index
+            newidx (int): the new visual index
+        """
+        self.data_model._column_order = self.get_column_ordering()
+
+    def get_column_ordering(self):
+        """Return the logical order of columns in the table view."""
+        header = self.ui.data_view.horizontalHeader()
+        n_columns = len(self.data_model.get_column_names())
+        return [header.logicalIndex(i) for i in range(n_columns)]
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
