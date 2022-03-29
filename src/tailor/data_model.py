@@ -29,11 +29,11 @@ class DataModel(QtCore.QAbstractTableModel):
     _calculated_column_expression = None
     _column_order = []
 
-    def __init__(self, main_window):
+    def __init__(self, main_app):
         """Instantiate the class."""
         super().__init__()
 
-        self.main_window = main_window
+        self.main_app = main_app
 
         self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
         self._column_order = list(range(len(self._data.columns)))
@@ -164,7 +164,7 @@ class DataModel(QtCore.QAbstractTableModel):
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, column_name, np.nan)
         self.endInsertColumns()
-        self._column_order = self.main_window.get_column_ordering()
+        self._column_order = self.main_app.get_column_ordering()
         return True
 
     def removeColumn(self, column, parent=None):
@@ -189,7 +189,7 @@ class DataModel(QtCore.QAbstractTableModel):
             # not a calculated column
             pass
         self.endRemoveColumns()
-        self._column_order = self.main_window.get_column_ordering()
+        self._column_order = self.main_app.get_column_ordering()
         return True
 
     def removeRow(self, row, parent=None):
@@ -272,7 +272,7 @@ class DataModel(QtCore.QAbstractTableModel):
         except KeyError:
             pass
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
-        self.main_window.statusbar.showMessage("Renamed column.", timeout=MSG_TIMEOUT)
+        self.main_app.ui.statusbar.showMessage("Renamed column.", timeout=MSG_TIMEOUT)
         return new_name
 
     def normalize_column_name(self, name):
@@ -302,17 +302,16 @@ class DataModel(QtCore.QAbstractTableModel):
             if self.recalculate_column(col_name, expression):
                 # calculation was successful
                 self._calculated_column_expression[col_name] = expression
-                top_left = self.createIndex(0, col_idx)
-                bottom_right = self.createIndex(len(self._data), col_idx)
-                self.dataChanged.emit(top_left, bottom_right)
-                self.main_window.statusbar.showMessage(
+                self.main_app.ui.statusbar.showMessage(
                     "Updated column values.", timeout=MSG_TIMEOUT
                 )
 
     def recalculate_column(self, col_name, expression=None):
         """Recalculate column values.
 
-        Calculate column values based on its expression.
+        Calculate column values based on its expression. Each column can use
+        values from columns to the left of itself. Those values can be accessed
+        by using the column name as a variable in the expression.
 
         Args:
             col_name: a string containing the column name.
@@ -325,13 +324,13 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         if expression is None:
             expression = self._calculated_column_expression[col_name]
-        objects = {k: self._data[k] for k in self._data.columns if k is not col_name}
+        objects = self._get_accessible_columns(col_name)
         aeval = asteval.Interpreter(usersyms=objects)
         output = aeval(expression)
         if aeval.error:
             for err in aeval.error:
                 exc, msg = err.get_error()
-                self.main_window.statusbar.showMessage(
+                self.main_app.ui.statusbar.showMessage(
                     f"ERROR: {exc}: {msg}.", timeout=MSG_TIMEOUT
                 )
         elif output is not None:
@@ -350,6 +349,25 @@ class DataModel(QtCore.QAbstractTableModel):
         else:
             print(f"No evaluation error but no output for expression {expression}.")
         return False
+
+    def _get_accessible_columns(self, col_name):
+        """Get accessible column data for use in expressions.
+
+        When calculating column values each column can access the values of the
+        columns to its left by using the column name as a variable. This method
+        returns the column data for the accessible columns.
+
+        Args:
+            col_name (str): the name of the column that wants to access data.
+
+        Returns:
+            dict: a dictionary of column_name, data pairs.
+        """
+        col_idx = self._data.columns.get_loc(col_name)
+        accessible_idx = self._column_order[:col_idx]
+        accessible_columns = self._data.columns[accessible_idx]
+        data = {k: self._data[k] for k in accessible_columns}
+        return data
 
     def recalculate_all_columns(self):
         """Recalculate all columns.
