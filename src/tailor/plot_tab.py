@@ -897,17 +897,20 @@ def make_param_table(params):
     Returns:
         A string with the formatted table text.
     """
-    width = max([len(p) for p in params])
-    text = ""
-    fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g} ({:s} %)\n"
-    for p in params:
-        value = params[p].value
-        stderr = params[p].stderr
-        if stderr is None:
-            stderr = 0
-        try:
-            rel_err = "{:.1f}".format(abs(stderr / value * 100))
-        except ZeroDivisionError:
-            rel_err = "--"
-        text += fmt.format(p, value, stderr, rel_err)
-    return text
+    if params:
+        width = max([len(p) for p in params])
+        text = ""
+        fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g} ({:s} %)\n"
+        for p in params:
+            value = params[p].value
+            stderr = params[p].stderr
+            if stderr is None:
+                stderr = 0
+            try:
+                rel_err = "{:.1f}".format(abs(stderr / value * 100))
+            except ZeroDivisionError:
+                rel_err = "--"
+            text += fmt.format(p, value, stderr, rel_err)
+        return text
+    else:
+        return ""
