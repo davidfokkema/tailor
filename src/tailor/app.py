@@ -704,7 +704,7 @@ class Application(QtCore.QObject):
             str: the most recently visited directory.
         """
         cfg = config.read_config()
-        return cfg["recent_dir"]
+        return cfg.get("recent_dir", None)
 
     def set_recent_directory(self, directory):
         """Save the most recently visited directory to the config file.
