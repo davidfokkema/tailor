@@ -340,11 +340,13 @@ class Application(QtCore.QObject):
         box.setInformativeText(
             dedent(
                 f"""
-            Version {__version__}.
+            <p>Version {__version__}.</p>
 
-            Tailor is written by David Fokkema for use in the physics lab courses at the Vrije Universiteit Amsterdam and the University of Amsterdam.
+            <p>Tailor is written by David Fokkema for use in the physics lab courses at the Vrije Universiteit Amsterdam and the University of Amsterdam.</p>
 
-            Tailor is free software licensed under the GNU General Public License v3.0 or later.
+            <p>Tailor is free software licensed under the GNU General Public License v3.0 or later.</p>
+
+            <p>For more information, please visit:<br><a href="https://github.com/davidfokkema/tailor">https://github.com/davidfokkema/tailor</a></p>
         """
             )
         )
