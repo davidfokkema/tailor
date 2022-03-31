@@ -7,13 +7,16 @@ You can fit custom models to your data to estimate best-fit parameters.
 import gzip
 import json
 import pathlib
+import platform
 import sys
 import traceback
+import urllib.request
 from functools import partial
 from importlib import metadata as importlib_metadata
 from importlib import resources
 from textwrap import dedent
 
+import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtUiTools import QUiLoader
@@ -32,10 +35,10 @@ metadata = importlib_metadata.metadata(app_module)
 __name__ = metadata["name"]
 __version__ = metadata["version"]
 
-
 MAX_RECENT_FILES = 5
 
 DIRTY_TIMEOUT = 10000  # 10 s
+RELEASE_API_URL = "https://api.github.com/repos/davidfokkema/tailor/releases/latest"
 
 
 # FIXME: antialiasing is EXTREMELY slow. Why?
@@ -63,6 +66,9 @@ class Application(QtCore.QObject):
         """Initialize the class."""
 
         super().__init__()
+
+        # Preflight
+        self.check_for_updates(silent=True)
 
         self.ui = QUiLoader().load(resources.path("tailor.resources", "tailor.ui"))
         self.ui.setWindowIcon(
@@ -92,6 +98,7 @@ class Application(QtCore.QObject):
         self.ui.actionOpen.triggered.connect(self.open_project_dialog)
         self.ui.actionSave.triggered.connect(self.save_project_or_dialog)
         self.ui.actionSave_As.triggered.connect(self.save_as_project_dialog)
+        self.ui.actionCheck_for_updates.triggered.connect(self.check_for_updates)
         self.ui.actionImport_CSV.triggered.connect(
             lambda: self.import_csv(create_new=True)
         )
@@ -1029,6 +1036,63 @@ class Application(QtCore.QObject):
     def open_recent_project_action(self, filename):
         if self.confirm_project_close_dialog():
             self.load_project(filename)
+
+    def check_for_updates(self, silent=False):
+        """Check for new releases of Tailor.
+
+        Args:
+            silent (bool, optional): If there are no updates available, should
+                this method return silently? Defaults to False.
+        """
+        latest_version, update_link = self.get_latest_version_and_update_link()
+        if not update_link:
+            msg = f"You're on the latest version ({__version__}), great!"
+        else:
+            msg = dedent(
+                f"""\
+                <p>There is a new version available. You have version {__version__} and the latest
+                version is {latest_version}. You can download the new version using the link below.</p>
+
+                <p><a href={update_link}>Download update.</a></p>
+                """
+            )
+        if silent and not update_link:
+            # no updates, and asked to be silent
+            return
+        else:
+            box = QtWidgets.QMessageBox()
+            box.setText("Updates")
+            box.setInformativeText(msg)
+            box.setStyleSheet("QLabel{min-width: 300px;}")
+            box.exec()
+
+    def get_latest_version_and_update_link(self):
+        """Get latest version and link to latest release, if available.
+
+        Get the latest version of Tailor. If a new release is available, returns
+        a platform-specific download link. If there is no new release, returns
+        None.
+
+        Returns:
+            str: URL to download link or None.
+        """
+        r = urllib.request.urlopen(RELEASE_API_URL)
+        release_info = json.loads(r.read())
+        latest_version = release_info["name"]
+        update_link = None
+        if packaging.version.parse(latest_version) > packaging.version.parse(
+            __version__
+        ):
+            urls = {
+                pathlib.Path(a["name"]).suffix: a["browser_download_url"]
+                for a in release_info["assets"]
+            }
+            system = platform.system()
+            if system == "Darwin":
+                update_link = urls[".dmg"]
+            elif system == "Windows":
+                update_link = urls[".msi"]
+        return latest_version, update_link
 
 
 def main():

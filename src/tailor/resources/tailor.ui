@@ -180,6 +180,8 @@
     <addaction name="actionOpen"/>
     <addaction name="menuOpen_Recent"/>
     <addaction name="separator"/>
+    <addaction name="actionCheck_for_updates"/>
+    <addaction name="separator"/>
     <addaction name="actionClose"/>
     <addaction name="actionSave"/>
     <addaction name="actionSave_As"/>
@@ -310,6 +312,11 @@
    </property>
    <property name="text">
     <string>Clear Menu</string>
+   </property>
+  </action>
+  <action name="actionCheck_for_updates">
+   <property name="text">
+    <string>Check for updates</string>
    </property>
   </action>
  </widget>
