@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.5.0
+
+### What’s Changed
+
+Nice update with several usability enhancements and bug fixes.
+
+### :rocket: Features
+
+* Check for new releases (#37) @davidfokkema
+* Only confirm closing a project when some time has passed (#36) @davidfokkema
+* Calculate column values in a strict order (left to right) (#34) @davidfokkema
+* Move columns by dragging the column header (#31) @davidfokkema
+* Change model function input to multi-line text field (#28) @davidfokkema
+* Added shortcuts for menu items (#27) @davidfokkema
+* Remember cwd and recent files (#26) @davidfokkema
+* Upgrade and switch from PyQt5 to PySide6 (#21) @davidfokkema
+
+### :beetle: Fixes
+
+* Fix crash when model has no parameters (#35) @davidfokkema
+* Fix crashes when moving columns (#33) @davidfokkema
+* Do not ignore NaN values in fit (#32) @davidfokkema
+* Hide autoscale button in plots (fix infinite zoom) (#30) @davidfokkema
+* Normalize column names when editing (#29) @davidfokkema
+
+
 ## v1.4.2
 
 ### What’s Changed
