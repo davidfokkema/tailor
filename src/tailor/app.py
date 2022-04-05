@@ -694,6 +694,9 @@ class Application(QtCore.QObject):
         # remember filename for subsequent call to "Save"
         self._set_project_path(filename)
 
+        self.update_recent_files(filename)
+        self.mark_project_dirty(False)
+
     def open_project_dialog(self):
         """Present open project dialog and load project."""
         if self.confirm_project_close_dialog():
