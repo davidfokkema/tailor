@@ -1091,10 +1091,14 @@ class Application(QtCore.QObject):
                 for a in release_info["assets"]
             }
             system = platform.system()
-            if system == "Darwin":
-                update_link = urls[".dmg"]
-            elif system == "Windows":
-                update_link = urls[".msi"]
+            try:
+                if system == "Darwin":
+                    update_link = urls[".dmg"]
+                elif system == "Windows":
+                    update_link = urls[".msi"]
+            except KeyError:
+                # installer not available, no update link
+                pass
         return latest_version, update_link
 
 
