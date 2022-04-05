@@ -606,6 +606,7 @@ class DataModel(QtCore.QAbstractTableModel):
             filename, delimiter, decimal, thousands, header, skiprows
         )
         self._calculated_column_expression = {}
+        self._column_order = list(range(len(self._data.columns)))
 
         self.endResetModel()
 
