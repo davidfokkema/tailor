@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.5.1
+
+### :beetle: Fixes
+
+* Saving project updates recent files and dirty flag (#44) @davidfokkema
+* Set correct column order when importing CSV (fixes missing columns) (#43) @davidfokkema
+
+
 ## v1.5.0
 
 ### What’s Changed
