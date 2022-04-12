@@ -151,6 +151,11 @@ class DataModel(QtCore.QAbstractTableModel):
         # See Qt for Python docs -> Considerations -> API Changes
         return None
 
+    def is_empty(self):
+        """Check whether all cells are empty."""
+        # check for *all* nans in a row or column
+        return self._data.dropna(how="all").empty
+
     def insertColumn(self, column, parent=None, column_name=None):
         """Insert a single column.
 
