@@ -351,7 +351,7 @@ class PlotTab:
         Returns:
             A set of parameter names.
         """
-        model_expr = self.ui.model_func.toPlainText()
+        model_expr = self.ui.model_func.toPlainText().replace("\n", "")
         code = compile(model_expr, "<string>", "eval")
         params = set(code.co_names) - set([self.x_var]) - self._symbols
         if self.y_var in params:
