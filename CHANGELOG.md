@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.5.2
+
+### What’s Changed
+
+### :rocket: Features
+
+* Ignore line endings in model expression (#49) @davidfokkema
+
+### :beetle: Fixes
+
+* Really fix missing columns (#52) @davidfokkema
+* Correctly restart dirty flag timer (#51) @davidfokkema
+* Recalculate values when removing rows or columns (#50) @davidfokkema
+* Handle network issues when checking for updates (#48) @davidfokkema
+
+
 ## v1.5.1
 
 ### :beetle: Fixes
