@@ -105,12 +105,7 @@ class Application(QtCore.QObject):
         self.ui.actionSave.triggered.connect(self.save_project_or_dialog)
         self.ui.actionSave_As.triggered.connect(self.save_as_project_dialog)
         self.ui.actionCheck_for_updates.triggered.connect(self.check_for_updates)
-        self.ui.actionImport_CSV.triggered.connect(
-            lambda: self.import_csv(create_new=True)
-        )
-        self.ui.actionImport_CSV_Into_Current_Project.triggered.connect(
-            lambda: self.import_csv(create_new=False)
-        )
+        self.ui.actionImport_CSV.triggered.connect(self.import_csv)
         self.ui.actionExport_CSV.triggered.connect(self.export_csv)
         self.ui.actionExport_Graph_to_PDF.triggered.connect(
             lambda: self.export_graph(".pdf")
@@ -850,15 +845,11 @@ class Application(QtCore.QObject):
             self.set_recent_directory(pathlib.Path(filename).parent)
             self.data_model.write_csv(filename)
 
-    def import_csv(self, create_new=True):
+    def import_csv(self):
         """Import data from a CSV file.
 
         After confirmation, erase all data and import from a comma-separated
         values file.
-
-        Args:
-            create_new: a boolean indicating whether or not to create a new
-                project or import into the existing project.
         """
         if self.confirm_project_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -884,12 +875,9 @@ class Application(QtCore.QObject):
                         thousands,
                         header,
                         skiprows,
-                        create_new,
                     )
 
-    def _do_import_csv(
-        self, filename, delimiter, decimal, thousands, header, skiprows, create_new=True
-    ):
+    def _do_import_csv(self, filename, delimiter, decimal, thousands, header, skiprows):
         """Import CSV data from file.
 
         Args:
@@ -900,13 +888,14 @@ class Application(QtCore.QObject):
             header: an integer with the row number containing the column names,
                 or None.
             skiprows: an integer with the number of rows to skip at start of file
-            create_new: a boolean indicating whether or not to create a new
-                project or import into the existing project.
         """
-        if create_new:
+        if self.data_model.is_empty():
+            # when the data only contains empty cells
+            print("EMPTY")
             self.clear_all()
             import_func = self.data_model.read_csv
         else:
+            print("NOT EMPTY")
             import_func = self.data_model.read_and_concat_csv
 
         import_func(

@@ -151,6 +151,11 @@ class DataModel(QtCore.QAbstractTableModel):
         # See Qt for Python docs -> Considerations -> API Changes
         return None
 
+    def is_empty(self):
+        """Check whether all cells are empty."""
+        # check for *all* nans in a row or column
+        return self._data.dropna(how="all").empty
+
     def insertColumn(self, column, parent=None, column_name=None):
         """Insert a single column.
 
@@ -567,11 +572,11 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         self.beginResetModel()
         self._data = pd.DataFrame.from_dict(save_obj["data"])
-        self._column_order = list(range(len(self._data.columns)))
         self._calculated_column_expression = save_obj["calculated_columns"]
         self._new_col_num = save_obj["new_col_num"]
         self.recalculate_all_columns()
         self.endResetModel()
+        self._column_order = self.main_app.get_column_ordering()
 
     def write_csv(self, filename):
         """Write all data to CSV file.
@@ -609,9 +614,8 @@ class DataModel(QtCore.QAbstractTableModel):
             filename, delimiter, decimal, thousands, header, skiprows
         )
         self._calculated_column_expression = {}
-        self._column_order = list(range(len(self._data.columns)))
-
         self.endResetModel()
+        self._column_order = self.main_app.get_column_ordering()
 
     def read_and_concat_csv(
         self,
@@ -651,8 +655,8 @@ class DataModel(QtCore.QAbstractTableModel):
         # save final data and recalculate values in calculated columns
         self._data = final_data
         self.recalculate_all_columns()
-
         self.endResetModel()
+        self._column_order = self.main_app.get_column_ordering()
 
     def _read_csv_into_dataframe(
         self, filename, delimiter, decimal, thousands, header, skiprows

@@ -187,7 +187,6 @@
     <addaction name="actionSave_As"/>
     <addaction name="separator"/>
     <addaction name="actionImport_CSV"/>
-    <addaction name="actionImport_CSV_Into_Current_Project"/>
     <addaction name="actionExport_CSV"/>
     <addaction name="separator"/>
     <addaction name="actionExport_Graph_to_PDF"/>
