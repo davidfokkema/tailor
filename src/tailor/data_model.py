@@ -197,6 +197,7 @@ class DataModel(QtCore.QAbstractTableModel):
             pass
         self.endRemoveColumns()
         self._column_order = self.main_app.get_column_ordering()
+        self.recalculate_all_columns()
         return True
 
     def removeRow(self, row, parent=None):
@@ -217,6 +218,7 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data.drop(index, axis=0, inplace=True)
         self._data.reset_index(drop=True, inplace=True)
         self.endRemoveRows()
+        self.recalculate_all_columns()
         return True
 
     def insertRow(self, row, parent=None):
@@ -238,6 +240,7 @@ class DataModel(QtCore.QAbstractTableModel):
         num_col = len(self._data.columns)
         self._data.loc[row] = num_col * [np.nan]
         self.endInsertRows()
+        self.recalculate_all_columns()
         return True
 
     def insert_calculated_column(self, column):
