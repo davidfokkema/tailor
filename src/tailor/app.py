@@ -78,6 +78,11 @@ class Application(QtCore.QObject):
         # store reference to this code in data tab
         self.ui.data.code = self
 
+        # set up dirty timer
+        self._dirty_timer = QtCore.QTimer()
+        self._dirty_timer.timeout.connect(self.mark_project_dirty)
+
+        # clear all program state
         self.clear_all()
 
         # Enable close buttons...
@@ -293,7 +298,7 @@ class Application(QtCore.QObject):
         self.update_window_title()
         if not is_dirty:
             # FIXME: this can be implemented much better by actually detecting changes.
-            QtCore.QTimer.singleShot(DIRTY_TIMEOUT, self.mark_project_dirty)
+            self._dirty_timer.start(DIRTY_TIMEOUT)
 
     def column_moved(self, logidx, oldidx, newidx):
         """Move column in reaction to UI signal.
