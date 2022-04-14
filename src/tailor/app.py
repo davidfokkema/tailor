@@ -898,11 +898,9 @@ class Application(QtCore.QObject):
         """
         if self.data_model.is_empty():
             # when the data only contains empty cells
-            print("EMPTY")
             self.clear_all()
             import_func = self.data_model.read_csv
         else:
-            print("NOT EMPTY")
             import_func = self.data_model.read_and_concat_csv
 
         import_func(
