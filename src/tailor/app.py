@@ -311,7 +311,14 @@ class Application(QtCore.QObject):
         self.data_model.recalculate_all_columns()
 
     def get_column_ordering(self):
-        """Return the logical order of columns in the table view."""
+        """Return the visual order of logical columns in the table view.
+
+        Returns a list of column indexes. The first index is the first (visual)
+        column in the table view. The index points to a colum in the underlying
+        data. So, if the underlying data has columns col0, col1, col2, col3, but
+        you visually rearrange them as col3, col1, col0, col2, then this method
+        will return [3, 1, 0, 2].
+        """
         header = self.ui.data_view.horizontalHeader()
         n_columns = len(self.data_model.get_column_names())
         return [header.logicalIndex(i) for i in range(n_columns)]

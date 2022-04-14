@@ -28,7 +28,6 @@ class DataModel(QtCore.QAbstractTableModel):
     _data = None
     _calculated_column_expression = None
     _is_calculated_column_valid = None
-    _column_order = []
 
     def __init__(self, main_app):
         """Instantiate the class."""
@@ -37,7 +36,6 @@ class DataModel(QtCore.QAbstractTableModel):
         self.main_app = main_app
 
         self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
-        self._column_order = list(range(len(self._data.columns)))
         self._calculated_column_expression = {}
         self._is_calculated_column_valid = {}
 
@@ -151,6 +149,17 @@ class DataModel(QtCore.QAbstractTableModel):
         # See Qt for Python docs -> Considerations -> API Changes
         return None
 
+    def _get_column_ordering(self):
+        """Return the visual order of logical columns in the table view.
+
+        Returns a list of column indexes. The first index is the first (visual)
+        column in the table view. The index points to a colum in the underlying
+        data. So, if the underlying data has columns col0, col1, col2, col3, but
+        you visually rearrange them as col3, col1, col0, col2, then this method
+        will return [3, 1, 0, 2].
+        """
+        return self.main_app.get_column_ordering()
+
     def is_empty(self):
         """Check whether all cells are empty."""
         # check for *all* nans in a row or column
@@ -176,7 +185,6 @@ class DataModel(QtCore.QAbstractTableModel):
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
         self._data.insert(column, column_name, np.nan)
         self.endInsertColumns()
-        self._column_order = self.main_app.get_column_ordering()
         return True
 
     def removeColumn(self, column, parent=None):
@@ -201,7 +209,6 @@ class DataModel(QtCore.QAbstractTableModel):
             # not a calculated column
             pass
         self.endRemoveColumns()
-        self._column_order = self.main_app.get_column_ordering()
         self.recalculate_all_columns()
         return True
 
@@ -391,12 +398,13 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             dict: a dictionary of column_name, data pairs.
         """
+        column_order = self._get_column_ordering()
         # logical column number in data
         log_idx = self._data.columns.get_loc(col_name)
         # visual column number in table view
-        vis_idx = self._column_order.index(log_idx)
+        vis_idx = column_order.index(log_idx)
         # accessible columns to the left of current column
-        accessible_idx = self._column_order[:vis_idx]
+        accessible_idx = column_order[:vis_idx]
         accessible_columns = self._data.columns[accessible_idx]
         data = {
             k: self._data[k]
@@ -412,7 +420,8 @@ class DataModel(QtCore.QAbstractTableModel):
         updated. This method will manually recalculate all column values.
         """
         column_names = self.get_column_names()
-        for col_idx in self._column_order:
+        column_order = self._get_column_ordering()
+        for col_idx in column_order:
             if self.is_calculated_column(col_idx):
                 self.recalculate_column(column_names[col_idx])
 
@@ -554,8 +563,9 @@ class DataModel(QtCore.QAbstractTableModel):
         Args:
             save_obj: a dictionary to store the data and state.
         """
-        columns = self._data.columns[self._column_order]
-        df = self._data[columns]
+        column_order = self._get_column_ordering()
+        ordered_columns = self._data.columns[column_order]
+        df = self._data[ordered_columns]
         save_obj.update(
             {
                 "data": df.to_dict("list"),
@@ -576,7 +586,6 @@ class DataModel(QtCore.QAbstractTableModel):
         self._new_col_num = save_obj["new_col_num"]
         self.recalculate_all_columns()
         self.endResetModel()
-        self._column_order = self.main_app.get_column_ordering()
 
     def write_csv(self, filename):
         """Write all data to CSV file.
@@ -615,7 +624,6 @@ class DataModel(QtCore.QAbstractTableModel):
         )
         self._calculated_column_expression = {}
         self.endResetModel()
-        self._column_order = self.main_app.get_column_ordering()
 
     def read_and_concat_csv(
         self,
@@ -656,7 +664,6 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data = final_data
         self.recalculate_all_columns()
         self.endResetModel()
-        self._column_order = self.main_app.get_column_ordering()
 
     def _read_csv_into_dataframe(
         self, filename, delimiter, decimal, thousands, header, skiprows
