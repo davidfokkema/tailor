@@ -175,6 +175,10 @@ class Application(QtCore.QObject):
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
         # tests
+        # def test():
+        #     print(self.get_column_ordering())
+
+        # QtGui.QShortcut(QtGui.QKeySequence("Ctrl+X"), self.ui.data_view, test)
         # filename = "~/Desktop/meting1.csv"
         # dialog = CSVFormatDialog(filename)
         # dialog.exec()
@@ -277,12 +281,25 @@ class Application(QtCore.QObject):
         # )
 
     def _set_view_and_selection_model(self):
+        """Set up data view and selection model.
+
+        Connects the table widget to the data model, sets up various behaviours
+        and resets visual column ordering.
+        """
         self.ui.data_view.setModel(self.data_model)
         self.ui.data_view.setDragDropMode(self.ui.data_view.NoDragDrop)
         header = self.ui.data_view.horizontalHeader()
         header.setSectionsMovable(True)
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         header.setMinimumSectionSize(header.defaultSectionSize())
+
+        # reset column ordering. There is, apparently, no easy way to do this :'(
+        for log_idx in range(self.data_model.columnCount()):
+            # move sections in the correct position FROM LEFT TO RIGHT
+            # so, logical indexes should be numbered [0, 1, 2, ... ]
+            # >>> header.moveSection(from, to)
+            vis_idx = header.visualIndex(log_idx)
+            header.moveSection(vis_idx, log_idx)
 
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
@@ -311,9 +328,16 @@ class Application(QtCore.QObject):
         self.data_model.recalculate_all_columns()
 
     def get_column_ordering(self):
-        """Return the logical order of columns in the table view."""
+        """Return the visual order of logical columns in the table view.
+
+        Returns a list of column indexes. The first index is the first (visual)
+        column in the table view. The index points to a colum in the underlying
+        data. So, if the underlying data has columns col0, col1, col2, col3, but
+        you visually rearrange them as col3, col1, col0, col2, then this method
+        will return [3, 1, 0, 2].
+        """
         header = self.ui.data_view.horizontalHeader()
-        n_columns = len(self.data_model.get_column_names())
+        n_columns = self.data_model.columnCount()
         return [header.logicalIndex(i) for i in range(n_columns)]
 
     def eventFilter(self, watched, event):
@@ -891,11 +915,9 @@ class Application(QtCore.QObject):
         """
         if self.data_model.is_empty():
             # when the data only contains empty cells
-            print("EMPTY")
             self.clear_all()
             import_func = self.data_model.read_csv
         else:
-            print("NOT EMPTY")
             import_func = self.data_model.read_and_concat_csv
 
         import_func(
