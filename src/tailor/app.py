@@ -465,9 +465,29 @@ class Application(QtCore.QObject):
         Args:
             idx: an integer index of the now-focused tab.
         """
-        tab = self.ui.tabWidget.currentWidget().code
+        self.update_plot_tab(idx)
+
+    def update_plot_tab(self, idx):
+        """Update plot tab.
+
+        Update the plot to reflect any changes to the data that might have
+        occured.
+
+        Args:
+            idx: an integer index of the tab.
+        """
+        tab = self.ui.tabWidget.widget(idx).code
         if type(tab) == PlotTab:
             tab.update_plot()
+
+    def update_all_plots(self):
+        """Update all plot tabs.
+
+        Update all plots to reflect any changes to the data that might have
+        occured.
+        """
+        for idx in range(self.ui.tabWidget.count()):
+            self.update_plot_tab(idx)
 
     def add_column(self):
         """Add column to data model and select it."""
@@ -934,6 +954,7 @@ class Application(QtCore.QObject):
             skiprows=skiprows,
         )
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self.update_all_plots()
 
     def export_graph(self, suffix):
         """Export a graph to a file.
