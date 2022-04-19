@@ -92,7 +92,7 @@ class DataModel(QtCore.QAbstractTableModel):
         # See Qt for Python docs -> Considerations -> API Changes
         return None
 
-    def setData(self, index, value, role=QtCore.Qt.EditRole):
+    def setData(self, index, value, role=QtCore.Qt.EditRole, *, skip_update=False):
         """Set (attributes of) data values.
 
         This method is used to set data values in the model. The role indicates
@@ -104,6 +104,9 @@ class DataModel(QtCore.QAbstractTableModel):
             value: the value to set.
             role: an ItemDataRole to indicate what type of information is
                 requested.
+            skip_update (boolean): if True, do not recalculate computed
+                cell values or signal that the current cell has changed. These
+                are both time-consuming operations.
 
         Returns:
             True if the data could be set. False otherwise.
@@ -118,8 +121,9 @@ class DataModel(QtCore.QAbstractTableModel):
             finally:
                 # FIXME: data changed, recalculate all columns; better to only
                 # recalculate the current row
-                self.recalculate_all_columns()
-            self.dataChanged.emit(index, index)
+                if not skip_update:
+                    self.recalculate_all_columns()
+                    self.dataChanged.emit(index, index)
             return True
         # Role not implemented
         return False
