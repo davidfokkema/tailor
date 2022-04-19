@@ -584,8 +584,8 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data = pd.DataFrame.from_dict(save_obj["data"])
         self._calculated_column_expression = save_obj["calculated_columns"]
         self._new_col_num = save_obj["new_col_num"]
-        self.recalculate_all_columns()
         self.endResetModel()
+        self.recalculate_all_columns()
 
     def write_csv(self, filename):
         """Write all data to CSV file.
@@ -662,8 +662,8 @@ class DataModel(QtCore.QAbstractTableModel):
 
         # save final data and recalculate values in calculated columns
         self._data = final_data
-        self.recalculate_all_columns()
         self.endResetModel()
+        self.recalculate_all_columns()
 
     def _read_csv_into_dataframe(
         self, filename, delimiter, decimal, thousands, header, skiprows
