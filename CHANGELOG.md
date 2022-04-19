@@ -2,14 +2,15 @@
 
 ## v1.5.2
 
-### What’s Changed
-
 ### :rocket: Features
 
+* Speed up clearing cells (#54) @davidfokkema
 * Ignore line endings in model expression (#49) @davidfokkema
 
 ### :beetle: Fixes
 
+* Update plots on import of CSV files (#55) @davidfokkema
+* Reset column ordering when opening a new project (#53) @davidfokkema
 * Really fix missing columns (#52) @davidfokkema
 * Correctly restart dirty flag timer (#51) @davidfokkema
 * Recalculate values when removing rows or columns (#50) @davidfokkema
