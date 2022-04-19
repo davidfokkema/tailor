@@ -175,6 +175,10 @@ class Application(QtCore.QObject):
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
         # tests
+        # def test():
+        #     print(self.get_column_ordering())
+
+        # QtGui.QShortcut(QtGui.QKeySequence("Ctrl+X"), self.ui.data_view, test)
         # filename = "~/Desktop/meting1.csv"
         # dialog = CSVFormatDialog(filename)
         # dialog.exec()
