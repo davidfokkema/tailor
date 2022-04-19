@@ -277,12 +277,25 @@ class Application(QtCore.QObject):
         # )
 
     def _set_view_and_selection_model(self):
+        """Set up data view and selection model.
+
+        Connects the table widget to the data model, sets up various behaviours
+        and resets visual column ordering.
+        """
         self.ui.data_view.setModel(self.data_model)
         self.ui.data_view.setDragDropMode(self.ui.data_view.NoDragDrop)
         header = self.ui.data_view.horizontalHeader()
         header.setSectionsMovable(True)
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         header.setMinimumSectionSize(header.defaultSectionSize())
+
+        # reset column ordering. There is, apparently, no easy way to do this :'(
+        for log_idx in range(self.data_model.columnCount()):
+            # move sections in the correct position FROM LEFT TO RIGHT
+            # so, logical indexes should be numbered [0, 1, 2, ... ]
+            # >>> header.moveSection(from, to)
+            vis_idx = header.visualIndex(log_idx)
+            header.moveSection(vis_idx, log_idx)
 
         self.selection = self.ui.data_view.selectionModel()
         self.selection.selectionChanged.connect(self.selection_changed)
@@ -320,7 +333,7 @@ class Application(QtCore.QObject):
         will return [3, 1, 0, 2].
         """
         header = self.ui.data_view.horizontalHeader()
-        n_columns = len(self.data_model.get_column_names())
+        n_columns = self.data_model.columnCount()
         return [header.logicalIndex(i) for i in range(n_columns)]
 
     def eventFilter(self, watched, event):
