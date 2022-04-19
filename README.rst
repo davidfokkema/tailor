@@ -53,7 +53,7 @@ Development
 
 Set up a development environment with::
 
-    $ conda create -n tailor python=3.8
+    $ conda create -n tailor python=3.10
     $ conda activate tailor
     $ pip install briefcase
 
