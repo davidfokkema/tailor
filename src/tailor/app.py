@@ -430,7 +430,8 @@ class Application(QtCore.QObject):
         These values are used to update the column information in the user
         interface.
 
-        Args: selected: QItemSelection containing the newly selected events.
+        Args:
+            selected: QItemSelection containing the newly selected events.
             deselected: QItemSelection containing previously selected, and now
             deselected, items.
         """
