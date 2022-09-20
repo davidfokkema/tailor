@@ -1,10 +1,10 @@
+import pathlib
 import sys
 from importlib import metadata as importlib_metadata
 
 import appdirs
-import toml
-import pathlib
-
+import tomli
+import tomli_w
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
@@ -18,8 +18,8 @@ def read_config():
     """Read configuration file."""
     config_path = get_config_path()
     if config_path.is_file():
-        with open(config_path) as f:
-            return toml.load(f)
+        with open(config_path, "rb") as f:
+            return tomli.load(f)
     else:
         return {}
 
@@ -32,7 +32,7 @@ def write_config(config):
     """
     create_config_dir()
     config_path = get_config_path()
-    toml_config = toml.dumps(config)
+    toml_config = tomli_w.dumps(config)
     with open(config_path, "w") as f:
         # separate TOML generation from writing to file, or an exception
         # generating TOML will result in an empty file
