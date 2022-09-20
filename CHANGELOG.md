@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.5.3
+
+### :package: Build System
+
+* New version of briefcase; crashes on Windows now show error messages
+
+### :rocket: Features
+
+* New version of PySide6, only the 'Essentials' package
+
+### :beetle: Fixes
+
+* Fix toml decoding error (#56) @davidfokkema
+
+
 ## v1.5.2
 
 ### :rocket: Features
