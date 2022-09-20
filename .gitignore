@@ -67,3 +67,6 @@ windows/
 android/
 linux/
 django/
+
+# Briefcase dev logs
+*.dev.log
