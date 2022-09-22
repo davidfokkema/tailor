@@ -21,6 +21,7 @@ jobs:
       - run: python -m pip install briefcase==0.3.6
       - run: briefcase create
       - run: briefcase build
+      - run: python -m pip install tomli
       - run: python pruner.py
       - run: briefcase package --no-sign
       - uses: svenstaro/upload-release-action@v2
