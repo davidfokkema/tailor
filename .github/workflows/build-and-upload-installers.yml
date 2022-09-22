@@ -2,6 +2,7 @@ name: build-and-upload-installers
 on:
   release:
     types: [published]
+  workflow_dispatch:
 jobs:
   build-and-upload-installer:
     strategy:
