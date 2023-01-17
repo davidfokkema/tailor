@@ -18,8 +18,12 @@ def read_config():
     """Read configuration file."""
     config_path = get_config_path()
     if config_path.is_file():
-        with open(config_path, "rb") as f:
-            return tomli.load(f)
+        try:
+            with open(config_path, "rb") as f:
+                return tomli.load(f)
+        except (tomli.TOMLDecodeError, UnicodeDecodeError):
+            # error parsing TOML
+            return {}
     else:
         return {}
 
@@ -32,11 +36,13 @@ def write_config(config):
     """
     create_config_dir()
     config_path = get_config_path()
-    toml_config = tomli_w.dumps(config)
-    with open(config_path, "w") as f:
+    # make sure that TOML conversion works before opening file
+    tomli_w.dumps(config)
+    with open(config_path, "wb") as f:
         # separate TOML generation from writing to file, or an exception
         # generating TOML will result in an empty file
-        f.write(toml_config)
+        # correct TOML unicode handling requires writing bytes
+        tomli_w.dump(config, f)
 
 
 def get_config_path():
