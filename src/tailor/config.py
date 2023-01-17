@@ -21,7 +21,7 @@ def read_config():
         try:
             with open(config_path, "rb") as f:
                 return tomli.load(f)
-        except tomli.TOMLDecodeError:
+        except (tomli.TOMLDecodeError, UnicodeDecodeError):
             # error parsing TOML
             return {}
     else:
