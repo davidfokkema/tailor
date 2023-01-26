@@ -125,6 +125,7 @@ class Application(QtCore.QObject):
         self.ui.actionRemove_row.triggered.connect(self.remove_row)
         self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
         self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
+        self.ui.actionPaste.triggered.connect(self.paste_cells)
 
         # set up the open recent menu
         self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
@@ -452,6 +453,43 @@ class Application(QtCore.QObject):
 
         # write TSV text to clipboard
         self.clipboard.setText(text)
+
+    def paste_cells(self):
+        """Paste cells from clipboard."""
+
+        # get data from clipboard
+        text = self.clipboard.text()
+
+        # create array from tab separated values, "" -> NaN
+        data = np.array(
+            [
+                [float(v) if v != "" else np.nan for v in row.split("\t")]
+                for row in text.split("\n")
+            ]
+        )
+
+        # get current coordinates
+        index = self.ui.data_view.currentIndex()
+        start_row, start_column = index.row(), index.column()
+
+        # write clipboard data to data model
+        it = np.nditer(data, flags=["multi_index"])
+        for value in it:
+            row, column = it.multi_index
+            self.data_model.setData(
+                self.data_model.createIndex(row + start_row, column + start_column),
+                value,
+                skip_update=True,
+            )
+
+        # signal that values have changed
+        height, width = data.shape
+        self.data_model.dataChanged.emit(
+            self.data_model.createIndex(start_row, start_column),
+            self.data_model.createIndex(start_row + height, start_column + width),
+        )
+        # recalculate computed values once
+        self.data_model.recalculate_all_columns()
 
     def selection_changed(self, selected, deselected):
         """Handle selectionChanged events in the data view.

@@ -46,7 +46,7 @@ def test_copy_paste():
 
     app.ui.data_view.setCurrentIndex(app.data_model.createIndex(3, 0))
 
-    # app.paste_selected_cells()
+    app.paste_cells()
 
     # IPython.embed()
 
