@@ -438,7 +438,9 @@ class Application(QtCore.QObject):
         # fill data from selected indexes, not selected -> NaN
         data = np.full((height, width), np.nan)
         for index in self.selection.selectedIndexes():
-            data[index.row() - top, index.column() - left] = index.data()
+            if (value := index.data()) == "":
+                value = np.nan
+            data[index.row() - top, index.column() - left] = value
 
         # create tab separated values from data, NaN -> empty string, e.g.
         # 1 2 3
