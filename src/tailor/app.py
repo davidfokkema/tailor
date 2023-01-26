@@ -16,6 +16,7 @@ from importlib import metadata as importlib_metadata
 from importlib import resources
 from textwrap import dedent
 
+import numpy as np
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -75,6 +76,7 @@ class Application(QtCore.QObject):
         self.ui.setWindowIcon(
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
+        self.clipboard = QtWidgets.QApplication.clipboard()
         # store reference to this code in data tab
         self.ui.data.code = self
 
@@ -122,6 +124,7 @@ class Application(QtCore.QObject):
         self.ui.actionRemove_column.triggered.connect(self.remove_column)
         self.ui.actionRemove_row.triggered.connect(self.remove_row)
         self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
+        self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
 
         # set up the open recent menu
         self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
@@ -420,6 +423,35 @@ class Application(QtCore.QObject):
         return self.ui.data_view.moveCursor(
             self.ui.data_view.MoveDown, QtCore.Qt.NoModifier
         )
+
+    def copy_selected_cells(self):
+        """Copy selected cells to clipboard."""
+
+        # get bounding rectangle coordinates and sizes
+        selection = self.selection.selection().toList()
+        left = min(r.left() for r in selection)
+        width = max(r.right() for r in selection) - left + 1
+        top = min(r.top() for r in selection)
+        height = max(r.bottom() for r in selection) - top + 1
+
+        # fill data from selected indexes, not selected -> NaN
+        data = np.full((height, width), np.nan)
+        for index in self.selection.selectedIndexes():
+            data[index.row() - top, index.column() - left] = index.data()
+
+        # create tab separated values from data, NaN -> empty string, e.g.
+        # 1 2 3
+        # 2   4
+        # 5 5 6
+        text = "\n".join(
+            [
+                "\t".join([str(v) if not np.isnan(v) else "" for v in row])
+                for row in data
+            ]
+        )
+
+        # write TSV text to clipboard
+        self.clipboard.setText(text)
 
     def selection_changed(self, selected, deselected):
         """Handle selectionChanged events in the data view.
