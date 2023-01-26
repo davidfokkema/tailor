@@ -463,12 +463,18 @@ class Application(QtCore.QObject):
         text = self.clipboard.text()
 
         # create array from tab separated values, "" -> NaN
-        data = np.array(
-            [
-                [float(v) if v != "" else np.nan for v in row.split("\t")]
-                for row in text.split("\n")
-            ]
-        )
+        try:
+            data = np.array(
+                [
+                    [float(v) if v != "" else np.nan for v in row.split("\t")]
+                    for row in text.split("\n")
+                ]
+            )
+        except ValueError as exc:
+            self.ui.statusbar.showMessage(
+                f"Error pasting from clipboard: {exc}", timeout=MSG_TIMEOUT
+            )
+            return
 
         # get current coordinates
         index = self.ui.data_view.currentIndex()
