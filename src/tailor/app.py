@@ -152,6 +152,8 @@ class Application(QtCore.QObject):
         self.ui.actionClose.setShortcut(QtGui.QKeySequence.Close)
         self.ui.actionSave.setShortcut(QtGui.QKeySequence.Save)
         self.ui.actionSave_As.setShortcut(QtGui.QKeySequence.SaveAs)
+        self.ui.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
+        self.ui.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
 
         # Set other shortcuts for menu items
         self.ui.actionImport_CSV.setShortcut(QtGui.QKeySequence("Ctrl+I"))
