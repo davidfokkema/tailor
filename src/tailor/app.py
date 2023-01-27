@@ -504,7 +504,9 @@ class Application(QtCore.QObject):
         # signal that values have changed
         self.data_model.dataChanged.emit(
             self.data_model.createIndex(start_row, start_column),
-            self.data_model.createIndex(start_row + height, start_column + width),
+            self.data_model.createIndex(
+                start_row + height - 1, start_column + width - 1
+            ),
         )
         # recalculate computed values once
         self.data_model.recalculate_all_columns()
