@@ -14,18 +14,13 @@ SELECT = QtCore.QItemSelectionModel.SelectionFlag.Select
 TOGGLE = QtCore.QItemSelectionModel.SelectionFlag.Toggle
 
 
-def test_copy_paste():
-    qapp = QtWidgets.QApplication()
-    app = Application()
-
+def test_copy_paste(app):
     x = np.arange(20)
     app.data_model.beginResetModel()
     app.data_model._data = pd.DataFrame.from_dict(
         {"x": x, "y": x**2, "z": x / 2, "a": x * 2, "b": np.sin(x)}
     )
     app.data_model.endResetModel()
-
-    app.ui.show()
 
     set_selection(app, 1, 1, 3, 8, SELECT)
     set_selection(app, 2, 2, 2, 4, TOGGLE)
@@ -71,10 +66,6 @@ def test_copy_paste():
 19  19.0  361.0   9.5  38.000000  0.149877"""
     assert str(app.data_model._data) == data
 
-    # IPython.embed()
-
-    qapp.exec()
-
 
 def set_selection(app, x1, y1, x2, y2, flag):
     app.selection.select(
@@ -86,5 +77,22 @@ def set_selection(app, x1, y1, x2, y2, flag):
     )
 
 
+def test_paste_adds_rows_and_columns(app):
+    app.clear_all()
+    C, R = 3, 10
+    data = "\n".join(["\t".join([str(i * j) for j in range(C)]) for i in range(R)])
+    app.clipboard.setText(data)
+    app.paste_cells()
+
+
 if __name__ == "__main__":
-    test_copy_paste()
+    qapp = QtWidgets.QApplication()
+    app = Application()
+
+    test_copy_paste(app)
+    test_paste_adds_rows_and_columns(app)
+
+    app.ui.show()
+    qapp.exec()
+
+    qapp.quit()

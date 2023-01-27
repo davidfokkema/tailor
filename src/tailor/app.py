@@ -476,9 +476,20 @@ class Application(QtCore.QObject):
             )
             return
 
-        # get current coordinates
-        index = self.ui.data_view.currentIndex()
-        start_row, start_column = index.row(), index.column()
+        # get current coordinates and data size
+        current_index = self.ui.data_view.currentIndex()
+        start_row, start_column = current_index.row(), current_index.column()
+        height, width = data.shape
+
+        # extend rows and columns if necessary
+        last_table_column = self.data_model.columnCount() - 1
+        if (last_data_column := start_column + width - 1) > last_table_column:
+            for _ in range(last_data_column - last_table_column):
+                self.add_column()
+        last_table_row = self.data_model.rowCount() - 1
+        if (last_data_row := start_row + height - 1) > last_table_row:
+            for _ in range(last_data_row - last_table_row):
+                self.add_row()
 
         # write clipboard data to data model
         it = np.nditer(data, flags=["multi_index"])
@@ -491,13 +502,15 @@ class Application(QtCore.QObject):
             )
 
         # signal that values have changed
-        height, width = data.shape
         self.data_model.dataChanged.emit(
             self.data_model.createIndex(start_row, start_column),
             self.data_model.createIndex(start_row + height, start_column + width),
         )
         # recalculate computed values once
         self.data_model.recalculate_all_columns()
+        # reset current index and focus
+        self.ui.data_view.setCurrentIndex(current_index)
+        self.ui.data_view.setFocus()
 
     def selection_changed(self, selected, deselected):
         """Handle selectionChanged events in the data view.
