@@ -321,15 +321,29 @@ class Application(QtCore.QObject):
 
         Dragging a column to a new location triggers execution of this method.
         Since the UI only reorders the column visually and does not change the
-        underlying data, we will store the ordering in the data model.
+        underlying data, things can get tricky when trying to determine which
+        variables are available to the left of calculated columns and which
+        columns include the bouding box of a selection for copy/paste. So, we
+        will immediately move back the column in the view and move the
+        underlying data instead. That way, visual and logical ordering are
+        always in sync.
 
         Args:
             logidx (int): the logical column index (index in the dataframe)
-            oldidx (int): the old visual index
-            newidx (int): the new visual index
+            oldidx (int): the old visual index newidx (int): the new visual
+            index
         """
-        self.data_model._column_order = self.get_column_ordering()
+        print(f"Column moved from {oldidx=} to {newidx=}")
+        header = self.ui.data_view.horizontalHeader()
+        header.blockSignals(True)
+        # move the column back, keep the header in logical order
+        header.moveSection(newidx, oldidx)
+        header.blockSignals(False)
+        # move the underlying data column instead
+        self.data_model.moveColumn(None, oldidx, None, newidx)
         self.data_model.recalculate_all_columns()
+        # select the column that was just moved at the new location
+        self.ui.data_view.selectColumn(newidx)
 
     def get_column_ordering(self):
         """Return the visual order of logical columns in the table view.
@@ -342,7 +356,9 @@ class Application(QtCore.QObject):
         """
         header = self.ui.data_view.horizontalHeader()
         n_columns = self.data_model.columnCount()
-        return [header.logicalIndex(i) for i in range(n_columns)]
+        ordering = [header.logicalIndex(i) for i in range(n_columns)]
+        print(f"{ordering=}")
+        return ordering
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
