@@ -200,7 +200,15 @@
     </property>
     <addaction name="actionAbout_Tailor"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionCopy"/>
+    <addaction name="actionPaste"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuTable"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -316,6 +324,16 @@
   <action name="actionCheck_for_updates">
    <property name="text">
     <string>Check for updates</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="text">
+    <string>Paste</string>
    </property>
   </action>
  </widget>

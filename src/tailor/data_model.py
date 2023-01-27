@@ -169,6 +169,28 @@ class DataModel(QtCore.QAbstractTableModel):
         # check for *all* nans in a row or column
         return self._data.dropna(how="all").empty
 
+    def moveColumn(
+        self, sourceParent, sourceColumn, destinationParent, destinationChild
+    ):
+        """Move column.
+
+        Move a column from sourceColumn to destinationChild. Alas, the Qt naming
+        scheme remains a bit of a mystery.
+
+        Args:
+            sourceParent: ignored.
+            sourceColumn (int): the source column number.
+            destinationParent: ignored.
+            destinationChild (int): the destination column number.
+
+        Returns:
+            bool: True if the column was moved.
+        """
+        cols = list(self._data.columns)
+        cols.insert(destinationChild, cols.pop(sourceColumn))
+        self._data = self._data[cols]
+        return True
+
     def insertColumn(self, column, parent=None, column_name=None):
         """Insert a single column.
 

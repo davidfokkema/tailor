@@ -16,6 +16,7 @@ from importlib import metadata as importlib_metadata
 from importlib import resources
 from textwrap import dedent
 
+import numpy as np
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -75,6 +76,7 @@ class Application(QtCore.QObject):
         self.ui.setWindowIcon(
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
+        self.clipboard = QtWidgets.QApplication.clipboard()
         # store reference to this code in data tab
         self.ui.data.code = self
 
@@ -122,6 +124,8 @@ class Application(QtCore.QObject):
         self.ui.actionRemove_column.triggered.connect(self.remove_column)
         self.ui.actionRemove_row.triggered.connect(self.remove_row)
         self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
+        self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
+        self.ui.actionPaste.triggered.connect(self.paste_cells)
 
         # set up the open recent menu
         self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
@@ -148,6 +152,8 @@ class Application(QtCore.QObject):
         self.ui.actionClose.setShortcut(QtGui.QKeySequence.Close)
         self.ui.actionSave.setShortcut(QtGui.QKeySequence.Save)
         self.ui.actionSave_As.setShortcut(QtGui.QKeySequence.SaveAs)
+        self.ui.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
+        self.ui.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
 
         # Set other shortcuts for menu items
         self.ui.actionImport_CSV.setShortcut(QtGui.QKeySequence("Ctrl+I"))
@@ -317,15 +323,29 @@ class Application(QtCore.QObject):
 
         Dragging a column to a new location triggers execution of this method.
         Since the UI only reorders the column visually and does not change the
-        underlying data, we will store the ordering in the data model.
+        underlying data, things can get tricky when trying to determine which
+        variables are available to the left of calculated columns and which
+        columns include the bouding box of a selection for copy/paste. So, we
+        will immediately move back the column in the view and move the
+        underlying data instead. That way, visual and logical ordering are
+        always in sync.
 
         Args:
             logidx (int): the logical column index (index in the dataframe)
-            oldidx (int): the old visual index
-            newidx (int): the new visual index
+            oldidx (int): the old visual index newidx (int): the new visual
+            index
         """
-        self.data_model._column_order = self.get_column_ordering()
+        print(f"Column moved from {oldidx=} to {newidx=}")
+        header = self.ui.data_view.horizontalHeader()
+        header.blockSignals(True)
+        # move the column back, keep the header in logical order
+        header.moveSection(newidx, oldidx)
+        header.blockSignals(False)
+        # move the underlying data column instead
+        self.data_model.moveColumn(None, oldidx, None, newidx)
         self.data_model.recalculate_all_columns()
+        # select the column that was just moved at the new location
+        self.ui.data_view.selectColumn(newidx)
 
     def get_column_ordering(self):
         """Return the visual order of logical columns in the table view.
@@ -338,7 +358,9 @@ class Application(QtCore.QObject):
         """
         header = self.ui.data_view.horizontalHeader()
         n_columns = self.data_model.columnCount()
-        return [header.logicalIndex(i) for i in range(n_columns)]
+        ordering = [header.logicalIndex(i) for i in range(n_columns)]
+        print(f"{ordering=}")
+        return ordering
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
@@ -420,6 +442,95 @@ class Application(QtCore.QObject):
         return self.ui.data_view.moveCursor(
             self.ui.data_view.MoveDown, QtCore.Qt.NoModifier
         )
+
+    def copy_selected_cells(self):
+        """Copy selected cells to clipboard."""
+
+        # get bounding rectangle coordinates and sizes
+        selection = self.selection.selection().toList()
+        left = min(r.left() for r in selection)
+        width = max(r.right() for r in selection) - left + 1
+        top = min(r.top() for r in selection)
+        height = max(r.bottom() for r in selection) - top + 1
+
+        # fill data from selected indexes, not selected -> NaN
+        data = np.full((height, width), np.nan)
+        for index in self.selection.selectedIndexes():
+            if (value := index.data()) == "":
+                value = np.nan
+            data[index.row() - top, index.column() - left] = value
+
+        # create tab separated values from data, NaN -> empty string, e.g.
+        # 1 2 3
+        # 2   4
+        # 5 5 6
+        text = "\n".join(
+            [
+                "\t".join([str(v) if not np.isnan(v) else "" for v in row])
+                for row in data
+            ]
+        )
+
+        # write TSV text to clipboard
+        self.clipboard.setText(text)
+
+    def paste_cells(self):
+        """Paste cells from clipboard."""
+
+        # get data from clipboard
+        text = self.clipboard.text()
+
+        # create array from tab separated values, "" -> NaN
+        try:
+            data = np.array(
+                [
+                    [float(v) if v != "" else np.nan for v in row.split("\t")]
+                    for row in text.split("\n")
+                ]
+            )
+        except ValueError as exc:
+            self.ui.statusbar.showMessage(
+                f"Error pasting from clipboard: {exc}", timeout=MSG_TIMEOUT
+            )
+            return
+
+        # get current coordinates and data size
+        current_index = self.ui.data_view.currentIndex()
+        start_row, start_column = current_index.row(), current_index.column()
+        height, width = data.shape
+
+        # extend rows and columns if necessary
+        last_table_column = self.data_model.columnCount() - 1
+        if (last_data_column := start_column + width - 1) > last_table_column:
+            for _ in range(last_data_column - last_table_column):
+                self.add_column()
+        last_table_row = self.data_model.rowCount() - 1
+        if (last_data_row := start_row + height - 1) > last_table_row:
+            for _ in range(last_data_row - last_table_row):
+                self.add_row()
+
+        # write clipboard data to data model
+        it = np.nditer(data, flags=["multi_index"])
+        for value in it:
+            row, column = it.multi_index
+            self.data_model.setData(
+                self.data_model.createIndex(row + start_row, column + start_column),
+                value,
+                skip_update=True,
+            )
+
+        # signal that values have changed
+        self.data_model.dataChanged.emit(
+            self.data_model.createIndex(start_row, start_column),
+            self.data_model.createIndex(
+                start_row + height - 1, start_column + width - 1
+            ),
+        )
+        # recalculate computed values once
+        self.data_model.recalculate_all_columns()
+        # reset current index and focus
+        self.ui.data_view.setCurrentIndex(current_index)
+        self.ui.data_view.setFocus()
 
     def selection_changed(self, selected, deselected):
         """Handle selectionChanged events in the data view.
