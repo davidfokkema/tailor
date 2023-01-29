@@ -438,11 +438,10 @@ class DataModel(QtCore.QAbstractTableModel):
         """Recalculate all columns.
 
         If data is entered or changed, the calculated column values must be
-        updated. This method will manually recalculate all column values.
+        updated. This method will manually recalculate all column values, from left to right.
         """
         column_names = self.get_column_names()
-        column_order = self._get_column_ordering()
-        for col_idx in column_order:
+        for col_idx in range(self.columnCount()):
             if self.is_calculated_column(col_idx):
                 self.recalculate_column(column_names[col_idx])
 
