@@ -361,6 +361,12 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         if expression is None:
             expression = self._calculated_column_expression[col_name]
+        elif expression == "":
+            self.main_app.ui.statusbar.showMessage(
+                f"Empty expression.", timeout=MSG_TIMEOUT
+            )
+            return False
+
         objects = self._get_accessible_columns(col_name)
         aeval = asteval.Interpreter(usersyms=objects)
         output = aeval(expression)
