@@ -15,6 +15,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.header.setSectionsMovable(True)
         self.header.sectionMoved.connect(self.reset_column_ordering)
 
+        self.header.moveSection(0, 2)
+
     def reset_column_ordering(self, logical, old_visual, new_visual):
         print(f"{logical=}, {old_visual=}, {new_visual=}")
         self.show_ordering()

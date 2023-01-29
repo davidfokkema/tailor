@@ -180,112 +180,6 @@ class Application(QtCore.QObject):
         # Start at (0, 0)
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
-        # tests
-        # def test():
-        #     print(self.get_column_ordering())
-
-        # QtGui.QShortcut(QtGui.QKeySequence("Ctrl+X"), self.ui.data_view, test)
-        # filename = "~/Desktop/meting1.csv"
-        # dialog = CSVFormatDialog(filename)
-        # dialog.exec()
-        # sys.exit()
-        # if dialog.exec() == QtWidgets.QDialog.Accepted:
-        #     (
-        #         delimiter,
-        #         decimal,
-        #         thousands,
-        #         header,
-        #         skiprows,
-        #     ) = dialog.get_format_parameters()
-        #     self._do_import_csv(
-        #         filename, delimiter, decimal, thousands, header, skiprows
-        #     )
-        # self._do_import_csv(filename, ";", ",", ".", 0, 0)
-
-        # import numpy as np
-        # import pandas as pd
-
-        # x = [1, 2, 3, 4, 5, np.nan]
-        # y = [1, 4, np.nan, 8, 10, np.nan]
-        # self.data_model.beginResetModel()
-        # self.data_model._data = pd.DataFrame.from_dict({"x": x, "y": y})
-        # self.data_model.endResetModel()
-        # self.create_plot_tab("x", "y")
-        # plot_tab = self.ui.tabWidget.currentWidget()
-        # plot_tab.model_func.setText("a * x + b")
-        # plot_tab.fit_button.clicked.emit()
-
-        # np.random.seed(1)
-        # x = np.linspace(0, 10, 11)
-        # y = np.random.normal(loc=x, scale=0.1 * x, size=len(x))
-        # self.data_model.beginResetModel()
-        # self.data_model._data = pd.DataFrame.from_dict(
-        #     {"U": x, "I": y, "dU": 0.1 * x + 0.01, "dI": 0.1 * y + 0.01}
-        # )
-        # self.data_model.endResetModel()
-        # self.create_plot_tab("U", "I", "dU", "dI")
-
-        # plot_tab = self.tabWidget.currentWidget()
-        # plot_tab.model_func.setText("U0 * U + b")
-        # plot_tab.fit_button.clicked.emit()
-
-        # plot_tab.model_func.setText("(U0 * U + b")
-        # plot_tab.fit_button.clicked.emit()
-
-        # self.tabWidget.setCurrentIndex(0)
-        # self.data_view.selectColumn(0)
-        # self.name_edit.setText("U_0")
-        # self.name_edit.textEdited.emit("U_0")
-        # self.data_view.selectColumn(1)
-        # self.name_edit.setText("I_0")
-        # self.name_edit.textEdited.emit("I_0")
-        # self.tabWidget.setCurrentIndex(1)
-        # plot_tab.fit_button.clicked.emit()
-
-        # self.add_calculated_column()
-        # self.name_edit.setText("inv_U")
-        # self.formula_edit.setText("1 / U")
-        # self.create_plot_tab("inv_U", "I")
-
-        # self.add_calculated_column()
-        # self.name_edit.setText("P")
-        # self.formula_edit.setText("U * I")
-        # self.name_edit.textEdited.emit("P")
-        # self.formula_edit.textEdited.emit("U * I")
-        # self.data_view.selectColumn(0)
-        # self.remove_column()
-        # self.add_column()
-        # self.name_edit.setText("P")
-        # self.data_view.selectColumn(0)
-        # # self.create_plot_tab("U", "Usq")
-        # plot_tab = self.tabWidget.currentWidget()
-        # # plot_tab.fit_start_box.setValue(4.5)
-        # # plot_tab.fit_end_box.setValue(7.5)
-        # # plot_tab.use_fit_domain.setChecked(True)
-        # plot_tab.model_func.setText("a * U + b")
-        # # for row in plot_tab._params.values():
-        # #     row.itemAt(plot_tab._idx_value_box).widget().setValue(20)
-        # plot_tab.fit_button.clicked.emit()
-        # plot_tab.draw_curve_option.setCurrentIndex(2)
-        # # plot_tab.use_fit_domain.setChecked(False)
-        # # plot_tab.export_graph("test.png")
-        # # plot_tab.export_graph("test.pdf")
-        # # self.tabWidget.setCurrentIndex(0)
-        # # self.data_model._data["I"] /= 2
-        # # plot_tab.update_plot()
-        # # plot_tab.model_func.setText("a * U ** 2 + c")
-        # # plot_tab.model_func.textEdited.emit("")
-        # self.save_project("test.tlr")
-        # self.clear_all()
-        # self.load_project(pathlib.Path.home() / "Desktop" / "analyse-radon220.tlr")
-        # self.save_project("test.tlr")
-        # self.clear_all()
-        # self.load_project("test.tlr")
-
-        # self._do_import_csv(
-        #     "~/Desktop/importtest.csv", ",", ".", ",", 0, 0, create_new=False
-        # )
-
     def _set_view_and_selection_model(self):
         """Set up data view and selection model.
 
@@ -346,21 +240,6 @@ class Application(QtCore.QObject):
         self.data_model.recalculate_all_columns()
         # select the column that was just moved at the new location
         self.ui.data_view.selectColumn(newidx)
-
-    def get_column_ordering(self):
-        """Return the visual order of logical columns in the table view.
-
-        Returns a list of column indexes. The first index is the first (visual)
-        column in the table view. The index points to a colum in the underlying
-        data. So, if the underlying data has columns col0, col1, col2, col3, but
-        you visually rearrange them as col3, col1, col0, col2, then this method
-        will return [3, 1, 0, 2].
-        """
-        header = self.ui.data_view.horizontalHeader()
-        n_columns = self.data_model.columnCount()
-        ordering = [header.logicalIndex(i) for i in range(n_columns)]
-        print(f"{ordering=}")
-        return ordering
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.

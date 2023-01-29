@@ -153,17 +153,6 @@ class DataModel(QtCore.QAbstractTableModel):
         # See Qt for Python docs -> Considerations -> API Changes
         return None
 
-    def _get_column_ordering(self):
-        """Return the visual order of logical columns in the table view.
-
-        Returns a list of column indexes. The first index is the first (visual)
-        column in the table view. The index points to a colum in the underlying
-        data. So, if the underlying data has columns col0, col1, col2, col3, but
-        you visually rearrange them as col3, col1, col0, col2, then this method
-        will return [3, 1, 0, 2].
-        """
-        return self.main_app.get_column_ordering()
-
     def is_empty(self):
         """Check whether all cells are empty."""
         # check for *all* nans in a row or column
@@ -424,14 +413,9 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             dict: a dictionary of column_name, data pairs.
         """
-        column_order = self._get_column_ordering()
-        # logical column number in data
-        log_idx = self._data.columns.get_loc(col_name)
-        # visual column number in table view
-        vis_idx = column_order.index(log_idx)
         # accessible columns to the left of current column
-        accessible_idx = column_order[:vis_idx]
-        accessible_columns = self._data.columns[accessible_idx]
+        idx = self._data.columns.get_loc(col_name)
+        accessible_columns = self._data.columns[:idx]
         data = {
             k: self._data[k]
             for k in accessible_columns
@@ -443,11 +427,10 @@ class DataModel(QtCore.QAbstractTableModel):
         """Recalculate all columns.
 
         If data is entered or changed, the calculated column values must be
-        updated. This method will manually recalculate all column values.
+        updated. This method will manually recalculate all column values, from left to right.
         """
         column_names = self.get_column_names()
-        column_order = self._get_column_ordering()
-        for col_idx in column_order:
+        for col_idx in range(self.columnCount()):
             if self.is_calculated_column(col_idx):
                 self.recalculate_column(column_names[col_idx])
 
@@ -589,12 +572,9 @@ class DataModel(QtCore.QAbstractTableModel):
         Args:
             save_obj: a dictionary to store the data and state.
         """
-        column_order = self._get_column_ordering()
-        ordered_columns = self._data.columns[column_order]
-        df = self._data[ordered_columns]
         save_obj.update(
             {
-                "data": df.to_dict("list"),
+                "data": self._data.to_dict("list"),
                 "calculated_columns": self._calculated_column_expression,
                 "new_col_num": self._new_col_num,
             }
