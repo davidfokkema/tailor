@@ -583,12 +583,9 @@ class DataModel(QtCore.QAbstractTableModel):
         Args:
             save_obj: a dictionary to store the data and state.
         """
-        column_order = self._get_column_ordering()
-        ordered_columns = self._data.columns[column_order]
-        df = self._data[ordered_columns]
         save_obj.update(
             {
-                "data": df.to_dict("list"),
+                "data": self._data.to_dict("list"),
                 "calculated_columns": self._calculated_column_expression,
                 "new_col_num": self._new_col_num,
             }
