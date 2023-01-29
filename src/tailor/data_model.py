@@ -424,14 +424,9 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             dict: a dictionary of column_name, data pairs.
         """
-        column_order = self._get_column_ordering()
-        # logical column number in data
-        log_idx = self._data.columns.get_loc(col_name)
-        # visual column number in table view
-        vis_idx = column_order.index(log_idx)
         # accessible columns to the left of current column
-        accessible_idx = column_order[:vis_idx]
-        accessible_columns = self._data.columns[accessible_idx]
+        idx = self._data.columns.get_loc(col_name)
+        accessible_columns = self._data.columns[:idx]
         data = {
             k: self._data[k]
             for k in accessible_columns
