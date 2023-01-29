@@ -241,21 +241,6 @@ class Application(QtCore.QObject):
         # select the column that was just moved at the new location
         self.ui.data_view.selectColumn(newidx)
 
-    def get_column_ordering(self):
-        """Return the visual order of logical columns in the table view.
-
-        Returns a list of column indexes. The first index is the first (visual)
-        column in the table view. The index points to a colum in the underlying
-        data. So, if the underlying data has columns col0, col1, col2, col3, but
-        you visually rearrange them as col3, col1, col0, col2, then this method
-        will return [3, 1, 0, 2].
-        """
-        header = self.ui.data_view.horizontalHeader()
-        n_columns = self.data_model.columnCount()
-        ordering = [header.logicalIndex(i) for i in range(n_columns)]
-        print(f"{ordering=}")
-        return ordering
-
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
 

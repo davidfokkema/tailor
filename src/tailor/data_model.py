@@ -153,17 +153,6 @@ class DataModel(QtCore.QAbstractTableModel):
         # See Qt for Python docs -> Considerations -> API Changes
         return None
 
-    def _get_column_ordering(self):
-        """Return the visual order of logical columns in the table view.
-
-        Returns a list of column indexes. The first index is the first (visual)
-        column in the table view. The index points to a colum in the underlying
-        data. So, if the underlying data has columns col0, col1, col2, col3, but
-        you visually rearrange them as col3, col1, col0, col2, then this method
-        will return [3, 1, 0, 2].
-        """
-        return self.main_app.get_column_ordering()
-
     def is_empty(self):
         """Check whether all cells are empty."""
         # check for *all* nans in a row or column
