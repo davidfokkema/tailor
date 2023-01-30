@@ -309,7 +309,7 @@ class DataModel(QtCore.QAbstractTableModel):
             ):
                 d[new_name] = d.pop(old_name, False)
         self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
-        self.main_app.ui.statusbar.showMessage("Renamed column.", timeout=MSG_TIMEOUT)
+        self.show_error("Renamed column.")
         return new_name
 
     def normalize_column_name(self, name):
@@ -339,9 +339,7 @@ class DataModel(QtCore.QAbstractTableModel):
             if self.recalculate_column(col_name, expression):
                 # calculation was successful
                 self._calculated_column_expression[col_name] = expression
-                self.main_app.ui.statusbar.showMessage(
-                    "Updated column values.", timeout=MSG_TIMEOUT
-                )
+                self.show_error("Updated column values.")
 
     def recalculate_column(self, col_name, expression=None):
         """Recalculate column values.
@@ -360,25 +358,28 @@ class DataModel(QtCore.QAbstractTableModel):
             True if the calculation was successful, False otherwise.
         """
         if expression is None:
+            # expression must be retrieved from column information
             expression = self._calculated_column_expression[col_name]
         elif expression == "":
-            self.main_app.ui.statusbar.showMessage(
-                f"Empty expression.", timeout=MSG_TIMEOUT
-            )
+            # expression is still empty
+            self.show_error(f"Empty expression.")
             return False
 
+        # evaluate the expression
         objects = self._get_accessible_columns(col_name)
         aeval = asteval.Interpreter(usersyms=objects)
         output = aeval(expression)
+
+        # process the result of the expression
         if aeval.error:
+            # handle an evaluation error
             self._is_calculated_column_valid[col_name] = False
             self.emit_column_changed(col_name)
             for err in aeval.error:
                 exc, msg = err.get_error()
-                self.main_app.ui.statusbar.showMessage(
-                    f"ERROR: {exc}: {msg}.", timeout=MSG_TIMEOUT
-                )
+                self.show_error(f"ERROR: {exc}: {msg}.")
         elif output is not None:
+            # evaluation returned results
             self._is_calculated_column_valid[col_name] = True
             if isinstance(output, pd.Series):
                 output = output.astype("float64")
@@ -386,13 +387,21 @@ class DataModel(QtCore.QAbstractTableModel):
                 output = float(output)
             self._data[col_name] = output
             self.emit_column_changed(col_name)
-            self.main_app.ui.statusbar.showMessage(
-                f"Recalculated column values.", timeout=MSG_TIMEOUT
-            )
+            self.show_error(f"Recalculated column values.")
             return True
         else:
-            print(f"No evaluation error but no output for expression {expression}.")
+            self.show_error(
+                f"No evaluation error but no output for expression {expression}."
+            )
         return False
+
+    def show_error(self, msg):
+        """Show error message in statusbar.
+
+        Args:
+            msg (str): the error message.
+        """
+        self.main_app.ui.statusbar.showMessage(msg, timeout=MSG_TIMEOUT)
 
     def emit_column_changed(self, col_name):
         """Emit dataChanged signal for a given column.
