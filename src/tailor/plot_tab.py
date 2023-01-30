@@ -416,7 +416,10 @@ class PlotTab:
             self._idx_fixed_checkbox = layout.count() - 1
 
             self._params[p] = layout
-            self.ui.param_layout.addLayout(layout)
+            # determine position to insert the parameter in alphabetical order
+            sorted_params = sorted(list(self._params.keys()))
+            idx = sorted_params.index(p)
+            self.ui.param_layout.insertLayout(idx, layout)
 
     def remove_params_from_ui(self, params):
         """Remove parameters from user interface.
