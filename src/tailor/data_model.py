@@ -336,9 +336,9 @@ class DataModel(QtCore.QAbstractTableModel):
         """
         col_name = self.get_column_name(col_idx)
         if self.is_calculated_column(col_idx):
+            self._calculated_column_expression[col_name] = expression
             if self.recalculate_column(col_name, expression):
                 # calculation was successful
-                self._calculated_column_expression[col_name] = expression
                 self.show_error("Updated column values.")
 
     def recalculate_column(self, col_name, expression=None):
