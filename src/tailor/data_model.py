@@ -357,43 +357,34 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             True if the calculation was successful, False otherwise.
         """
+        # UI must be updated to reflect changes in column values
+        self.emit_column_changed(col_name)
+
         if expression is None:
             # expression must be retrieved from column information
             expression = self._calculated_column_expression[col_name]
-        elif expression == "":
-            # expression is still empty
-            self.show_error(f"Empty expression.")
-            return False
 
-        # evaluate the expression
+        # set up interpreter
         objects = self._get_accessible_columns(col_name)
         aeval = asteval.Interpreter(usersyms=objects)
-        output = aeval(expression)
-
-        # process the result of the expression
-        if aeval.error:
-            # handle an evaluation error
-            self._is_calculated_column_valid[col_name] = False
-            self.emit_column_changed(col_name)
-            for err in aeval.error:
-                exc, msg = err.get_error()
-                self.show_status(f"ERROR: {exc}: {msg}.")
-        elif output is not None:
-            # evaluation returned results
-            self._is_calculated_column_valid[col_name] = True
+        try:
+            # try to evaluate expression and cast output to a float (series)
+            output = aeval(expression, show_errors=False, raise_errors=True)
             if isinstance(output, pd.Series):
                 output = output.astype("float64")
             else:
                 output = float(output)
+        except Exception as exc:
+            # error in evaluation or output cannot be cast to a float (series)
+            self._is_calculated_column_valid[col_name] = False
+            self.show_status(f"Error evaluating expression: {exc}")
+            return False
+        else:
+            # evaluation was successful
             self._data[col_name] = output
-            self.emit_column_changed(col_name)
+            self._is_calculated_column_valid[col_name] = True
             self.show_status(f"Recalculated column values.")
             return True
-        else:
-            self.show_status(
-                f"No evaluation error but no output for expression {expression}."
-            )
-        return False
 
     def show_status(self, msg):
         """Show message in statusbar.
