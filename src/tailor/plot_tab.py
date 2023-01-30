@@ -8,7 +8,6 @@ from importlib import resources
 
 import asteval
 import matplotlib.pyplot as plt
-from matplotlib.quiver import Quiver
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
@@ -69,7 +68,8 @@ class PlotTab:
 
         self.ui.param_layout = QtWidgets.QVBoxLayout()
         self.ui.param_layout.setContentsMargins(4, 0, 0, 0)
-        self.ui.parameter_box.setLayout(self.ui.param_layout)
+        self.ui.param_layout.setSpacing(0)
+        self.ui.parameter_list.setLayout(self.ui.param_layout)
         self._params = {}
         self._symbols = set(asteval.Interpreter().symtable.keys())
 
@@ -378,6 +378,7 @@ class PlotTab:
         """
         for p in params:
             layout = QtWidgets.QHBoxLayout()
+            layout.setSpacing(12)
             layout.addWidget(QtWidgets.QLabel(f"{p}: ", minimumWidth=30))
             min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
             min_box.setMaximumWidth(75)

@@ -10,15 +10,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
+        layout.setSpacing(0)
         widget.setLayout(layout)
 
         self.setCentralWidget(self.scrollable)
         self.scrollable.setWidget(widget)
 
-        for _ in range(1):
+        for _ in range(10):
             layout.addWidget(QtWidgets.QPushButton("OK"))
 
-        for _ in range(1):
+        for _ in range(10):
             layout.addWidget(QtWidgets.QPushButton("OK"))
 
 
