@@ -376,19 +376,8 @@ class PlotTab:
         Args:
             params: a list of parameter names to add to the user interface.
         """
-        for p in params:
-            layout = QtWidgets.QHBoxLayout()
-            layout.setSpacing(12)
-            layout.addWidget(QtWidgets.QLabel(f"{p}: ", minimumWidth=30))
-            min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
-            min_box.setMaximumWidth(75)
-            layout.addWidget(min_box)
-            self._idx_min_value_box = layout.count() - 1
-            layout.addWidget(
-                QtWidgets.QLabel(
-                    "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
-                )
-            )
+        for param in params:
+            label = QtWidgets.QLabel(f"{param}: ", minimumWidth=30)
             value_box = pg.SpinBox(
                 value=1.0,
                 dec=True,
@@ -397,29 +386,41 @@ class PlotTab:
                 finite=True,
                 compactHeight=False,
             )
+            min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
+            max_box = pg.SpinBox(value=+np.inf, finite=False, compactHeight=False)
+            create_leq_sign = lambda: QtWidgets.QLabel(
+                "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+            )
+
+            # connect signals to changes in parameter value
             value_box.sigValueChanging.connect(
                 lambda: self.ui.show_initial_fit.setChecked(True)
             )
             value_box.sigValueChanging.connect(self.plot_initial_model)
-            value_box.setMaximumWidth(75)
+
+            # build parameter layout
+            layout = QtWidgets.QHBoxLayout()
+            layout.addWidget(label)
+            layout.addWidget(min_box)
+            self._idx_min_value_box = layout.count() - 1
+            layout.addWidget(create_leq_sign())
             layout.addWidget(value_box)
             self._idx_value_box = layout.count() - 1
-            layout.addWidget(
-                QtWidgets.QLabel(
-                    "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
-                )
-            )
-            max_box = pg.SpinBox(value=+np.inf, finite=False, compactHeight=False)
-            max_box.setMaximumWidth(75)
+            layout.addWidget(create_leq_sign())
             layout.addWidget(max_box)
             self._idx_max_value_box = layout.count() - 1
             layout.addWidget(QtWidgets.QCheckBox("Fixed"))
             self._idx_fixed_checkbox = layout.count() - 1
+            layout.setSpacing(12)
+            value_box.setMaximumWidth(75)
+            min_box.setMaximumWidth(75)
+            max_box.setMaximumWidth(75)
 
-            self._params[p] = layout
+            # store parameter layout
+            self._params[param] = layout
             # determine position to insert the parameter in alphabetical order
             sorted_params = sorted(list(self._params.keys()))
-            idx = sorted_params.index(p)
+            idx = sorted_params.index(param)
             self.ui.param_layout.insertLayout(idx, layout)
 
     def remove_params_from_ui(self, params):
