@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.6.0
+### What’s Changed
+
+This release includes several enhancements, the most notable being support for copy and paste in the data sheet. It is now easy to copy and paste entire columns, or copy data to and from a spreadsheet application like Numbers or Excel. The plot interface is also a bit improved when a model includes a large number of parameters. Since the list of parameters is now scrollable the size stays relatively small so there's more room for the model function and the information window.
+
+Several bugs are fixed including a fatal unicode decoding bug. Under the hood parts of the code are refactored to reduce complexity and make it easier to further develop the code base.
+
+### :rocket: Features
+
+* Improve plot tab user interface layout (#65) @davidfokkema
+* Add copy/paste behaviour (#61) @davidfokkema
+
+### :beetle: Fixes
+
+* Insert model parameters in alphabetical order (#64) @davidfokkema
+* Fix unicode decoding errors on Windows in TOML config (#59) @davidfokkema
+
+### :hammer: Refactoring
+
+* Improve plot tab user interface layout (#65) @davidfokkema
+* Simplified logic and improved error messages for calculated columns (#63) @davidfokkema
+* Refactored column ordering (#62) @davidfokkema
+
+
 ## 1.5.3
 
 ### :package: Build System
