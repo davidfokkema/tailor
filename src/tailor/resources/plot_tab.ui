@@ -360,7 +360,7 @@
      <item>
       <widget class="QGroupBox" name="parameter_box">
        <property name="title">
-        <string>Starting values</string>
+        <string>Starting values and parameter bounds</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <property name="leftMargin">

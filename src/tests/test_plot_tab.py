@@ -18,6 +18,7 @@ def test_plot_tab(app: Application):
     app.create_plot_tab("x", "y")
     plottab = app.ui.tabWidget.currentWidget()
     plottab.model_func.setPlainText("a * x**2 + b * x + c + d + f + g")
+    plottab.model_func.setPlainText("a * x")
 
 
 if __name__ == "__main__":
