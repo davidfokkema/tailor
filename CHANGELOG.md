@@ -9,6 +9,7 @@ Several bugs are fixed including a fatal unicode decoding bug. Under the hood pa
 
 ### :rocket: Features
 
+* Move axis settings and buttons below plot (#66) @davidfokkema
 * Improve plot tab user interface layout (#65) @davidfokkema
 * Add copy/paste behaviour (#61) @davidfokkema
 
