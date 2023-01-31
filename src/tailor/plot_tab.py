@@ -8,7 +8,6 @@ from importlib import resources
 
 import asteval
 import matplotlib.pyplot as plt
-from matplotlib.quiver import Quiver
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
@@ -69,7 +68,8 @@ class PlotTab:
 
         self.ui.param_layout = QtWidgets.QVBoxLayout()
         self.ui.param_layout.setContentsMargins(4, 0, 0, 0)
-        self.ui.parameter_box.setLayout(self.ui.param_layout)
+        self.ui.param_layout.setSpacing(0)
+        self.ui.parameter_list.setLayout(self.ui.param_layout)
         self._params = {}
         self._symbols = set(asteval.Interpreter().symtable.keys())
 
@@ -376,18 +376,9 @@ class PlotTab:
         Args:
             params: a list of parameter names to add to the user interface.
         """
-        for p in params:
-            layout = QtWidgets.QHBoxLayout()
-            layout.addWidget(QtWidgets.QLabel(f"{p}: ", minimumWidth=30))
-            min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
-            min_box.setMaximumWidth(75)
-            layout.addWidget(min_box)
-            self._idx_min_value_box = layout.count() - 1
-            layout.addWidget(
-                QtWidgets.QLabel(
-                    "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
-                )
-            )
+        for param in params:
+            # create widgets
+            label = QtWidgets.QLabel(f"{param}: ", minimumWidth=30)
             value_box = pg.SpinBox(
                 value=1.0,
                 dec=True,
@@ -396,30 +387,47 @@ class PlotTab:
                 finite=True,
                 compactHeight=False,
             )
+            value_box.setObjectName("value")
+            min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
+            min_box.setObjectName("min")
+            max_box = pg.SpinBox(value=+np.inf, finite=False, compactHeight=False)
+            max_box.setObjectName("max")
+            is_fixed_checkbox = QtWidgets.QCheckBox("Fixed", objectName="is_fixed")
+            create_leq_sign = lambda: QtWidgets.QLabel(
+                "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+            )
+
+            # connect signals to changes in parameter value
             value_box.sigValueChanging.connect(
                 lambda: self.ui.show_initial_fit.setChecked(True)
             )
             value_box.sigValueChanging.connect(self.plot_initial_model)
-            value_box.setMaximumWidth(75)
-            layout.addWidget(value_box)
-            self._idx_value_box = layout.count() - 1
-            layout.addWidget(
-                QtWidgets.QLabel(
-                    "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
-                )
-            )
-            max_box = pg.SpinBox(value=+np.inf, finite=False, compactHeight=False)
-            max_box.setMaximumWidth(75)
-            layout.addWidget(max_box)
-            self._idx_max_value_box = layout.count() - 1
-            layout.addWidget(QtWidgets.QCheckBox("Fixed"))
-            self._idx_fixed_checkbox = layout.count() - 1
 
-            self._params[p] = layout
+            # build parameter layout
+            layout = QtWidgets.QHBoxLayout()
+            layout.addWidget(label)
+            layout.addWidget(min_box)
+            layout.addWidget(create_leq_sign())
+            layout.addWidget(value_box)
+            layout.addWidget(create_leq_sign())
+            layout.addWidget(max_box)
+            layout.addWidget(is_fixed_checkbox)
+            layout.setSpacing(12)
+            value_box.setMaximumWidth(75)
+            min_box.setMaximumWidth(75)
+            max_box.setMaximumWidth(75)
+            layout.setContentsMargins(0, 0, 0, 0)
+
+            # put layout into widget
+            layout_widget = QtWidgets.QWidget()
+            layout_widget.setLayout(layout)
+
+            # store parameter layout
+            self._params[param] = layout_widget
             # determine position to insert the parameter in alphabetical order
             sorted_params = sorted(list(self._params.keys()))
-            idx = sorted_params.index(p)
-            self.ui.param_layout.insertLayout(idx, layout)
+            idx = sorted_params.index(param)
+            self.ui.param_layout.insertWidget(idx, layout_widget)
 
     def remove_params_from_ui(self, params):
         """Remove parameters from user interface.
@@ -430,22 +438,15 @@ class PlotTab:
         Args:
             params: a list of parameter names to remove from the user interface.
         """
-        for p in params:
-            layout = self._params[p]
-            # delete all widgets from the parameter row
-            for _ in range(layout.count()):
-                item = layout.takeAt(0)
-                item.widget().deleteLater()
-            # remove and delete the parameter row
-            self.ui.param_layout.removeItem(layout)
-            layout.deleteLater()
-            # remove the reference to the parameter
-            del self._params[p]
+        for param in params:
+            layout_widget = self._params.pop(param)
+            self.ui.param_layout.removeWidget(layout_widget)
+            layout_widget.deleteLater()
 
     def get_parameter_values(self):
         """Get current parameter values."""
         return {
-            k: v.itemAt(self._idx_value_box).widget().value()
+            k: v.findChild(QtWidgets.QWidget, "value").value()
             for k, v in self._params.items()
         }
 
@@ -461,10 +462,10 @@ class PlotTab:
         """
         return {
             k: {
-                "min": v.itemAt(self._idx_min_value_box).widget().value(),
-                "value": v.itemAt(self._idx_value_box).widget().value(),
-                "max": v.itemAt(self._idx_max_value_box).widget().value(),
-                "vary": not v.itemAt(self._idx_fixed_checkbox).widget().checkState(),
+                "min": v.findChild(QtWidgets.QWidget, "min").value(),
+                "value": v.findChild(QtWidgets.QWidget, "value").value(),
+                "max": v.findChild(QtWidgets.QWidget, "max").value(),
+                "vary": not v.findChild(QtWidgets.QWidget, "is_fixed").checkState(),
             }
             for k, v in self._params.items()
         }
@@ -785,11 +786,13 @@ class PlotTab:
                 fixed_state = QtCore.Qt.Unchecked
             else:
                 fixed_state = QtCore.Qt.Checked
-            layout = self._params[p]
-            layout.itemAt(self._idx_min_value_box).widget().setValue(hints["min"])
-            layout.itemAt(self._idx_value_box).widget().setValue(hints["value"])
-            layout.itemAt(self._idx_max_value_box).widget().setValue(hints["max"])
-            layout.itemAt(self._idx_fixed_checkbox).widget().setCheckState(fixed_state)
+            layout_widget = self._params[p]
+            layout_widget.findChild(QtWidgets.QWidget, "min").setValue(hints["min"])
+            layout_widget.findChild(QtWidgets.QWidget, "value").setValue(hints["value"])
+            layout_widget.findChild(QtWidgets.QWidget, "max").setValue(hints["max"])
+            layout_widget.findChild(QtWidgets.QWidget, "is_fixed").setCheckState(
+                fixed_state
+            )
 
         # manually recreate (possibly outdated!) fit
         if "saved_fit" in save_obj:
