@@ -10,15 +10,17 @@ Features
 --------
 
 * Spreadsheet-like editing of data
+* Copy and paste data to and from external applications
 * Open and save project files
 * Import and export of CSV files
 * Add / remove columns or rows
+* Drag to reorder columns
 * Add columns based on mathematical expressions
-* Create multiple scatter plots with X/Y error bars
+* Create scatter plots with X/Y error bars
 * Fit custom models to data based on mathematical expressions
 * Models can include a wide range of Python operators and mathematical functions
 * Parameters are automatically deduced from the model expression and displayed in the user interface
-* Start values can be easily changes and an initial fit is updated in the plot window
+* Starting values can be easily changed and an initial fit is updated in the plot window
 * Bounds on parameters and the ability to fix a parameter to a particular value
 * Fits can be restricted to a subset of the data by specifying a fit domain
 * Fit results include reduced chi-square statistic and parameter value and error estimations
