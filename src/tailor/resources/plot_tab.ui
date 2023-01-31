@@ -6,31 +6,172 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>916</width>
-    <height>646</height>
+    <width>1000</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Plot Tab</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+   <property name="spacing">
+    <number>-1</number>
+   </property>
    <property name="leftMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <item>
-    <widget class="PlotWidget" name="plot_widget"/>
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <property name="spacing">
+      <number>-1</number>
+     </property>
+     <item>
+      <widget class="PlotWidget" name="plot_widget"/>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0">
+       <item>
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="title">
+          <string>Axis settings</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0">
+          <property name="leftMargin">
+           <number>4</number>
+          </property>
+          <property name="topMargin">
+           <number>4</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <property name="bottomMargin">
+           <number>4</number>
+          </property>
+          <item row="0" column="5">
+           <widget class="QLineEdit" name="xmax">
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="ylabel"/>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="xlabel"/>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="xmin">
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Max:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Y —</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Min:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Max:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>X —</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QLineEdit" name="ymax">
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Min:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLineEdit" name="ymin">
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <widget class="QPushButton" name="fit_button">
+           <property name="text">
+            <string>(Re)Fit model</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="set_limits_button">
+           <property name="text">
+            <string>(Re)Set plot limits</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </item>
+    </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0,1,2,0,0">
+    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0,1,2">
      <property name="leftMargin">
       <number>0</number>
      </property>
@@ -219,7 +360,7 @@
      <item>
       <widget class="QGroupBox" name="parameter_box">
        <property name="title">
-        <string>Starting values</string>
+        <string>Starting values and parameter bounds</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <property name="leftMargin">
@@ -245,7 +386,7 @@
              <x>0</x>
              <y>0</y>
              <width>384</width>
-             <height>69</height>
+             <height>91</height>
             </rect>
            </property>
           </widget>
@@ -288,133 +429,6 @@
        </layout>
       </widget>
      </item>
-     <item>
-      <widget class="QGroupBox" name="groupBox_2">
-       <property name="title">
-        <string>Axis settings</string>
-       </property>
-       <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,0,0">
-        <property name="leftMargin">
-         <number>4</number>
-        </property>
-        <property name="topMargin">
-         <number>4</number>
-        </property>
-        <property name="rightMargin">
-         <number>4</number>
-        </property>
-        <property name="bottomMargin">
-         <number>4</number>
-        </property>
-        <item row="1" column="3">
-         <widget class="QLineEdit" name="ymin">
-          <property name="maximumSize">
-           <size>
-            <width>50</width>
-            <height>16777215</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Y —</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="xlabel"/>
-        </item>
-        <item row="0" column="2">
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>Min:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="5">
-         <widget class="QLineEdit" name="xmax">
-          <property name="maximumSize">
-           <size>
-            <width>50</width>
-            <height>16777215</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>X —</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Min:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="4">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>Max:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="ylabel"/>
-        </item>
-        <item row="0" column="3">
-         <widget class="QLineEdit" name="xmin">
-          <property name="maximumSize">
-           <size>
-            <width>50</width>
-            <height>16777215</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="4">
-         <widget class="QLabel" name="label_6">
-          <property name="text">
-           <string>Max:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="5">
-         <widget class="QLineEdit" name="ymax">
-          <property name="maximumSize">
-           <size>
-            <width>50</width>
-            <height>16777215</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,0">
-       <item>
-        <widget class="QPushButton" name="fit_button">
-         <property name="text">
-          <string>(Re)Fit model</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="set_limits_button">
-         <property name="text">
-          <string>(Re)Set plot limits</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
     </layout>
    </item>
   </layout>
@@ -444,9 +458,6 @@
   <tabstop>ylabel</tabstop>
   <tabstop>ymin</tabstop>
   <tabstop>ymax</tabstop>
-  <tabstop>fit_button</tabstop>
-  <tabstop>set_limits_button</tabstop>
-  <tabstop>plot_widget</tabstop>
  </tabstops>
  <resources/>
  <connections/>

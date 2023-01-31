@@ -69,6 +69,9 @@ class PlotTab:
         self.ui.param_layout = QtWidgets.QVBoxLayout()
         self.ui.param_layout.setContentsMargins(4, 0, 0, 0)
         self.ui.param_layout.setSpacing(0)
+        # add stretch to prevent excessive widget sizes for small numbers of
+        # parameters
+        self.ui.param_layout.addStretch()
         self.ui.parameter_list.setLayout(self.ui.param_layout)
         self._params = {}
         self._symbols = set(asteval.Interpreter().symtable.keys())
