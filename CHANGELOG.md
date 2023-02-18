@@ -9,6 +9,7 @@ I no longer use release drafter. It is a nice idea but I _had_ to create pull re
 ### :package: Build system
 
 * Ditched release drafter, too much overkill.
+* We can use the newest briefcase on Windows (beeware/briefcase#930)
 
 
 ### :rocket: Features
