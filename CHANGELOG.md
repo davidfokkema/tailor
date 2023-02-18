@@ -1,5 +1,20 @@
 # Changelog
 
+## Draft
+
+### What's Changed
+
+I no longer use release drafter. It is a nice idea but I _had_ to create pull requests for _everything_ or it wouldn't show up in the release notes and I still had to copy/paste these notes to the CHANGELOG.md file. Furthermore, I had to rerun the GitHub Action if I made a typo in the PR title.
+
+### :package: Build system
+
+* Ditched release drafter, too much overkill.
+
+
+### :rocket: Features
+### :beetle: Fixes
+
+
 ## 1.6.0
 ### What’s Changed
 
