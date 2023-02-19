@@ -19,7 +19,7 @@ jobs:
       - run: briefcase build
       - run: python -m pip install tomli
       - run: python pruner.py
-      - run: briefcase package
+      - run: briefcase package --adhoc
       - uses: actions/upload-artifact@v3
         with:
           name: macos-installer
