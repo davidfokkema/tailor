@@ -15,6 +15,8 @@ I no longer use release drafter. It is a nice idea but I _had_ to create pull re
 ### :rocket: Features
 ### :beetle: Fixes
 
+* Accept NumPy arrays as output of functions
+
 
 ## 1.6.0
 ### What’s Changed

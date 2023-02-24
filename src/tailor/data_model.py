@@ -370,7 +370,7 @@ class DataModel(QtCore.QAbstractTableModel):
         try:
             # try to evaluate expression and cast output to a float (series)
             output = aeval(expression, show_errors=False, raise_errors=True)
-            if isinstance(output, pd.Series):
+            if isinstance(output, pd.Series) or isinstance(output, np.ndarray):
                 output = output.astype("float64")
             else:
                 output = float(output)
