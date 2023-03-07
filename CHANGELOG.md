@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0
+
+### What's Changed
+
+We now have fully signed, notarized and native builds for Apple Silicon. Builds for Windows are submitted to Microsoft for analysis so there should never be any warning that Tailor is untrusted, from an unidentified developer, or not commonly downloaded 😀. Unfortunately, universal builds are very difficult because some Python packages don't supply universal wheels and GitHub Actions does not have Apple Silicon machines. So, only Windows builds are done on GitHub Actions and Mac builds are done on two local machines.
+
+### :package: Build system
+
+* Signed, notarized and native builds for Macs on Intel and Apple Silicon
+
+
 ## 1.6.1
 
 ### What's Changed
