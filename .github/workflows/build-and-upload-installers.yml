@@ -8,8 +8,8 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: macos-latest
-            filename: macOS/*.dmg
+          # - os: macos-latest
+          #   filename: macOS/*.dmg
           - os: windows-latest
             filename: windows/*.msi
     runs-on: ${{ matrix.os }}
