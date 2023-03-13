@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>plot_tab</class>
- <widget class="QWidget" name="plot_tab">
+ <class>PlotTab</class>
+ <widget class="QWidget" name="PlotTab">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -386,7 +386,7 @@
              <x>0</x>
              <y>0</y>
              <width>384</width>
-             <height>91</height>
+             <height>90</height>
             </rect>
            </property>
           </widget>

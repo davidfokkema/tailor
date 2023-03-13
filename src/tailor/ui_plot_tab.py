@@ -22,12 +22,12 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFormLayout,
 
 from pyqtgraph import (PlotWidget, SpinBox)
 
-class Ui_plot_tab(object):
-    def setupUi(self, plot_tab):
-        if not plot_tab.objectName():
-            plot_tab.setObjectName(u"plot_tab")
-        plot_tab.resize(1000, 600)
-        self.horizontalLayout = QHBoxLayout(plot_tab)
+class Ui_PlotTab(object):
+    def setupUi(self, PlotTab):
+        if not PlotTab.objectName():
+            PlotTab.setObjectName(u"PlotTab")
+        PlotTab.resize(1000, 600)
+        self.horizontalLayout = QHBoxLayout(PlotTab)
 #ifndef Q_OS_MAC
         self.horizontalLayout.setSpacing(-1)
 #endif
@@ -38,14 +38,14 @@ class Ui_plot_tab(object):
         self.verticalLayout_5.setSpacing(-1)
 #endif
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.plot_widget = PlotWidget(plot_tab)
+        self.plot_widget = PlotWidget(PlotTab)
         self.plot_widget.setObjectName(u"plot_widget")
 
         self.verticalLayout_5.addWidget(self.plot_widget)
 
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.groupBox_2 = QGroupBox(plot_tab)
+        self.groupBox_2 = QGroupBox(PlotTab)
         self.groupBox_2.setObjectName(u"groupBox_2")
         self.gridLayout = QGridLayout(self.groupBox_2)
         self.gridLayout.setObjectName(u"gridLayout")
@@ -119,12 +119,12 @@ class Ui_plot_tab(object):
 
         self.verticalLayout_6 = QVBoxLayout()
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.fit_button = QPushButton(plot_tab)
+        self.fit_button = QPushButton(PlotTab)
         self.fit_button.setObjectName(u"fit_button")
 
         self.verticalLayout_6.addWidget(self.fit_button)
 
-        self.set_limits_button = QPushButton(plot_tab)
+        self.set_limits_button = QPushButton(PlotTab)
         self.set_limits_button.setObjectName(u"set_limits_button")
 
         self.verticalLayout_6.addWidget(self.set_limits_button)
@@ -141,7 +141,7 @@ class Ui_plot_tab(object):
         self.verticalLayout_2 = QVBoxLayout()
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.groupBox = QGroupBox(plot_tab)
+        self.groupBox = QGroupBox(PlotTab)
         self.groupBox.setObjectName(u"groupBox")
         self.groupBox.setMinimumSize(QSize(400, 0))
         self.formLayout_4 = QFormLayout(self.groupBox)
@@ -168,7 +168,7 @@ class Ui_plot_tab(object):
 
         self.verticalLayout_2.addWidget(self.groupBox)
 
-        self.groupBox_4 = QGroupBox(plot_tab)
+        self.groupBox_4 = QGroupBox(PlotTab)
         self.groupBox_4.setObjectName(u"groupBox_4")
         self.verticalLayout_3 = QVBoxLayout(self.groupBox_4)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
@@ -235,7 +235,7 @@ class Ui_plot_tab(object):
 
         self.verticalLayout_2.addWidget(self.groupBox_4)
 
-        self.parameter_box = QGroupBox(plot_tab)
+        self.parameter_box = QGroupBox(PlotTab)
         self.parameter_box.setObjectName(u"parameter_box")
         self.verticalLayout_4 = QVBoxLayout(self.parameter_box)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
@@ -245,7 +245,7 @@ class Ui_plot_tab(object):
         self.scrollArea.setWidgetResizable(True)
         self.parameter_list = QWidget()
         self.parameter_list.setObjectName(u"parameter_list")
-        self.parameter_list.setGeometry(QRect(0, 0, 384, 91))
+        self.parameter_list.setGeometry(QRect(0, 0, 384, 90))
         self.scrollArea.setWidget(self.parameter_list)
 
         self.verticalLayout_4.addWidget(self.scrollArea)
@@ -253,7 +253,7 @@ class Ui_plot_tab(object):
 
         self.verticalLayout_2.addWidget(self.parameter_box)
 
-        self.groupBox_3 = QGroupBox(plot_tab)
+        self.groupBox_3 = QGroupBox(PlotTab)
         self.groupBox_3.setObjectName(u"groupBox_3")
         self.verticalLayout = QVBoxLayout(self.groupBox_3)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -289,31 +289,31 @@ class Ui_plot_tab(object):
         QWidget.setTabOrder(self.ylabel, self.ymin)
         QWidget.setTabOrder(self.ymin, self.ymax)
 
-        self.retranslateUi(plot_tab)
+        self.retranslateUi(PlotTab)
 
-        QMetaObject.connectSlotsByName(plot_tab)
+        QMetaObject.connectSlotsByName(PlotTab)
     # setupUi
 
-    def retranslateUi(self, plot_tab):
-        plot_tab.setWindowTitle(QCoreApplication.translate("plot_tab", u"Plot Tab", None))
-        self.groupBox_2.setTitle(QCoreApplication.translate("plot_tab", u"Axis settings", None))
-        self.label_5.setText(QCoreApplication.translate("plot_tab", u"Max:", None))
-        self.label_2.setText(QCoreApplication.translate("plot_tab", u"Y \u2014", None))
-        self.label_3.setText(QCoreApplication.translate("plot_tab", u"Min:", None))
-        self.label_6.setText(QCoreApplication.translate("plot_tab", u"Max:", None))
-        self.label.setText(QCoreApplication.translate("plot_tab", u"X \u2014", None))
-        self.label_4.setText(QCoreApplication.translate("plot_tab", u"Min:", None))
-        self.fit_button.setText(QCoreApplication.translate("plot_tab", u"(Re)Fit model", None))
-        self.set_limits_button.setText(QCoreApplication.translate("plot_tab", u"(Re)Set plot limits", None))
-        self.groupBox.setTitle(QCoreApplication.translate("plot_tab", u"Model", None))
-        self.model_func_label.setText(QCoreApplication.translate("plot_tab", u"Function:", None))
-        self.show_initial_fit.setText(QCoreApplication.translate("plot_tab", u"Show initial fit", None))
-        self.groupBox_4.setTitle(QCoreApplication.translate("plot_tab", u"Fit options", None))
-        self.label_7.setText(QCoreApplication.translate("plot_tab", u"Start:", None))
-        self.label_8.setText(QCoreApplication.translate("plot_tab", u"End:", None))
-        self.use_fit_domain.setText(QCoreApplication.translate("plot_tab", u"Use domain", None))
-        self.label_9.setText(QCoreApplication.translate("plot_tab", u"Draw curve:", None))
-        self.parameter_box.setTitle(QCoreApplication.translate("plot_tab", u"Starting values and parameter bounds", None))
-        self.groupBox_3.setTitle(QCoreApplication.translate("plot_tab", u"Information", None))
+    def retranslateUi(self, PlotTab):
+        PlotTab.setWindowTitle(QCoreApplication.translate("PlotTab", u"Plot Tab", None))
+        self.groupBox_2.setTitle(QCoreApplication.translate("PlotTab", u"Axis settings", None))
+        self.label_5.setText(QCoreApplication.translate("PlotTab", u"Max:", None))
+        self.label_2.setText(QCoreApplication.translate("PlotTab", u"Y \u2014", None))
+        self.label_3.setText(QCoreApplication.translate("PlotTab", u"Min:", None))
+        self.label_6.setText(QCoreApplication.translate("PlotTab", u"Max:", None))
+        self.label.setText(QCoreApplication.translate("PlotTab", u"X \u2014", None))
+        self.label_4.setText(QCoreApplication.translate("PlotTab", u"Min:", None))
+        self.fit_button.setText(QCoreApplication.translate("PlotTab", u"(Re)Fit model", None))
+        self.set_limits_button.setText(QCoreApplication.translate("PlotTab", u"(Re)Set plot limits", None))
+        self.groupBox.setTitle(QCoreApplication.translate("PlotTab", u"Model", None))
+        self.model_func_label.setText(QCoreApplication.translate("PlotTab", u"Function:", None))
+        self.show_initial_fit.setText(QCoreApplication.translate("PlotTab", u"Show initial fit", None))
+        self.groupBox_4.setTitle(QCoreApplication.translate("PlotTab", u"Fit options", None))
+        self.label_7.setText(QCoreApplication.translate("PlotTab", u"Start:", None))
+        self.label_8.setText(QCoreApplication.translate("PlotTab", u"End:", None))
+        self.use_fit_domain.setText(QCoreApplication.translate("PlotTab", u"Use domain", None))
+        self.label_9.setText(QCoreApplication.translate("PlotTab", u"Draw curve:", None))
+        self.parameter_box.setTitle(QCoreApplication.translate("PlotTab", u"Starting values and parameter bounds", None))
+        self.groupBox_3.setTitle(QCoreApplication.translate("PlotTab", u"Information", None))
     # retranslateUi
 
