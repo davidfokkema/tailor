@@ -905,7 +905,7 @@ class Application(QtCore.QObject):
             if filename:
                 self.set_recent_directory(pathlib.Path(filename).parent)
                 dialog = CSVFormatDialog(filename, parent=self.ui)
-                if dialog.ui.exec() == QtWidgets.QDialog.Accepted:
+                if dialog.exec() == QtWidgets.QDialog.Accepted:
                     (
                         delimiter,
                         decimal,
