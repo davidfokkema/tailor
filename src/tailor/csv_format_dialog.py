@@ -1,9 +1,9 @@
 import textwrap
-from importlib import resources
 from pathlib import Path
 
 import pandas as pd
 from PySide6 import QtWidgets
+
 from tailor.ui_csv_format_dialog import Ui_CsvFormatDialog
 
 DELIMITER_CHOICES = {
