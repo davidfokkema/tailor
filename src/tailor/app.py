@@ -468,7 +468,7 @@ class Application(QtCore.QObject):
         Args:
             idx: an integer index of the tab.
         """
-        tab = self.ui.tabWidget.widget(idx).code
+        tab = self.ui.tabWidget.widget(idx)
         if type(tab) == PlotTab:
             tab.update_plot()
 
@@ -556,7 +556,7 @@ class Application(QtCore.QObject):
             new_name: the new column name
         """
         num_tabs = self.ui.tabWidget.count()
-        tabs = [self.ui.tabWidget.widget(i).code for i in range(num_tabs)]
+        tabs = [self.ui.tabWidget.widget(i) for i in range(num_tabs)]
         for tab in tabs:
             if type(tab) == PlotTab:
                 needs_info_update = False
@@ -619,7 +619,7 @@ class Application(QtCore.QObject):
             y_err: the name of the variable to use for the y-error bars.
         """
         plot_tab = PlotTab(self.data_model, main_app=self)
-        idx = self.ui.tabWidget.addTab(plot_tab.ui, f"Plot {self._plot_num}")
+        idx = self.ui.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
         self._plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
@@ -722,7 +722,7 @@ class Application(QtCore.QObject):
 
             for idx in range(1, self.ui.tabWidget.count()):
                 # save data for each tab
-                tab = self.ui.tabWidget.widget(idx).code
+                tab = self.ui.tabWidget.widget(idx)
                 tab_data = {"label": self.ui.tabWidget.tabBar().tabText(idx)}
                 tab.save_state_to_obj(tab_data)
                 save_obj["tabs"].append(tab_data)
@@ -859,7 +859,7 @@ class Application(QtCore.QObject):
                 # create a tab and load data for each plot
                 for tab_data in save_obj["tabs"]:
                     plot_tab = PlotTab(self.data_model, main_app=self)
-                    self.ui.tabWidget.addTab(plot_tab.ui, tab_data["label"])
+                    self.ui.tabWidget.addTab(plot_tab, tab_data["label"])
                     plot_tab.load_state_from_obj(tab_data)
                 self._plot_num = save_obj["plot_num"]
                 self.ui.tabWidget.setCurrentIndex(save_obj["current_tab"])
@@ -961,7 +961,7 @@ class Application(QtCore.QObject):
         Args:
             suffix: the required suffix of the file.
         """
-        tab = self.ui.tabWidget.currentWidget().code
+        tab = self.ui.tabWidget.currentWidget()
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self.ui,

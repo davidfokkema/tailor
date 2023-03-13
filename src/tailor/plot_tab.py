@@ -4,8 +4,6 @@ A widget containing a scatter plot of some data columns with user interface
 elements to specify a mathematical model to fit to the model.
 """
 
-from importlib import resources
-
 import asteval
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,7 +11,8 @@ import pandas as pd
 import pyqtgraph as pg
 from lmfit import models
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtUiTools import QUiLoader
+
+from tailor.ui_plot_tab import Ui_PlotTab
 
 NUM_POINTS = 1000
 MSG_TIMEOUT = 0
@@ -28,7 +27,7 @@ class VariableError(RuntimeError):
     pass
 
 
-class PlotTab:
+class PlotTab(QtWidgets.QWidget):
     """Tab widget containing plot with associated user interface.
 
     A widget containing a scatter plot of some data columns with user interface
@@ -55,14 +54,11 @@ class PlotTab:
         Args:
             data_model: the data model holding the data.
         """
-        self.data_model = data_model
+        super().__init__()
+        self.ui = Ui_PlotTab()
+        self.ui.setupUi(self)
 
-        loader = QUiLoader()
-        loader.registerCustomWidget(pg.PlotWidget)
-        loader.registerCustomWidget(pg.SpinBox)
-        self.ui = loader.load(resources.path("tailor.resources", "plot_tab.ui"))
-        # store reference to this code in widget
-        self.ui.code = self
+        self.data_model = data_model
 
         self.main_app = main_app
 
