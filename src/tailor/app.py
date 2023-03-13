@@ -20,7 +20,6 @@ import numpy as np
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtUiTools import QUiLoader
 
 from tailor import config
 from tailor.csv_format_dialog import (
@@ -31,6 +30,8 @@ from tailor.csv_format_dialog import (
 from tailor.data_model import MSG_TIMEOUT, DataModel
 from tailor.plot_tab import PlotTab
 from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
+from tailor.ui_tailor import Ui_MainWindow
+
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
@@ -50,7 +51,7 @@ pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
 
-class Application(QtCore.QObject):
+class Application(QtWidgets.QMainWindow):
     """Main user interface for the tailor app.
 
     The user interface centers on the table containing the data values. A single
@@ -69,12 +70,13 @@ class Application(QtCore.QObject):
         """Initialize the class."""
 
         super().__init__()
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
         # Preflight
         self.check_for_updates(silent=True)
 
-        self.ui = QUiLoader().load(resources.path("tailor.resources", "tailor.ui"))
-        self.ui.setWindowIcon(
+        self.setWindowIcon(
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
         self.clipboard = QtWidgets.QApplication.clipboard()
@@ -101,7 +103,7 @@ class Application(QtCore.QObject):
         self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
-        self.ui.actionQuit.triggered.connect(self.ui.close)
+        self.ui.actionQuit.triggered.connect(self.close)
         self.ui.actionAbout_Tailor.triggered.connect(self.show_about_dialog)
         self.ui.actionNew.triggered.connect(self.new_project)
         self.ui.actionOpen.triggered.connect(self.open_project_dialog)
@@ -145,7 +147,7 @@ class Application(QtCore.QObject):
 
         # install event filter to capture UI events (which are not signals)
         # necessary to caputer closeEvent inside QMainWindow widget
-        self.ui.installEventFilter(self)
+        self.installEventFilter(self)
 
         # Set standard shortcuts for menu items
         self.ui.actionNew.setShortcut(QtGui.QKeySequence.New)
@@ -256,7 +258,7 @@ class Application(QtCore.QObject):
         Returns:
             boolean: True if the event is ignored, False otherwise.
         """
-        if watched is self.ui and event.type() == QtCore.QEvent.Close:
+        if watched is self and event.type() == QtCore.QEvent.Close:
             if self.confirm_project_close_dialog():
                 event.accept()
                 return False
@@ -269,7 +271,7 @@ class Application(QtCore.QObject):
     def show_about_dialog(self):
         """Show about application dialog."""
         box = QtWidgets.QMessageBox()
-        box.setIconPixmap(self.ui.windowIcon().pixmap(64, 64))
+        box.setIconPixmap(self.windowIcon().pixmap(64, 64))
         box.setText("Tailor")
         box.setInformativeText(
             dedent(
@@ -690,7 +692,7 @@ class Application(QtCore.QObject):
     def save_as_project_dialog(self):
         """Present save project dialog and save project."""
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self.ui,
+            parent=self,
             dir=self.get_recent_directory(),
             filter="Tailor project files (*.tlr);;All files (*)",
         )
@@ -747,7 +749,7 @@ class Application(QtCore.QObject):
         """Present open project dialog and load project."""
         if self.confirm_project_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self.ui,
+                parent=self,
                 dir=self.get_recent_directory(),
                 filter="Tailor project files (*.tlr);;All files (*)",
             )
@@ -790,7 +792,7 @@ class Application(QtCore.QObject):
         else:
             msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
             button = QtWidgets.QMessageBox.warning(
-                self.ui,
+                self,
                 "Please confirm",
                 msg,
                 buttons=QtWidgets.QMessageBox.Save
@@ -823,7 +825,7 @@ class Application(QtCore.QObject):
         if msg is None:
             msg = "You might lose changes."
         button = QtWidgets.QMessageBox.warning(
-            self.ui,
+            self,
             "Please confirm",
             msg,
             buttons=QtWidgets.QMessageBox.Close | QtWidgets.QMessageBox.Cancel,
@@ -882,7 +884,7 @@ class Application(QtCore.QObject):
         Export all data in the table as a comma-separated values file.
         """
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self.ui,
+            parent=self,
             dir=self.get_recent_directory(),
             filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
         )
@@ -898,13 +900,13 @@ class Application(QtCore.QObject):
         """
         if self.confirm_project_close_dialog():
             filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self.ui,
+                parent=self,
                 dir=self.get_recent_directory(),
                 filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
             )
             if filename:
                 self.set_recent_directory(pathlib.Path(filename).parent)
-                dialog = CSVFormatDialog(filename, parent=self.ui)
+                dialog = CSVFormatDialog(filename, parent=self)
                 if dialog.exec() == QtWidgets.QDialog.Accepted:
                     (
                         delimiter,
@@ -964,7 +966,7 @@ class Application(QtCore.QObject):
         tab = self.ui.tabWidget.currentWidget()
         if type(tab) == PlotTab:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                parent=self.ui,
+                parent=self,
                 dir=self.get_recent_directory(),
                 filter=f"Graphics (*{suffix});;All files (*)",
             )
@@ -1005,7 +1007,7 @@ class Application(QtCore.QObject):
             title += f": {pathlib.Path(filename).stem}"
         if self._is_dirty:
             title += "*"
-        self.ui.setWindowTitle(title)
+        self.setWindowTitle(title)
 
     def _show_exception(self, exc, title, text):
         """Show a messagebox with detailed exception information.
@@ -1015,7 +1017,7 @@ class Application(QtCore.QObject):
             title: short header text.
             text: longer informative text describing the problem.
         """
-        msg = QtWidgets.QMessageBox(parent=self.ui)
+        msg = QtWidgets.QMessageBox(parent=self)
         msg.setText(title)
         msg.setInformativeText(text)
         msg.setDetailedText(traceback.format_exc())
@@ -1152,7 +1154,7 @@ def main():
     """Main entry point."""
     qapp = QtWidgets.QApplication(sys.argv)
     app = Application()
-    app.ui.show()
+    app.show()
     sys.exit(qapp.exec())
 
 

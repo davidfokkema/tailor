@@ -3,7 +3,6 @@ import sys
 sys.path.append("src/")
 
 
-import IPython
 import numpy as np
 import pandas as pd
 from PySide6 import QtCore, QtWidgets
@@ -33,7 +32,7 @@ if __name__ == "__main__":
 
     test_move_column(app)
 
-    app.ui.show()
+    app.show()
     qapp.exec()
 
     qapp.quit()
