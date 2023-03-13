@@ -19,51 +19,51 @@ from PySide6.QtWidgets import (QAbstractButton, QApplication, QComboBox, QDialog
     QDialogButtonBox, QFormLayout, QLabel, QSizePolicy,
     QVBoxLayout, QWidget)
 
-class Ui_Dialog(object):
-    def setupUi(self, Dialog):
-        if not Dialog.objectName():
-            Dialog.setObjectName(u"Dialog")
-        Dialog.resize(400, 236)
-        self.verticalLayout = QVBoxLayout(Dialog)
+class Ui_CreatePlotDialog(object):
+    def setupUi(self, CreatePlotDialog):
+        if not CreatePlotDialog.objectName():
+            CreatePlotDialog.setObjectName(u"CreatePlotDialog")
+        CreatePlotDialog.resize(400, 236)
+        self.verticalLayout = QVBoxLayout(CreatePlotDialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.formLayout = QFormLayout()
         self.formLayout.setObjectName(u"formLayout")
-        self.xAxisLabel = QLabel(Dialog)
+        self.xAxisLabel = QLabel(CreatePlotDialog)
         self.xAxisLabel.setObjectName(u"xAxisLabel")
 
         self.formLayout.setWidget(0, QFormLayout.LabelRole, self.xAxisLabel)
 
-        self.x_axis_box = QComboBox(Dialog)
+        self.x_axis_box = QComboBox(CreatePlotDialog)
         self.x_axis_box.setObjectName(u"x_axis_box")
 
         self.formLayout.setWidget(0, QFormLayout.FieldRole, self.x_axis_box)
 
-        self.uncertaintyXLabel = QLabel(Dialog)
+        self.uncertaintyXLabel = QLabel(CreatePlotDialog)
         self.uncertaintyXLabel.setObjectName(u"uncertaintyXLabel")
 
         self.formLayout.setWidget(1, QFormLayout.LabelRole, self.uncertaintyXLabel)
 
-        self.x_err_box = QComboBox(Dialog)
+        self.x_err_box = QComboBox(CreatePlotDialog)
         self.x_err_box.setObjectName(u"x_err_box")
 
         self.formLayout.setWidget(1, QFormLayout.FieldRole, self.x_err_box)
 
-        self.yAxisLabel = QLabel(Dialog)
+        self.yAxisLabel = QLabel(CreatePlotDialog)
         self.yAxisLabel.setObjectName(u"yAxisLabel")
 
         self.formLayout.setWidget(2, QFormLayout.LabelRole, self.yAxisLabel)
 
-        self.y_axis_box = QComboBox(Dialog)
+        self.y_axis_box = QComboBox(CreatePlotDialog)
         self.y_axis_box.setObjectName(u"y_axis_box")
 
         self.formLayout.setWidget(2, QFormLayout.FieldRole, self.y_axis_box)
 
-        self.uncertaintyYLabel = QLabel(Dialog)
+        self.uncertaintyYLabel = QLabel(CreatePlotDialog)
         self.uncertaintyYLabel.setObjectName(u"uncertaintyYLabel")
 
         self.formLayout.setWidget(3, QFormLayout.LabelRole, self.uncertaintyYLabel)
 
-        self.y_err_box = QComboBox(Dialog)
+        self.y_err_box = QComboBox(CreatePlotDialog)
         self.y_err_box.setObjectName(u"y_err_box")
 
         self.formLayout.setWidget(3, QFormLayout.FieldRole, self.y_err_box)
@@ -71,7 +71,7 @@ class Ui_Dialog(object):
 
         self.verticalLayout.addLayout(self.formLayout)
 
-        self.buttonBox = QDialogButtonBox(Dialog)
+        self.buttonBox = QDialogButtonBox(CreatePlotDialog)
         self.buttonBox.setObjectName(u"buttonBox")
         self.buttonBox.setOrientation(Qt.Horizontal)
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
@@ -82,18 +82,18 @@ class Ui_Dialog(object):
         QWidget.setTabOrder(self.x_err_box, self.y_axis_box)
         QWidget.setTabOrder(self.y_axis_box, self.y_err_box)
 
-        self.retranslateUi(Dialog)
-        self.buttonBox.accepted.connect(Dialog.accept)
-        self.buttonBox.rejected.connect(Dialog.reject)
+        self.retranslateUi(CreatePlotDialog)
+        self.buttonBox.accepted.connect(CreatePlotDialog.accept)
+        self.buttonBox.rejected.connect(CreatePlotDialog.reject)
 
-        QMetaObject.connectSlotsByName(Dialog)
+        QMetaObject.connectSlotsByName(CreatePlotDialog)
     # setupUi
 
-    def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
-        self.xAxisLabel.setText(QCoreApplication.translate("Dialog", u"X-axis", None))
-        self.uncertaintyXLabel.setText(QCoreApplication.translate("Dialog", u"Uncertainty X", None))
-        self.yAxisLabel.setText(QCoreApplication.translate("Dialog", u"Y-axis", None))
-        self.uncertaintyYLabel.setText(QCoreApplication.translate("Dialog", u"Uncertainty Y", None))
+    def retranslateUi(self, CreatePlotDialog):
+        CreatePlotDialog.setWindowTitle(QCoreApplication.translate("CreatePlotDialog", u"Dialog", None))
+        self.xAxisLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"X-axis", None))
+        self.uncertaintyXLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Uncertainty X", None))
+        self.yAxisLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Y-axis", None))
+        self.uncertaintyYLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Uncertainty Y", None))
     # retranslateUi
 

@@ -30,6 +30,7 @@ from tailor.csv_format_dialog import (
 )
 from tailor.data_model import MSG_TIMEOUT, DataModel
 from tailor.plot_tab import PlotTab
+from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
@@ -599,10 +600,10 @@ class Application(QtCore.QObject):
         """
         dialog = self.create_plot_dialog()
         if dialog.exec() == QtWidgets.QDialog.Accepted:
-            x_var = dialog.x_axis_box.currentText()
-            y_var = dialog.y_axis_box.currentText()
-            x_err = dialog.x_err_box.currentText()
-            y_err = dialog.y_err_box.currentText()
+            x_var = dialog.ui.x_axis_box.currentText()
+            y_var = dialog.ui.y_axis_box.currentText()
+            x_err = dialog.ui.x_err_box.currentText()
+            y_err = dialog.ui.y_err_box.currentText()
             if x_var and y_var:
                 self.create_plot_tab(x_var, y_var, x_err, y_err)
 
@@ -626,15 +627,19 @@ class Application(QtCore.QObject):
 
     def create_plot_dialog(self):
         """Create a dialog to request variables for creating a plot."""
-        create_dialog = QUiLoader().load(
-            resources.path("tailor.resources", "create_plot_dialog.ui"),
-            self.ui,
-        )
+
+        class Dialog(QtWidgets.QDialog):
+            def __init__(self):
+                super().__init__()
+                self.ui = Ui_CreatePlotDialog()
+                self.ui.setupUi(self)
+
         choices = [None] + self.data_model.get_column_names()
-        create_dialog.x_axis_box.addItems(choices)
-        create_dialog.y_axis_box.addItems(choices)
-        create_dialog.x_err_box.addItems(choices)
-        create_dialog.y_err_box.addItems(choices)
+        create_dialog = Dialog()
+        create_dialog.ui.x_axis_box.addItems(choices)
+        create_dialog.ui.y_axis_box.addItems(choices)
+        create_dialog.ui.x_err_box.addItems(choices)
+        create_dialog.ui.y_err_box.addItems(choices)
         return create_dialog
 
     def close_tab(self, idx):
