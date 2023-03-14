@@ -32,7 +32,6 @@ from tailor.plot_tab import PlotTab
 from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
 from tailor.ui_tailor import Ui_MainWindow
 
-
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
 __name__ = metadata["name"]
