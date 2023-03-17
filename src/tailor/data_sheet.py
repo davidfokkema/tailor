@@ -5,10 +5,12 @@ from tailor.ui_data_sheet import Ui_DataSheet
 
 
 class DataSheet(QtWidgets.QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, main_window):
         super().__init__(parent)
         self.ui = Ui_DataSheet()
         self.ui.setupUi(self)
+
+        self.main_window = main_window
 
         # connect button signals
         self.ui.add_column_button.clicked.connect(self.add_column)
@@ -18,10 +20,11 @@ class DataSheet(QtWidgets.QWidget):
         self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
         self.ui.name_edit.textEdited.connect(self.rename_column)
         self.ui.formula_edit.textEdited.connect(self.update_column_expression)
+        # WIP
         # self.ui.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # set up data model
-        self.data_model = DataModel(main_app=self)
+        self.data_model = DataModel(main_window=main_window)
         self._set_view_and_selection_model()
         # Start at (0, 0)
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
@@ -124,7 +127,7 @@ class DataSheet(QtWidgets.QWidget):
             if name and name not in self.data_model.get_column_names():
                 old_name = self.data_model.get_column_name(self._selected_col_idx)
                 new_name = self.data_model.rename_column(self._selected_col_idx, name)
-                self.rename_plot_variables(old_name, new_name)
+                self.main_window.rename_plot_variables(old_name, new_name)
                 # set the normalized name to the name edit field
                 self.ui.name_edit.setText(new_name)
 
