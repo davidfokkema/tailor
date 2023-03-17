@@ -79,15 +79,13 @@ class Application(QtWidgets.QMainWindow):
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
         self.clipboard = QtWidgets.QApplication.clipboard()
-        # store reference to this code in data tab
-        self.ui.data.code = self
 
         # set up dirty timer
         self._dirty_timer = QtCore.QTimer()
         self._dirty_timer.timeout.connect(self.mark_project_dirty)
 
         # clear all program state
-        self.clear_all()
+        # self.clear_all()
 
         # Enable close buttons...
         self.ui.tabWidget.setTabsClosable(True)
@@ -96,10 +94,6 @@ class Application(QtWidgets.QMainWindow):
             widget = self.ui.tabWidget.tabBar().tabButton(0, pos)
             if widget:
                 widget.close()
-
-        # connect button signals
-        self.ui.add_column_button.clicked.connect(self.add_column)
-        self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
         self.ui.actionQuit.triggered.connect(self.close)
@@ -137,12 +131,8 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
         # user interface events
-        self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
-        self.ui.name_edit.textEdited.connect(self.rename_column)
-        self.ui.formula_edit.textEdited.connect(self.update_column_expression)
-        self.ui.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # install event filter to capture UI events (which are not signals)
         # necessary to caputer closeEvent inside QMainWindow widget
@@ -168,19 +158,17 @@ class Application(QtWidgets.QMainWindow):
             QtGui.QKeySequence("Shift+Ctrl+G")
         )
 
-        # Create shortcut for return/enter keys
-        for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
-            QtGui.QShortcut(
-                QtGui.QKeySequence(key), self.ui.data_view, self.edit_or_move_down
-            )
-        # Shortcut for backspace and delete: clear cell contents
-        for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
-            QtGui.QShortcut(
-                QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
-            )
-
-        # Start at (0, 0)
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        # WIP
+        # # Create shortcut for return/enter keys
+        # for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
+        #     QtGui.QShortcut(
+        #         QtGui.QKeySequence(key), self.ui.data_view, self.edit_or_move_down
+        #     )
+        # # Shortcut for backspace and delete: clear cell contents
+        # for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
+        #     QtGui.QShortcut(
+        #         QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
+        #     )
 
     def _set_view_and_selection_model(self):
         """Set up data view and selection model.
