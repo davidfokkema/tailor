@@ -137,7 +137,7 @@ class Application(QtWidgets.QMainWindow):
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
 
         # install event filter to capture UI events (which are not signals)
-        # necessary to caputer closeEvent inside QMainWindow widget
+        # necessary to capture closeEvent inside QMainWindow widget
         self.installEventFilter(self)
 
         # Set standard shortcuts for menu items
