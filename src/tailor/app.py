@@ -113,11 +113,11 @@ class Application(QtWidgets.QMainWindow):
             lambda: self.export_graph(".png")
         )
         self.ui.actionClose.triggered.connect(self.new_project)
+        self.ui.actionAdd_column.triggered.connect(self.add_column)
+        self.ui.actionAdd_calculated_column.triggered.connect(
+            self.add_calculated_column
+        )
         # WIP
-        # self.ui.actionAdd_column.triggered.connect(self.add_column)
-        # self.ui.actionAdd_calculated_column.triggered.connect(
-        #     self.add_calculated_column
-        # )
         # self.ui.actionAdd_row.triggered.connect(self.add_row)
         # self.ui.actionRemove_column.triggered.connect(self.remove_column)
         # self.ui.actionRemove_row.triggered.connect(self.remove_row)
@@ -211,6 +211,16 @@ class Application(QtWidgets.QMainWindow):
             )
         )
         box.exec()
+
+    def add_column(self):
+        """Add a column to the current data sheet."""
+        if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
+            tab.add_column()
+
+    def add_calculated_column(self):
+        """Add a calculated column to the current data sheet."""
+        if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
+            tab.add_calculated_column()
 
     def tab_changed(self, idx):
         """Handle currentChanged events of the tab widget.
