@@ -160,18 +160,6 @@ class Application(QtWidgets.QMainWindow):
             QtGui.QKeySequence("Shift+Ctrl+G")
         )
 
-        # WIP
-        # # Create shortcut for return/enter keys
-        # for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
-        #     QtGui.QShortcut(
-        #         QtGui.QKeySequence(key), self.ui.data_view, self.edit_or_move_down
-        #     )
-        # # Shortcut for backspace and delete: clear cell contents
-        # for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
-        #     QtGui.QShortcut(
-        #         QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
-        #     )
-
     def mark_project_dirty(self, is_dirty=True):
         """Mark project as dirty"""
         self._is_dirty = is_dirty
@@ -365,7 +353,9 @@ class Application(QtWidgets.QMainWindow):
         self.mark_project_dirty(False)
 
     def add_data_sheet(self):
-        self.ui.tabWidget.addTab(DataSheet(self), f"Sheet{self._sheet_num}")
+        datasheet = DataSheet(self)
+        self.ui.tabWidget.addTab(datasheet, f"Sheet{self._sheet_num}")
+        datasheet.ui.data_view.setFocus()
         self._sheet_num += 1
 
     def new_project(self):

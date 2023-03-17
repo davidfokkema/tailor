@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from tailor.data_model import MSG_TIMEOUT, DataModel
 from tailor.ui_data_sheet import Ui_DataSheet
@@ -25,6 +25,17 @@ class DataSheet(QtWidgets.QWidget):
         self._set_view_and_selection_model()
         # Start at (0, 0)
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+
+        # Create shortcut for return/enter keys
+        for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
+            QtGui.QShortcut(
+                QtGui.QKeySequence(key), self.ui.data_view, self.edit_or_move_down
+            )
+        # Shortcut for backspace and delete: clear cell contents
+        for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
+            QtGui.QShortcut(
+                QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
+            )
 
     def _set_view_and_selection_model(self):
         """Set up data view and selection model.
