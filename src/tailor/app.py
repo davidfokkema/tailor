@@ -22,7 +22,7 @@ import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from tailor import config
+from tailor import config, dialogs
 from tailor.csv_format_dialog import (
     DELIMITER_CHOICES,
     NUM_FORMAT_CHOICES,
@@ -217,6 +217,9 @@ class Application(QtWidgets.QMainWindow):
         if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
             return tab
         else:
+            dialogs.show_warning_dialog(
+                parent=self, msg="You must select a data sheet to perform this action."
+            )
             return None
 
     def add_column(self):
