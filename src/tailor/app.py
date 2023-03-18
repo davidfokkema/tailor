@@ -121,8 +121,8 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionAdd_row.triggered.connect(self.add_row)
         self.ui.actionRemove_column.triggered.connect(self.remove_column)
         self.ui.actionRemove_row.triggered.connect(self.remove_row)
+        self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
         # WIP
-        # self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
         # self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
         # self.ui.actionPaste.triggered.connect(self.paste_cells)
 
@@ -246,6 +246,11 @@ class Application(QtWidgets.QMainWindow):
         """Remove a row from the current data sheet."""
         if tab := self._on_data_sheet():
             tab.remove_row()
+
+    def clear_selected_cells(self):
+        """Clear the contents of selected cells in the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.clear_selected_cells()
 
     def tab_changed(self, idx):
         """Handle currentChanged events of the tab widget.
