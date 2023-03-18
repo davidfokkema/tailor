@@ -299,9 +299,6 @@ class DataSheet(QtWidgets.QWidget):
             )
             return
 
-        # save selection for later
-        old_selection = self.selection.selection()
-
         # get current coordinates and data size
         current_index = self.ui.data_view.currentIndex()
         start_row, start_column = current_index.row(), current_index.column()
@@ -328,15 +325,15 @@ class DataSheet(QtWidgets.QWidget):
             )
 
         # signal that values have changed
-        self.data_model.dataChanged.emit(
-            self.data_model.createIndex(start_row, start_column),
-            self.data_model.createIndex(
-                start_row + height - 1, start_column + width - 1
-            ),
+        top_left = self.data_model.createIndex(start_row, start_column)
+        bottom_right = self.data_model.createIndex(
+            start_row + height - 1, start_column + width - 1
         )
+        self.data_model.dataChanged.emit(top_left, bottom_right)
         # recalculate computed values once
         self.data_model.recalculate_all_columns()
         # reset current index and focus
         self.ui.data_view.setFocus()
-        # restore selection
-        self.selection.select(old_selection, self.selection.ClearAndSelect)
+        # set selection to pasted cells
+        selection = QtCore.QItemSelection(top_left, bottom_right)
+        self.selection.select(selection, self.selection.ClearAndSelect)
