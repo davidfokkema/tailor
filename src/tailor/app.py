@@ -212,14 +212,20 @@ class Application(QtWidgets.QMainWindow):
         )
         box.exec()
 
+    def _on_data_sheet(self):
+        if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
+            return tab
+        else:
+            return None
+
     def add_column(self):
         """Add a column to the current data sheet."""
-        if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
+        if tab := self._on_data_sheet():
             tab.add_column()
 
     def add_calculated_column(self):
         """Add a calculated column to the current data sheet."""
-        if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
+        if tab := self._on_data_sheet():
             tab.add_calculated_column()
 
     def tab_changed(self, idx):
