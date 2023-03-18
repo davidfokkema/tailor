@@ -299,6 +299,9 @@ class DataSheet(QtWidgets.QWidget):
             )
             return
 
+        # save selection for later
+        old_selection = self.selection.selection()
+
         # get current coordinates and data size
         current_index = self.ui.data_view.currentIndex()
         start_row, start_column = current_index.row(), current_index.column()
@@ -334,5 +337,6 @@ class DataSheet(QtWidgets.QWidget):
         # recalculate computed values once
         self.data_model.recalculate_all_columns()
         # reset current index and focus
-        self.ui.data_view.setCurrentIndex(current_index)
         self.ui.data_view.setFocus()
+        # restore selection
+        self.selection.select(old_selection, self.selection.ClearAndSelect)
