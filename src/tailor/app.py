@@ -122,9 +122,8 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionRemove_column.triggered.connect(self.remove_column)
         self.ui.actionRemove_row.triggered.connect(self.remove_row)
         self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
-        # WIP
-        # self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
-        # self.ui.actionPaste.triggered.connect(self.paste_cells)
+        self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
+        self.ui.actionPaste.triggered.connect(self.paste_cells)
 
         # set up the open recent menu
         self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
@@ -251,6 +250,16 @@ class Application(QtWidgets.QMainWindow):
         """Clear the contents of selected cells in the current data sheet."""
         if tab := self._on_data_sheet():
             tab.clear_selected_cells()
+
+    def copy_selected_cells(self):
+        """Copy selected cells in the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.copy_selected_cells()
+
+    def paste_cells(self):
+        """Paste selected cells into the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.paste_cells()
 
     def tab_changed(self, idx):
         """Handle currentChanged events of the tab widget.

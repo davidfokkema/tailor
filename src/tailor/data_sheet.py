@@ -1,3 +1,4 @@
+import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from tailor import dialogs
@@ -12,6 +13,7 @@ class DataSheet(QtWidgets.QWidget):
         self.ui.setupUi(self)
 
         self.main_window = main_window
+        self.clipboard = QtWidgets.QApplication.clipboard()
 
         # connect button signals
         self.ui.add_column_button.clicked.connect(self.add_column)
