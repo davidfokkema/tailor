@@ -294,7 +294,7 @@ class DataSheet(QtWidgets.QWidget):
                 ]
             )
         except ValueError as exc:
-            self.ui.statusbar.showMessage(
+            self.main_window.ui.statusbar.showMessage(
                 f"Error pasting from clipboard: {exc}", timeout=MSG_TIMEOUT
             )
             return
