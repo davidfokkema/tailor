@@ -1,5 +1,6 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
+from tailor import dialogs
 from tailor.data_model import MSG_TIMEOUT, DataModel
 from tailor.ui_data_sheet import Ui_DataSheet
 
@@ -95,9 +96,9 @@ class DataSheet(QtWidgets.QWidget):
             for column in selected_columns:
                 self.data_model.removeColumn(column)
         else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select one or more columns.")
-            error_msg.exec()
+            dialogs.show_warning_dialog(
+                parent=self, msg="You must select one or more columns."
+            )
 
     def remove_row(self):
         """Remove selected row(s) from data model."""
@@ -110,9 +111,9 @@ class DataSheet(QtWidgets.QWidget):
             for row in selected_rows:
                 self.data_model.removeRow(row)
         else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select one or more rows.")
-            error_msg.exec()
+            dialogs.show_warning_dialog(
+                parent=self, msg="You must select one or more rows."
+            )
 
     def rename_column(self, name):
         """Rename a column.
