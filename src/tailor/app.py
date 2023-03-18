@@ -80,7 +80,6 @@ class Application(QtWidgets.QMainWindow):
         self.setWindowIcon(
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
-        self.clipboard = QtWidgets.QApplication.clipboard()
 
         # set up dirty timer
         self._dirty_timer = QtCore.QTimer()
