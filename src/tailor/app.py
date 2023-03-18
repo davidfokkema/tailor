@@ -15,6 +15,7 @@ from functools import partial
 from importlib import metadata as importlib_metadata
 from importlib import resources
 from textwrap import dedent
+from typing import Optional
 
 import numpy as np
 import packaging
@@ -117,10 +118,10 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionAdd_calculated_column.triggered.connect(
             self.add_calculated_column
         )
+        self.ui.actionAdd_row.triggered.connect(self.add_row)
+        self.ui.actionRemove_column.triggered.connect(self.remove_column)
+        self.ui.actionRemove_row.triggered.connect(self.remove_row)
         # WIP
-        # self.ui.actionAdd_row.triggered.connect(self.add_row)
-        # self.ui.actionRemove_column.triggered.connect(self.remove_column)
-        # self.ui.actionRemove_row.triggered.connect(self.remove_row)
         # self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
         # self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
         # self.ui.actionPaste.triggered.connect(self.paste_cells)
@@ -212,7 +213,7 @@ class Application(QtWidgets.QMainWindow):
         )
         box.exec()
 
-    def _on_data_sheet(self):
+    def _on_data_sheet(self) -> Optional[DataSheet]:
         if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
             return tab
         else:
@@ -227,6 +228,21 @@ class Application(QtWidgets.QMainWindow):
         """Add a calculated column to the current data sheet."""
         if tab := self._on_data_sheet():
             tab.add_calculated_column()
+
+    def add_row(self):
+        """Add a row to the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.add_row()
+
+    def remove_column(self):
+        """Remove a column from the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.remove_column()
+
+    def remove_row(self):
+        """Remove a row from the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.remove_row()
 
     def tab_changed(self, idx):
         """Handle currentChanged events of the tab widget.
