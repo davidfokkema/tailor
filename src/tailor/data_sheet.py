@@ -23,8 +23,9 @@ class DataSheet(QtWidgets.QWidget):
         self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
         self.ui.name_edit.textEdited.connect(self.rename_column)
         self.ui.formula_edit.textEdited.connect(self.update_column_expression)
-        # WIP
-        # self.ui.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
+        self.ui.create_plot_button.clicked.connect(
+            self.main_window.ask_and_create_plot_tab
+        )
 
         # set up data model
         self.data_model = DataModel(main_window=main_window)

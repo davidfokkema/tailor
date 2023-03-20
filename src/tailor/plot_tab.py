@@ -48,7 +48,7 @@ class PlotTab(QtWidgets.QWidget):
     fit_domain = None, None
     model = None
 
-    def __init__(self, data_model, main_app):
+    def __init__(self, data_model, main_window):
         """Initialize the widget.
 
         Args:
@@ -60,7 +60,7 @@ class PlotTab(QtWidgets.QWidget):
 
         self.data_model = data_model
 
-        self.main_app = main_app
+        self.main_window = main_window
 
         self.ui.param_layout = QtWidgets.QVBoxLayout()
         self.ui.param_layout.setContentsMargins(4, 0, 0, 0)
@@ -194,12 +194,12 @@ class PlotTab(QtWidgets.QWidget):
     def update_xlabel(self):
         """Update the x-axis label of the plot."""
         self.ui.plot_widget.setLabel("bottom", self.ui.xlabel.text())
-        self.main_app.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+        self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
 
     def update_ylabel(self):
         """Update the y-axis label of the plot."""
         self.ui.plot_widget.setLabel("left", self.ui.ylabel.text())
-        self.main_app.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+        self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
 
     def update_info_box(self):
         """Update the information box."""
@@ -220,7 +220,9 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setRange(
             xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
-        self.main_app.ui.statusbar.showMessage("Updated limits.", timeout=MSG_TIMEOUT)
+        self.main_window.ui.statusbar.showMessage(
+            "Updated limits.", timeout=MSG_TIMEOUT
+        )
 
     def get_adjusted_limits(self):
         """Get adjusted plot limits from the data points and text fields.
@@ -316,14 +318,14 @@ class PlotTab(QtWidgets.QWidget):
         try:
             params = self.get_params_and_update_model()
         except (SyntaxError, VariableError) as exc:
-            self.main_app.ui.statusbar.showMessage(
+            self.main_window.ui.statusbar.showMessage(
                 f"ERROR: {exc!s}", timeout=MSG_TIMEOUT
             )
             self.model = None
         else:
             self.update_params_ui(params)
             self.plot_initial_model()
-            self.main_app.ui.statusbar.showMessage(
+            self.main_window.ui.statusbar.showMessage(
                 "Updated model.", timeout=MSG_TIMEOUT
             )
 
@@ -500,7 +502,7 @@ class PlotTab(QtWidgets.QWidget):
             self.fit_domain = start, end
             self.ui.fit_domain_area.setRegion((start, end))
         else:
-            self.main_app.ui.statusbar.showMessage(
+            self.main_window.ui.statusbar.showMessage(
                 "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
             )
 
@@ -529,7 +531,7 @@ class PlotTab(QtWidgets.QWidget):
         the best fit is plotted on top of the data.
         """
         if self.model is None:
-            self.main_app.ui.statusbar.showMessage(
+            self.main_window.ui.statusbar.showMessage(
                 "FIT FAILED: please fix your model first."
             )
             return
@@ -544,7 +546,7 @@ class PlotTab(QtWidgets.QWidget):
             xmin = self.ui.fit_start_box.value()
             xmax = self.ui.fit_end_box.value()
             if xmin > xmax:
-                self.main_app.ui.statusbar.showMessage(
+                self.main_window.ui.statusbar.showMessage(
                     "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
                 )
                 return
@@ -570,12 +572,14 @@ class PlotTab(QtWidgets.QWidget):
         try:
             self.fit = self.model.fit(y, **kwargs)
         except Exception as exc:
-            self.main_app.ui.statusbar.showMessage(f"FIT FAILED: {exc}")
+            self.main_window.ui.statusbar.showMessage(f"FIT FAILED: {exc}")
         else:
             self.update_info_box()
             self.update_best_fit_plot()
             self.ui.show_initial_fit.setChecked(False)
-            self.main_app.ui.statusbar.showMessage("Updated fit.", timeout=MSG_TIMEOUT)
+            self.main_window.ui.statusbar.showMessage(
+                "Updated fit.", timeout=MSG_TIMEOUT
+            )
 
     def updated_plot_range(self):
         """Handle updated plot range.

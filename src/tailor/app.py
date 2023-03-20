@@ -212,6 +212,7 @@ class Application(QtWidgets.QMainWindow):
         box.exec()
 
     def _on_data_sheet(self) -> Optional[DataSheet]:
+        """Return the current tab if a data sheet else display warning."""
         if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
             return tab
         else:
@@ -331,34 +332,38 @@ class Application(QtWidgets.QMainWindow):
         to plot. When the dialog is accepted, creates a new tab containing the
         requested plot.
         """
-        dialog = self.create_plot_dialog()
-        if dialog.exec() == QtWidgets.QDialog.Accepted:
-            x_var = dialog.ui.x_axis_box.currentText()
-            y_var = dialog.ui.y_axis_box.currentText()
-            x_err = dialog.ui.x_err_box.currentText()
-            y_err = dialog.ui.y_err_box.currentText()
-            if x_var and y_var:
-                self.create_plot_tab(x_var, y_var, x_err, y_err)
+        if data_tab := self._on_data_sheet():
+            dialog = self.create_plot_dialog(data_tab)
+            if dialog.exec() == QtWidgets.QDialog.Accepted:
+                x_var = dialog.ui.x_axis_box.currentText()
+                y_var = dialog.ui.y_axis_box.currentText()
+                x_err = dialog.ui.x_err_box.currentText()
+                y_err = dialog.ui.y_err_box.currentText()
+                if x_var and y_var:
+                    self.create_plot_tab(
+                        data_tab.data_model, x_var, y_var, x_err, y_err
+                    )
 
-    def create_plot_tab(self, x_var, y_var, x_err=None, y_err=None):
+    def create_plot_tab(self, data_model, x_var, y_var, x_err=None, y_err=None):
         """Create a new tab with a plot.
 
         After creating the plot, the tab containing the plot is focused.
 
         Args:
+            data_model (DataModel): the model containing the data.
             x_var: the name of the variable to plot on the x-axis.
             y_var: the name of the variable to plot on the y-axis.
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(self.data_model, main_app=self)
+        plot_tab = PlotTab(data_model, main_window=self)
         idx = self.ui.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
         self._plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
         self.ui.tabWidget.setCurrentIndex(idx)
 
-    def create_plot_dialog(self):
+    def create_plot_dialog(self, data_tab):
         """Create a dialog to request variables for creating a plot."""
 
         class Dialog(QtWidgets.QDialog):
@@ -367,7 +372,7 @@ class Application(QtWidgets.QMainWindow):
                 self.ui = Ui_CreatePlotDialog()
                 self.ui.setupUi(self)
 
-        choices = [None] + self.data_model.get_column_names()
+        choices = [None] + data_tab.data_model.get_column_names()
         create_dialog = Dialog()
         create_dialog.ui.x_axis_box.addItems(choices)
         create_dialog.ui.y_axis_box.addItems(choices)
