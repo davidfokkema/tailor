@@ -7,8 +7,8 @@ from tailor.ui_data_sheet import Ui_DataSheet
 
 
 class DataSheet(QtWidgets.QWidget):
-    def __init__(self, parent, main_window):
-        super().__init__(parent)
+    def __init__(self, main_window):
+        super().__init__()
         self.ui = Ui_DataSheet()
         self.ui.setupUi(self)
 

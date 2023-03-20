@@ -406,7 +406,7 @@ class Application(QtWidgets.QMainWindow):
         self.mark_project_dirty(False)
 
     def add_data_sheet(self):
-        datasheet = DataSheet(parent=self, main_window=self)
+        datasheet = DataSheet(main_window=self)
         self.ui.tabWidget.addTab(datasheet, f"Sheet{self._sheet_num}")
         datasheet.ui.data_view.setFocus()
         self._sheet_num += 1
