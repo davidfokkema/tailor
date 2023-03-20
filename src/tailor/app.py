@@ -406,13 +406,14 @@ class Application(QtWidgets.QMainWindow):
         self._set_project_path(None)
         self.mark_project_dirty(False)
 
-    def add_data_sheet(self):
+    def add_data_sheet(self) -> DataSheet:
         """Add a new data sheet to the project."""
         datasheet = DataSheet(main_window=self)
         idx = self.ui.tabWidget.addTab(datasheet, f"Sheet{self._sheet_num}")
         self.ui.tabWidget.setCurrentIndex(idx)
         datasheet.ui.data_view.setFocus()
         self._sheet_num += 1
+        return datasheet
 
     def new_project(self):
         """Close the current project and open a new one."""
