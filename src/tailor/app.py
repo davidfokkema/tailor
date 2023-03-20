@@ -113,6 +113,7 @@ class Application(QtWidgets.QMainWindow):
             lambda: self.export_graph(".png")
         )
         self.ui.actionClose.triggered.connect(self.new_project)
+        self.ui.actionAdd_Data_Sheet.triggered.connect(self.add_data_sheet)
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
             self.add_calculated_column
@@ -406,8 +407,10 @@ class Application(QtWidgets.QMainWindow):
         self.mark_project_dirty(False)
 
     def add_data_sheet(self):
+        """Add a new data sheet to the project."""
         datasheet = DataSheet(main_window=self)
-        self.ui.tabWidget.addTab(datasheet, f"Sheet{self._sheet_num}")
+        idx = self.ui.tabWidget.addTab(datasheet, f"Sheet{self._sheet_num}")
+        self.ui.tabWidget.setCurrentIndex(idx)
         datasheet.ui.data_view.setFocus()
         self._sheet_num += 1
 

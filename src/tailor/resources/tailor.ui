@@ -37,6 +37,8 @@
     <property name="title">
      <string>Table</string>
     </property>
+    <addaction name="actionAdd_Data_Sheet"/>
+    <addaction name="separator"/>
     <addaction name="actionAdd_column"/>
     <addaction name="actionAdd_calculated_column"/>
     <addaction name="actionAdd_row"/>
@@ -214,6 +216,11 @@
   <action name="actionPaste">
    <property name="text">
     <string>Paste</string>
+   </property>
+  </action>
+  <action name="actionAdd_Data_Sheet">
+   <property name="text">
+    <string>Add Data Sheet</string>
    </property>
   </action>
  </widget>
