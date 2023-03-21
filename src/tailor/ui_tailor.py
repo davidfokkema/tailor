@@ -82,6 +82,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.tabWidget = QTabWidget(self.centralwidget)
         self.tabWidget.setObjectName(u"tabWidget")
+        self.tabWidget.setMovable(True)
 
         self.verticalLayout_2.addWidget(self.tabWidget)
 
