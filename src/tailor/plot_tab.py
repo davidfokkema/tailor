@@ -48,17 +48,18 @@ class PlotTab(QtWidgets.QWidget):
     fit_domain = None, None
     model = None
 
-    def __init__(self, data_model, main_window):
+    def __init__(self, data_sheet, main_window):
         """Initialize the widget.
 
         Args:
-            data_model: the data model holding the data.
+            data_sheet: the data sheet holding the data.
         """
         super().__init__()
         self.ui = Ui_PlotTab()
         self.ui.setupUi(self)
 
-        self.data_model = data_model
+        self.data_sheet = data_sheet
+        self.data_model = data_sheet.data_model
 
         self.main_window = main_window
 

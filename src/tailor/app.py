@@ -339,31 +339,29 @@ class Application(QtWidgets.QMainWindow):
         to plot. When the dialog is accepted, creates a new tab containing the
         requested plot.
         """
-        if data_tab := self._on_data_sheet():
-            dialog = self.create_plot_dialog(data_tab)
+        if data_sheet := self._on_data_sheet():
+            dialog = self.create_plot_dialog(data_sheet)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
                 x_var = dialog.ui.x_axis_box.currentText()
                 y_var = dialog.ui.y_axis_box.currentText()
                 x_err = dialog.ui.x_err_box.currentText()
                 y_err = dialog.ui.y_err_box.currentText()
                 if x_var and y_var:
-                    self.create_plot_tab(
-                        data_tab.data_model, x_var, y_var, x_err, y_err
-                    )
+                    self.create_plot_tab(data_sheet, x_var, y_var, x_err, y_err)
 
-    def create_plot_tab(self, data_model, x_var, y_var, x_err=None, y_err=None):
+    def create_plot_tab(self, data_sheet, x_var, y_var, x_err=None, y_err=None):
         """Create a new tab with a plot.
 
         After creating the plot, the tab containing the plot is focused.
 
         Args:
-            data_model (DataModel): the model containing the data.
+            data_sheet (DataSheet): the sheet containing the data.
             x_var: the name of the variable to plot on the x-axis.
             y_var: the name of the variable to plot on the y-axis.
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(data_model, main_window=self)
+        plot_tab = PlotTab(data_sheet, main_window=self)
         idx = self.ui.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
         self._plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)

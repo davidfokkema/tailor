@@ -18,14 +18,14 @@ def test_sheets_and_columns(app: Application):
         {"t": x, "y": x**2, "z": x / 2, "a": x * 2, "b": np.sin(x)}
     )
     sheet1.data_model.endResetModel()
-    app.create_plot_tab(sheet1.data_model, "t", "b")
+    app.create_plot_tab(sheet1, "t", "b")
 
     sheet2 = app.add_data_sheet()
     t = np.arange(10)
     sheet2.data_model.beginResetModel()
     sheet2.data_model._data = pd.DataFrame.from_dict({"t": t, "s": 2 * t + 3})
     sheet2.data_model.endResetModel()
-    app.create_plot_tab(sheet2.data_model, "t", "s")
+    app.create_plot_tab(sheet2, "t", "s")
 
     # WIP
     # make plots aware of data_model's origin sheet
