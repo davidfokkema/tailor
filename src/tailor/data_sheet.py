@@ -7,11 +7,12 @@ from tailor.ui_data_sheet import Ui_DataSheet
 
 
 class DataSheet(QtWidgets.QWidget):
-    def __init__(self, main_window):
+    def __init__(self, name, main_window):
         super().__init__()
         self.ui = Ui_DataSheet()
         self.ui.setupUi(self)
 
+        self.name = name
         self.main_window = main_window
         self.clipboard = QtWidgets.QApplication.clipboard()
 

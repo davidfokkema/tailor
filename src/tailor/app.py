@@ -412,8 +412,9 @@ class Application(QtWidgets.QMainWindow):
 
     def add_data_sheet(self) -> DataSheet:
         """Add a new data sheet to the project."""
-        datasheet = DataSheet(main_window=self)
-        idx = self.ui.tabWidget.addTab(datasheet, f"Sheet{self._sheet_num}")
+        name = f"Sheet{self._sheet_num}"
+        datasheet = DataSheet(name, main_window=self)
+        idx = self.ui.tabWidget.addTab(datasheet, name)
         self.ui.tabWidget.setCurrentIndex(idx)
         datasheet.ui.data_view.setFocus()
         self._sheet_num += 1

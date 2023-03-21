@@ -12,6 +12,7 @@ import pyqtgraph as pg
 from lmfit import models
 from PySide6 import QtCore, QtWidgets
 
+from tailor.data_sheet import DataSheet
 from tailor.ui_plot_tab import Ui_PlotTab
 
 NUM_POINTS = 1000
@@ -48,7 +49,7 @@ class PlotTab(QtWidgets.QWidget):
     fit_domain = None, None
     model = None
 
-    def __init__(self, data_sheet, main_window):
+    def __init__(self, data_sheet: DataSheet, main_window):
         """Initialize the widget.
 
         Args:
@@ -639,8 +640,20 @@ class PlotTab(QtWidgets.QWidget):
         msg += make_table(
             [
                 # make sure everything is a string, even None
-                ("X: ", str(self.x_var), " +- ", str(self.x_err_var)),
-                ("Y: ", str(self.y_var), " +- ", str(self.y_err_var)),
+                (
+                    "X: ",
+                    str(self.x_var),
+                    " +- ",
+                    str(self.x_err_var),
+                    f" (from {self.data_sheet.name})",
+                ),
+                (
+                    "Y: ",
+                    str(self.y_var),
+                    " +- ",
+                    str(self.y_err_var),
+                    f" (from {self.data_sheet.name})",
+                ),
             ]
         )
         return msg
