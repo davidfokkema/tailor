@@ -27,6 +27,13 @@ def test_sheets_and_columns(app: Application):
     sheet2.data_model.endResetModel()
     app.create_plot_tab(sheet2, "t", "s")
 
+    app.ui.tabWidget.setCurrentWidget(sheet1)
+    sheet1.ui.data_view.setCurrentIndex(sheet1.data_model.createIndex(0, 0))
+    sheet1.rename_column("time")
+
+    # column must not be renamed to 'time'
+    app.ui.tabWidget.setCurrentIndex(3)
+
     # WIP
     # only rename columns for plots with data from current sheet
 
