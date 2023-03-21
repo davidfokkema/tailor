@@ -28,8 +28,6 @@ def test_sheets_and_columns(app: Application):
     app.create_plot_tab(sheet2, "t", "s")
 
     # WIP
-    # make plots aware of data_model's origin sheet
-    # only update plots with data from current sheet
     # only rename columns for plots with data from current sheet
 
 
