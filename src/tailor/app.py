@@ -51,6 +51,12 @@ pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
 
+## WIP
+# Open / save project
+# Import / Export CSV
+# Export Plots
+
+
 class Application(QtWidgets.QMainWindow):
     """Main user interface for the tailor app.
 
