@@ -25,14 +25,16 @@ def test_sheets_and_columns(app: Application):
     sheet2.data_model.beginResetModel()
     sheet2.data_model._data = pd.DataFrame.from_dict({"t": t, "s": 2 * t + 3})
     sheet2.data_model.endResetModel()
-    app.create_plot_tab(sheet2, "t", "s")
+    plot2 = app.create_plot_tab(sheet2, "t", "s")
 
+    # Rename column
     app.ui.tabWidget.setCurrentWidget(sheet1)
     sheet1.ui.data_view.setCurrentIndex(sheet1.data_model.createIndex(0, 0))
     sheet1.rename_column("time")
 
-    # column must not be renamed to 'time'
+    # column must not be renamed to 'time', but still be 't'
     app.ui.tabWidget.setCurrentIndex(3)
+    assert plot2.x_var == "t"
 
     # WIP
     # only rename columns for plots with data from current sheet

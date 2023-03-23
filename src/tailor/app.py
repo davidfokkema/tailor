@@ -349,7 +349,9 @@ class Application(QtWidgets.QMainWindow):
                 if x_var and y_var:
                     self.create_plot_tab(data_sheet, x_var, y_var, x_err, y_err)
 
-    def create_plot_tab(self, data_sheet, x_var, y_var, x_err=None, y_err=None):
+    def create_plot_tab(
+        self, data_sheet, x_var, y_var, x_err=None, y_err=None
+    ) -> PlotTab:
         """Create a new tab with a plot.
 
         After creating the plot, the tab containing the plot is focused.
@@ -367,6 +369,7 @@ class Application(QtWidgets.QMainWindow):
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
         self.ui.tabWidget.setCurrentIndex(idx)
+        return plot_tab
 
     def create_plot_dialog(self, data_tab):
         """Create a dialog to request variables for creating a plot."""
