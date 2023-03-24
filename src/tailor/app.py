@@ -53,7 +53,6 @@ pg.setConfigOption("foreground", "k")
 
 ## WIP
 # Open / save project
-# Import / Export CSV
 # Export Plots
 
 
