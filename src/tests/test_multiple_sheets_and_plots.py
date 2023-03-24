@@ -36,8 +36,9 @@ def test_sheets_and_columns(app: Application):
     app.ui.tabWidget.setCurrentIndex(3)
     assert plot2.x_var == "t"
 
-    # WIP
-    # only rename columns for plots with data from current sheet
+    # duplicate a data sheet
+    app.ui.tabWidget.setCurrentWidget(sheet1)
+    app.duplicate_data_sheet()
 
 
 if __name__ == "__main__":

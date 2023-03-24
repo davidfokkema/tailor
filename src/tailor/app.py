@@ -120,6 +120,7 @@ class Application(QtWidgets.QMainWindow):
         )
         self.ui.actionClose.triggered.connect(self.new_project)
         self.ui.actionAdd_Data_Sheet.triggered.connect(self.add_data_sheet)
+        self.ui.actionDuplicate_Data_Sheet.triggered.connect(self.duplicate_data_sheet)
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
             self.add_calculated_column
@@ -424,6 +425,14 @@ class Application(QtWidgets.QMainWindow):
         datasheet.ui.data_view.setFocus()
         self._sheet_num += 1
         return datasheet
+
+    def duplicate_data_sheet(self) -> DataSheet:
+        """Duplicate the current data sheet."""
+        if current_sheet := self._on_data_sheet():
+            new_sheet = self.add_data_sheet()
+            new_sheet.data_model.beginResetModel()
+            new_sheet.data_model._data = current_sheet.data_model._data.copy(deep=True)
+            new_sheet.data_model.endResetModel()
 
     def new_project(self):
         """Close the current project and open a new one."""
