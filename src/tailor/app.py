@@ -53,7 +53,6 @@ pg.setConfigOption("foreground", "k")
 
 ## WIP
 # Open / save project
-# Export Plots
 
 
 class Application(QtWidgets.QMainWindow):
@@ -220,6 +219,16 @@ class Application(QtWidgets.QMainWindow):
         else:
             dialogs.show_warning_dialog(
                 parent=self, msg="You must select a data sheet to perform this action."
+            )
+            return None
+
+    def _on_plot(self) -> Optional[DataSheet]:
+        """Return the current tab if it is a plot else display warning."""
+        if type(tab := self.ui.tabWidget.currentWidget()) == PlotTab:
+            return tab
+        else:
+            dialogs.show_warning_dialog(
+                parent=self, msg="You must select a plot to perform this action."
             )
             return None
 
@@ -765,8 +774,7 @@ class Application(QtWidgets.QMainWindow):
         Args:
             suffix: the required suffix of the file.
         """
-        tab = self.ui.tabWidget.currentWidget()
-        if type(tab) == PlotTab:
+        if tab := self._on_plot():
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self,
                 dir=self.get_recent_directory(),
@@ -785,13 +793,9 @@ class Application(QtWidgets.QMainWindow):
                             text="This can happen if there is a bug in the application.",
                         )
                 else:
-                    error_msg = QtWidgets.QMessageBox()
-                    error_msg.setText(f"You didn't select a {suffix} file.")
-                    error_msg.exec()
-        else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select a plot tab first.")
-            error_msg.exec()
+                    dialogs.show_error_dialog(
+                        self, f"You didn't select a {suffix} file."
+                    )
 
     def _set_project_path(self, filename):
         """Set window title and project name."""
