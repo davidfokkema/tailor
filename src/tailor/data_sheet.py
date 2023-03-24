@@ -132,7 +132,7 @@ class DataSheet(QtWidgets.QWidget):
             if name and name not in self.data_model.get_column_names():
                 old_name = self.data_model.get_column_name(self._selected_col_idx)
                 new_name = self.data_model.rename_column(self._selected_col_idx, name)
-                self.main_window.rename_plot_variables(old_name, new_name)
+                self.main_window.rename_plot_variables(self, old_name, new_name)
                 # set the normalized name to the name edit field
                 self.ui.name_edit.setText(new_name)
 

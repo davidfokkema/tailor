@@ -301,17 +301,19 @@ class Application(QtWidgets.QMainWindow):
         for idx in range(self.ui.tabWidget.count()):
             self.update_plot_tab(idx)
 
-    def rename_plot_variables(self, old_name, new_name):
+    def rename_plot_variables(self, data_sheet, old_name, new_name):
         """Rename any plotted variables
 
         Args:
-            old_name: the name that may be currently in use.
-            new_name: the new column name
+            data_sheet (DataSheet): the data sheet containing the column that
+                needs to be renamed.
+            old_name (str): the name that may be currently in use.
+            new_name (str): the new column name.
         """
         num_tabs = self.ui.tabWidget.count()
         tabs = [self.ui.tabWidget.widget(i) for i in range(num_tabs)]
         for tab in tabs:
-            if type(tab) == PlotTab:
+            if type(tab) == PlotTab and tab.data_sheet == data_sheet:
                 needs_info_update = False
                 for var in ["x_var", "y_var", "x_err_var", "y_err_var"]:
                     if getattr(tab, var) == old_name:
