@@ -29,11 +29,11 @@ class DataModel(QtCore.QAbstractTableModel):
     _calculated_column_expression = None
     _is_calculated_column_valid = None
 
-    def __init__(self, main_app):
+    def __init__(self, main_window):
         """Instantiate the class."""
         super().__init__()
 
-        self.main_app = main_app
+        self.main_window = main_window
 
         self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
         self._calculated_column_expression = {}
@@ -392,7 +392,7 @@ class DataModel(QtCore.QAbstractTableModel):
         Args:
             msg (str): the error message.
         """
-        self.main_app.ui.statusbar.showMessage(msg, timeout=MSG_TIMEOUT)
+        self.main_window.ui.statusbar.showMessage(msg, timeout=MSG_TIMEOUT)
 
     def emit_column_changed(self, col_name):
         """Emit dataChanged signal for a given column.

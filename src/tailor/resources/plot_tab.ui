@@ -416,7 +416,9 @@
         <item>
          <widget class="QPlainTextEdit" name="result_box">
           <property name="font">
-           <font/>
+           <font>
+            <family>Courier New</family>
+           </font>
           </property>
           <property name="lineWrapMode">
            <enum>QPlainTextEdit::NoWrap</enum>

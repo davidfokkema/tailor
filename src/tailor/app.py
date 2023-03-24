@@ -15,23 +15,23 @@ from functools import partial
 from importlib import metadata as importlib_metadata
 from importlib import resources
 from textwrap import dedent
+from typing import Optional
 
 import numpy as np
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from tailor import config
+from tailor import config, dialogs
 from tailor.csv_format_dialog import (
     DELIMITER_CHOICES,
     NUM_FORMAT_CHOICES,
     CSVFormatDialog,
 )
-from tailor.data_model import MSG_TIMEOUT, DataModel
+from tailor.data_sheet import DataSheet
 from tailor.plot_tab import PlotTab
 from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
 from tailor.ui_tailor import Ui_MainWindow
-
 
 app_module = sys.modules["__main__"].__package__
 metadata = importlib_metadata.metadata(app_module)
@@ -51,6 +51,10 @@ pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
 
+## WIP
+# Open / save project
+
+
 class Application(QtWidgets.QMainWindow):
     """Main user interface for the tailor app.
 
@@ -63,6 +67,7 @@ class Application(QtWidgets.QMainWindow):
     _recent_files_actions = None
     _selected_col_idx = None
     _plot_num = 1
+    _sheet_num = 1
 
     _is_dirty = False
 
@@ -79,9 +84,6 @@ class Application(QtWidgets.QMainWindow):
         self.setWindowIcon(
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
-        self.clipboard = QtWidgets.QApplication.clipboard()
-        # store reference to this code in data tab
-        self.ui.data.code = self
 
         # set up dirty timer
         self._dirty_timer = QtCore.QTimer()
@@ -92,15 +94,6 @@ class Application(QtWidgets.QMainWindow):
 
         # Enable close buttons...
         self.ui.tabWidget.setTabsClosable(True)
-        # ...but remove them for the table view
-        for pos in QtWidgets.QTabBar.LeftSide, QtWidgets.QTabBar.RightSide:
-            widget = self.ui.tabWidget.tabBar().tabButton(0, pos)
-            if widget:
-                widget.close()
-
-        # connect button signals
-        self.ui.add_column_button.clicked.connect(self.add_column)
-        self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
 
         # connect menu items
         self.ui.actionQuit.triggered.connect(self.close)
@@ -119,6 +112,8 @@ class Application(QtWidgets.QMainWindow):
             lambda: self.export_graph(".png")
         )
         self.ui.actionClose.triggered.connect(self.new_project)
+        self.ui.actionAdd_Data_Sheet.triggered.connect(self.add_data_sheet)
+        self.ui.actionDuplicate_Data_Sheet.triggered.connect(self.duplicate_data_sheet)
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
             self.add_calculated_column
@@ -138,15 +133,11 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
         # user interface events
-        self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
-        self.ui.name_edit.textEdited.connect(self.rename_column)
-        self.ui.formula_edit.textEdited.connect(self.update_column_expression)
-        self.ui.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
 
         # install event filter to capture UI events (which are not signals)
-        # necessary to caputer closeEvent inside QMainWindow widget
+        # necessary to capture closeEvent inside QMainWindow widget
         self.installEventFilter(self)
 
         # Set standard shortcuts for menu items
@@ -169,44 +160,6 @@ class Application(QtWidgets.QMainWindow):
             QtGui.QKeySequence("Shift+Ctrl+G")
         )
 
-        # Create shortcut for return/enter keys
-        for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
-            QtGui.QShortcut(
-                QtGui.QKeySequence(key), self.ui.data_view, self.edit_or_move_down
-            )
-        # Shortcut for backspace and delete: clear cell contents
-        for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
-            QtGui.QShortcut(
-                QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
-            )
-
-        # Start at (0, 0)
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
-
-    def _set_view_and_selection_model(self):
-        """Set up data view and selection model.
-
-        Connects the table widget to the data model, sets up various behaviours
-        and resets visual column ordering.
-        """
-        self.ui.data_view.setModel(self.data_model)
-        self.ui.data_view.setDragDropMode(self.ui.data_view.NoDragDrop)
-        header = self.ui.data_view.horizontalHeader()
-        header.setSectionsMovable(True)
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        header.setMinimumSectionSize(header.defaultSectionSize())
-
-        # reset column ordering. There is, apparently, no easy way to do this :'(
-        for log_idx in range(self.data_model.columnCount()):
-            # move sections in the correct position FROM LEFT TO RIGHT
-            # so, logical indexes should be numbered [0, 1, 2, ... ]
-            # >>> header.moveSection(from, to)
-            vis_idx = header.visualIndex(log_idx)
-            header.moveSection(vis_idx, log_idx)
-
-        self.selection = self.ui.data_view.selectionModel()
-        self.selection.selectionChanged.connect(self.selection_changed)
-
     def mark_project_dirty(self, is_dirty=True):
         """Mark project as dirty"""
         self._is_dirty = is_dirty
@@ -214,35 +167,6 @@ class Application(QtWidgets.QMainWindow):
         if not is_dirty:
             # FIXME: this can be implemented much better by actually detecting changes.
             self._dirty_timer.start(DIRTY_TIMEOUT)
-
-    def column_moved(self, logidx, oldidx, newidx):
-        """Move column in reaction to UI signal.
-
-        Dragging a column to a new location triggers execution of this method.
-        Since the UI only reorders the column visually and does not change the
-        underlying data, things can get tricky when trying to determine which
-        variables are available to the left of calculated columns and which
-        columns include the bouding box of a selection for copy/paste. So, we
-        will immediately move back the column in the view and move the
-        underlying data instead. That way, visual and logical ordering are
-        always in sync.
-
-        Args:
-            logidx (int): the logical column index (index in the dataframe)
-            oldidx (int): the old visual index newidx (int): the new visual
-            index
-        """
-        print(f"Column moved from {oldidx=} to {newidx=}")
-        header = self.ui.data_view.horizontalHeader()
-        header.blockSignals(True)
-        # move the column back, keep the header in logical order
-        header.moveSection(newidx, oldidx)
-        header.blockSignals(False)
-        # move the underlying data column instead
-        self.data_model.moveColumn(None, oldidx, None, newidx)
-        self.data_model.recalculate_all_columns()
-        # select the column that was just moved at the new location
-        self.ui.data_view.selectColumn(newidx)
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
@@ -288,167 +212,65 @@ class Application(QtWidgets.QMainWindow):
         )
         box.exec()
 
-    def edit_or_move_down(self):
-        """Edit cell or move cursor down a row.
-
-        Start editing a cell. If the cell was already being edited, move the
-        cursor down a row, stopping the edit in the process. Trigger a
-        recalculation of all calculated columns.
-        """
-        cur_index = self.ui.data_view.currentIndex()
-        if not self.ui.data_view.isPersistentEditorOpen(cur_index):
-            # is not yet editing, so start an edit
-            self.ui.data_view.edit(cur_index)
+    def _on_data_sheet(self) -> Optional[DataSheet]:
+        """Return the current tab if a data sheet else display warning."""
+        if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
+            return tab
         else:
-            # is already editing, what index is below?
-            new_index = self.get_index_below_selected_cell()
-            if new_index == cur_index:
-                # already on bottom row, create a new row and take that index
-                self.add_row()
-                new_index = self.get_index_below_selected_cell()
-            # move to it (finishing editing in the process)
-            self.ui.data_view.setCurrentIndex(new_index)
+            dialogs.show_warning_dialog(
+                parent=self, msg="You must select a data sheet to perform this action."
+            )
+            return None
+
+    def _on_plot(self) -> Optional[DataSheet]:
+        """Return the current tab if it is a plot else display warning."""
+        if type(tab := self.ui.tabWidget.currentWidget()) == PlotTab:
+            return tab
+        else:
+            dialogs.show_warning_dialog(
+                parent=self, msg="You must select a plot to perform this action."
+            )
+            return None
+
+    def add_column(self):
+        """Add a column to the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.add_column()
+
+    def add_calculated_column(self):
+        """Add a calculated column to the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.add_calculated_column()
+
+    def add_row(self):
+        """Add a row to the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.add_row()
+
+    def remove_column(self):
+        """Remove a column from the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.remove_column()
+
+    def remove_row(self):
+        """Remove a row from the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.remove_row()
 
     def clear_selected_cells(self):
-        """Clear contents of selected cells."""
-        for index in self.selection.selectedIndexes():
-            self.data_model.setData(index, "", skip_update=True)
-        # signal that ALL values may have changed using an invalid index
-        # this can be MUCH quicker than emitting signals for each cell
-        self.data_model.dataChanged.emit(QtCore.QModelIndex(), QtCore.QModelIndex())
-        # recalculate computed values once
-        self.data_model.recalculate_all_columns()
-
-    def get_index_below_selected_cell(self):
-        """Get index directly below the selected cell."""
-        return self.ui.data_view.moveCursor(
-            self.ui.data_view.MoveDown, QtCore.Qt.NoModifier
-        )
+        """Clear the contents of selected cells in the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.clear_selected_cells()
 
     def copy_selected_cells(self):
-        """Copy selected cells to clipboard."""
-
-        # get bounding rectangle coordinates and sizes
-        selection = self.selection.selection().toList()
-        left = min(r.left() for r in selection)
-        width = max(r.right() for r in selection) - left + 1
-        top = min(r.top() for r in selection)
-        height = max(r.bottom() for r in selection) - top + 1
-
-        # fill data from selected indexes, not selected -> NaN
-        data = np.full((height, width), np.nan)
-        for index in self.selection.selectedIndexes():
-            if (value := index.data()) == "":
-                value = np.nan
-            data[index.row() - top, index.column() - left] = value
-
-        # create tab separated values from data, NaN -> empty string, e.g.
-        # 1 2 3
-        # 2   4
-        # 5 5 6
-        text = "\n".join(
-            [
-                "\t".join([str(v) if not np.isnan(v) else "" for v in row])
-                for row in data
-            ]
-        )
-
-        # write TSV text to clipboard
-        self.clipboard.setText(text)
+        """Copy selected cells in the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.copy_selected_cells()
 
     def paste_cells(self):
-        """Paste cells from clipboard."""
-
-        # get data from clipboard
-        text = self.clipboard.text()
-
-        # create array from tab separated values, "" -> NaN
-        try:
-            data = np.array(
-                [
-                    [float(v) if v != "" else np.nan for v in row.split("\t")]
-                    for row in text.split("\n")
-                ]
-            )
-        except ValueError as exc:
-            self.ui.statusbar.showMessage(
-                f"Error pasting from clipboard: {exc}", timeout=MSG_TIMEOUT
-            )
-            return
-
-        # get current coordinates and data size
-        current_index = self.ui.data_view.currentIndex()
-        start_row, start_column = current_index.row(), current_index.column()
-        height, width = data.shape
-
-        # extend rows and columns if necessary
-        last_table_column = self.data_model.columnCount() - 1
-        if (last_data_column := start_column + width - 1) > last_table_column:
-            for _ in range(last_data_column - last_table_column):
-                self.add_column()
-        last_table_row = self.data_model.rowCount() - 1
-        if (last_data_row := start_row + height - 1) > last_table_row:
-            for _ in range(last_data_row - last_table_row):
-                self.add_row()
-
-        # write clipboard data to data model
-        it = np.nditer(data, flags=["multi_index"])
-        for value in it:
-            row, column = it.multi_index
-            self.data_model.setData(
-                self.data_model.createIndex(row + start_row, column + start_column),
-                value,
-                skip_update=True,
-            )
-
-        # signal that values have changed
-        self.data_model.dataChanged.emit(
-            self.data_model.createIndex(start_row, start_column),
-            self.data_model.createIndex(
-                start_row + height - 1, start_column + width - 1
-            ),
-        )
-        # recalculate computed values once
-        self.data_model.recalculate_all_columns()
-        # reset current index and focus
-        self.ui.data_view.setCurrentIndex(current_index)
-        self.ui.data_view.setFocus()
-
-    def selection_changed(self, selected, deselected):
-        """Handle selectionChanged events in the data view.
-
-        When the selection is changed, the column index of the left-most cell in
-        the first selection is used to identify the column name and the
-        mathematical expression that is used to calculate the column values.
-        These values are used to update the column information in the user
-        interface.
-
-        Args:
-            selected: QItemSelection containing the newly selected events.
-            deselected: QItemSelection containing previously selected, and now
-            deselected, items.
-        """
-        if not selected.isEmpty():
-            self.ui.nameLabel.setEnabled(True)
-            self.ui.name_edit.setEnabled(True)
-            first_selection = selected.first()
-            col_idx = first_selection.left()
-            self._selected_col_idx = col_idx
-            self.ui.name_edit.setText(self.data_model.get_column_name(col_idx))
-            self.ui.formula_edit.setText(self.data_model.get_column_expression(col_idx))
-            if self.data_model.is_calculated_column(col_idx):
-                self.ui.formulaLabel.setEnabled(True)
-                self.ui.formula_edit.setEnabled(True)
-            else:
-                self.ui.formulaLabel.setEnabled(False)
-                self.ui.formula_edit.setEnabled(False)
-        else:
-            self.ui.nameLabel.setEnabled(False)
-            self.ui.name_edit.clear()
-            self.ui.name_edit.setEnabled(False)
-            self.ui.formulaLabel.setEnabled(False)
-            self.ui.formula_edit.clear()
-            self.ui.formula_edit.setEnabled(False)
+        """Paste selected cells into the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.paste_cells()
 
     def tab_changed(self, idx):
         """Handle currentChanged events of the tab widget.
@@ -483,84 +305,19 @@ class Application(QtWidgets.QMainWindow):
         for idx in range(self.ui.tabWidget.count()):
             self.update_plot_tab(idx)
 
-    def add_column(self):
-        """Add column to data model and select it."""
-        col_index = self.data_model.columnCount()
-        self.data_model.insertColumn(col_index)
-        self.ui.data_view.selectColumn(col_index)
-        self.ui.name_edit.selectAll()
-        self.ui.name_edit.setFocus()
-
-    def add_calculated_column(self):
-        """Add a calculated column to data model and select it."""
-        col_index = self.data_model.columnCount()
-        self.data_model.insert_calculated_column(col_index)
-        self.ui.data_view.selectColumn(col_index)
-        self.ui.name_edit.selectAll()
-        self.ui.name_edit.setFocus()
-
-    def add_row(self):
-        """Add row to data model."""
-        self.data_model.insertRow(self.data_model.rowCount())
-
-    def remove_column(self):
-        """Remove selected column(s) from data model."""
-        selected_columns = [s.column() for s in self.selection.selectedColumns()]
-        if selected_columns:
-            # Remove columns in reverse order to avoid index shifting during
-            # removal. WIP: It would be more efficient to merge ranges of
-            # contiguous columns since they can be removed in one fell swoop.
-            selected_columns.sort(reverse=True)
-            for column in selected_columns:
-                self.data_model.removeColumn(column)
-        else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select one or more columns.")
-            error_msg.exec()
-
-    def remove_row(self):
-        """Remove selected row(s) from data model."""
-        selected_rows = [s.row() for s in self.selection.selectedRows()]
-        if selected_rows:
-            # Remove rows in reverse order to avoid index shifting during
-            # removal. WIP: It would be more efficient to merge ranges of
-            # contiguous rows since they can be removed in one fell swoop.
-            selected_rows.sort(reverse=True)
-            for row in selected_rows:
-                self.data_model.removeRow(row)
-        else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select one or more rows.")
-            error_msg.exec()
-
-    def rename_column(self, name):
-        """Rename a column.
-
-        Renames the currently selected column.
-
-        Args:
-            name: a QString containing the new name.
-        """
-        if self._selected_col_idx is not None:
-            # Do not allow empty names or duplicate column names
-            if name and name not in self.data_model.get_column_names():
-                old_name = self.data_model.get_column_name(self._selected_col_idx)
-                new_name = self.data_model.rename_column(self._selected_col_idx, name)
-                self.rename_plot_variables(old_name, new_name)
-                # set the normalized name to the name edit field
-                self.ui.name_edit.setText(new_name)
-
-    def rename_plot_variables(self, old_name, new_name):
+    def rename_plot_variables(self, data_sheet, old_name, new_name):
         """Rename any plotted variables
 
         Args:
-            old_name: the name that may be currently in use.
-            new_name: the new column name
+            data_sheet (DataSheet): the data sheet containing the column that
+                needs to be renamed.
+            old_name (str): the name that may be currently in use.
+            new_name (str): the new column name.
         """
         num_tabs = self.ui.tabWidget.count()
         tabs = [self.ui.tabWidget.widget(i) for i in range(num_tabs)]
         for tab in tabs:
-            if type(tab) == PlotTab:
+            if type(tab) == PlotTab and tab.data_sheet == data_sheet:
                 needs_info_update = False
                 for var in ["x_var", "y_var", "x_err_var", "y_err_var"]:
                     if getattr(tab, var) == old_name:
@@ -581,18 +338,6 @@ class Application(QtWidgets.QMainWindow):
                 if needs_info_update:
                     tab.update_info_box()
 
-    def update_column_expression(self, expression):
-        """Update a column expression.
-
-        Tries to recalculate the values of the currently selected column in the
-        data model.
-
-        Args:
-            expression: a QString containing the mathematical expression.
-        """
-        if self._selected_col_idx is not None:
-            self.data_model.update_column_expression(self._selected_col_idx, expression)
-
     def ask_and_create_plot_tab(self):
         """Opens a dialog and create a new tab with a plot.
 
@@ -600,34 +345,39 @@ class Application(QtWidgets.QMainWindow):
         to plot. When the dialog is accepted, creates a new tab containing the
         requested plot.
         """
-        dialog = self.create_plot_dialog()
-        if dialog.exec() == QtWidgets.QDialog.Accepted:
-            x_var = dialog.ui.x_axis_box.currentText()
-            y_var = dialog.ui.y_axis_box.currentText()
-            x_err = dialog.ui.x_err_box.currentText()
-            y_err = dialog.ui.y_err_box.currentText()
-            if x_var and y_var:
-                self.create_plot_tab(x_var, y_var, x_err, y_err)
+        if data_sheet := self._on_data_sheet():
+            dialog = self.create_plot_dialog(data_sheet)
+            if dialog.exec() == QtWidgets.QDialog.Accepted:
+                x_var = dialog.ui.x_axis_box.currentText()
+                y_var = dialog.ui.y_axis_box.currentText()
+                x_err = dialog.ui.x_err_box.currentText()
+                y_err = dialog.ui.y_err_box.currentText()
+                if x_var and y_var:
+                    self.create_plot_tab(data_sheet, x_var, y_var, x_err, y_err)
 
-    def create_plot_tab(self, x_var, y_var, x_err=None, y_err=None):
+    def create_plot_tab(
+        self, data_sheet, x_var, y_var, x_err=None, y_err=None
+    ) -> PlotTab:
         """Create a new tab with a plot.
 
         After creating the plot, the tab containing the plot is focused.
 
         Args:
+            data_sheet (DataSheet): the sheet containing the data.
             x_var: the name of the variable to plot on the x-axis.
             y_var: the name of the variable to plot on the y-axis.
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(self.data_model, main_app=self)
+        plot_tab = PlotTab(data_sheet, main_window=self)
         idx = self.ui.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
         self._plot_num += 1
         plot_tab.create_plot(x_var, y_var, x_err, y_err)
 
         self.ui.tabWidget.setCurrentIndex(idx)
+        return plot_tab
 
-    def create_plot_dialog(self):
+    def create_plot_dialog(self, data_tab):
         """Create a dialog to request variables for creating a plot."""
 
         class Dialog(QtWidgets.QDialog):
@@ -636,7 +386,7 @@ class Application(QtWidgets.QMainWindow):
                 self.ui = Ui_CreatePlotDialog()
                 self.ui.setupUi(self)
 
-        choices = [None] + self.data_model.get_column_names()
+        choices = [None] + data_tab.data_model.get_column_names()
         create_dialog = Dialog()
         create_dialog.ui.x_axis_box.addItems(choices)
         create_dialog.ui.y_axis_box.addItems(choices)
@@ -644,33 +394,79 @@ class Application(QtWidgets.QMainWindow):
         create_dialog.ui.y_err_box.addItems(choices)
         return create_dialog
 
-    def close_tab(self, idx):
-        """Close a plot tab.
+    def close_tab(self, close_idx):
+        """Close a tab.
 
-        Closes the requested tab, but do not close the table view.
+        Closes the requested tab. If it is a data sheet, close all related plots.
 
         Args:
-            idx: an integer tab index
+            close_idx: an integer tab index
         """
-        if idx > 0:
-            # Don't close the table view, only close plot tabs
+        tab_widget = self.ui.tabWidget
+        close_tab = tab_widget.widget(close_idx)
+        if type(close_tab) == PlotTab:
+            # plots can be easily closed
             if self.confirm_close_dialog("Are you sure you want to close this plot?"):
-                self.ui.tabWidget.removeTab(idx)
+                tab_widget.removeTab(close_idx)
+        elif type(close_tab) == DataSheet:
+            # data sheets need special attention
+            if self.confirm_close_dialog(
+                "Are you sure you want to close this data sheet and all associated plots?"
+            ):
+                if self._count_data_sheets() == 1:
+                    # there's just the one data sheet, close all and start new
+                    # project
+                    self.clear_all()
+                else:
+                    # find associated plots and close plots and data sheet
+                    close_idxs = [close_idx]
+                    for idx in range(tab_widget.count()):
+                        tab = tab_widget.widget(idx)
+                        if (
+                            type(tab) == PlotTab
+                            and tab.data_model == close_tab.data_model
+                        ):
+                            close_idxs.append(idx)
+                    for idx in sorted(close_idxs, reverse=True):
+                        tab_widget.removeTab(idx)
+
+    def _count_data_sheets(self):
+        """Count the number of data sheets."""
+        is_data_sheet = [
+            type(self.ui.tabWidget.widget(idx)) == DataSheet
+            for idx in range(self.ui.tabWidget.count())
+        ]
+        return sum(is_data_sheet)
 
     def clear_all(self):
         """Clear all program state.
 
         Closes all tabs and data.
         """
-        for idx in range(self.ui.tabWidget.count(), 0, -1):
-            # close all plot tabs in reverse order, they are no longer valid
-            self.ui.tabWidget.removeTab(idx)
+        self.ui.tabWidget.clear()
         self._plot_num = 1
-        self.data_model = DataModel(main_app=self)
-        self._set_view_and_selection_model()
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self._sheet_num = 1
+        self.add_data_sheet()
         self._set_project_path(None)
         self.mark_project_dirty(False)
+
+    def add_data_sheet(self) -> DataSheet:
+        """Add a new data sheet to the project."""
+        name = f"Sheet{self._sheet_num}"
+        datasheet = DataSheet(name, main_window=self)
+        idx = self.ui.tabWidget.addTab(datasheet, name)
+        self.ui.tabWidget.setCurrentIndex(idx)
+        datasheet.ui.data_view.setFocus()
+        self._sheet_num += 1
+        return datasheet
+
+    def duplicate_data_sheet(self) -> DataSheet:
+        """Duplicate the current data sheet."""
+        if current_sheet := self._on_data_sheet():
+            new_sheet = self.add_data_sheet()
+            new_sheet.data_model.beginResetModel()
+            new_sheet.data_model._data = current_sheet.data_model._data.copy(deep=True)
+            new_sheet.data_model.endResetModel()
 
     def new_project(self):
         """Close the current project and open a new one."""
@@ -883,14 +679,24 @@ class Application(QtWidgets.QMainWindow):
 
         Export all data in the table as a comma-separated values file.
         """
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self,
-            dir=self.get_recent_directory(),
-            filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
-        )
-        if filename:
-            self.set_recent_directory(pathlib.Path(filename).parent)
-            self.data_model.write_csv(filename)
+        if data_sheet := self._on_data_sheet():
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                parent=self,
+                dir=self.get_recent_directory(),
+                filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
+            )
+            if filename:
+                self._do_export_csv(data_sheet, filename)
+
+    def _do_export_csv(self, data_sheet, filename):
+        """Export sheet data as CSV.
+
+        Args:
+            data_sheet (DataSheet): the data sheet containing the data.
+            filename (str or pathlib.Path): the filename to save the data to.
+        """
+        self.set_recent_directory(pathlib.Path(filename).parent)
+        data_sheet.data_model.write_csv(filename)
 
     def import_csv(self):
         """Import data from a CSV file.
@@ -898,36 +704,42 @@ class Application(QtWidgets.QMainWindow):
         After confirmation, erase all data and import from a comma-separated
         values file.
         """
-        if self.confirm_project_close_dialog():
-            filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self,
-                dir=self.get_recent_directory(),
-                filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
-            )
-            if filename:
-                self.set_recent_directory(pathlib.Path(filename).parent)
-                dialog = CSVFormatDialog(filename, parent=self)
-                if dialog.exec() == QtWidgets.QDialog.Accepted:
-                    (
-                        delimiter,
-                        decimal,
-                        thousands,
-                        header,
-                        skiprows,
-                    ) = dialog.get_format_parameters()
-                    self._do_import_csv(
-                        filename,
-                        delimiter,
-                        decimal,
-                        thousands,
-                        header,
-                        skiprows,
-                    )
+        if data_sheet := self._on_data_sheet():
+            if self.confirm_project_close_dialog():
+                filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                    parent=self,
+                    dir=self.get_recent_directory(),
+                    filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
+                )
+                if filename:
+                    self.set_recent_directory(pathlib.Path(filename).parent)
+                    dialog = CSVFormatDialog(filename, parent=self)
+                    if dialog.exec() == QtWidgets.QDialog.Accepted:
+                        (
+                            delimiter,
+                            decimal,
+                            thousands,
+                            header,
+                            skiprows,
+                        ) = dialog.get_format_parameters()
+                        self._do_import_csv(
+                            data_sheet,
+                            filename,
+                            delimiter,
+                            decimal,
+                            thousands,
+                            header,
+                            skiprows,
+                        )
 
-    def _do_import_csv(self, filename, delimiter, decimal, thousands, header, skiprows):
+    def _do_import_csv(
+        self, data_sheet, filename, delimiter, decimal, thousands, header, skiprows
+    ):
         """Import CSV data from file.
 
         Args:
+            data_sheet (DataSheet): the data sheet into which the data will be
+                written.
             filename: a string containing the path to the CSV file
             delimiter: a string containing the column delimiter
             decimal: a string containing the decimal separator
@@ -936,12 +748,11 @@ class Application(QtWidgets.QMainWindow):
                 or None.
             skiprows: an integer with the number of rows to skip at start of file
         """
-        if self.data_model.is_empty():
-            # when the data only contains empty cells
-            self.clear_all()
-            import_func = self.data_model.read_csv
+        if data_sheet.data_model.is_empty():
+            # when the data only contains empty cells, overwrite all columns
+            import_func = data_sheet.data_model.read_csv
         else:
-            import_func = self.data_model.read_and_concat_csv
+            import_func = data_sheet.data_model.read_and_concat_csv
 
         import_func(
             filename,
@@ -951,7 +762,7 @@ class Application(QtWidgets.QMainWindow):
             header=header,
             skiprows=skiprows,
         )
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        data_sheet.ui.data_view.setCurrentIndex(data_sheet.data_model.createIndex(0, 0))
         self.update_all_plots()
 
     def export_graph(self, suffix):
@@ -963,8 +774,7 @@ class Application(QtWidgets.QMainWindow):
         Args:
             suffix: the required suffix of the file.
         """
-        tab = self.ui.tabWidget.currentWidget()
-        if type(tab) == PlotTab:
+        if tab := self._on_plot():
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self,
                 dir=self.get_recent_directory(),
@@ -983,13 +793,9 @@ class Application(QtWidgets.QMainWindow):
                             text="This can happen if there is a bug in the application.",
                         )
                 else:
-                    error_msg = QtWidgets.QMessageBox()
-                    error_msg.setText(f"You didn't select a {suffix} file.")
-                    error_msg.exec()
-        else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select a plot tab first.")
-            error_msg.exec()
+                    dialogs.show_error_dialog(
+                        self, f"You didn't select a {suffix} file."
+                    )
 
     def _set_project_path(self, filename):
         """Set window title and project name."""

@@ -16,10 +16,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QFormLayout, QGroupBox, QHBoxLayout,
-    QHeaderView, QLabel, QLineEdit, QMainWindow,
-    QMenu, QMenuBar, QPushButton, QSizePolicy,
-    QStatusBar, QTabWidget, QTableView, QVBoxLayout,
+from PySide6.QtWidgets import (QApplication, QMainWindow, QMenu, QMenuBar,
+    QSizePolicy, QStatusBar, QTabWidget, QVBoxLayout,
     QWidget)
 
 class Ui_MainWindow(object):
@@ -76,96 +74,24 @@ class Ui_MainWindow(object):
         self.actionCopy.setObjectName(u"actionCopy")
         self.actionPaste = QAction(MainWindow)
         self.actionPaste.setObjectName(u"actionPaste")
+        self.actionAdd_Data_Sheet = QAction(MainWindow)
+        self.actionAdd_Data_Sheet.setObjectName(u"actionAdd_Data_Sheet")
+        self.actionDuplicate_Data_Sheet = QAction(MainWindow)
+        self.actionDuplicate_Data_Sheet.setObjectName(u"actionDuplicate_Data_Sheet")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.tabWidget = QTabWidget(self.centralwidget)
         self.tabWidget.setObjectName(u"tabWidget")
-        self.data = QWidget()
-        self.data.setObjectName(u"data")
-        self.horizontalLayout = QHBoxLayout(self.data)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(4, 4, 4, 4)
-        self.data_view = QTableView(self.data)
-        self.data_view.setObjectName(u"data_view")
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(1)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.data_view.sizePolicy().hasHeightForWidth())
-        self.data_view.setSizePolicy(sizePolicy)
-
-        self.horizontalLayout.addWidget(self.data_view)
-
-        self.groupBox = QGroupBox(self.data)
-        self.groupBox.setObjectName(u"groupBox")
-        self.verticalLayout = QVBoxLayout(self.groupBox)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.formLayout = QFormLayout()
-        self.formLayout.setObjectName(u"formLayout")
-        self.formLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-        self.formLayout.setContentsMargins(4, 4, 4, 4)
-        self.nameLabel = QLabel(self.groupBox)
-        self.nameLabel.setObjectName(u"nameLabel")
-
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.nameLabel)
-
-        self.name_edit = QLineEdit(self.groupBox)
-        self.name_edit.setObjectName(u"name_edit")
-
-        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.name_edit)
-
-        self.formulaLabel = QLabel(self.groupBox)
-        self.formulaLabel.setObjectName(u"formulaLabel")
-
-        self.formLayout.setWidget(1, QFormLayout.LabelRole, self.formulaLabel)
-
-        self.formula_edit = QLineEdit(self.groupBox)
-        self.formula_edit.setObjectName(u"formula_edit")
-
-        self.formLayout.setWidget(1, QFormLayout.FieldRole, self.formula_edit)
-
-
-        self.verticalLayout.addLayout(self.formLayout)
-
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.add_column_button = QPushButton(self.groupBox)
-        self.add_column_button.setObjectName(u"add_column_button")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.add_column_button.sizePolicy().hasHeightForWidth())
-        self.add_column_button.setSizePolicy(sizePolicy1)
-
-        self.horizontalLayout_2.addWidget(self.add_column_button)
-
-        self.add_calculated_column_button = QPushButton(self.groupBox)
-        self.add_calculated_column_button.setObjectName(u"add_calculated_column_button")
-
-        self.horizontalLayout_2.addWidget(self.add_calculated_column_button)
-
-
-        self.verticalLayout.addLayout(self.horizontalLayout_2)
-
-        self.create_plot_button = QPushButton(self.groupBox)
-        self.create_plot_button.setObjectName(u"create_plot_button")
-
-        self.verticalLayout.addWidget(self.create_plot_button)
-
-        self.verticalLayout.setStretch(0, 1)
-
-        self.horizontalLayout.addWidget(self.groupBox)
-
-        self.tabWidget.addTab(self.data, "")
+        self.tabWidget.setMovable(True)
 
         self.verticalLayout_2.addWidget(self.tabWidget)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1200, 24))
+        self.menubar.setGeometry(QRect(0, 0, 1200, 37))
         self.menuTable = QMenu(self.menubar)
         self.menuTable.setObjectName(u"menuTable")
         self.menuFile = QMenu(self.menubar)
@@ -180,17 +106,14 @@ class Ui_MainWindow(object):
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        QWidget.setTabOrder(self.tabWidget, self.data_view)
-        QWidget.setTabOrder(self.data_view, self.name_edit)
-        QWidget.setTabOrder(self.name_edit, self.formula_edit)
-        QWidget.setTabOrder(self.formula_edit, self.add_column_button)
-        QWidget.setTabOrder(self.add_column_button, self.add_calculated_column_button)
-        QWidget.setTabOrder(self.add_calculated_column_button, self.create_plot_button)
 
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
         self.menubar.addAction(self.menuTable.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
+        self.menuTable.addAction(self.actionAdd_Data_Sheet)
+        self.menuTable.addAction(self.actionDuplicate_Data_Sheet)
+        self.menuTable.addSeparator()
         self.menuTable.addAction(self.actionAdd_column)
         self.menuTable.addAction(self.actionAdd_calculated_column)
         self.menuTable.addAction(self.actionAdd_row)
@@ -223,7 +146,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(-1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -255,13 +178,8 @@ class Ui_MainWindow(object):
         self.actionCheck_for_updates.setText(QCoreApplication.translate("MainWindow", u"Check for updates", None))
         self.actionCopy.setText(QCoreApplication.translate("MainWindow", u"Copy", None))
         self.actionPaste.setText(QCoreApplication.translate("MainWindow", u"Paste", None))
-        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Column information", None))
-        self.nameLabel.setText(QCoreApplication.translate("MainWindow", u"Name:", None))
-        self.formulaLabel.setText(QCoreApplication.translate("MainWindow", u"Formula", None))
-        self.add_column_button.setText(QCoreApplication.translate("MainWindow", u"Add column", None))
-        self.add_calculated_column_button.setText(QCoreApplication.translate("MainWindow", u"Add calculated column", None))
-        self.create_plot_button.setText(QCoreApplication.translate("MainWindow", u"Create plot", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.data), QCoreApplication.translate("MainWindow", u"Data", None))
+        self.actionAdd_Data_Sheet.setText(QCoreApplication.translate("MainWindow", u"Add Data Sheet", None))
+        self.actionDuplicate_Data_Sheet.setText(QCoreApplication.translate("MainWindow", u"Duplicate Data Sheet", None))
         self.menuTable.setTitle(QCoreApplication.translate("MainWindow", u"Table", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
         self.menuOpen_Recent.setTitle(QCoreApplication.translate("MainWindow", u"Open Recent", None))

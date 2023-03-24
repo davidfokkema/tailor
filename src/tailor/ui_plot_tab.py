@@ -261,6 +261,7 @@ class Ui_PlotTab(object):
         self.result_box = QPlainTextEdit(self.groupBox_3)
         self.result_box.setObjectName(u"result_box")
         font = QFont()
+        font.setFamilies([u"Courier New"])
         self.result_box.setFont(font)
         self.result_box.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.result_box.setReadOnly(True)
