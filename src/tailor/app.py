@@ -95,11 +95,6 @@ class Application(QtWidgets.QMainWindow):
 
         # Enable close buttons...
         self.ui.tabWidget.setTabsClosable(True)
-        # ...but remove them for the table view
-        for pos in QtWidgets.QTabBar.LeftSide, QtWidgets.QTabBar.RightSide:
-            widget = self.ui.tabWidget.tabBar().tabButton(0, pos)
-            if widget:
-                widget.close()
 
         # connect menu items
         self.ui.actionQuit.triggered.connect(self.close)
@@ -390,18 +385,49 @@ class Application(QtWidgets.QMainWindow):
         create_dialog.ui.y_err_box.addItems(choices)
         return create_dialog
 
-    def close_tab(self, idx):
-        """Close a plot tab.
+    def close_tab(self, close_idx):
+        """Close a tab.
 
-        Closes the requested tab, but do not close the table view.
+        Closes the requested tab. If it is a data sheet, close all related plots.
 
         Args:
-            idx: an integer tab index
+            close_idx: an integer tab index
         """
-        if idx > 0:
-            # Don't close the table view, only close plot tabs
+        tab_widget = self.ui.tabWidget
+        close_tab = tab_widget.widget(close_idx)
+        if type(close_tab) == PlotTab:
+            # plots can be easily closed
             if self.confirm_close_dialog("Are you sure you want to close this plot?"):
-                self.ui.tabWidget.removeTab(idx)
+                tab_widget.removeTab(close_idx)
+        elif type(close_tab) == DataSheet:
+            # data sheets need special attention
+            if self.confirm_close_dialog(
+                "Are you sure you want to close this data sheet and all associated plots?"
+            ):
+                if self._count_data_sheets() == 1:
+                    # there's just the one data sheet, close all and start new
+                    # project
+                    self.clear_all()
+                else:
+                    # find associated plots and close plots and data sheet
+                    close_idxs = [close_idx]
+                    for idx in range(tab_widget.count()):
+                        tab = tab_widget.widget(idx)
+                        if (
+                            type(tab) == PlotTab
+                            and tab.data_model == close_tab.data_model
+                        ):
+                            close_idxs.append(idx)
+                    for idx in sorted(close_idxs, reverse=True):
+                        tab_widget.removeTab(idx)
+
+    def _count_data_sheets(self):
+        """Count the number of data sheets."""
+        is_data_sheet = [
+            type(self.ui.tabWidget.widget(idx)) == DataSheet
+            for idx in range(self.ui.tabWidget.count())
+        ]
+        return sum(is_data_sheet)
 
     def clear_all(self):
         """Clear all program state.
