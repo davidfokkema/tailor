@@ -2,10 +2,12 @@ import sys
 
 sys.path.append("src/")
 
+import pathlib
+import tempfile
 
 import numpy as np
 import pandas as pd
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtWidgets
 
 from tailor.app import Application
 
@@ -39,6 +41,32 @@ def test_sheets_and_columns(app: Application):
     # duplicate a data sheet
     app.ui.tabWidget.setCurrentWidget(sheet1)
     app.duplicate_data_sheet()
+
+    # export and import CSV
+    with tempfile.TemporaryDirectory() as dirname:
+        path = pathlib.Path(dirname) / "test.csv"
+        app._do_export_csv(sheet1, path)
+        new_sheet = app.add_data_sheet()
+        app._do_import_csv(
+            new_sheet,
+            path,
+            delimiter=",",
+            decimal=".",
+            thousands=None,
+            header=0,
+            skiprows=0,
+        )
+        # import into another sheet
+        app.ui.tabWidget.setCurrentWidget(sheet2)
+        app._do_import_csv(
+            sheet2,
+            path,
+            delimiter=",",
+            decimal=".",
+            thousands=None,
+            header=0,
+            skiprows=0,
+        )
 
 
 if __name__ == "__main__":

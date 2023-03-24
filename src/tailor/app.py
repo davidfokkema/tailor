@@ -645,14 +645,24 @@ class Application(QtWidgets.QMainWindow):
 
         Export all data in the table as a comma-separated values file.
         """
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self,
-            dir=self.get_recent_directory(),
-            filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
-        )
-        if filename:
-            self.set_recent_directory(pathlib.Path(filename).parent)
-            self.data_model.write_csv(filename)
+        if data_sheet := self._on_data_sheet():
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                parent=self,
+                dir=self.get_recent_directory(),
+                filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
+            )
+            if filename:
+                self._do_export_csv(data_sheet, filename)
+
+    def _do_export_csv(self, data_sheet, filename):
+        """Export sheet data as CSV.
+
+        Args:
+            data_sheet (DataSheet): the data sheet containing the data.
+            filename (str or pathlib.Path): the filename to save the data to.
+        """
+        self.set_recent_directory(pathlib.Path(filename).parent)
+        data_sheet.data_model.write_csv(filename)
 
     def import_csv(self):
         """Import data from a CSV file.
@@ -660,36 +670,42 @@ class Application(QtWidgets.QMainWindow):
         After confirmation, erase all data and import from a comma-separated
         values file.
         """
-        if self.confirm_project_close_dialog():
-            filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self,
-                dir=self.get_recent_directory(),
-                filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
-            )
-            if filename:
-                self.set_recent_directory(pathlib.Path(filename).parent)
-                dialog = CSVFormatDialog(filename, parent=self)
-                if dialog.exec() == QtWidgets.QDialog.Accepted:
-                    (
-                        delimiter,
-                        decimal,
-                        thousands,
-                        header,
-                        skiprows,
-                    ) = dialog.get_format_parameters()
-                    self._do_import_csv(
-                        filename,
-                        delimiter,
-                        decimal,
-                        thousands,
-                        header,
-                        skiprows,
-                    )
+        if data_sheet := self._on_data_sheet():
+            if self.confirm_project_close_dialog():
+                filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                    parent=self,
+                    dir=self.get_recent_directory(),
+                    filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
+                )
+                if filename:
+                    self.set_recent_directory(pathlib.Path(filename).parent)
+                    dialog = CSVFormatDialog(filename, parent=self)
+                    if dialog.exec() == QtWidgets.QDialog.Accepted:
+                        (
+                            delimiter,
+                            decimal,
+                            thousands,
+                            header,
+                            skiprows,
+                        ) = dialog.get_format_parameters()
+                        self._do_import_csv(
+                            data_sheet,
+                            filename,
+                            delimiter,
+                            decimal,
+                            thousands,
+                            header,
+                            skiprows,
+                        )
 
-    def _do_import_csv(self, filename, delimiter, decimal, thousands, header, skiprows):
+    def _do_import_csv(
+        self, data_sheet, filename, delimiter, decimal, thousands, header, skiprows
+    ):
         """Import CSV data from file.
 
         Args:
+            data_sheet (DataSheet): the data sheet into which the data will be
+                written.
             filename: a string containing the path to the CSV file
             delimiter: a string containing the column delimiter
             decimal: a string containing the decimal separator
@@ -698,12 +714,11 @@ class Application(QtWidgets.QMainWindow):
                 or None.
             skiprows: an integer with the number of rows to skip at start of file
         """
-        if self.data_model.is_empty():
-            # when the data only contains empty cells
-            self.clear_all()
-            import_func = self.data_model.read_csv
+        if data_sheet.data_model.is_empty():
+            # when the data only contains empty cells, overwrite all columns
+            import_func = data_sheet.data_model.read_csv
         else:
-            import_func = self.data_model.read_and_concat_csv
+            import_func = data_sheet.data_model.read_and_concat_csv
 
         import_func(
             filename,
@@ -713,7 +728,7 @@ class Application(QtWidgets.QMainWindow):
             header=header,
             skiprows=skiprows,
         )
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        data_sheet.ui.data_view.setCurrentIndex(data_sheet.data_model.createIndex(0, 0))
         self.update_all_plots()
 
     def export_graph(self, suffix):
