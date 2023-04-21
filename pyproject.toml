@@ -85,7 +85,7 @@ include = [
 ]
 
 [tool.pruner.win32]
-base_dir = "build/*/windows/app/src/app_packages"
+base_dir = "build/tailor/windows/app/src/app_packages"
 exclude = [
     "**/tests",
     "**/examples",
