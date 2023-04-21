@@ -51,7 +51,7 @@ requires = []
 requires = []
 
 [tool.pruner.darwin]
-base_dir = "macOS/app/*/*/Contents/Resources/app_packages"
+base_dir = "build/tailor/macos/app/Tailor.app/Contents/Resources/app_packages"
 exclude = [
     "**/tests",
     "**/examples",
