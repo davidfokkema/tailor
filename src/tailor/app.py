@@ -1123,24 +1123,36 @@ class Application(QtCore.QObject):
         else:
             release_info = json.loads(r.read())
             latest_version = release_info["name"]
-            update_link = None
             if packaging.version.parse(latest_version) > packaging.version.parse(
                 __version__
             ):
-                urls = {
-                    pathlib.Path(a["name"]).suffix: a["browser_download_url"]
-                    for a in release_info["assets"]
-                }
-                system = platform.system()
+                asset_urls = [a["browser_download_url"] for a in release_info["assets"]]
+                system, machine = platform.system(), platform.machine()
                 try:
-                    if system == "Darwin":
-                        update_link = urls[".dmg"]
-                    elif system == "Windows":
-                        update_link = urls[".msi"]
-                except KeyError:
-                    # installer not available, no update link
-                    pass
-            return latest_version, update_link
+                    match system, machine:
+                        case ("Darwin", "arm64"):
+                            download_url = next(
+                                (u for u in asset_urls if "apple_silicon.dmg" in u),
+                                None,
+                            ) or next(u for u in asset_urls if ".dmg" in u)
+                        case ("Darwin", "x86_64"):
+                            download_url = next(
+                                (u for u in asset_urls if "intel.dmg" in u), None
+                            ) or next(u for u in asset_urls if ".dmg" in u)
+                        case ("Windows", *machine):
+                            download_url = next(
+                                v for k, v in asset_urls.items() if ".msi" in k
+                            )
+                        case default:
+                            # platform not yet supported
+                            download_url = None
+                except StopIteration:
+                    # the iterator in the next()-statement was empty, so no updates available
+                    download_url = None
+            else:
+                # No new version available
+                download_url = None
+            return latest_version, download_url
 
 
 def main():

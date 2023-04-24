@@ -1,5 +1,12 @@
 # Changelog
 
+## Draft
+
+### :beetle: Fixes
+
+* Check for both OS and CPU hardware for updates (e.g. differentiate between Intel and Apple Silicon)
+
+
 ## 1.7.0
 
 ### What's Changed
