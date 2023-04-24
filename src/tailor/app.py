@@ -1081,7 +1081,11 @@ class Application(QtCore.QObject):
             silent (bool, optional): If there are no updates available, should
                 this method return silently? Defaults to False.
         """
-        latest_version, update_link = self.get_latest_version_and_update_link()
+        (
+            latest_version,
+            update_link,
+            release_notes_link,
+        ) = self.get_latest_version_and_update_link()
         if latest_version is None:
             msg = "You appear to have no internet connection or GitHub is down."
         elif update_link is None:
@@ -1092,7 +1096,8 @@ class Application(QtCore.QObject):
                 <p>There is a new version available. You have version {__version__} and the latest
                 version is {latest_version}. You can download the new version using the link below.</p>
 
-                <p><a href={update_link}>Download update.</a></p>
+                <p><a href={update_link}>Download update</a></p>
+                <p><a href={release_notes_link}>Release notes</a></p>
                 """
             )
         if silent and update_link is None:
@@ -1119,7 +1124,7 @@ class Application(QtCore.QObject):
             r = urllib.request.urlopen(RELEASE_API_URL, timeout=HTTP_TIMEOUT)
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
             # no internet connection?
-            return None, None
+            return None, None, None
         else:
             release_info = json.loads(r.read())
             latest_version = release_info["name"]
@@ -1152,7 +1157,7 @@ class Application(QtCore.QObject):
             else:
                 # No new version available
                 download_url = None
-            return latest_version, download_url
+            return latest_version, download_url, release_info["html_url"]
 
 
 def main():
