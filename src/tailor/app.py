@@ -1117,7 +1117,7 @@ class Application(QtCore.QObject):
         """
         try:
             r = urllib.request.urlopen(RELEASE_API_URL, timeout=HTTP_TIMEOUT)
-        except urllib.error.URLError:
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
             # no internet connection?
             return None, None
         else:
