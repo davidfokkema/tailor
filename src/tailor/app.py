@@ -1182,7 +1182,7 @@ def main():
     app = Application()
     app.ui.show()
     # Preflight
-    if not app.check_for_updates():
+    if not app.check_for_updates(silent=True):
         # user does not want to install update so run the app
         sys.exit(qapp.exec())
 
