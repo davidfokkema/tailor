@@ -11,6 +11,7 @@ import platform
 import sys
 import traceback
 import urllib.request
+import webbrowser
 from functools import partial
 from importlib import metadata as importlib_metadata
 from importlib import resources
@@ -68,9 +69,6 @@ class Application(QtCore.QObject):
         """Initialize the class."""
 
         super().__init__()
-
-        # Preflight
-        self.check_for_updates(silent=True)
 
         self.ui = QUiLoader().load(resources.path("tailor.resources", "tailor.ui"))
         self.ui.setWindowIcon(
@@ -1096,19 +1094,37 @@ class Application(QtCore.QObject):
                 <p>There is a new version available. You have version {__version__} and the latest
                 version is {latest_version}. You can download the new version using the link below.</p>
 
-                <p><a href={update_link}>Download update</a></p>
                 <p><a href={release_notes_link}>Release notes</a></p>
+                <p></p>
                 """
             )
         if silent and update_link is None:
             # no updates, and asked to be silent
             return
         else:
-            box = QtWidgets.QMessageBox()
-            box.setText("Updates")
-            box.setInformativeText(msg)
-            box.setStyleSheet("QLabel{min-width: 300px;}")
-            box.exec()
+            dialog = QtWidgets.QMessageBox(parent=self.ui)
+            dialog.setText("Updates")
+            dialog.setInformativeText(msg)
+            dialog.setStyleSheet("QLabel{min-width: 300px;}")
+            dialog.setStandardButtons(dialog.Ok | dialog.Cancel)
+
+            dialog.button(dialog.Ok).setText("Download Update")
+            dialog.button(dialog.Cancel).setText("Skip Update")
+
+            value = dialog.exec()
+            match value:
+                case dialog.Ok:
+                    # if app is in the main event loop, ask to quit so user can
+                    # install update
+                    QtWidgets.QApplication.instance().quit()
+                    # after possible 'save your project' dialogs, download update
+                    webbrowser.open(update_link)
+                    # if not, return with True to signal that the user wants the update
+                    return True
+                case dialog.Cancel:
+                    return False
+                case default:
+                    return None
 
     def get_latest_version_and_update_link(self):
         """Get latest version and link to latest release, if available.
@@ -1165,7 +1181,10 @@ def main():
     qapp = QtWidgets.QApplication(sys.argv)
     app = Application()
     app.ui.show()
-    sys.exit(qapp.exec())
+    # Preflight
+    if not app.check_for_updates():
+        # user does not want to install update so run the app
+        sys.exit(qapp.exec())
 
 
 if __name__ == "__main__":

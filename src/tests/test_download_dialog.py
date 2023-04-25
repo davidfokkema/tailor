@@ -30,12 +30,13 @@ class MainWindow(QtWidgets.QMainWindow):
         match value:
             case dialog.Ok:
                 print("Yes, download!")
+                # if app is in the main event loop, ask to quit so user can
+                # install update
+                QtWidgets.QApplication.instance().quit()
+                # after possible 'save your project' dialogs, download update
                 webbrowser.open(
                     "https://github.com/davidfokkema/tailor/releases/latest"
                 )
-                # if app is in the main event loop, quit so user can install
-                # update
-                QtWidgets.QApplication.instance().quit()
                 # if not, return with True to signal that the user wants the update
                 return True
             case dialog.Cancel:
