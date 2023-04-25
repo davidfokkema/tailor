@@ -1101,6 +1101,13 @@ class Application(QtCore.QObject):
         if silent and update_link is None:
             # no updates, and asked to be silent
             return
+        elif update_link is None:
+            dialog = QtWidgets.QMessageBox(parent=self.ui)
+            dialog.setText("Updates")
+            dialog.setInformativeText(msg)
+            dialog.setStyleSheet("QLabel{min-width: 300px;}")
+            dialog.setStandardButtons(dialog.Ok)
+            dialog.exec()
         else:
             dialog = QtWidgets.QMessageBox(parent=self.ui)
             dialog.setText("Updates")
