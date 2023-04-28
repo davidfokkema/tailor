@@ -11,6 +11,7 @@ import platform
 import sys
 import traceback
 import urllib.request
+import webbrowser
 from functools import partial
 from importlib import metadata as importlib_metadata
 from importlib import resources
@@ -77,10 +78,6 @@ class Application(QtWidgets.QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
-        # Preflight
-        self.check_for_updates(silent=True)
-
         self.setWindowIcon(
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
@@ -894,7 +891,11 @@ class Application(QtWidgets.QMainWindow):
             silent (bool, optional): If there are no updates available, should
                 this method return silently? Defaults to False.
         """
-        latest_version, update_link = self.get_latest_version_and_update_link()
+        (
+            latest_version,
+            update_link,
+            release_notes_link,
+        ) = self.get_latest_version_and_update_link()
         if latest_version is None:
             msg = "You appear to have no internet connection or GitHub is down."
         elif update_link is None:
@@ -905,18 +906,44 @@ class Application(QtWidgets.QMainWindow):
                 <p>There is a new version available. You have version {__version__} and the latest
                 version is {latest_version}. You can download the new version using the link below.</p>
 
-                <p><a href={update_link}>Download update.</a></p>
+                <p><a href={release_notes_link}>Release notes</a></p>
+                <p></p>
                 """
             )
         if silent and update_link is None:
             # no updates, and asked to be silent
             return
+        elif update_link is None:
+            dialog = QtWidgets.QMessageBox(parent=self.ui)
+            dialog.setText("Updates")
+            dialog.setInformativeText(msg)
+            dialog.setStyleSheet("QLabel{min-width: 300px;}")
+            dialog.setStandardButtons(dialog.Ok)
+            dialog.exec()
         else:
-            box = QtWidgets.QMessageBox()
-            box.setText("Updates")
-            box.setInformativeText(msg)
-            box.setStyleSheet("QLabel{min-width: 300px;}")
-            box.exec()
+            dialog = QtWidgets.QMessageBox(parent=self.ui)
+            dialog.setText("Updates")
+            dialog.setInformativeText(msg)
+            dialog.setStyleSheet("QLabel{min-width: 300px;}")
+            dialog.setStandardButtons(dialog.Ok | dialog.Cancel)
+
+            dialog.button(dialog.Ok).setText("Download Update")
+            dialog.button(dialog.Cancel).setText("Skip Update")
+
+            value = dialog.exec()
+            match value:
+                case dialog.Ok:
+                    # if app is in the main event loop, ask to quit so user can
+                    # install update
+                    QtWidgets.QApplication.instance().quit()
+                    # after possible 'save your project' dialogs, download update
+                    webbrowser.open(update_link)
+                    # if not, return with True to signal that the user wants the update
+                    return True
+                case dialog.Cancel:
+                    return False
+                case default:
+                    return None
 
     def get_latest_version_and_update_link(self):
         """Get latest version and link to latest release, if available.
@@ -930,38 +957,53 @@ class Application(QtWidgets.QMainWindow):
         """
         try:
             r = urllib.request.urlopen(RELEASE_API_URL, timeout=HTTP_TIMEOUT)
-        except urllib.error.URLError:
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
             # no internet connection?
-            return None, None
+            return None, None, None
         else:
             release_info = json.loads(r.read())
             latest_version = release_info["name"]
-            update_link = None
             if packaging.version.parse(latest_version) > packaging.version.parse(
                 __version__
             ):
-                urls = {
-                    pathlib.Path(a["name"]).suffix: a["browser_download_url"]
-                    for a in release_info["assets"]
-                }
-                system = platform.system()
+                asset_urls = [a["browser_download_url"] for a in release_info["assets"]]
+                system, machine = platform.system(), platform.machine()
                 try:
-                    if system == "Darwin":
-                        update_link = urls[".dmg"]
-                    elif system == "Windows":
-                        update_link = urls[".msi"]
-                except KeyError:
-                    # installer not available, no update link
-                    pass
-            return latest_version, update_link
+                    match system, machine:
+                        case ("Darwin", "arm64"):
+                            download_url = next(
+                                (u for u in asset_urls if "apple_silicon.dmg" in u),
+                                None,
+                            ) or next(u for u in asset_urls if ".dmg" in u)
+                        case ("Darwin", "x86_64"):
+                            download_url = next(
+                                (u for u in asset_urls if "intel.dmg" in u), None
+                            ) or next(u for u in asset_urls if ".dmg" in u)
+                        case ("Windows", *machine):
+                            download_url = next(
+                                v for k, v in asset_urls.items() if ".msi" in k
+                            )
+                        case default:
+                            # platform not yet supported
+                            download_url = None
+                except StopIteration:
+                    # the iterator in the next()-statement was empty, so no updates available
+                    download_url = None
+            else:
+                # No new version available
+                download_url = None
+            return latest_version, download_url, release_info["html_url"]
 
 
 def main():
     """Main entry point."""
     qapp = QtWidgets.QApplication(sys.argv)
     app = Application()
-    app.show()
-    sys.exit(qapp.exec())
+    app.ui.show()
+    # Preflight
+    if not app.check_for_updates(silent=True):
+        # user does not want to install update so run the app
+        sys.exit(qapp.exec())
 
 
 if __name__ == "__main__":
