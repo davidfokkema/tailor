@@ -914,14 +914,14 @@ class Application(QtWidgets.QMainWindow):
             # no updates, and asked to be silent
             return
         elif update_link is None:
-            dialog = QtWidgets.QMessageBox(parent=self.ui)
+            dialog = QtWidgets.QMessageBox(parent=self)
             dialog.setText("Updates")
             dialog.setInformativeText(msg)
             dialog.setStyleSheet("QLabel{min-width: 300px;}")
             dialog.setStandardButtons(dialog.Ok)
             dialog.exec()
         else:
-            dialog = QtWidgets.QMessageBox(parent=self.ui)
+            dialog = QtWidgets.QMessageBox(parent=self)
             dialog.setText("Updates")
             dialog.setInformativeText(msg)
             dialog.setStyleSheet("QLabel{min-width: 300px;}")
@@ -999,7 +999,7 @@ def main():
     """Main entry point."""
     qapp = QtWidgets.QApplication(sys.argv)
     app = Application()
-    app.ui.show()
+    app.show()
     # Preflight
     if not app.check_for_updates(silent=True):
         # user does not want to install update so run the app
