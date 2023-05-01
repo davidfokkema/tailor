@@ -981,7 +981,7 @@ class Application(QtWidgets.QMainWindow):
                             ) or next(u for u in asset_urls if ".dmg" in u)
                         case ("Windows", *machine):
                             download_url = next(
-                                v for k, v in asset_urls.items() if ".msi" in k
+                                u for u in asset_urls if ".msi" in u
                             )
                         case default:
                             # platform not yet supported
@@ -997,13 +997,16 @@ class Application(QtWidgets.QMainWindow):
 
 def main():
     """Main entry point."""
-    qapp = QtWidgets.QApplication(sys.argv)
+    qapp = QtWidgets.QApplication()
     app = Application()
     app.show()
     # Preflight
-    if not app.check_for_updates(silent=True):
-        # user does not want to install update so run the app
-        sys.exit(qapp.exec())
+    if not "--no-update-check" in sys.argv:
+        # will check for updates
+        if app.check_for_updates(silent=True):
+            # user wants to install available updates, so quit
+            return
+    sys.exit(qapp.exec())
 
 
 if __name__ == "__main__":
