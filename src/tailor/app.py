@@ -1169,7 +1169,7 @@ class Application(QtCore.QObject):
                             ) or next(u for u in asset_urls if ".dmg" in u)
                         case ("Windows", *machine):
                             download_url = next(
-                                v for k, v in asset_urls.items() if ".msi" in k
+                                u for u in asset_urls if ".msi" in u
                             )
                         case default:
                             # platform not yet supported
