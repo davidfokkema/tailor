@@ -2,6 +2,10 @@
 
 ## Draft
 
+### :rocket: Features
+
+* Added `--no-update-check` flag to skip updates on startup
+
 ### :beetle: Fixes
 
 * Check for both OS and CPU hardware for updates (e.g. differentiate between Intel and Apple Silicon)
