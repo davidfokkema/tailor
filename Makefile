@@ -17,7 +17,7 @@ $(uidir)/ui_%.py: $(uisrcdir)/%.ui
 
 .PHONY: build
 build:
-	python -m pip install briefcase==0.3.12
+	python -m pip install briefcase==0.3.14
 	briefcase create
 	python -m pip install tomli
 	python pruner.py
