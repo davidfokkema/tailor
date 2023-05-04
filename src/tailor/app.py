@@ -976,9 +976,7 @@ class Application(QtWidgets.QMainWindow):
                                 (u for u in asset_urls if "intel.dmg" in u), None
                             ) or next(u for u in asset_urls if ".dmg" in u)
                         case ("Windows", *machine):
-                            download_url = next(
-                                u for u in asset_urls if ".msi" in u
-                            )
+                            download_url = next(u for u in asset_urls if ".msi" in u)
                         case default:
                             # platform not yet supported
                             download_url = None
