@@ -52,7 +52,7 @@ class DataSheet(QtWidgets.QWidget):
         and resets visual column ordering.
         """
         self.ui.data_view.setModel(self.data_model)
-        self.ui.data_view.setDragDropMode(self.ui.data_view.NoDragDrop)
+        self.ui.data_view.setDragDropMode(QtWidgets.QTableView.NoDragDrop)
         header = self.ui.data_view.horizontalHeader()
         header.setSectionsMovable(True)
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
