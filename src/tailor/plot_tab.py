@@ -540,7 +540,6 @@ class PlotTab(QtWidgets.QWidget):
 
         # set model parameter hints
         param_hints = self.get_parameter_hints()
-        print(f"{param_hints=}")
         for p, hints in param_hints.items():
             self.model.set_param_hint(p, **hints)
 
