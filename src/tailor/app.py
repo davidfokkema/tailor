@@ -5,6 +5,7 @@ You can fit custom models to your data to estimate best-fit parameters.
 """
 
 import gzip
+import importlib.metadata
 import json
 import pathlib
 import platform
@@ -13,7 +14,6 @@ import traceback
 import urllib.request
 import webbrowser
 from functools import partial
-from importlib import metadata as importlib_metadata
 from importlib import resources
 from textwrap import dedent
 from typing import Optional
@@ -34,8 +34,7 @@ from tailor.plot_tab import PlotTab
 from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
 from tailor.ui_tailor import Ui_MainWindow
 
-app_module = sys.modules["__main__"].__package__
-metadata = importlib_metadata.metadata(app_module)
+metadata = importlib.metadata.metadata("tailor")
 __name__ = metadata["name"]
 __version__ = metadata["version"]
 
