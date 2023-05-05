@@ -468,7 +468,7 @@ class PlotTab(QtWidgets.QWidget):
                 "min": v.findChild(QtWidgets.QWidget, "min").value(),
                 "value": v.findChild(QtWidgets.QWidget, "value").value(),
                 "max": v.findChild(QtWidgets.QWidget, "max").value(),
-                "vary": not v.findChild(QtWidgets.QWidget, "is_fixed").checkState(),
+                "vary": not v.findChild(QtWidgets.QWidget, "is_fixed").isChecked(),
             }
             for k, v in self._params.items()
         }
@@ -545,7 +545,7 @@ class PlotTab(QtWidgets.QWidget):
             self.model.set_param_hint(p, **hints)
 
         # select data for fit
-        if self.ui.use_fit_domain.checkState() == QtCore.Qt.Checked:
+        if self.ui.use_fit_domain.isChecked():
             xmin = self.ui.fit_start_box.value()
             xmax = self.ui.fit_end_box.value()
             if xmin > xmax:
@@ -703,7 +703,7 @@ class PlotTab(QtWidgets.QWidget):
         # save checkbox state
         save_obj.update(
             {
-                name: int(getattr(self.ui, name).checkState())
+                name: getattr(self.ui, name).isChecked()
                 for name in ["show_initial_fit", "use_fit_domain"]
             }
         )
@@ -788,8 +788,8 @@ class PlotTab(QtWidgets.QWidget):
 
         # load checkbox state
         for name in ["use_fit_domain"]:
-            state = QtCore.Qt.CheckState(save_obj[name])
-            getattr(self.ui, name).setCheckState(state)
+            state = save_obj[name]
+            getattr(self.ui, name).setChecked(state)
 
         # load combobox state
         for name in ["draw_curve_option"]:
@@ -800,16 +800,12 @@ class PlotTab(QtWidgets.QWidget):
         params = save_obj["parameters"].keys()
         self.update_params_ui(params)
         for p, hints in save_obj["parameters"].items():
-            if hints["vary"]:
-                fixed_state = QtCore.Qt.Unchecked
-            else:
-                fixed_state = QtCore.Qt.Checked
             layout_widget = self._params[p]
             layout_widget.findChild(QtWidgets.QWidget, "min").setValue(hints["min"])
             layout_widget.findChild(QtWidgets.QWidget, "value").setValue(hints["value"])
             layout_widget.findChild(QtWidgets.QWidget, "max").setValue(hints["max"])
-            layout_widget.findChild(QtWidgets.QWidget, "is_fixed").setCheckState(
-                fixed_state
+            layout_widget.findChild(QtWidgets.QWidget, "is_fixed").setChecked(
+                not hints["vary"]
             )
 
         # manually recreate (possibly outdated!) fit
@@ -844,8 +840,8 @@ class PlotTab(QtWidgets.QWidget):
             self.update_best_fit_plot(x_var)
 
         # set state of show_initial_fit, will have changed when setting parameters
-        state = QtCore.Qt.CheckState(save_obj["show_initial_fit"])
-        self.ui.show_initial_fit.setCheckState(state)
+        state = save_obj["show_initial_fit"]
+        self.ui.show_initial_fit.setChecked(state)
 
     def export_graph(self, filename):
         """Export graph to a file.
