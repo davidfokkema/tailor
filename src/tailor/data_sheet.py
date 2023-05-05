@@ -247,7 +247,7 @@ class DataSheet(QtWidgets.QWidget):
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""
         return self.ui.data_view.moveCursor(
-            self.ui.data_view.MoveDown, QtCore.Qt.NoModifier
+            QtWidgets.QTableView.MoveDown, QtCore.Qt.NoModifier
         )
 
     def copy_selected_cells(self):
