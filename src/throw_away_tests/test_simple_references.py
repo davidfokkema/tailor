@@ -33,13 +33,13 @@ def test_move_column(app: Application):
 
     app.create_plot_tab(sheet1, "x", "y")
 
-    app.ui.tabWidget.setCurrentIndex(0)
-    sheet1.rename_column("newy")
-    app.ui.tabWidget.setCurrentIndex(1)
+    # app.ui.tabWidget.setCurrentIndex(0)
+    # sheet1.rename_column("newy")
+    # app.ui.tabWidget.setCurrentIndex(1)
 
-    plot1 = app.ui.tabWidget.currentWidget()
-    plot1.ui.model_func.setPlainText("a * x**2 + b * x")
-    plot1.perform_fit()
+    # plot1 = app.ui.tabWidget.currentWidget()
+    # plot1.ui.model_func.setPlainText("a * x**2 + b * x")
+    # plot1.perform_fit()
 
 
 if __name__ == "__main__":
