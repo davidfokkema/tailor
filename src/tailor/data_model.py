@@ -29,13 +29,12 @@ class DataModel(QtCore.QAbstractTableModel):
     _calculated_column_expression = None
     _is_calculated_column_valid = None
 
-    def __init__(self, main_window):
+    def __init__(self):
         """Instantiate the class."""
         super().__init__()
 
-        self.main_window = main_window
-
-        self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
+        # self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
+        self._data = pd.DataFrame()
         self._calculated_column_expression = {}
         self._is_calculated_column_valid = {}
 
@@ -180,7 +179,7 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data = self._data[cols]
         return True
 
-    def insertColumn(self, column, parent=None, column_name=None):
+    def insertColumn(self, column, parent=None, column_name=None, values=np.nan):
         """Insert a single column.
 
         Insert a column *before* the specified column number. Returns True if
@@ -190,6 +189,7 @@ class DataModel(QtCore.QAbstractTableModel):
             column: an integer column number to indicate the place of insertion.
             parent: a QModelIndex pointing to the model (ignored).
             column_name: the name of the new column.
+            values: values to insert.
 
         Returns:
             True if the insertion was succesful, False otherwise.
@@ -198,7 +198,7 @@ class DataModel(QtCore.QAbstractTableModel):
             column_name = self._create_new_column_name()
 
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
-        self._data.insert(column, column_name, np.nan)
+        self._data.insert(column, column_name, values)
         self.endInsertColumns()
         return True
 
