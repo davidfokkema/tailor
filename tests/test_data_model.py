@@ -37,3 +37,40 @@ def test_column_insert_position(data: DataModel):
     # and at the end.
     data.insertColumn(column=3, column_name="t")
     assert list(data._data.columns) == ["x", "s", "y", "t"]
+
+
+class TestQtRequired:
+    def test_rowCount(self):
+        pytest.skip()
+
+    def test_columnCount(self):
+        pytest.skip()
+
+    def test_data(self):
+        pytest.skip()
+
+    def test_headerData(self):
+        pytest.skip()
+
+    def test_setData(self):
+        pytest.skip()
+
+    def test_flags(self):
+        pytest.skip()
+
+    def test_insertRows(self):
+        pytest.skip()
+
+    def test_removeRows(self):
+        pytest.skip()
+
+    def test_insertColumns(self):
+        pytest.skip()
+
+    def test_removeColumns(self):
+        pytest.skip()
+
+
+# class TestTailorAPI:
+#     def test_insert_calculated_column
+#       etc.
