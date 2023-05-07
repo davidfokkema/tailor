@@ -4,6 +4,7 @@ Implements a QAbstractDataModel to contain the data values as a backend for the
 table view used in the app.
 """
 import re
+from typing import Optional
 
 import asteval
 import numpy as np
@@ -38,13 +39,37 @@ class DataModel(QtCore.QAbstractTableModel):
         self._calculated_column_expression = {}
         self._is_calculated_column_valid = {}
 
-    def rowCount(self, parent=None):
-        """Return the number of rows in the data."""
-        return len(self._data)
+    def rowCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
+        """Return the number of rows in the data.
 
-    def columnCount(self, parent=None):
-        """Return the number of columns in the data."""
-        return len(self._data.columns)
+        Since a table has no hierarchy, when the parent is valid (i.e. points to
+        an item in the table) this method returns 0 since an item in the table
+        has no rows of itself. If the parent is invalid, return the number of
+        rows in the table.
+
+        Args:
+            parent: the parent item for which to count rows [invalid]
+        """
+        if parent.isValid():
+            return 0
+        else:
+            return len(self._data)
+
+    def columnCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
+        """Return the number of columns in the data.
+
+        Since a table has no hierarchy, when the parent is valid (i.e. points to
+        an item in the table) this method returns 0 since an item in the table
+        has no columns of itself. If the parent is invalid, return the number of
+        columns in the table.
+
+        Args:
+            parent: the parent item for which to count columns [invalid]
+        """
+        if parent.isValid():
+            return 0
+        else:
+            return len(self._data.columns)
 
     def data(self, index, role):
         """Return (attributes of) the data.
