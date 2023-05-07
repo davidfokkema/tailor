@@ -58,6 +58,10 @@ class DataSheet(QtWidgets.QWidget):
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         header.setMinimumSectionSize(header.defaultSectionSize())
 
+        # FIXME: is this still necessary? If we dont reuse the same data_model
+        # for loading / importing we probably don't need to reset a messed up
+        # column ordering.
+
         # reset column ordering. There is, apparently, no easy way to do this :'(
         for log_idx in range(self.data_model.columnCount()):
             # move sections in the correct position FROM LEFT TO RIGHT
