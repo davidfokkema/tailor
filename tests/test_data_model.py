@@ -1,6 +1,6 @@
-import numpy as np
 import pandas as pd
 import pytest
+from PySide6 import QtCore
 
 from tailor.data_model import DataModel
 
@@ -61,17 +61,60 @@ class TestQtRequired:
         index = bare_bones_data.createIndex(0, 0)
         assert bare_bones_data.columnCount(index) == 0
 
-    def test_data(self):
-        pytest.skip()
+    def test_data_returns_data(self, bare_bones_data: DataModel):
+        index1 = bare_bones_data.createIndex(2, 1)
+        index2 = bare_bones_data.createIndex(3, 0)
 
-    def test_headerData(self):
-        pytest.skip()
+        value0 = bare_bones_data.data(index1)
+        value1 = bare_bones_data.data(index1, QtCore.Qt.DisplayRole)
+        value2 = bare_bones_data.data(index2, QtCore.Qt.EditRole)
 
-    def test_setData(self):
-        pytest.skip()
+        assert value0 == "8"
+        assert value1 == "8"
+        assert value2 == "4"
 
-    def test_flags(self):
-        pytest.skip()
+    def test_data_returns_None_for_invalid_role(self, bare_bones_data: DataModel):
+        index = bare_bones_data.createIndex(2, 1)
+        value = bare_bones_data.data(index, QtCore.Qt.DecorationRole)
+        assert value is None
+
+    def test_headerData(self, bare_bones_data: DataModel):
+        assert bare_bones_data.headerData(0, QtCore.Qt.Horizontal) == "col0"
+        assert (
+            bare_bones_data.headerData(1, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
+            == "col1"
+        )
+        assert (
+            bare_bones_data.headerData(
+                0, QtCore.Qt.Horizontal, QtCore.Qt.DecorationRole
+            )
+            is None
+        )
+        assert bare_bones_data.headerData(3, QtCore.Qt.Vertical) == "4"
+
+    def test_setData(self, bare_bones_data: DataModel):
+        # WIP: test that this method emits dataChanged
+        index1 = bare_bones_data.createIndex(2, 1)
+        index2 = bare_bones_data.createIndex(3, 0)
+
+        retvalue1 = bare_bones_data.setData(index1, 1.7, QtCore.Qt.EditRole)
+        retvalue2 = bare_bones_data.setData(index2, 4.2)
+        retvalue3 = bare_bones_data.setData(index2, 5.0, QtCore.Qt.DecorationRole)
+
+        assert retvalue1 == retvalue2 is True
+        assert retvalue3 is False
+        assert bare_bones_data._data.at[2, "col1"] == 1.7
+        assert bare_bones_data._data.at[3, "col0"] == 4.2
+
+    def test_flags(self, bare_bones_data: DataModel):
+        index = bare_bones_data.createIndex(2, 1)
+        flags = bare_bones_data.flags(index)
+        assert (
+            flags
+            == QtCore.Qt.ItemIsEnabled
+            | QtCore.Qt.ItemIsSelectable
+            | QtCore.Qt.ItemIsEditable
+        )
 
     def test_insertRows(self):
         pytest.skip()

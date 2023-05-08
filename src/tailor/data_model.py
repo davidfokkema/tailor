@@ -4,7 +4,6 @@ Implements a QAbstractDataModel to contain the data values as a backend for the
 table view used in the app.
 """
 import re
-from typing import Optional
 
 import asteval
 import numpy as np
@@ -71,7 +70,11 @@ class DataModel(QtCore.QAbstractTableModel):
         else:
             return len(self._data.columns)
 
-    def data(self, index, role):
+    def data(
+        self,
+        index: QtCore.QModelIndex,
+        role: QtCore.Qt.ItemDataRole = QtCore.Qt.DisplayRole,
+    ) -> str | QtGui.QBrush:
         """Return (attributes of) the data.
 
         This method is called by the table view to request data points or its
@@ -86,11 +89,11 @@ class DataModel(QtCore.QAbstractTableModel):
         (None) is returned.
 
         Args:
-            index: a QModelIndex referencing the requested data item.
-            role: an ItemDataRole to indicate what type of information is
+            index: a reference to the requested data item.
+            role: an indication what type of information is
                 requested.
 
-        Returns: The requested data or an invalid QVariant (None).
+        Returns: The requested data or None.
         """
         row = index.row()
         col = index.column()
@@ -116,7 +119,14 @@ class DataModel(QtCore.QAbstractTableModel):
         # See Qt for Python docs -> Considerations -> API Changes
         return None
 
-    def setData(self, index, value, role=QtCore.Qt.EditRole, *, skip_update=False):
+    def setData(
+        self,
+        index: QtCore.QModelIndex,
+        value: float,
+        role: QtCore.Qt.ItemDataRole = QtCore.Qt.EditRole,
+        *,
+        skip_update=False,
+    ) -> bool:
         """Set (attributes of) data values.
 
         This method is used to set data values in the model. The role indicates
@@ -152,7 +162,12 @@ class DataModel(QtCore.QAbstractTableModel):
         # Role not implemented
         return False
 
-    def headerData(self, section, orientation, role):
+    def headerData(
+        self,
+        section: int,
+        orientation: QtCore.Qt.Orientation,
+        role: QtCore.Qt.ItemDataRole = QtCore.Qt.DisplayRole,
+    ):
         """Return row and column information.
 
         Return data on the row and column headers. Mainly useful for displaying
@@ -465,7 +480,7 @@ class DataModel(QtCore.QAbstractTableModel):
             if self.is_calculated_column(col_idx):
                 self.recalculate_column(column_names[col_idx])
 
-    def flags(self, index):
+    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlag:
         """Returns item flags.
 
         Returns the item flags for the given index.
