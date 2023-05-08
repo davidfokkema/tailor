@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 from PySide6 import QtCore
@@ -22,7 +23,7 @@ def bare_bones_data(model: DataModel):
     This fixture depends on certain implementation details.
     """
     model._data = pd.DataFrame.from_dict(
-        {"col0": [1, 2, 3, 4, 5], "col1": [6, 7, 8, 9, 10]}
+        {"col0": [1.0, 2.0, 3.0, 4.0, 5.0], "col1": [6.0, 7.0, 8.0, 9.0, 10.0]}
     )
     model._new_col_num += 2
     yield model
@@ -116,8 +117,34 @@ class TestQtRequired:
             | QtCore.Qt.ItemIsEditable
         )
 
-    def test_insertRows(self):
-        pytest.skip()
+    def test_insertRows(self, bare_bones_data: DataModel):
+        # WIP: test that begin/endInsertRows is called
+        retvalue1 = bare_bones_data.insertRows(3, 4, parent=QtCore.QModelIndex())
+        assert retvalue1 is True
+        # check that all values are in inserted rows are NaN
+        # use loc to check that the row labels are reindexed
+        assert bool(bare_bones_data._data.loc[3:6].isna().all(axis=None)) is True
+        assert list(bare_bones_data._data["col0"]) == pytest.approx(
+            [
+                1.0,
+                2.0,
+                3.0,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                4.0,
+                5.0,
+            ],
+            nan_ok=True,
+        )
+
+    def test_insertRows_valid_parent(self, bare_bones_data: DataModel):
+        """You can't add rows inside cells."""
+        assert (
+            bare_bones_data.insertRows(0, 2, parent=bare_bones_data.createIndex(0, 0))
+            is False
+        )
 
     def test_removeRows(self):
         pytest.skip()

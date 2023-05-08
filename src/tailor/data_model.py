@@ -288,24 +288,34 @@ class DataModel(QtCore.QAbstractTableModel):
         self.recalculate_all_columns()
         return True
 
-    def insertRow(self, row, parent=None):
-        """Insert a single row.
+    def insertRows(
+        self, row: int, count: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
+    ) -> bool:
+        """Insert rows into the table.
 
-        Append a row to the table, ignoring the specified row number. Returns
-        True if the insertion was succesful.
+        Insert `count` rows into the table at position `row`. Returns True if
+        the insertion was succesful.
 
         Args:
-            row: an integer row number to indicate the place of insertion
-                (ignored).
-            parent: a QModelIndex pointing to the model (ignored).
+            row: an integer row number to indicate the place of insertion.
+            count: number of rows to insert
+            parent: a QModelIndex pointing into the model. Must be invalid since
+                you cannot insert rows into a cell.
 
         Returns:
             True if the insertion was succesful, False otherwise.
         """
-        row = self.rowCount()
-        self.beginInsertRows(QtCore.QModelIndex(), row, row)
-        num_col = len(self._data.columns)
-        self._data.loc[row] = num_col * [np.nan]
+        if parent.isValid():
+            # a table cell can _not_ insert rows
+            return False
+
+        self.beginInsertRows(parent, row, row + count)
+        new_data = pd.DataFrame.from_dict(
+            {col: count * [np.nan] for col in self._data.columns}
+        )
+        self._data = pd.concat(
+            [self._data.iloc[:row], new_data, self._data.iloc[row:]]
+        ).reset_index(drop=True)
         self.endInsertRows()
         self.recalculate_all_columns()
         return True
