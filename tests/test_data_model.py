@@ -146,8 +146,19 @@ class TestQtRequired:
             is False
         )
 
-    def test_removeRows(self):
-        pytest.skip()
+    def test_removeRows(self, bare_bones_data: DataModel):
+        # WIP: test that begin/endRemoveRows is called
+        retvalue = bare_bones_data.removeRows(1, 2)
+        assert retvalue is True
+        assert list(bare_bones_data._data["col0"]) == pytest.approx([1.0, 4.0, 5.0])
+        assert list(bare_bones_data._data["col1"]) == pytest.approx([6.0, 9.0, 10.0])
+
+    def test_removeRows_valid_parent(self, bare_bones_data: DataModel):
+        """You can't remove rows inside cells."""
+        assert (
+            bare_bones_data.removeRows(0, 2, parent=bare_bones_data.createIndex(0, 0))
+            is False
+        )
 
     def test_insertColumns(self):
         pytest.skip()

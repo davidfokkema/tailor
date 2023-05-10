@@ -267,8 +267,10 @@ class DataModel(QtCore.QAbstractTableModel):
         self.recalculate_all_columns()
         return True
 
-    def removeRow(self, row, parent=None):
-        """Remove a single row.
+    def removeRows(
+        self, row: int, count: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
+    ) -> bool:
+        """Remove rows from the table.
 
         Removes a row at the specified row number. Returns True if the
         removal was succesful.
@@ -280,7 +282,11 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             True if the removal was succesful, False otherwise.
         """
-        index = self._data.index[row]
+        if parent.isValid():
+            # a table cell can _not_ remove rows
+            return False
+
+        index = self._data.index[row : row + count]
         self.beginRemoveRows(QtCore.QModelIndex(), row, row)
         self._data.drop(index, axis=0, inplace=True)
         self._data.reset_index(drop=True, inplace=True)
