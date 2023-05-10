@@ -23,9 +23,13 @@ def bare_bones_data(model: DataModel):
     This fixture depends on certain implementation details.
     """
     model._data = pd.DataFrame.from_dict(
-        {"col0": [1.0, 2.0, 3.0, 4.0, 5.0], "col1": [6.0, 7.0, 8.0, 9.0, 10.0]}
+        {
+            "col0": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "col1": [6.0, 7.0, 8.0, 9.0, 10.0],
+            "col2": [11.0, 12.0, 13.0, 14.0, 15.0],
+        }
     )
-    model._new_col_num += 2
+    model._new_col_num += 3
     yield model
 
 
@@ -34,15 +38,10 @@ class TestImplementationDetails:
         assert type(model._data) == pd.DataFrame
         assert model._new_col_num == 0
 
-
-# def test_adding_data(model: DataModel):
-#     model.insertColumn(column=0, column_name="x", values=[1, 2, 3, 4])
-#     assert list(model._data["x"]) == [1, 2, 3, 4]
-
-
-# def test_adding_default_nan(data: DataModel):
-#     data.insertColumn(column=0, column_name="foo")
-#     assert data._data["foo"].isna().all()
+    def test_new_column_label(self, model: DataModel):
+        labels = [model._create_new_column_label() for _ in range(3)]
+        assert labels == ["col1", "col2", "col3"]
+        assert model._new_col_num == 3
 
 
 class TestQtRequired:
@@ -55,7 +54,7 @@ class TestQtRequired:
         assert bare_bones_data.rowCount(index) == 0
 
     def test_columnCount(self, bare_bones_data: DataModel):
-        assert bare_bones_data.columnCount() == 2
+        assert bare_bones_data.columnCount() == 3
 
     def test_columnCount_valid_parent(self, bare_bones_data: DataModel):
         """Valid parent has no children in a table."""
@@ -160,18 +159,37 @@ class TestQtRequired:
             is False
         )
 
-    def test_insertColumns(self):
-        pytest.skip()
+    def test_insertColumns(self, bare_bones_data: DataModel):
+        retvalue = bare_bones_data.insertColumns(1, 2)
+        assert retvalue is True
+        assert bare_bones_data._data.shape == (5, 5)
+        assert list(bare_bones_data._data.iloc[0]) == pytest.approx(
+            [1.0, np.nan, np.nan, 6.0, 11.0], nan_ok=True
+        )
 
-    # def test_column_insert_position(self, data: DataModel):
-    #     # insert in the middle...
-    #     data.insertColumn(column=1, column_name="s")
-    #     # and at the end.
-    #     data.insertColumn(column=3, column_name="t")
-    #     assert list(data._data.columns) == ["x", "s", "y", "t"]
+    def test_insertColumns_valid_parent(self, bare_bones_data: DataModel):
+        """You can't add columns inside cells."""
+        assert (
+            bare_bones_data.insertColumns(
+                0, 2, parent=bare_bones_data.createIndex(0, 0)
+            )
+            is False
+        )
 
-    def test_removeColumns(self):
-        pytest.skip()
+    def test_removeColumns(self, bare_bones_data: DataModel):
+        retvalue = bare_bones_data.removeColumns(1, 2)
+        assert retvalue is True
+        assert bare_bones_data._data.shape == (5, 1)
+        assert bare_bones_data._data.columns == ["col0"]
+
+    def test_removeColumns_valid_parent(self, bare_bones_data: DataModel):
+        """You can't remove columns inside cells."""
+        assert (
+            bare_bones_data.removeColumns(
+                0, 2, parent=bare_bones_data.createIndex(0, 0)
+            )
+            is False
+        )
 
 
 # class TestTailorAPI:

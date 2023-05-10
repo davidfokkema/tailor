@@ -219,52 +219,66 @@ class DataModel(QtCore.QAbstractTableModel):
         self._data = self._data[cols]
         return True
 
-    def insertColumn(self, column, parent=None, column_name=None, values=np.nan):
-        """Insert a single column.
+    def insertColumns(
+        self, column: int, count: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
+    ) -> bool:
+        """Insert columns into the table.
 
-        Insert a column *before* the specified column number. Returns True if
+        Insert columns *before* the specified column number. Returns True if
         the insertion was succesful.
 
         Args:
-            column: an integer column number to indicate the place of insertion.
-            parent: a QModelIndex pointing to the model (ignored).
-            column_name: the name of the new column.
-            values: values to insert.
+            column: a column number to indicate the place of insertion.
+            count: the number of columns to insert.
+            parent: a QModelIndex pointing to the model. Must be invalid since
+                you can't insert columns into a cell.
 
         Returns:
             True if the insertion was succesful, False otherwise.
         """
-        if column_name is None:
-            column_name = self._create_new_column_name()
+        if parent.isValid():
+            # a table cell can _not_ insert columns
+            return False
+
+        labels = [self._create_new_column_label() for _ in range(count)]
 
         self.beginInsertColumns(QtCore.QModelIndex(), column, column)
-        self._data.insert(column, column_name, values)
+        for idx, label in zip(range(column, column + count), labels):
+            self._data.insert(idx, label, np.nan)
         self.endInsertColumns()
         return True
 
-    def removeColumn(self, column, parent=None):
-        """Remove a single column.
+    def removeColumns(
+        self, column: int, count: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
+    ) -> bool:
+        """Remove columns from the table.
 
         Removes a column at the specified column number. Returns True if the
         removal was succesful.
 
         Args:
-            column: an integer column number to indicate the place of removal.
-            parent: a QModelIndex pointing to the model (ignored).
+            column: a column number to indicate the place of removal.
+            count: the number of columns to remove.
+            parent: a QModelIndex pointing to the model. Must be invalid since
+                you can't remove columns from a cell.
 
         Returns:
             True if the removal was succesful, False otherwise.
         """
-        column_name = self.get_column_name(column)
+        if parent.isValid():
+            # a table cell can _not_ remove columns
+            return False
+
+        labels = self._data.columns[column : column + count]
         self.beginRemoveColumns(QtCore.QModelIndex(), column, column)
-        self._data.drop(column_name, axis=1, inplace=True)
-        try:
-            del self._calculated_column_expression[column_name]
-        except KeyError:
-            # not a calculated column
-            pass
+        self._data.drop(columns=labels, inplace=True)
+        # try:
+        #     del self._calculated_column_expression[column_name]
+        # except KeyError:
+        #     # not a calculated column
+        #     pass
         self.endRemoveColumns()
-        self.recalculate_all_columns()
+        # self.recalculate_all_columns()
         return True
 
     def insertRows(
@@ -612,21 +626,16 @@ class DataModel(QtCore.QAbstractTableModel):
         else:
             return self._is_calculated_column_valid.get(col_name, False)
 
-    def _create_new_column_name(self):
-        """Create a name for a new column.
+    def _create_new_column_label(self):
+        """Create a label for a new column.
 
-        Creates column names like new1, new2, etc. while making sure the new
-        name is not yet taken.
+        Creates column labels like col1, col2, etc.
 
         Returns:
-            A string containing the new name.
+            A string containing the new label.
         """
-        col_names = self.get_column_names()
-        while True:
-            self._new_col_num += 1
-            new_name = f"new{self._new_col_num}"
-            if new_name not in col_names:
-                return new_name
+        self._new_col_num += 1
+        return f"col{self._new_col_num}"
 
     def save_state_to_obj(self, save_obj):
         """Save all data and state to save object.
