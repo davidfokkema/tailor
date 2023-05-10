@@ -267,33 +267,6 @@ class DataModel(QtCore.QAbstractTableModel):
         self.recalculate_all_columns()
         return True
 
-    def removeRows(
-        self, row: int, count: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
-    ) -> bool:
-        """Remove rows from the table.
-
-        Removes a row at the specified row number. Returns True if the
-        removal was succesful.
-
-        Args:
-            row: an integer row number to indicate the place of removal.
-            parent: a QModelIndex pointing to the model (ignored).
-
-        Returns:
-            True if the removal was succesful, False otherwise.
-        """
-        if parent.isValid():
-            # a table cell can _not_ remove rows
-            return False
-
-        index = self._data.index[row : row + count]
-        self.beginRemoveRows(QtCore.QModelIndex(), row, row)
-        self._data.drop(index, axis=0, inplace=True)
-        self._data.reset_index(drop=True, inplace=True)
-        self.endRemoveRows()
-        self.recalculate_all_columns()
-        return True
-
     def insertRows(
         self, row: int, count: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
     ) -> bool:
@@ -323,6 +296,33 @@ class DataModel(QtCore.QAbstractTableModel):
             [self._data.iloc[:row], new_data, self._data.iloc[row:]]
         ).reset_index(drop=True)
         self.endInsertRows()
+        self.recalculate_all_columns()
+        return True
+
+    def removeRows(
+        self, row: int, count: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
+    ) -> bool:
+        """Remove rows from the table.
+
+        Removes a row at the specified row number. Returns True if the
+        removal was succesful.
+
+        Args:
+            row: an integer row number to indicate the place of removal.
+            parent: a QModelIndex pointing to the model (ignored).
+
+        Returns:
+            True if the removal was succesful, False otherwise.
+        """
+        if parent.isValid():
+            # a table cell can _not_ remove rows
+            return False
+
+        index = self._data.index[row : row + count]
+        self.beginRemoveRows(QtCore.QModelIndex(), row, row)
+        self._data.drop(index, axis=0, inplace=True)
+        self._data.reset_index(drop=True, inplace=True)
+        self.endRemoveRows()
         self.recalculate_all_columns()
         return True
 
