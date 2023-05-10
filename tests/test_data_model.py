@@ -3,19 +3,19 @@ import pandas as pd
 import pytest
 from PySide6 import QtCore
 
-from tailor.data_model import DataModel
+from tailor.qdata_model import QDataModel
 
 
 @pytest.fixture()
 def model():
-    yield DataModel()
+    yield QDataModel()
 
 
 @pytest.fixture()
-def bare_bones_data(model: DataModel):
+def bare_bones_data(model: QDataModel):
     """Create a bare bones data model.
 
-    This is an instance of DataModel with a very basic data structure (five
+    This is an instance of QDataModel with a very basic data structure (five
     rows, two columns) and an updated column number variable, but nothing else.
     You can use this to test basic data manipulation required by Qt for
     subclasses of QAbstractDataModel.
@@ -34,34 +34,34 @@ def bare_bones_data(model: DataModel):
 
 
 class TestImplementationDetails:
-    def test_model_attributes(self, model: DataModel):
+    def test_model_attributes(self, model: QDataModel):
         assert type(model._data) == pd.DataFrame
         assert model._new_col_num == 0
 
-    def test_new_column_label(self, model: DataModel):
+    def test_new_column_label(self, model: QDataModel):
         labels = [model._create_new_column_label() for _ in range(3)]
         assert labels == ["col1", "col2", "col3"]
         assert model._new_col_num == 3
 
 
 class TestQtRequired:
-    def test_rowCount_row_count(self, bare_bones_data: DataModel):
+    def test_rowCount_row_count(self, bare_bones_data: QDataModel):
         assert bare_bones_data.rowCount() == 5
 
-    def test_rowCount_valid_parent(self, bare_bones_data: DataModel):
+    def test_rowCount_valid_parent(self, bare_bones_data: QDataModel):
         """Valid parent has no children in a table."""
         index = bare_bones_data.createIndex(0, 0)
         assert bare_bones_data.rowCount(index) == 0
 
-    def test_columnCount(self, bare_bones_data: DataModel):
+    def test_columnCount(self, bare_bones_data: QDataModel):
         assert bare_bones_data.columnCount() == 3
 
-    def test_columnCount_valid_parent(self, bare_bones_data: DataModel):
+    def test_columnCount_valid_parent(self, bare_bones_data: QDataModel):
         """Valid parent has no children in a table."""
         index = bare_bones_data.createIndex(0, 0)
         assert bare_bones_data.columnCount(index) == 0
 
-    def test_data_returns_data(self, bare_bones_data: DataModel):
+    def test_data_returns_data(self, bare_bones_data: QDataModel):
         index1 = bare_bones_data.createIndex(2, 1)
         index2 = bare_bones_data.createIndex(3, 0)
 
@@ -73,12 +73,12 @@ class TestQtRequired:
         assert value1 == "8"
         assert value2 == "4"
 
-    def test_data_returns_None_for_invalid_role(self, bare_bones_data: DataModel):
+    def test_data_returns_None_for_invalid_role(self, bare_bones_data: QDataModel):
         index = bare_bones_data.createIndex(2, 1)
         value = bare_bones_data.data(index, QtCore.Qt.DecorationRole)
         assert value is None
 
-    def test_headerData(self, bare_bones_data: DataModel):
+    def test_headerData(self, bare_bones_data: QDataModel):
         assert bare_bones_data.headerData(0, QtCore.Qt.Horizontal) == "col0"
         assert (
             bare_bones_data.headerData(1, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
@@ -92,7 +92,7 @@ class TestQtRequired:
         )
         assert bare_bones_data.headerData(3, QtCore.Qt.Vertical) == "4"
 
-    def test_setData(self, bare_bones_data: DataModel):
+    def test_setData(self, bare_bones_data: QDataModel):
         # WIP: test that this method emits dataChanged
         index1 = bare_bones_data.createIndex(2, 1)
         index2 = bare_bones_data.createIndex(3, 0)
@@ -106,7 +106,7 @@ class TestQtRequired:
         assert bare_bones_data._data.at[2, "col1"] == 1.7
         assert bare_bones_data._data.at[3, "col0"] == 4.2
 
-    def test_flags(self, bare_bones_data: DataModel):
+    def test_flags(self, bare_bones_data: QDataModel):
         index = bare_bones_data.createIndex(2, 1)
         flags = bare_bones_data.flags(index)
         assert (
@@ -116,7 +116,7 @@ class TestQtRequired:
             | QtCore.Qt.ItemIsEditable
         )
 
-    def test_insertRows(self, bare_bones_data: DataModel):
+    def test_insertRows(self, bare_bones_data: QDataModel):
         # WIP: test that begin/endInsertRows is called
         retvalue1 = bare_bones_data.insertRows(3, 4, parent=QtCore.QModelIndex())
         assert retvalue1 is True
@@ -138,28 +138,28 @@ class TestQtRequired:
             nan_ok=True,
         )
 
-    def test_insertRows_valid_parent(self, bare_bones_data: DataModel):
+    def test_insertRows_valid_parent(self, bare_bones_data: QDataModel):
         """You can't add rows inside cells."""
         assert (
             bare_bones_data.insertRows(0, 2, parent=bare_bones_data.createIndex(0, 0))
             is False
         )
 
-    def test_removeRows(self, bare_bones_data: DataModel):
+    def test_removeRows(self, bare_bones_data: QDataModel):
         # WIP: test that begin/endRemoveRows is called
         retvalue = bare_bones_data.removeRows(1, 2)
         assert retvalue is True
         assert list(bare_bones_data._data["col0"]) == pytest.approx([1.0, 4.0, 5.0])
         assert list(bare_bones_data._data["col1"]) == pytest.approx([6.0, 9.0, 10.0])
 
-    def test_removeRows_valid_parent(self, bare_bones_data: DataModel):
+    def test_removeRows_valid_parent(self, bare_bones_data: QDataModel):
         """You can't remove rows inside cells."""
         assert (
             bare_bones_data.removeRows(0, 2, parent=bare_bones_data.createIndex(0, 0))
             is False
         )
 
-    def test_insertColumns(self, bare_bones_data: DataModel):
+    def test_insertColumns(self, bare_bones_data: QDataModel):
         retvalue = bare_bones_data.insertColumns(1, 2)
         assert retvalue is True
         assert bare_bones_data._data.shape == (5, 5)
@@ -167,7 +167,7 @@ class TestQtRequired:
             [1.0, np.nan, np.nan, 6.0, 11.0], nan_ok=True
         )
 
-    def test_insertColumns_valid_parent(self, bare_bones_data: DataModel):
+    def test_insertColumns_valid_parent(self, bare_bones_data: QDataModel):
         """You can't add columns inside cells."""
         assert (
             bare_bones_data.insertColumns(
@@ -176,13 +176,13 @@ class TestQtRequired:
             is False
         )
 
-    def test_removeColumns(self, bare_bones_data: DataModel):
+    def test_removeColumns(self, bare_bones_data: QDataModel):
         retvalue = bare_bones_data.removeColumns(1, 2)
         assert retvalue is True
         assert bare_bones_data._data.shape == (5, 1)
         assert bare_bones_data._data.columns == ["col0"]
 
-    def test_removeColumns_valid_parent(self, bare_bones_data: DataModel):
+    def test_removeColumns_valid_parent(self, bare_bones_data: QDataModel):
         """You can't remove columns inside cells."""
         assert (
             bare_bones_data.removeColumns(
