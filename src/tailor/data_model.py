@@ -17,10 +17,32 @@ class DataModel:
     table view used in the app. This class provides an API specific to Tailor.
     """
 
+    _new_col_num = 0
+    _data = None
+    _calculated_column_expression = None
+    _is_calculated_column_valid = None
+
     def __init__(self) -> None:
         self._data = pd.DataFrame()
         self._calculated_column_expression = {}
         self._is_calculated_column_valid = {}
+
+    def num_rows(self):
+        """Return the number of rows in the table."""
+        return len(self._data)
+
+    def num_columns(self):
+        """Return the number of columns in the table."""
+        return len(self._data.columns)
+
+    def get_value(self, row: int, column: int):
+        """Get value at row, column in table
+
+        Args:
+            row (int): row number
+            column (int): column number
+        """
+        return self._data.iat[row, column]
 
     def is_empty(self):
         """Check whether all cells are empty."""

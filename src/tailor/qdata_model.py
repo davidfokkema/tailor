@@ -19,11 +19,6 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
     table view used in the app. This class mostly implements the GUI side of things, but subclasses the Tailor DataModel.
     """
 
-    _new_col_num = 0
-    _data = None
-    _calculated_column_expression = None
-    _is_calculated_column_valid = None
-
     def __init__(self):
         """Instantiate the class."""
         super().__init__()
@@ -42,7 +37,7 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
         if parent.isValid():
             return 0
         else:
-            return len(self._data)
+            return self.num_rows()
 
     def columnCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
         """Return the number of columns in the data.
@@ -58,7 +53,7 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
         if parent.isValid():
             return 0
         else:
-            return len(self._data.columns)
+            return self.num_columns()
 
     def data(
         self,
@@ -90,11 +85,12 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
 
         if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
             # request for the data itself
-            value = self._data.iat[row, col]
+            value = self.get_value(row, col)
             if np.isnan(value) and not self.is_calculated_column(col):
                 # NaN in a data column, show as empty
                 return ""
             else:
+                # Show float value or "nan" in a calculated column
                 return f"{value:.10g}"
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell

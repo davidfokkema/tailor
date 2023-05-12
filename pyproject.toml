@@ -30,7 +30,8 @@ requires = [
     'matplotlib>=3.5.1,<4.0.0',
 ]
 test_requires = [
-    "pytest",
+    "pytest", 
+    "pytest-mock",
 ]
 
 [tool.briefcase.app.tailor.document_type.tlr]

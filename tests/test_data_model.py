@@ -2,17 +2,24 @@ import numpy as np
 import pandas as pd
 import pytest
 from PySide6 import QtCore
+from pytest_mock import MockerFixture
 
+from tailor.data_model import DataModel
 from tailor.qdata_model import QDataModel
 
 
 @pytest.fixture()
 def model():
+    yield DataModel()
+
+
+@pytest.fixture()
+def qmodel():
     yield QDataModel()
 
 
 @pytest.fixture()
-def bare_bones_data(model: QDataModel):
+def bare_bones_data(qmodel: QDataModel):
     """Create a bare bones data model.
 
     This is an instance of QDataModel with a very basic data structure (five
@@ -22,18 +29,21 @@ def bare_bones_data(model: QDataModel):
 
     This fixture depends on certain implementation details.
     """
-    model._data = pd.DataFrame.from_dict(
+    qmodel._data = pd.DataFrame.from_dict(
         {
             "col0": [1.0, 2.0, 3.0, 4.0, 5.0],
             "col1": [6.0, 7.0, 8.0, 9.0, 10.0],
             "col2": [11.0, 12.0, 13.0, 14.0, 15.0],
         }
     )
-    model._new_col_num += 3
-    yield model
+    qmodel._new_col_num += 3
+    yield qmodel
 
 
 class TestImplementationDetails:
+    def test_instance(self):
+        assert issubclass(QDataModel, DataModel)
+
     def test_model_attributes(self, model: QDataModel):
         assert type(model._data) == pd.DataFrame
         assert model._new_col_num == 0
@@ -45,37 +55,51 @@ class TestImplementationDetails:
 
 
 class TestQtRequired:
-    def test_rowCount_row_count(self, bare_bones_data: QDataModel):
-        assert bare_bones_data.rowCount() == 5
+    def test_rowCount(self, mocker: MockerFixture, qmodel: QDataModel):
+        num_rows = mocker.patch.object(qmodel, "num_rows")
+        assert qmodel.rowCount() == num_rows.return_value
 
-    def test_rowCount_valid_parent(self, bare_bones_data: QDataModel):
+    def test_rowCount_valid_parent(self, mocker: MockerFixture, qmodel: QDataModel):
         """Valid parent has no children in a table."""
-        index = bare_bones_data.createIndex(0, 0)
-        assert bare_bones_data.rowCount(index) == 0
+        mocker.patch.object(qmodel, "num_rows")
+        index = qmodel.createIndex(0, 0)
+        assert qmodel.rowCount(index) == 0
 
-    def test_columnCount(self, bare_bones_data: QDataModel):
-        assert bare_bones_data.columnCount() == 3
+    def test_columnCount(self, mocker: MockerFixture, qmodel: QDataModel):
+        num_columns = mocker.patch.object(qmodel, "num_columns")
+        assert qmodel.columnCount() == num_columns.return_value
 
-    def test_columnCount_valid_parent(self, bare_bones_data: QDataModel):
+    def test_columnCount_valid_parent(self, mocker: MockerFixture, qmodel: QDataModel):
         """Valid parent has no children in a table."""
-        index = bare_bones_data.createIndex(0, 0)
-        assert bare_bones_data.columnCount(index) == 0
+        mocker.patch.object(qmodel, "num_columns")
+        index = qmodel.createIndex(0, 0)
+        assert qmodel.columnCount(index) == 0
 
-    def test_data_returns_data(self, bare_bones_data: QDataModel):
-        index1 = bare_bones_data.createIndex(2, 1)
-        index2 = bare_bones_data.createIndex(3, 0)
+    @pytest.mark.parametrize(
+        "row, column, value, role",
+        [
+            (0, 0, 0.0, None),
+            (2, 1, 4.2, QtCore.Qt.DisplayRole),
+            (1, 7, 3.7, QtCore.Qt.EditRole),
+        ],
+    )
+    def test_data_returns_data(
+        self, mocker: MockerFixture, qmodel: QDataModel, row, column, value, role
+    ):
+        index = qmodel.createIndex(row, column)
+        get_value = mocker.patch.object(qmodel, "get_value")
+        get_value.return_value = value
 
-        value0 = bare_bones_data.data(index1)
-        value1 = bare_bones_data.data(index1, QtCore.Qt.DisplayRole)
-        value2 = bare_bones_data.data(index2, QtCore.Qt.EditRole)
+        if not role:
+            actual = qmodel.data(index)
+        else:
+            actual = qmodel.data(index, role)
 
-        assert value0 == "8"
-        assert value1 == "8"
-        assert value2 == "4"
+        assert actual == f"{value:.10g}"
 
-    def test_data_returns_None_for_invalid_role(self, bare_bones_data: QDataModel):
-        index = bare_bones_data.createIndex(2, 1)
-        value = bare_bones_data.data(index, QtCore.Qt.DecorationRole)
+    def test_data_returns_None_for_invalid_role(self, qmodel: QDataModel):
+        index = qmodel.createIndex(2, 1)
+        value = qmodel.data(index, QtCore.Qt.DecorationRole)
         assert value is None
 
     def test_headerData(self, bare_bones_data: QDataModel):
@@ -192,6 +216,13 @@ class TestQtRequired:
         )
 
 
-# class TestTailorAPI:
-#     def test_insert_calculated_column
-#       etc.
+class TestDataModel:
+    def test_num_rows_row_count(self, bare_bones_data: DataModel):
+        assert bare_bones_data.num_rows() == 5
+
+    def test_num_columns(self, bare_bones_data: DataModel):
+        assert bare_bones_data.num_columns() == 3
+
+    def test_data_returns_data(self, bare_bones_data: DataModel):
+        assert bare_bones_data.get_value(2, 1) == 8.0
+        assert bare_bones_data.get_value(3, 0) == 4.0
