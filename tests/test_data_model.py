@@ -1,3 +1,5 @@
+from unittest.mock import sentinel
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -117,19 +119,21 @@ class TestQtRequired:
         value = qmodel.data(index, QtCore.Qt.DecorationRole)
         assert value is None
 
-    def test_headerData(self, bare_bones_data: QDataModel):
-        assert bare_bones_data.headerData(0, QtCore.Qt.Horizontal) == "col0"
-        assert (
-            bare_bones_data.headerData(1, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
-            == "col1"
-        )
-        assert (
-            bare_bones_data.headerData(
-                0, QtCore.Qt.Horizontal, QtCore.Qt.DecorationRole
-            )
-            is None
-        )
-        assert bare_bones_data.headerData(3, QtCore.Qt.Vertical) == "4"
+    def test_headerData_for_columns(self, mocker: MockerFixture, qmodel: QDataModel):
+        get_column_name = mocker.patch.object(qmodel, "get_column_name")
+
+        actual = qmodel.headerData(sentinel.colidx, QtCore.Qt.Horizontal)
+
+        get_column_name.assert_called_once_with(sentinel.colidx)
+        assert actual == get_column_name.return_value
+
+    @pytest.mark.parametrize("rowidx, expected", [(0, 1), (1, 2), (7, 8), (20, 21)])
+    def test_headerData_for_rows(self, qmodel: QDataModel, rowidx, expected):
+        actual = qmodel.headerData(rowidx, QtCore.Qt.Vertical)
+        assert actual == expected
+
+    def test_headerData_returns_None_for_invalid_role(self, qmodel: QDataModel):
+        assert qmodel.headerData(None, None, QtCore.Qt.DecorationRole) is None
 
     def test_setData(self, bare_bones_data: QDataModel):
         # WIP: test that this method emits dataChanged
@@ -241,3 +245,7 @@ class TestDataModel:
     def test_data_returns_data(self, bare_bones_data: DataModel):
         assert bare_bones_data.get_value(2, 1) == 8.0
         assert bare_bones_data.get_value(3, 0) == 4.0
+
+    @pytest.mark.parametrize("colidx, name", [(0, "col0"), (1, "col1"), (2, "col2")])
+    def test_get_column_name(self, bare_bones_data: DataModel, colidx, name):
+        assert bare_bones_data.get_column_name(colidx) == name
