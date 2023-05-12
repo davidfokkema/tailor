@@ -76,26 +76,41 @@ class TestQtRequired:
         assert qmodel.columnCount(index) == 0
 
     @pytest.mark.parametrize(
-        "row, column, value, role",
+        "row, column, is_calculated, value, expected, role",
         [
-            (0, 0, 0.0, None),
-            (2, 1, 4.2, QtCore.Qt.DisplayRole),
-            (1, 7, 3.7, QtCore.Qt.EditRole),
+            (0, 0, False, 0.0, "0", None),
+            (0, 0, True, 0.0, "0", None),
+            (0, 0, False, np.nan, "", None),
+            (0, 0, True, np.nan, "nan", None),
+            (3, 4, False, 1.23456, "1.23456", None),
+            (2, 1, False, 4.2, "4.2", QtCore.Qt.DisplayRole),
+            (1, 7, False, 3.7, "3.7", QtCore.Qt.EditRole),
         ],
     )
     def test_data_returns_data(
-        self, mocker: MockerFixture, qmodel: QDataModel, row, column, value, role
+        self,
+        mocker: MockerFixture,
+        qmodel: QDataModel,
+        row,
+        column,
+        is_calculated,
+        value,
+        expected,
+        role,
     ):
         index = qmodel.createIndex(row, column)
         get_value = mocker.patch.object(qmodel, "get_value")
         get_value.return_value = value
+        is_calculated_column = mocker.patch.object(qmodel, "is_calculated_column")
+        is_calculated_column.return_value = is_calculated
 
         if not role:
             actual = qmodel.data(index)
         else:
             actual = qmodel.data(index, role)
 
-        assert actual == f"{value:.10g}"
+        get_value.assert_called_once_with(row, column)
+        assert actual == expected
 
     def test_data_returns_None_for_invalid_role(self, qmodel: QDataModel):
         index = qmodel.createIndex(2, 1)
