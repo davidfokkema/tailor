@@ -35,16 +35,16 @@ def bare_bones_data():
 
     This fixture depends on certain implementation details.
     """
-    qmodel = QDataModel()
-    qmodel._data = pd.DataFrame.from_dict(
+    model = DataModel()
+    model._data = pd.DataFrame.from_dict(
         {
             "col0": [1.0, 2.0, 3.0, 4.0, 5.0],
             "col1": [6.0, 7.0, 8.0, 9.0, 10.0],
             "col2": [11.0, 12.0, 13.0, 14.0, 15.0],
         }
     )
-    qmodel._new_col_num += 3
-    return qmodel
+    model._new_col_num += 3
+    return model
 
 
 class TestImplementationDetails:
@@ -238,14 +238,9 @@ class TestQtRequired:
         qmodel.beginRemoveColumns.assert_called_with(parent, 3, 6)
         qmodel.endRemoveColumns.assert_called()
 
-    def test_removeColumns_valid_parent(self, bare_bones_data: QDataModel):
+    def test_removeColumns_valid_parent(self, qmodel: QDataModel):
         """You can't remove columns inside cells."""
-        assert (
-            bare_bones_data.removeColumns(
-                0, 2, parent=bare_bones_data.createIndex(0, 0)
-            )
-            is False
-        )
+        assert qmodel.removeColumns(0, 2, parent=qmodel.createIndex(0, 0)) is False
 
     def test_removeColumns_no_parent(self, qmodel: QDataModel):
         assert qmodel.removeColumns(3, 4) is True
