@@ -166,10 +166,11 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
             row = index.row()
             col = index.column()
             try:
-                self._data.iat[row, col] = float(value)
+                value = float(value)
             except ValueError:
-                self._data.iat[row, col] = np.nan
+                value = np.nan
             finally:
+                self.set_value(row, col, value)
                 # FIXME: data changed, recalculate all columns; better to only
                 # recalculate the current row
                 if not skip_update:
@@ -219,12 +220,7 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
             return False
 
         self.beginInsertRows(parent, row, row + count)
-        new_data = pd.DataFrame.from_dict(
-            {col: count * [np.nan] for col in self._data.columns}
-        )
-        self._data = pd.concat(
-            [self._data.iloc[:row], new_data, self._data.iloc[row:]]
-        ).reset_index(drop=True)
+        self.insert_rows(row, count)
         self.endInsertRows()
         self.recalculate_all_columns()
         return True

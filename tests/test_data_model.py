@@ -138,54 +138,46 @@ class TestQtRequired:
             qmodel.headerData(0, QtCore.Qt.Horizontal, QtCore.Qt.DecorationRole) is None
         )
 
-    def test_setData(self, bare_bones_data: QDataModel):
-        # WIP: test that this method emits dataChanged
-        index1 = bare_bones_data.createIndex(2, 1)
-        index2 = bare_bones_data.createIndex(3, 0)
+    @pytest.mark.parametrize("role", [None, QtCore.Qt.EditRole])
+    def test_setData(self, mocker: MockerFixture, qmodel: QDataModel, role):
+        set_value = mocker.patch.object(qmodel, "set_value")
+        data_changed = mocker.patch.object(qmodel, "dataChanged")
+        index = qmodel.createIndex(1, 2)
 
-        retvalue1 = bare_bones_data.setData(index1, 1.7, QtCore.Qt.EditRole)
-        retvalue2 = bare_bones_data.setData(index2, 4.2)
+        if role:
+            qmodel.setData(index, 3, role)
+        else:
+            qmodel.setData(index, 3)
 
-        assert retvalue1 == retvalue2 is True
-        assert bare_bones_data._data.at[2, "col1"] == 1.7
-        assert bare_bones_data._data.at[3, "col0"] == 4.2
+        set_value.assert_called_once_with(1, 2, 3.0)
+        data_changed.emit.assert_called_once_with(index, index)
 
     def test_setData_with_unsupported_role(self, bare_bones_data: QDataModel):
         index = bare_bones_data.createIndex(2, 1)
         retvalue = bare_bones_data.setData(index, 5.0, QtCore.Qt.DecorationRole)
         assert retvalue is False
 
-    def test_flags(self, bare_bones_data: QDataModel):
-        index = bare_bones_data.createIndex(2, 1)
-        flags = bare_bones_data.flags(index)
-        assert (
-            flags
-            == QtCore.Qt.ItemIsEnabled
-            | QtCore.Qt.ItemIsSelectable
-            | QtCore.Qt.ItemIsEditable
-        )
+    @pytest.mark.parametrize("is_calculated", [True, False])
+    def test_flags(self, mocker: MockerFixture, qmodel: QDataModel, is_calculated):
+        is_calculated_column = mocker.patch.object(qmodel, "is_calculated_column")
+        is_calculated_column.return_value = is_calculated
+        expected = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        if not is_calculated:
+            expected |= QtCore.Qt.ItemIsEditable
 
-    def test_insertRows(self, bare_bones_data: QDataModel):
-        # WIP: test that begin/endInsertRows is called
-        retvalue1 = bare_bones_data.insertRows(3, 4, parent=QtCore.QModelIndex())
+        index = qmodel.createIndex(2, 123)
+        flags = qmodel.flags(index)
+
+        is_calculated_column.assert_called_once_with(123)
+        assert flags == expected
+
+    def test_insertRows(self, mocker: MockerFixture, qmodel: QDataModel):
+        insert_rows = mocker.patch.object(qmodel, "insert_rows")
+        parent = QtCore.QModelIndex()
+        retvalue1 = qmodel.insertRows(3, 4, parent=parent)
+
+        insert_rows.assert_called_once_with(3, 4)
         assert retvalue1 is True
-        # check that all values are in inserted rows are NaN
-        # use loc to check that the row labels are reindexed
-        assert bool(bare_bones_data._data.loc[3:6].isna().all(axis=None)) is True
-        assert list(bare_bones_data._data["col0"]) == pytest.approx(
-            [
-                1.0,
-                2.0,
-                3.0,
-                np.nan,
-                np.nan,
-                np.nan,
-                np.nan,
-                4.0,
-                5.0,
-            ],
-            nan_ok=True,
-        )
 
     def test_insertRows_valid_parent(self, bare_bones_data: QDataModel):
         """You can't add rows inside cells."""
@@ -252,6 +244,32 @@ class TestDataModel:
         assert bare_bones_data.get_value(2, 1) == 8.0
         assert bare_bones_data.get_value(3, 0) == 4.0
 
+    @pytest.mark.parametrize("value", [4.7, np.nan])
+    def test_set_value(self, bare_bones_data: DataModel, value):
+        bare_bones_data.set_value(2, 1, value)
+        assert bare_bones_data.get_value(2, 1) == pytest.approx(value, nan_ok=True)
+
     @pytest.mark.parametrize("colidx, name", [(0, "col0"), (1, "col1"), (2, "col2")])
     def test_get_column_name(self, bare_bones_data: DataModel, colidx, name):
         assert bare_bones_data.get_column_name(colidx) == name
+
+    def test_insert_rows(self, bare_bones_data: QDataModel):
+        bare_bones_data.insert_rows(3, 4)
+        # check that all values in inserted rows are NaN
+        # use loc to check that the row labels are reindexed
+        assert bool(bare_bones_data._data.loc[3:6].isna().all(axis=None)) is True
+        # check insertion using values from col0
+        assert list(bare_bones_data._data["col0"]) == pytest.approx(
+            [
+                1.0,
+                2.0,
+                3.0,
+                np.nan,
+                np.nan,
+                np.nan,
+                np.nan,
+                4.0,
+                5.0,
+            ],
+            nan_ok=True,
+        )

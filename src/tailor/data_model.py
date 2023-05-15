@@ -4,6 +4,7 @@ Implements a model to contain the data values as a backend for the
 table view used in the app. This class provides an API specific to Tailor.
 """
 
+import numpy as np
 import pandas as pd
 
 # treat Inf and -Inf as missing values (e.g. when calling dropna())
@@ -43,6 +44,32 @@ class DataModel:
             column (int): column number
         """
         return self._data.iat[row, column]
+
+    def set_value(self, row: int, column: int, value: float):
+        """Set value at row, column in table.
+
+        Args:
+            row (int): row number
+            column (int): column number
+            value (float): value to insert
+        """
+        self._data.iat[row, column] = value
+
+    def insert_rows(self, row: int, count: int):
+        """Insert rows into the table.
+
+        Insert `count` rows into the table at position `row`.
+
+        Args:
+            row: an integer row number to indicate the place of insertion.
+            count: number of rows to insert
+        """
+        new_data = pd.DataFrame.from_dict(
+            {col: count * [np.nan] for col in self._data.columns}
+        )
+        self._data = pd.concat(
+            [self._data.iloc[:row], new_data, self._data.iloc[row:]]
+        ).reset_index(drop=True)
 
     def is_empty(self):
         """Check whether all cells are empty."""
