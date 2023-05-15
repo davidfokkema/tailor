@@ -165,30 +165,44 @@ class TestQtRequired:
         qmodel.is_calculated_column.assert_called_once_with(123)
         assert flags == expected
 
-    def test_insertRows(self, qmodel: QDataModel):
+    def test_insertRows(self, qmodel: QDataModel, mocker: MockerFixture):
+        mocker.patch.object(qmodel, "beginInsertRows")
+        mocker.patch.object(qmodel, "endInsertRows")
         parent = QtCore.QModelIndex()
         retvalue1 = qmodel.insertRows(3, 4, parent=parent)
 
         qmodel.insert_rows.assert_called_once_with(3, 4)
         assert retvalue1 is True
+        # four rows: 3 (first), 4, 5, 6 (last)
+        qmodel.beginInsertRows.assert_called_with(parent, 3, 6)
+        qmodel.endInsertRows.assert_called()
 
     def test_insertRows_valid_parent(self, qmodel: QDataModel):
         """You can't add rows inside cells."""
         assert qmodel.insertRows(0, 2, parent=qmodel.createIndex(0, 0)) is False
 
-    def test_removeRows(self, bare_bones_data: QDataModel):
-        # WIP: test that begin/endRemoveRows is called
-        retvalue = bare_bones_data.removeRows(1, 2)
-        assert retvalue is True
-        assert list(bare_bones_data._data["col0"]) == pytest.approx([1.0, 4.0, 5.0])
-        assert list(bare_bones_data._data["col1"]) == pytest.approx([6.0, 9.0, 10.0])
+    def test_insertRows_no_parent(self, qmodel: QDataModel):
+        assert qmodel.insertRows(3, 4) is True
 
-    def test_removeRows_valid_parent(self, bare_bones_data: QDataModel):
+    def test_removeRows(self, qmodel: QDataModel, mocker: MockerFixture):
+        # WIP: test that begin/endRemoveRows is called
+        mocker.patch.object(qmodel, "beginRemoveRows")
+        mocker.patch.object(qmodel, "endRemoveRows")
+        parent = QtCore.QModelIndex()
+        retvalue = qmodel.removeRows(3, 4, parent=parent)
+
+        qmodel.remove_rows.assert_called_once_with(3, 4)
+        assert retvalue is True
+        # four rows: 3 (first), 4, 5, 6 (last)
+        qmodel.beginRemoveRows.assert_called_with(parent, 3, 6)
+        qmodel.endRemoveRows.assert_called()
+
+    def test_removeRows_valid_parent(self, qmodel: QDataModel):
         """You can't remove rows inside cells."""
-        assert (
-            bare_bones_data.removeRows(0, 2, parent=bare_bones_data.createIndex(0, 0))
-            is False
-        )
+        assert qmodel.removeRows(0, 2, parent=qmodel.createIndex(0, 0)) is False
+
+    def test_removeRows_no_parent(self, qmodel: QDataModel):
+        assert qmodel.removeRows(3, 4) is True
 
     def test_insertColumns(self, bare_bones_data: QDataModel):
         retvalue = bare_bones_data.insertColumns(1, 2)
@@ -243,7 +257,7 @@ class TestDataModel:
     def test_get_column_name(self, bare_bones_data: DataModel, colidx, name):
         assert bare_bones_data.get_column_name(colidx) == name
 
-    def test_insert_rows(self, bare_bones_data: QDataModel):
+    def test_insert_rows(self, bare_bones_data: DataModel):
         bare_bones_data.insert_rows(3, 4)
         # check that all values in inserted rows are NaN
         # use loc to check that the row labels are reindexed
@@ -263,3 +277,9 @@ class TestDataModel:
             ],
             nan_ok=True,
         )
+
+    def test_remove_rows(self, bare_bones_data: DataModel):
+        bare_bones_data.remove_rows(1, 2)
+        assert list(bare_bones_data._data["col0"]) == pytest.approx([1.0, 4.0, 5.0])
+        assert list(bare_bones_data._data["col1"]) == pytest.approx([6.0, 9.0, 10.0])
+        assert list(bare_bones_data._data.index) == list(range(3))

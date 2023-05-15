@@ -219,7 +219,7 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
             # a table cell can _not_ insert rows
             return False
 
-        self.beginInsertRows(parent, row, row + count)
+        self.beginInsertRows(parent, row, row + count - 1)
         self.insert_rows(row, count)
         self.endInsertRows()
         self.recalculate_all_columns()
@@ -234,8 +234,10 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
         removal was succesful.
 
         Args:
-            row: an integer row number to indicate the place of removal.
-            parent: a QModelIndex pointing to the model (ignored).
+            row (int): the first row to remove
+            count (int): the number of rows to remove.
+            parent (QtCore.QModelIndex): a QModelIndex pointing into the model.
+                Must be invalid since you cannot remove rows from a cell.
 
         Returns:
             True if the removal was succesful, False otherwise.
@@ -244,10 +246,8 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
             # a table cell can _not_ remove rows
             return False
 
-        index = self._data.index[row : row + count]
-        self.beginRemoveRows(QtCore.QModelIndex(), row, row)
-        self._data.drop(index, axis=0, inplace=True)
-        self._data.reset_index(drop=True, inplace=True)
+        self.beginRemoveRows(QtCore.QModelIndex(), row, row + count - 1)
+        self.remove_rows(row, count)
         self.endRemoveRows()
         self.recalculate_all_columns()
         return True

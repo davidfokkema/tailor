@@ -71,6 +71,19 @@ class DataModel:
             [self._data.iloc[:row], new_data, self._data.iloc[row:]]
         ).reset_index(drop=True)
 
+    def remove_rows(self, row: int, count: int):
+        """Remove rows from the table.
+
+        Removes a row at the specified row number.
+
+        Args:
+            row (int): the first row to remove.
+            count (int): the number of rows to remove.
+        """
+        self._data = self._data.drop(index=range(row, row + count)).reset_index(
+            drop=True
+        )
+
     def is_empty(self):
         """Check whether all cells are empty."""
         # check for *all* nans in a row or column
