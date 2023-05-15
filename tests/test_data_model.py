@@ -133,7 +133,10 @@ class TestQtRequired:
         assert actual == expected
 
     def test_headerData_returns_None_for_invalid_role(self, qmodel: QDataModel):
-        assert qmodel.headerData(None, None, QtCore.Qt.DecorationRole) is None
+        # Decoration role is not supported
+        assert (
+            qmodel.headerData(0, QtCore.Qt.Horizontal, QtCore.Qt.DecorationRole) is None
+        )
 
     def test_setData(self, bare_bones_data: QDataModel):
         # WIP: test that this method emits dataChanged
