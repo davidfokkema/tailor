@@ -305,25 +305,35 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
         return True
 
     def moveColumn(
-        self, sourceParent, sourceColumn, destinationParent, destinationChild
-    ):
+        self,
+        sourceParent: QtCore.QModelIndex = QtCore.QModelIndex(),
+        sourceColumn: int = 0,
+        destinationParent: QtCore.QModelIndex = QtCore.QModelIndex(),
+        destinationChild: int = 0,
+    ) -> bool:
         """Move column.
 
         Move a column from sourceColumn to destinationChild. Alas, the Qt naming
         scheme remains a bit of a mystery.
 
         Args:
-            sourceParent: ignored.
+            sourceParent (QtCore.QModelIndex): a QModelIndex pointing to the
+                model. Must be invalid since you can't move columns inside a
+                cell.
             sourceColumn (int): the source column number.
-            destinationParent: ignored.
+            destinationParent (QtCore.QModelIndex): a QModelIndex pointing to
+                the model. Must be invalid since you can't move columns inside a
+                cell.
             destinationChild (int): the destination column number.
 
         Returns:
             bool: True if the column was moved.
         """
-        cols = list(self._data.columns)
-        cols.insert(destinationChild, cols.pop(sourceColumn))
-        self._data = self._data[cols]
+        if sourceParent.isValid() or destinationParent.isValid():
+            # a table cell can _not_ move columns
+            return False
+
+        self.move_column(sourceColumn, destinationChild)
         return True
 
     # def show_status(self, msg):

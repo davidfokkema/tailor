@@ -115,6 +115,17 @@ class DataModel:
         #     pass
         # self.recalculate_all_columns()
 
+    def move_column(self, source: int, dest: int):
+        """Move a column in the table.
+
+        Args:
+            source (int): the original index of the column
+            dest (int): the final index of the column
+        """
+        cols = list(self._data.columns)
+        cols.insert(dest, cols.pop(source))
+        self._data = self._data.reindex(columns=cols)
+
     def is_empty(self):
         """Check whether all cells are empty."""
         # check for *all* nans in a row or column

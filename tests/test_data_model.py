@@ -245,6 +245,25 @@ class TestQtRequired:
     def test_removeColumns_no_parent(self, qmodel: QDataModel):
         assert qmodel.removeColumns(3, 4) is True
 
+    def test_moveColumn(self, qmodel: QDataModel):
+        source_parent = QtCore.QModelIndex()
+        destination_parent = QtCore.QModelIndex()
+        retvalue = qmodel.moveColumn(source_parent, 3, destination_parent, 4)
+
+        qmodel.move_column.assert_called_once_with(3, 4)
+        assert retvalue is True
+
+    def test_moveColumn_valid_parent(self, qmodel: QDataModel):
+        """You can't move columns inside cells."""
+        valid_parent = qmodel.createIndex(0, 0)
+        invalid_parent = QtCore.QModelIndex()
+        assert qmodel.moveColumn(valid_parent, 0, invalid_parent, 2) is False
+        assert qmodel.moveColumn(invalid_parent, 0, valid_parent, 2) is False
+        assert qmodel.moveColumn(valid_parent, 0, valid_parent, 2) is False
+
+    def test_moveColumn_no_parents(self, qmodel: QDataModel):
+        assert qmodel.moveColumn(sourceColumn=0, destinationChild=2) is True
+
 
 class TestDataModel:
     def test_num_rows_row_count(self, bare_bones_data: DataModel):
@@ -304,3 +323,16 @@ class TestDataModel:
         bare_bones_data.remove_columns(1, 2)
         assert bare_bones_data._data.shape == (5, 1)
         assert bare_bones_data._data.columns == ["col0"]
+
+    @pytest.mark.parametrize(
+        "source, dest, order",
+        [
+            (1, 1, ["col0", "col1", "col2"]),
+            (0, 1, ["col1", "col0", "col2"]),
+            (0, 2, ["col1", "col2", "col0"]),
+            (2, 1, ["col0", "col2", "col1"]),
+        ],
+    )
+    def test_move_column(self, bare_bones_data: DataModel, source, dest, order):
+        bare_bones_data.move_column(source, dest)
+        assert list(bare_bones_data._data.columns) == order
