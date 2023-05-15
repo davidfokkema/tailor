@@ -142,12 +142,15 @@ class TestQtRequired:
 
         retvalue1 = bare_bones_data.setData(index1, 1.7, QtCore.Qt.EditRole)
         retvalue2 = bare_bones_data.setData(index2, 4.2)
-        retvalue3 = bare_bones_data.setData(index2, 5.0, QtCore.Qt.DecorationRole)
 
         assert retvalue1 == retvalue2 is True
-        assert retvalue3 is False
         assert bare_bones_data._data.at[2, "col1"] == 1.7
         assert bare_bones_data._data.at[3, "col0"] == 4.2
+
+    def test_setData_with_unsupported_role(self, bare_bones_data: QDataModel):
+        index = bare_bones_data.createIndex(2, 1)
+        retvalue = bare_bones_data.setData(index, 5.0, QtCore.Qt.DecorationRole)
+        assert retvalue is False
 
     def test_flags(self, bare_bones_data: QDataModel):
         index = bare_bones_data.createIndex(2, 1)
