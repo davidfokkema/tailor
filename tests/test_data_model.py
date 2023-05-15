@@ -146,6 +146,7 @@ class TestQtRequired:
 
         qmodel.set_value.assert_called_once_with(1, 2, 3.0)
         qmodel.dataChanged.emit.assert_called_once_with(index, index)
+        qmodel.recalculate_all_columns.assert_called()
 
     def test_setData_with_unsupported_role(self, qmodel: QDataModel):
         index = qmodel.createIndex(2, 1)
@@ -176,6 +177,7 @@ class TestQtRequired:
         # four rows: 3 (first), 4, 5, 6 (last)
         qmodel.beginInsertRows.assert_called_with(parent, 3, 6)
         qmodel.endInsertRows.assert_called()
+        qmodel.recalculate_all_columns.assert_called()
 
     def test_insertRows_valid_parent(self, qmodel: QDataModel):
         """You can't add rows inside cells."""
@@ -196,6 +198,7 @@ class TestQtRequired:
         # four rows: 3 (first), 4, 5, 6 (last)
         qmodel.beginRemoveRows.assert_called_with(parent, 3, 6)
         qmodel.endRemoveRows.assert_called()
+        qmodel.recalculate_all_columns.assert_called()
 
     def test_removeRows_valid_parent(self, qmodel: QDataModel):
         """You can't remove rows inside cells."""
@@ -204,28 +207,36 @@ class TestQtRequired:
     def test_removeRows_no_parent(self, qmodel: QDataModel):
         assert qmodel.removeRows(3, 4) is True
 
-    def test_insertColumns(self, bare_bones_data: QDataModel):
-        retvalue = bare_bones_data.insertColumns(1, 2)
-        assert retvalue is True
-        assert bare_bones_data._data.shape == (5, 5)
-        assert list(bare_bones_data._data.iloc[0]) == pytest.approx(
-            [1.0, np.nan, np.nan, 6.0, 11.0], nan_ok=True
-        )
+    def test_insertColumns(self, qmodel: QDataModel, mocker: MockerFixture):
+        mocker.patch.object(qmodel, "beginInsertColumns")
+        mocker.patch.object(qmodel, "endInsertColumns")
+        parent = QtCore.QModelIndex()
+        retvalue = qmodel.insertColumns(3, 4, parent=parent)
 
-    def test_insertColumns_valid_parent(self, bare_bones_data: QDataModel):
+        qmodel.insert_columns.assert_called_once_with(3, 4)
+        assert retvalue is True
+        # four columns: 3 (first), 4, 5, 6 (last)
+        qmodel.beginInsertColumns.assert_called_with(parent, 3, 6)
+        qmodel.endInsertColumns.assert_called()
+
+    def test_insertColumns_no_parent(self, qmodel: QDataModel):
+        assert qmodel.insertColumns(3, 4) is True
+
+    def test_insertColumns_valid_parent(self, qmodel: QDataModel):
         """You can't add columns inside cells."""
-        assert (
-            bare_bones_data.insertColumns(
-                0, 2, parent=bare_bones_data.createIndex(0, 0)
-            )
-            is False
-        )
+        assert qmodel.insertColumns(0, 2, parent=qmodel.createIndex(0, 0)) is False
 
-    def test_removeColumns(self, bare_bones_data: QDataModel):
-        retvalue = bare_bones_data.removeColumns(1, 2)
+    def test_removeColumns(self, qmodel: QDataModel, mocker: MockerFixture):
+        mocker.patch.object(qmodel, "beginRemoveColumns")
+        mocker.patch.object(qmodel, "endRemoveColumns")
+        parent = QtCore.QModelIndex()
+        retvalue = qmodel.removeColumns(3, 4, parent=parent)
+
+        qmodel.remove_columns.assert_called_once_with(3, 4)
         assert retvalue is True
-        assert bare_bones_data._data.shape == (5, 1)
-        assert bare_bones_data._data.columns == ["col0"]
+        # four columns: 3 (first), 4, 5, 6 (last)
+        qmodel.beginRemoveColumns.assert_called_with(parent, 3, 6)
+        qmodel.endRemoveColumns.assert_called()
 
     def test_removeColumns_valid_parent(self, bare_bones_data: QDataModel):
         """You can't remove columns inside cells."""
@@ -235,6 +246,9 @@ class TestQtRequired:
             )
             is False
         )
+
+    def test_removeColumns_no_parent(self, qmodel: QDataModel):
+        assert qmodel.removeColumns(3, 4) is True
 
 
 class TestDataModel:
@@ -283,3 +297,15 @@ class TestDataModel:
         assert list(bare_bones_data._data["col0"]) == pytest.approx([1.0, 4.0, 5.0])
         assert list(bare_bones_data._data["col1"]) == pytest.approx([6.0, 9.0, 10.0])
         assert list(bare_bones_data._data.index) == list(range(3))
+
+    def test_insert_columns(self, bare_bones_data: DataModel):
+        bare_bones_data.insert_columns(1, 2)
+        assert bare_bones_data._data.shape == (5, 5)
+        assert list(bare_bones_data._data.iloc[0]) == pytest.approx(
+            [1.0, np.nan, np.nan, 6.0, 11.0], nan_ok=True
+        )
+
+    def test_remove_columns(self, bare_bones_data: DataModel):
+        bare_bones_data.remove_columns(1, 2)
+        assert bare_bones_data._data.shape == (5, 1)
+        assert bare_bones_data._data.columns == ["col0"]

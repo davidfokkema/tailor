@@ -246,7 +246,7 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
             # a table cell can _not_ remove rows
             return False
 
-        self.beginRemoveRows(QtCore.QModelIndex(), row, row + count - 1)
+        self.beginRemoveRows(parent, row, row + count - 1)
         self.remove_rows(row, count)
         self.endRemoveRows()
         self.recalculate_all_columns()
@@ -261,10 +261,10 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
         the insertion was succesful.
 
         Args:
-            column: a column number to indicate the place of insertion.
-            count: the number of columns to insert.
-            parent: a QModelIndex pointing to the model. Must be invalid since
-                you can't insert columns into a cell.
+            column (int): a column number to indicate the place of insertion.
+            count (int): the number of columns to insert.
+            parent (QtCore.QModelIndex): a QModelIndex pointing into the model.
+                Must be invalid since you can't insert columns into a cell.
 
         Returns:
             True if the insertion was succesful, False otherwise.
@@ -273,11 +273,8 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
             # a table cell can _not_ insert columns
             return False
 
-        labels = [self._create_new_column_label() for _ in range(count)]
-
-        self.beginInsertColumns(QtCore.QModelIndex(), column, column)
-        for idx, label in zip(range(column, column + count), labels):
-            self._data.insert(idx, label, np.nan)
+        self.beginInsertColumns(parent, column, column + count - 1)
+        self.insert_columns(column, count)
         self.endInsertColumns()
         return True
 
@@ -290,10 +287,10 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
         removal was succesful.
 
         Args:
-            column: a column number to indicate the place of removal.
-            count: the number of columns to remove.
-            parent: a QModelIndex pointing to the model. Must be invalid since
-                you can't remove columns from a cell.
+            column (int): a column number to indicate the place of removal.
+            count (int): the number of columns to remove.
+            parent (QtCore.QModelIndex): a QModelIndex pointing to the model.
+                Must be invalid since you can't remove columns from a cell.
 
         Returns:
             True if the removal was succesful, False otherwise.
@@ -302,16 +299,9 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
             # a table cell can _not_ remove columns
             return False
 
-        labels = self._data.columns[column : column + count]
-        self.beginRemoveColumns(QtCore.QModelIndex(), column, column)
-        self._data.drop(columns=labels, inplace=True)
-        # try:
-        #     del self._calculated_column_expression[column_name]
-        # except KeyError:
-        #     # not a calculated column
-        #     pass
+        self.beginRemoveColumns(parent, column, column + count - 1)
+        self.remove_columns(column, count)
         self.endRemoveColumns()
-        # self.recalculate_all_columns()
         return True
 
     def moveColumn(

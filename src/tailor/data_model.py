@@ -84,6 +84,37 @@ class DataModel:
             drop=True
         )
 
+    def insert_columns(self, column: int, count: int):
+        """Insert columns into the table.
+
+        Insert columns *before* the specified column number.
+
+        Args:
+            column (int): a column number to indicate the place of insertion.
+            count (int): the number of columns to insert.
+        """
+        labels = [self._create_new_column_label() for _ in range(count)]
+        for idx, label in zip(range(column, column + count), labels):
+            self._data.insert(idx, label, np.nan)
+
+    def remove_columns(self, column: int, count: int):
+        """Remove columns from the table.
+
+        Removes a column at the specified column number.
+
+        Args:
+            column (int): a column number to indicate the place of removal.
+            count (int): the number of columns to remove.
+        """
+        labels = self._data.columns[column : column + count]
+        self._data.drop(columns=labels, inplace=True)
+        # try:
+        #     del self._calculated_column_expression[column_name]
+        # except KeyError:
+        #     # not a calculated column
+        #     pass
+        # self.recalculate_all_columns()
+
     def is_empty(self):
         """Check whether all cells are empty."""
         # check for *all* nans in a row or column
