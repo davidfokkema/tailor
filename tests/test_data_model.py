@@ -12,16 +12,20 @@ from tailor.qdata_model import QDataModel
 
 @pytest.fixture()
 def model():
-    yield DataModel()
+    return DataModel()
 
 
 @pytest.fixture()
-def qmodel():
-    yield QDataModel()
+def qmodel(mocker: MockerFixture):
+    model = QDataModel()
+    for attr in dir(DataModel):
+        if not attr.startswith("__"):
+            mocker.patch.object(model, attr)
+    return model
 
 
 @pytest.fixture()
-def bare_bones_data(qmodel: QDataModel):
+def bare_bones_data():
     """Create a bare bones data model.
 
     This is an instance of QDataModel with a very basic data structure (five
@@ -31,6 +35,7 @@ def bare_bones_data(qmodel: QDataModel):
 
     This fixture depends on certain implementation details.
     """
+    qmodel = QDataModel()
     qmodel._data = pd.DataFrame.from_dict(
         {
             "col0": [1.0, 2.0, 3.0, 4.0, 5.0],
@@ -39,41 +44,37 @@ def bare_bones_data(qmodel: QDataModel):
         }
     )
     qmodel._new_col_num += 3
-    yield qmodel
+    return qmodel
 
 
 class TestImplementationDetails:
     def test_instance(self):
         assert issubclass(QDataModel, DataModel)
 
-    def test_model_attributes(self, model: QDataModel):
+    def test_model_attributes(self, model: DataModel):
         assert type(model._data) == pd.DataFrame
         assert model._new_col_num == 0
 
-    def test_new_column_label(self, model: QDataModel):
+    def test_new_column_label(self, model: DataModel):
         labels = [model._create_new_column_label() for _ in range(3)]
         assert labels == ["col1", "col2", "col3"]
         assert model._new_col_num == 3
 
 
 class TestQtRequired:
-    def test_rowCount(self, mocker: MockerFixture, qmodel: QDataModel):
-        num_rows = mocker.patch.object(qmodel, "num_rows")
-        assert qmodel.rowCount() == num_rows.return_value
+    def test_rowCount(self, qmodel: QDataModel):
+        assert qmodel.rowCount() == qmodel.num_rows.return_value
 
-    def test_rowCount_valid_parent(self, mocker: MockerFixture, qmodel: QDataModel):
+    def test_rowCount_valid_parent(self, qmodel: QDataModel):
         """Valid parent has no children in a table."""
-        mocker.patch.object(qmodel, "num_rows")
         index = qmodel.createIndex(0, 0)
         assert qmodel.rowCount(index) == 0
 
-    def test_columnCount(self, mocker: MockerFixture, qmodel: QDataModel):
-        num_columns = mocker.patch.object(qmodel, "num_columns")
-        assert qmodel.columnCount() == num_columns.return_value
+    def test_columnCount(self, qmodel: QDataModel):
+        assert qmodel.columnCount() == qmodel.num_columns.return_value
 
-    def test_columnCount_valid_parent(self, mocker: MockerFixture, qmodel: QDataModel):
+    def test_columnCount_valid_parent(self, qmodel: QDataModel):
         """Valid parent has no children in a table."""
-        mocker.patch.object(qmodel, "num_columns")
         index = qmodel.createIndex(0, 0)
         assert qmodel.columnCount(index) == 0
 
@@ -91,7 +92,6 @@ class TestQtRequired:
     )
     def test_data_returns_data(
         self,
-        mocker: MockerFixture,
         qmodel: QDataModel,
         row,
         column,
@@ -101,17 +101,15 @@ class TestQtRequired:
         role,
     ):
         index = qmodel.createIndex(row, column)
-        get_value = mocker.patch.object(qmodel, "get_value")
-        get_value.return_value = value
-        is_calculated_column = mocker.patch.object(qmodel, "is_calculated_column")
-        is_calculated_column.return_value = is_calculated
+        qmodel.get_value.return_value = value
+        qmodel.is_calculated_column.return_value = is_calculated
 
         if not role:
             actual = qmodel.data(index)
         else:
             actual = qmodel.data(index, role)
 
-        get_value.assert_called_once_with(row, column)
+        qmodel.get_value.assert_called_once_with(row, column)
         assert actual == expected
 
     def test_data_returns_None_for_invalid_role(self, qmodel: QDataModel):
@@ -119,13 +117,11 @@ class TestQtRequired:
         value = qmodel.data(index, QtCore.Qt.DecorationRole)
         assert value is None
 
-    def test_headerData_for_columns(self, mocker: MockerFixture, qmodel: QDataModel):
-        get_column_name = mocker.patch.object(qmodel, "get_column_name")
-
+    def test_headerData_for_columns(self, qmodel: QDataModel):
         actual = qmodel.headerData(sentinel.colidx, QtCore.Qt.Horizontal)
 
-        get_column_name.assert_called_once_with(sentinel.colidx)
-        assert actual == get_column_name.return_value
+        qmodel.get_column_name.assert_called_once_with(sentinel.colidx)
+        assert actual == qmodel.get_column_name.return_value
 
     @pytest.mark.parametrize("rowidx, expected", [(0, 1), (1, 2), (7, 8), (20, 21)])
     def test_headerData_for_rows(self, qmodel: QDataModel, rowidx, expected):
@@ -139,9 +135,8 @@ class TestQtRequired:
         )
 
     @pytest.mark.parametrize("role", [None, QtCore.Qt.EditRole])
-    def test_setData(self, mocker: MockerFixture, qmodel: QDataModel, role):
-        set_value = mocker.patch.object(qmodel, "set_value")
-        data_changed = mocker.patch.object(qmodel, "dataChanged")
+    def test_setData(self, qmodel: QDataModel, mocker: MockerFixture, role):
+        mocker.patch.object(qmodel, "dataChanged")
         index = qmodel.createIndex(1, 2)
 
         if role:
@@ -149,18 +144,17 @@ class TestQtRequired:
         else:
             qmodel.setData(index, 3)
 
-        set_value.assert_called_once_with(1, 2, 3.0)
-        data_changed.emit.assert_called_once_with(index, index)
+        qmodel.set_value.assert_called_once_with(1, 2, 3.0)
+        qmodel.dataChanged.emit.assert_called_once_with(index, index)
 
-    def test_setData_with_unsupported_role(self, bare_bones_data: QDataModel):
-        index = bare_bones_data.createIndex(2, 1)
-        retvalue = bare_bones_data.setData(index, 5.0, QtCore.Qt.DecorationRole)
+    def test_setData_with_unsupported_role(self, qmodel: QDataModel):
+        index = qmodel.createIndex(2, 1)
+        retvalue = qmodel.setData(index, 5.0, QtCore.Qt.DecorationRole)
         assert retvalue is False
 
     @pytest.mark.parametrize("is_calculated", [True, False])
-    def test_flags(self, mocker: MockerFixture, qmodel: QDataModel, is_calculated):
-        is_calculated_column = mocker.patch.object(qmodel, "is_calculated_column")
-        is_calculated_column.return_value = is_calculated
+    def test_flags(self, qmodel: QDataModel, is_calculated):
+        qmodel.is_calculated_column.return_value = is_calculated
         expected = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
         if not is_calculated:
             expected |= QtCore.Qt.ItemIsEditable
@@ -168,23 +162,19 @@ class TestQtRequired:
         index = qmodel.createIndex(2, 123)
         flags = qmodel.flags(index)
 
-        is_calculated_column.assert_called_once_with(123)
+        qmodel.is_calculated_column.assert_called_once_with(123)
         assert flags == expected
 
-    def test_insertRows(self, mocker: MockerFixture, qmodel: QDataModel):
-        insert_rows = mocker.patch.object(qmodel, "insert_rows")
+    def test_insertRows(self, qmodel: QDataModel):
         parent = QtCore.QModelIndex()
         retvalue1 = qmodel.insertRows(3, 4, parent=parent)
 
-        insert_rows.assert_called_once_with(3, 4)
+        qmodel.insert_rows.assert_called_once_with(3, 4)
         assert retvalue1 is True
 
-    def test_insertRows_valid_parent(self, bare_bones_data: QDataModel):
+    def test_insertRows_valid_parent(self, qmodel: QDataModel):
         """You can't add rows inside cells."""
-        assert (
-            bare_bones_data.insertRows(0, 2, parent=bare_bones_data.createIndex(0, 0))
-            is False
-        )
+        assert qmodel.insertRows(0, 2, parent=qmodel.createIndex(0, 0)) is False
 
     def test_removeRows(self, bare_bones_data: QDataModel):
         # WIP: test that begin/endRemoveRows is called
