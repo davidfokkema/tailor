@@ -314,7 +314,26 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
         """Move column.
 
         Move a column from sourceColumn to destinationChild. Alas, the Qt naming
-        scheme remains a bit of a mystery.
+        scheme remains a bit of a mystery. Qt conventions are a bit weird, too.
+        DestinationChild is the would-be index in the initial table, _before_
+        the move operation is completed. So, if you have the initial state:
+
+            col0, col1, col2, col3
+
+        and you want to end up with the final state:
+
+            col1, col2, col0, col3
+
+        you want the operation:
+
+            col0, col1, col2, col3
+              |--------------^
+
+        and you should call `moveColumn(0, 3)` to move col0 from index 0 to be
+        inserted at index 3, i.e. you want to place col0 _before_ col3. This +1
+        behaviour does not occur when moving a column to the left instead of to
+        the right since then you don't have to adjust for the removal of the
+        source column. So pay attention to the correct arguments.
 
         Args:
             sourceParent (QtCore.QModelIndex): a QModelIndex pointing to the
@@ -333,8 +352,23 @@ class QDataModel(QtCore.QAbstractTableModel, DataModel):
             # a table cell can _not_ move columns
             return False
 
-        self.move_column(sourceColumn, destinationChild)
-        return True
+        if self.beginMoveColumns(
+            sourceParent,
+            sourceColumn,
+            sourceColumn,
+            destinationParent,
+            destinationChild,
+        ):
+            source_idx = sourceColumn
+            dest_idx = destinationChild
+            if source_idx < dest_idx:
+                # Adjust for Qt conventions, undo +1, see docstring
+                dest_idx -= 1
+            self.move_column(source_idx, dest_idx)
+            self.endMoveColumns()
+            return True
+        else:
+            return False
 
     # def show_status(self, msg):
     #     """Show message in statusbar.

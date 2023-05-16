@@ -118,6 +118,21 @@ class DataModel:
     def move_column(self, source: int, dest: int):
         """Move a column in the table.
 
+        Moves a column from the source index to the dest index. Contrary to Qt
+        conventions the dest index is the index in the final table, _after_ the
+        move operation is completed. So, if you have the initial state:
+
+            col0, col1, col2, col3
+
+        and you want to end up with the final state:
+
+            col1, col2, col0, col3
+
+        you should call `move_column(0, 2)` to move col0 from index 0 to index
+        2. By Qt conventions, you should call the Qt function with
+        `moveColumn(0, 3)` because you want to place col0 _before_ col3. So pay
+        attention to the correct arguments.
+
         Args:
             source (int): the original index of the column
             dest (int): the final index of the column

@@ -245,13 +245,37 @@ class TestQtRequired:
     def test_removeColumns_no_parent(self, qmodel: QDataModel):
         assert qmodel.removeColumns(3, 4) is True
 
-    def test_moveColumn(self, qmodel: QDataModel):
-        source_parent = QtCore.QModelIndex()
-        destination_parent = QtCore.QModelIndex()
-        retvalue = qmodel.moveColumn(source_parent, 3, destination_parent, 4)
+    def test_moveColumn_right(self, qmodel: QDataModel, mocker: MockerFixture):
+        mocker.patch.object(qmodel, "beginMoveColumns")
+        mocker.patch.object(qmodel, "endMoveColumns")
+        parent = QtCore.QModelIndex()
 
-        qmodel.move_column.assert_called_once_with(3, 4)
+        retvalue = qmodel.moveColumn(parent, 3, parent, 5)
+
+        # pay attention to Qt conventions, see method docstring
+        qmodel.move_column.assert_called_once_with(3, 5 - 1)
         assert retvalue is True
+        qmodel.beginMoveColumns.assert_called_with(parent, 3, 3, parent, 5)
+        qmodel.endMoveColumns.assert_called()
+
+    def test_moveColumn_left(self, qmodel: QDataModel, mocker: MockerFixture):
+        mocker.patch.object(qmodel, "beginMoveColumns")
+        mocker.patch.object(qmodel, "endMoveColumns")
+        parent = QtCore.QModelIndex()
+        retvalue = qmodel.moveColumn(parent, 5, parent, 3)
+
+        # pay attention to Qt conventions, see method docstring
+        qmodel.move_column.assert_called_once_with(5, 3)
+        assert retvalue is True
+        qmodel.beginMoveColumns.assert_called_with(parent, 5, 5, parent, 3)
+        qmodel.endMoveColumns.assert_called()
+
+    def test_moveColumn_invalid_move(self, qmodel: QDataModel):
+        parent = QtCore.QModelIndex()
+
+        retvalue = qmodel.moveColumn(parent, 3, parent, 4)
+
+        assert retvalue is False
 
     def test_moveColumn_valid_parent(self, qmodel: QDataModel):
         """You can't move columns inside cells."""
