@@ -10,27 +10,26 @@ from tailor.data_model import DataModel
 from tailor.qdata_model import QDataModel
 
 
-@pytest.fixture()
-def qmodel(mocker: MockerFixture):
-    model = QDataModel()
-    for attr in dir(DataModel):
-        if not attr.startswith("__"):
-            mocker.patch.object(model, attr)
-    return model
-
-
 class TestImplementationDetails:
     def test_instance(self):
         assert issubclass(QDataModel, QtCore.QAbstractTableModel)
 
-    def test_model_attributes(self, qmodel: QDataModel):
-        # assert isinstance(qmodel._data, DataModel)
-        ...
+    def test_model_attributes(self):
+        # test the actual implementation, not a mocked fixture
+        qmodel = QDataModel()
+        assert isinstance(qmodel._data, DataModel)
+
+
+@pytest.fixture()
+def qmodel(mocker: MockerFixture):
+    model = QDataModel()
+    mocker.patch.object(model, "_data")
+    return model
 
 
 class TestQtRequired:
     def test_rowCount(self, qmodel: QDataModel):
-        assert qmodel.rowCount() == qmodel.num_rows.return_value
+        assert qmodel.rowCount() == qmodel._data.num_rows.return_value
 
     def test_rowCount_valid_parent(self, qmodel: QDataModel):
         """Valid parent has no children in a table."""
@@ -38,7 +37,7 @@ class TestQtRequired:
         assert qmodel.rowCount(index) == 0
 
     def test_columnCount(self, qmodel: QDataModel):
-        assert qmodel.columnCount() == qmodel.num_columns.return_value
+        assert qmodel.columnCount() == qmodel._data.num_columns.return_value
 
     def test_columnCount_valid_parent(self, qmodel: QDataModel):
         """Valid parent has no children in a table."""
@@ -68,15 +67,15 @@ class TestQtRequired:
         role,
     ):
         index = qmodel.createIndex(row, column)
-        qmodel.get_value.return_value = value
-        qmodel.is_calculated_column.return_value = is_calculated
+        qmodel._data.get_value.return_value = value
+        qmodel._data.is_calculated_column.return_value = is_calculated
 
         if not role:
             actual = qmodel.data(index)
         else:
             actual = qmodel.data(index, role)
 
-        qmodel.get_value.assert_called_once_with(row, column)
+        qmodel._data.get_value.assert_called_once_with(row, column)
         assert actual == expected
 
     def test_data_returns_None_for_invalid_role(self, qmodel: QDataModel):
@@ -87,8 +86,8 @@ class TestQtRequired:
     def test_headerData_for_columns(self, qmodel: QDataModel):
         actual = qmodel.headerData(sentinel.colidx, QtCore.Qt.Horizontal)
 
-        qmodel.get_column_name.assert_called_once_with(sentinel.colidx)
-        assert actual == qmodel.get_column_name.return_value
+        qmodel._data.get_column_name.assert_called_once_with(sentinel.colidx)
+        assert actual == qmodel._data.get_column_name.return_value
 
     @pytest.mark.parametrize("rowidx, expected", [(0, 1), (1, 2), (7, 8), (20, 21)])
     def test_headerData_for_rows(self, qmodel: QDataModel, rowidx, expected):
@@ -111,9 +110,9 @@ class TestQtRequired:
         else:
             qmodel.setData(index, 3)
 
-        qmodel.set_value.assert_called_once_with(1, 2, 3.0)
+        qmodel._data.set_value.assert_called_once_with(1, 2, 3.0)
         qmodel.dataChanged.emit.assert_called_once_with(index, index)
-        qmodel.recalculate_all_columns.assert_called()
+        qmodel._data.recalculate_all_columns.assert_called()
 
     def test_setData_with_unsupported_role(self, qmodel: QDataModel):
         index = qmodel.createIndex(2, 1)
@@ -122,7 +121,7 @@ class TestQtRequired:
 
     @pytest.mark.parametrize("is_calculated", [True, False])
     def test_flags(self, qmodel: QDataModel, is_calculated):
-        qmodel.is_calculated_column.return_value = is_calculated
+        qmodel._data.is_calculated_column.return_value = is_calculated
         expected = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
         if not is_calculated:
             expected |= QtCore.Qt.ItemIsEditable
@@ -130,7 +129,7 @@ class TestQtRequired:
         index = qmodel.createIndex(2, 123)
         flags = qmodel.flags(index)
 
-        qmodel.is_calculated_column.assert_called_once_with(123)
+        qmodel._data.is_calculated_column.assert_called_once_with(123)
         assert flags == expected
 
     def test_insertRows(self, qmodel: QDataModel, mocker: MockerFixture):
@@ -139,12 +138,12 @@ class TestQtRequired:
         parent = QtCore.QModelIndex()
         retvalue1 = qmodel.insertRows(3, 4, parent=parent)
 
-        qmodel.insert_rows.assert_called_once_with(3, 4)
+        qmodel._data.insert_rows.assert_called_once_with(3, 4)
         assert retvalue1 is True
         # four rows: 3 (first), 4, 5, 6 (last)
         qmodel.beginInsertRows.assert_called_with(parent, 3, 6)
         qmodel.endInsertRows.assert_called()
-        qmodel.recalculate_all_columns.assert_called()
+        qmodel._data.recalculate_all_columns.assert_called()
 
     def test_insertRows_valid_parent(self, qmodel: QDataModel):
         """You can't add rows inside cells."""
@@ -160,12 +159,12 @@ class TestQtRequired:
         parent = QtCore.QModelIndex()
         retvalue = qmodel.removeRows(3, 4, parent=parent)
 
-        qmodel.remove_rows.assert_called_once_with(3, 4)
+        qmodel._data.remove_rows.assert_called_once_with(3, 4)
         assert retvalue is True
         # four rows: 3 (first), 4, 5, 6 (last)
         qmodel.beginRemoveRows.assert_called_with(parent, 3, 6)
         qmodel.endRemoveRows.assert_called()
-        qmodel.recalculate_all_columns.assert_called()
+        qmodel._data.recalculate_all_columns.assert_called()
 
     def test_removeRows_valid_parent(self, qmodel: QDataModel):
         """You can't remove rows inside cells."""
@@ -180,7 +179,7 @@ class TestQtRequired:
         parent = QtCore.QModelIndex()
         retvalue = qmodel.insertColumns(3, 4, parent=parent)
 
-        qmodel.insert_columns.assert_called_once_with(3, 4)
+        qmodel._data.insert_columns.assert_called_once_with(3, 4)
         assert retvalue is True
         # four columns: 3 (first), 4, 5, 6 (last)
         qmodel.beginInsertColumns.assert_called_with(parent, 3, 6)
@@ -199,7 +198,7 @@ class TestQtRequired:
         parent = QtCore.QModelIndex()
         retvalue = qmodel.removeColumns(3, 4, parent=parent)
 
-        qmodel.remove_columns.assert_called_once_with(3, 4)
+        qmodel._data.remove_columns.assert_called_once_with(3, 4)
         assert retvalue is True
         # four columns: 3 (first), 4, 5, 6 (last)
         qmodel.beginRemoveColumns.assert_called_with(parent, 3, 6)
@@ -220,7 +219,7 @@ class TestQtRequired:
         retvalue = qmodel.moveColumn(parent, 3, parent, 5)
 
         # pay attention to Qt conventions, see method docstring
-        qmodel.move_column.assert_called_once_with(3, 5 - 1)
+        qmodel._data.move_column.assert_called_once_with(3, 5 - 1)
         assert retvalue is True
         qmodel.beginMoveColumns.assert_called_with(parent, 3, 3, parent, 5)
         qmodel.endMoveColumns.assert_called()
@@ -232,7 +231,7 @@ class TestQtRequired:
         retvalue = qmodel.moveColumn(parent, 5, parent, 3)
 
         # pay attention to Qt conventions, see method docstring
-        qmodel.move_column.assert_called_once_with(5, 3)
+        qmodel._data.move_column.assert_called_once_with(5, 3)
         assert retvalue is True
         qmodel.beginMoveColumns.assert_called_with(parent, 5, 5, parent, 3)
         qmodel.endMoveColumns.assert_called()
