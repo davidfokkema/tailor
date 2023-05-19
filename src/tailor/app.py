@@ -77,17 +77,23 @@ class Application(QtWidgets.QMainWindow):
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
 
+        self.connect_menu_items()
+        self.connect_ui_events()
+        self.setup_keyboard_shortcuts()
+        self.fill_recent_menu()
+
+        # clear all program state and set up as new project
+        self.clear_all()
+
+        # install event filter to capture UI events (which are not signals)
+        # necessary to capture closeEvent inside QMainWindow widget
+        self.installEventFilter(self)
+
         # set up dirty timer
         self._dirty_timer = QtCore.QTimer()
         self._dirty_timer.timeout.connect(self.mark_project_dirty)
 
-        # clear all program state
-        self.clear_all()
-
-        # Enable close buttons...
-        self.ui.tabWidget.setTabsClosable(True)
-
-        # connect menu items
+    def connect_menu_items(self):
         self.ui.actionQuit.triggered.connect(self.close)
         self.ui.actionAbout_Tailor.triggered.connect(self.show_about_dialog)
         self.ui.actionNew.triggered.connect(self.new_project)
@@ -117,21 +123,11 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
         self.ui.actionPaste.triggered.connect(self.paste_cells)
 
-        # set up the open recent menu
-        self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
-            self.ui.actionClear_Menu
-        )
-        self.update_recent_files()
-        self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
-
-        # user interface events
+    def connect_ui_events(self):
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
 
-        # install event filter to capture UI events (which are not signals)
-        # necessary to capture closeEvent inside QMainWindow widget
-        self.installEventFilter(self)
-
+    def setup_keyboard_shortcuts(self):
         # Set standard shortcuts for menu items
         self.ui.actionNew.setShortcut(QtGui.QKeySequence.New)
         self.ui.actionOpen.setShortcut(QtGui.QKeySequence.Open)
@@ -151,6 +147,13 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionExport_Graph_to_PNG.setShortcut(
             QtGui.QKeySequence("Shift+Ctrl+G")
         )
+
+    def fill_recent_menu(self):
+        self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
+            self.ui.actionClear_Menu
+        )
+        self.update_recent_files()
+        self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
     def mark_project_dirty(self, is_dirty=True):
         """Mark project as dirty"""
@@ -436,6 +439,8 @@ class Application(QtWidgets.QMainWindow):
         Closes all tabs and data.
         """
         self.ui.tabWidget.clear()
+        self.ui.tabWidget.setTabsClosable(True)
+
         self._plot_num = 1
         self._sheet_num = 1
         self.add_data_sheet()
