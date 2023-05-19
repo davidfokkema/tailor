@@ -18,7 +18,6 @@ from importlib import resources
 from textwrap import dedent
 from typing import Optional
 
-import numpy as np
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -82,9 +81,6 @@ class Application(QtWidgets.QMainWindow):
         self.setup_keyboard_shortcuts()
         self.fill_recent_menu()
 
-        # clear all program state and set up as new project
-        self.clear_all()
-
         # install event filter to capture UI events (which are not signals)
         # necessary to capture closeEvent inside QMainWindow widget
         self.installEventFilter(self)
@@ -92,6 +88,9 @@ class Application(QtWidgets.QMainWindow):
         # set up dirty timer
         self._dirty_timer = QtCore.QTimer()
         self._dirty_timer.timeout.connect(self.mark_project_dirty)
+
+        # clear all program state and set up as new project
+        self.clear_all()
 
     def connect_menu_items(self):
         self.ui.actionQuit.triggered.connect(self.close)

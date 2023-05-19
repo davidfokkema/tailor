@@ -28,11 +28,7 @@ class DataSheet(QtWidgets.QWidget):
             self.main_window.ask_and_create_plot_tab
         )
 
-        # set up data model
-        self.data_model = QDataModel()
-        self._set_view_and_selection_model()
-        # Start at (0, 0)
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self.setup_data_model()
 
         # Create shortcut for return/enter keys
         for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
@@ -44,6 +40,16 @@ class DataSheet(QtWidgets.QWidget):
             QtGui.QShortcut(
                 QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
             )
+
+    def setup_data_model(self):
+        """Set up the data model with some initial data."""
+        self.data_model = QDataModel()
+        self.data_model.insertColumns(0, 2)
+        self.data_model.insertRows(0, 5)
+
+        self._set_view_and_selection_model()
+        # Start at (0, 0)
+        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
     def _set_view_and_selection_model(self):
         """Set up data view and selection model.
