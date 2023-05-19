@@ -2,7 +2,7 @@ import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from tailor import dialogs
-from tailor.data_model import MSG_TIMEOUT, DataModel
+from tailor.qdata_model import MSG_TIMEOUT, QDataModel
 from tailor.ui_data_sheet import Ui_DataSheet
 
 
@@ -29,7 +29,7 @@ class DataSheet(QtWidgets.QWidget):
         )
 
         # set up data model
-        self.data_model = DataModel(main_window=main_window)
+        self.data_model = QDataModel()
         self._set_view_and_selection_model()
         # Start at (0, 0)
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))

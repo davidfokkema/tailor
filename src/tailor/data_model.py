@@ -4,6 +4,9 @@ Implements a model to contain the data values as a backend for the
 table view used in the app. This class provides an API specific to Tailor.
 """
 
+import re
+
+import asteval
 import numpy as np
 import pandas as pd
 
