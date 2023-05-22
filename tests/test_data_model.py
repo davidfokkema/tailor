@@ -1,6 +1,9 @@
+from unittest.mock import sentinel
+
 import numpy as np
 import pandas as pd
 import pytest
+from pytest_mock import MockerFixture
 
 from tailor.data_model import DataModel
 
@@ -114,3 +117,25 @@ class TestDataModel:
     def test_move_column(self, bare_bones_data: DataModel, source, dest, order):
         bare_bones_data.move_column(source, dest)
         assert list(bare_bones_data._data.columns) == order
+
+    def test_insert_calculated_column(self, bare_bones_data: DataModel):
+        assert len(bare_bones_data._calculated_column_expression) == 0
+        assert bare_bones_data._data.shape == (5, 3)
+
+        bare_bones_data.insert_calculated_column(column=1)
+
+        assert len(bare_bones_data._calculated_column_expression) == 1
+        assert bare_bones_data._data.shape == (5, 4)
+        assert list(bare_bones_data._data.iloc[0]) == pytest.approx(
+            [1.0, np.nan, 6.0, 11.0], nan_ok=True
+        )
+
+    def test_insert_calculated_column_uses_label(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "insert_columns")
+        bare_bones_data.insert_columns.return_value = [sentinel.label]
+
+        bare_bones_data.insert_calculated_column(column=1)
+
+        assert sentinel.label in bare_bones_data._calculated_column_expression

@@ -370,6 +370,31 @@ class QDataModel(QtCore.QAbstractTableModel):
         else:
             return False
 
+    def insertCalculatedColumn(
+        self, column: int, parent: QtCore.QModelIndex = QtCore.QModelIndex()
+    ) -> bool:
+        """Insert a calculated column into the table.
+
+        Insert column *before* the specified column number. Returns True if
+        the insertion was succesful.
+
+        Args:
+            column (int): a column number to indicate the place of insertion.
+            parent (QtCore.QModelIndex): a QModelIndex pointing into the model.
+                Must be invalid since you can't insert columns into a cell.
+
+        Returns:
+            True if the insertion was succesful, False otherwise.
+        """
+        if parent.isValid():
+            # a table cell can _not_ insert columns
+            return False
+
+        self.beginInsertColumns(parent, column, column)
+        self._data.insert_calculated_column(column)
+        self.endInsertColumns()
+        return True
+
     # def show_status(self, msg):
     #     """Show message in statusbar.
 

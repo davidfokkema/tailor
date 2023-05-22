@@ -95,10 +95,14 @@ class DataModel:
         Args:
             column (int): a column number to indicate the place of insertion.
             count (int): the number of columns to insert.
+
+        Returns:
+            A list of inserted column labels.
         """
         labels = [self._create_new_column_label() for _ in range(count)]
         for idx, label in zip(range(column, column + count), labels):
             self._data.insert(idx, label, np.nan)
+        return labels
 
     def remove_columns(self, column: int, count: int):
         """Remove columns from the table.
@@ -149,25 +153,18 @@ class DataModel:
         # check for *all* nans in a row or column
         return self._data.dropna(how="all").empty
 
-    def insert_calculated_column(self, column):
+    def insert_calculated_column(self, column: int):
         """Insert a calculated column.
 
         Insert a column *before* the specified column number. Returns True if
         the insertion was succesful.
 
         Args:
-            column: an integer column number to indicate the place of insertion.
-
-        Returns:
-            True if the insertion was succesful, False otherwise.
+            column (int): an integer column number to indicate the place of
+                insertion.
         """
-        column_name = self._create_new_column_name()
-
-        if self.insertColumn(column, column_name=column_name) is True:
-            self._calculated_column_expression[column_name] = None
-            return True
-        else:
-            return False
+        (label,) = self.insert_columns(column, count=1)
+        self._calculated_column_expression[label] = None
 
     def rename_column(self, col_idx, new_name):
         """Rename a column.

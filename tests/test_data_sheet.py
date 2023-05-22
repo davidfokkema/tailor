@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, sentinel
 
 import pytest
 from PySide6 import QtWidgets
@@ -19,6 +19,7 @@ def data_sheet(mocker: MockerFixture):
 @pytest.fixture()
 def bare_bones_data_sheet(mocker: MockerFixture):
     mocker.patch.object(tailor.data_sheet, "Ui_DataSheet")
+    mocker.patch.object(tailor.data_sheet, "QDataModel")
     mocker.patch.object(DataSheet, "connect_ui_events")
     mocker.patch.object(DataSheet, "setup_keyboard_shortcuts")
     main_window = mocker.Mock()
@@ -31,8 +32,20 @@ class TestDataSheet:
         assert isinstance(bare_bones_data_sheet.ui, MagicMock)
         DataSheet.connect_ui_events.assert_called_once()
         DataSheet.setup_keyboard_shortcuts.assert_called_once()
-        assert bare_bones_data_sheet.data_model.columnCount() == 2
-        assert bare_bones_data_sheet.data_model.rowCount() == 5
+
+    def test_add_column(self, bare_bones_data_sheet: DataSheet):
+        bare_bones_data_sheet.data_model.columnCount.return_value = sentinel.num_columns
+        bare_bones_data_sheet.add_column()
+        bare_bones_data_sheet.data_model.insertColumn.assert_called_once_with(
+            sentinel.num_columns
+        )
+
+    def test_add_calculated_column(self, bare_bones_data_sheet: DataSheet):
+        bare_bones_data_sheet.data_model.columnCount.return_value = sentinel.num_columns
+        bare_bones_data_sheet.add_calculated_column()
+        bare_bones_data_sheet.data_model.insertCalculatedColumn.assert_called_once_with(
+            sentinel.num_columns
+        )
 
 
 class TestIntegratedDataSheet:
@@ -45,6 +58,6 @@ class TestIntegratedDataSheet:
         data_sheet.add_column()
         assert data_sheet.data_model.columnCount() == 3
 
-    # def test_add_calculated_column(self, data_sheet: DataSheet):
-    #     data_sheet.add_calculated_column()
-    #     assert data_sheet.data_model.columnCount() == 3
+    def test_add_calculated_column(self, data_sheet: DataSheet):
+        data_sheet.add_calculated_column()
+        assert data_sheet.data_model.columnCount() == 3

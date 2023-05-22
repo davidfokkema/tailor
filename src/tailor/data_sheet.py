@@ -79,7 +79,7 @@ class DataSheet(QtWidgets.QWidget):
     def add_calculated_column(self):
         """Add a calculated column to data model and select it."""
         col_index = self.data_model.columnCount()
-        self.data_model._data.insert_calculated_column(col_index)
+        self.data_model.insertCalculatedColumn(col_index)
         self.ui.data_view.selectColumn(col_index)
         self.ui.name_edit.selectAll()
         self.ui.name_edit.setFocus()

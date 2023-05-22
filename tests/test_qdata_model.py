@@ -253,3 +253,25 @@ class TestQtRequired:
 
     def test_moveColumn_no_parents(self, qmodel: QDataModel):
         assert qmodel.moveColumn(sourceColumn=0, destinationChild=2) is True
+
+
+class TestAPI:
+    def test_insertCalculatedColumn(self, qmodel: QDataModel, mocker: MockerFixture):
+        mocker.patch.object(qmodel, "beginInsertColumns")
+        mocker.patch.object(qmodel, "endInsertColumns")
+        parent = QtCore.QModelIndex()
+        retvalue = qmodel.insertCalculatedColumn(3, parent=parent)
+
+        qmodel._data.insert_calculated_column.assert_called_once_with(3)
+        assert retvalue is True
+        qmodel.beginInsertColumns.assert_called_with(parent, 3, 3)
+        qmodel.endInsertColumns.assert_called()
+
+    def test_insertCalculatedColumn_no_parent(self, qmodel: QDataModel):
+        assert qmodel.insertCalculatedColumn(3) is True
+
+    def test_insertCalculatedColumn_valid_parent(self, qmodel: QDataModel):
+        """You can't add columns inside cells."""
+        assert (
+            qmodel.insertCalculatedColumn(0, parent=qmodel.createIndex(0, 0)) is False
+        )
