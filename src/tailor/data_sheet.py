@@ -16,10 +16,15 @@ class DataSheet(QtWidgets.QWidget):
         self.main_window = main_window
         self.clipboard = QtWidgets.QApplication.clipboard()
 
+        self.connect_ui_events()
+        self.setup_keyboard_shortcuts()
+
+        self.setup_data_model()
+
+    def connect_ui_events(self):
         # connect button signals
         self.ui.add_column_button.clicked.connect(self.add_column)
         self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
-
         # user interface events
         self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
         self.ui.name_edit.textEdited.connect(self.rename_column)
@@ -28,8 +33,7 @@ class DataSheet(QtWidgets.QWidget):
             self.main_window.ask_and_create_plot_tab
         )
 
-        self.setup_data_model()
-
+    def setup_keyboard_shortcuts(self):
         # Create shortcut for return/enter keys
         for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
             QtGui.QShortcut(
@@ -90,7 +94,7 @@ class DataSheet(QtWidgets.QWidget):
     def add_calculated_column(self):
         """Add a calculated column to data model and select it."""
         col_index = self.data_model.columnCount()
-        self.data_model.insert_calculated_column(col_index)
+        self.data_model._data.insert_calculated_column(col_index)
         self.ui.data_view.selectColumn(col_index)
         self.ui.name_edit.selectAll()
         self.ui.name_edit.setFocus()
@@ -178,9 +182,11 @@ class DataSheet(QtWidgets.QWidget):
             first_selection = selected.first()
             col_idx = first_selection.left()
             self._selected_col_idx = col_idx
-            self.ui.name_edit.setText(self.data_model.get_column_name(col_idx))
-            self.ui.formula_edit.setText(self.data_model.get_column_expression(col_idx))
-            if self.data_model.is_calculated_column(col_idx):
+            self.ui.name_edit.setText(self.data_model._data.get_column_name(col_idx))
+            self.ui.formula_edit.setText(
+                self.data_model._data.get_column_expression(col_idx)
+            )
+            if self.data_model._data.is_calculated_column(col_idx):
                 self.ui.formulaLabel.setEnabled(True)
                 self.ui.formula_edit.setEnabled(True)
             else:
