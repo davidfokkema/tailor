@@ -295,7 +295,7 @@ class DataModel:
         updated. This method will manually recalculate all column values, from left to right.
         """
         column_names = self.get_column_names()
-        for col_idx in range(self.columnCount()):
+        for col_idx in range(self.num_columns()):
             if self.is_calculated_column(col_idx):
                 self.recalculate_column(column_names[col_idx])
 
