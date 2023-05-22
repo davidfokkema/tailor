@@ -26,9 +26,9 @@ def bare_bones_data(model):
     """
     model._data = pd.DataFrame.from_dict(
         {
-            "col0": [1.0, 2.0, 3.0, 4.0, 5.0],
-            "col1": [6.0, 7.0, 8.0, 9.0, 10.0],
-            "col2": [11.0, 12.0, 13.0, 14.0, 15.0],
+            "col1": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "col2": [6.0, 7.0, 8.0, 9.0, 10.0],
+            "col3": [11.0, 12.0, 13.0, 14.0, 15.0],
         }
     )
     model._new_col_num += 3
@@ -62,7 +62,7 @@ class TestDataModel:
         bare_bones_data.set_value(2, 1, value)
         assert bare_bones_data.get_value(2, 1) == pytest.approx(value, nan_ok=True)
 
-    @pytest.mark.parametrize("colidx, name", [(0, "col0"), (1, "col1"), (2, "col2")])
+    @pytest.mark.parametrize("colidx, name", [(0, "col1"), (1, "col2"), (2, "col3")])
     def test_get_column_name(self, bare_bones_data: DataModel, colidx, name):
         assert bare_bones_data.get_column_name(colidx) == name
 
@@ -72,7 +72,7 @@ class TestDataModel:
         # use loc to check that the row labels are reindexed
         assert bool(bare_bones_data._data.loc[3:6].isna().all(axis=None)) is True
         # check insertion using values from col0
-        assert list(bare_bones_data._data["col0"]) == pytest.approx(
+        assert list(bare_bones_data._data["col1"]) == pytest.approx(
             [
                 1.0,
                 2.0,
@@ -89,8 +89,8 @@ class TestDataModel:
 
     def test_remove_rows(self, bare_bones_data: DataModel):
         bare_bones_data.remove_rows(1, 2)
-        assert list(bare_bones_data._data["col0"]) == pytest.approx([1.0, 4.0, 5.0])
-        assert list(bare_bones_data._data["col1"]) == pytest.approx([6.0, 9.0, 10.0])
+        assert list(bare_bones_data._data["col1"]) == pytest.approx([1.0, 4.0, 5.0])
+        assert list(bare_bones_data._data["col2"]) == pytest.approx([6.0, 9.0, 10.0])
         assert list(bare_bones_data._data.index) == list(range(3))
 
     def test_insert_columns(self, bare_bones_data: DataModel):
@@ -100,18 +100,28 @@ class TestDataModel:
             [1.0, np.nan, np.nan, 6.0, 11.0], nan_ok=True
         )
 
+    def test_insert_columns_labels(self, bare_bones_data: DataModel):
+        bare_bones_data.insert_columns(3, 2)
+        assert list(bare_bones_data._data.columns) == [
+            "col1",
+            "col2",
+            "col3",
+            "col4",
+            "col5",
+        ]
+
     def test_remove_columns(self, bare_bones_data: DataModel):
         bare_bones_data.remove_columns(1, 2)
         assert bare_bones_data._data.shape == (5, 1)
-        assert bare_bones_data._data.columns == ["col0"]
+        assert bare_bones_data._data.columns == ["col1"]
 
     @pytest.mark.parametrize(
         "source, dest, order",
         [
-            (1, 1, ["col0", "col1", "col2"]),
-            (0, 1, ["col1", "col0", "col2"]),
-            (0, 2, ["col1", "col2", "col0"]),
-            (2, 1, ["col0", "col2", "col1"]),
+            (1, 1, ["col1", "col2", "col3"]),
+            (0, 1, ["col2", "col1", "col3"]),
+            (0, 2, ["col2", "col3", "col1"]),
+            (2, 1, ["col1", "col3", "col2"]),
         ],
     )
     def test_move_column(self, bare_bones_data: DataModel, source, dest, order):
@@ -139,3 +149,23 @@ class TestDataModel:
         bare_bones_data.insert_calculated_column(column=1)
 
         assert sentinel.label in bare_bones_data._calculated_column_expression
+
+    def test_get_column_label(self, bare_bones_data: DataModel):
+        expected = ["col1", "col2", "col3"]
+        actual = [bare_bones_data.get_column_label(idx) for idx in range(3)]
+        assert actual == expected
+
+    def test_is_calculated_column_col_idx(self, bare_bones_data: DataModel):
+        bare_bones_data.insert_calculated_column(column=1)
+        assert bare_bones_data.is_calculated_column(col_idx=0) is False
+        assert bare_bones_data.is_calculated_column(col_idx=1) is True
+
+    def test_is_calculated_column_col_label(self, bare_bones_data: DataModel):
+        bare_bones_data.insert_calculated_column(column=1)
+        assert bare_bones_data.is_calculated_column(col_label="col1") is False
+        assert bare_bones_data.is_calculated_column(col_label="col4") is True
+
+    def test_is_calculated_column_col_name(self, bare_bones_data: DataModel):
+        bare_bones_data.insert_calculated_column(column=1)
+        assert bare_bones_data.is_calculated_column(col_name="col1") is False
+        assert bare_bones_data.is_calculated_column(col_name="col4") is True

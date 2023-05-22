@@ -296,7 +296,20 @@ class DataModel:
             if self.is_calculated_column(col_idx):
                 self.recalculate_column(column_names[col_idx])
 
-    def get_column_name(self, col_idx):
+    def get_column_label(self, col_idx: int):
+        """Get column label.
+
+        Get column label at the given index.
+
+        Args:
+            col_idx: an integer column number.
+
+        Returns:
+            The column label as a string.
+        """
+        return self._data.columns[col_idx]
+
+    def get_column_name(self, col_idx: int):
         """Get column name.
 
         Get column name at the given index.
@@ -307,6 +320,7 @@ class DataModel:
         Returns:
             The column name as a string.
         """
+        # WIP this is the label, not the name
         return self._data.columns[col_idx]
 
     def get_column_names(self):
@@ -353,23 +367,32 @@ class DataModel:
         """
         return [self._data[c] for c in col_names]
 
-    def is_calculated_column(self, col_idx=None, col_name=None):
+    def is_calculated_column(
+        self,
+        col_idx: int | None = None,
+        col_label: str | None = None,
+        col_name: str | None = None,
+    ):
         """Check if column is calculated.
 
-        Supplied with either a column index or a column name (index takes
-        precedence), checks whether the column is calculated from a mathematical
-        expression.
+        Supplied with either a column index, column label or column name (index
+        takes precedence), checks whether the column is calculated from a
+        mathematical expression.
 
         Args:
-            col_idx: an integer column index (takes precedence over name).
-            col_name: a string containing the column name.
+            col_idx: an integer column index (takes precedence over label).
+            col_label: a string containing the column label.
+            col_name: a string containing a column name.
 
         Returns:
             True if the column is calculated, False otherwise.
         """
         if col_idx is not None:
-            col_name = self.get_column_name(col_idx)
-        return col_name in self._calculated_column_expression
+            col_label = self.get_column_label(col_idx)
+        elif col_name is not None:
+            # WIP: fix handling column names
+            col_label = col_name
+        return col_label in self._calculated_column_expression
 
     def is_calculated_column_valid(self, col_idx=None, col_name=None):
         """Check if a calculated column has valid values.
