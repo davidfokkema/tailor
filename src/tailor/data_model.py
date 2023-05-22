@@ -115,12 +115,13 @@ class DataModel:
         """
         labels = self._data.columns[column : column + count]
         self._data.drop(columns=labels, inplace=True)
-        # try:
-        #     del self._calculated_column_expression[column_name]
-        # except KeyError:
-        #     # not a calculated column
-        #     pass
-        # self.recalculate_all_columns()
+        for label in labels:
+            try:
+                del self._calculated_column_expression[label]
+            except KeyError:
+                # not a calculated column
+                pass
+        self.recalculate_all_columns()
 
     def move_column(self, source: int, dest: int):
         """Move a column in the table.
@@ -234,7 +235,8 @@ class DataModel:
             True if the calculation was successful, False otherwise.
         """
         # UI must be updated to reflect changes in column values
-        self.emit_column_changed(col_name)
+        # FIXME how to handle this in UI layer
+        # self.emit_column_changed(col_name)
 
         if expression is None:
             # expression must be retrieved from column information
@@ -253,13 +255,13 @@ class DataModel:
         except Exception as exc:
             # error in evaluation or output cannot be cast to a float (series)
             self._is_calculated_column_valid[col_name] = False
-            self.show_status(f"Error evaluating expression: {exc}")
+            # FIXME self.show_status(f"Error evaluating expression: {exc}")
             return False
         else:
             # evaluation was successful
             self._data[col_name] = output
             self._is_calculated_column_valid[col_name] = True
-            self.show_status(f"Recalculated column values.")
+            # FIXME self.show_status(f"Recalculated column values.")
             return True
 
     def _get_accessible_columns(self, col_name):

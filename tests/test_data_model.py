@@ -115,6 +115,21 @@ class TestDataModel:
         assert bare_bones_data._data.shape == (5, 1)
         assert bare_bones_data._data.columns == ["col1"]
 
+    def test_remove_columns_removes_calculated_column(self, bare_bones_data: DataModel):
+        bare_bones_data.insert_calculated_column(column=0)
+        bare_bones_data.remove_columns(column=1, count=1)
+        assert len(bare_bones_data._calculated_column_expression) == 1
+
+        bare_bones_data.remove_columns(column=0, count=1)
+        assert len(bare_bones_data._calculated_column_expression) == 0
+
+    def test_remove_columns_calls_recalculate(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "recalculate_all_columns")
+        bare_bones_data.remove_columns(1, 1)
+        bare_bones_data.recalculate_all_columns.assert_called()
+
     @pytest.mark.parametrize(
         "source, dest, order",
         [
