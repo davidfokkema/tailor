@@ -165,6 +165,7 @@ class DataModel:
         """
         (label,) = self.insert_columns(column, count=1)
         self._calculated_column_expression[label] = None
+        self._is_calculated_column_valid[label] = False
 
     def rename_column(self, label: str, name: str):
         """Rename a column.
@@ -361,56 +362,37 @@ class DataModel:
         """
         return [self._data[c] for c in col_names]
 
-    def is_calculated_column(
-        self,
-        col_idx: int | None = None,
-        col_label: str | None = None,
-        col_name: str | None = None,
-    ):
+    def is_calculated_column(self, label: str):
         """Check if column is calculated.
 
-        Supplied with either a column index, column label or column name (index
-        takes precedence), checks whether the column is calculated from a
-        mathematical expression.
+        Checks whether a column is calculated from a mathematical expression.
 
         Args:
-            col_idx: an integer column index (takes precedence over label).
-            col_label: a string containing the column label.
-            col_name: a string containing a column name.
+            label (str): the column label.
 
         Returns:
             True if the column is calculated, False otherwise.
         """
-        if col_idx is not None:
-            col_label = self.get_column_label(col_idx)
-        elif col_name is not None:
-            # WIP: fix handling column names
-            col_label = col_name
-        return col_label in self._calculated_column_expression
+        return label in self._calculated_column_expression
 
-    def is_calculated_column_valid(self, col_idx=None, col_name=None):
+    def is_calculated_column_valid(self, label: str):
         """Check if a calculated column has valid values.
 
-        Supplied with either a column index or a column name (index takes
-        precedence), checks whether the column contains the results of a valid
-        calculation. When a calculation fails due to an invalid expression the
-        values are invalid.
+        Checks whether the column contains the results of a valid calculation.
+        When a calculation fails due to an invalid expression the values are
+        invalid.
 
         Args:
-            col_idx: an integer column index (takes precedence over name).
-            col_name: a string containing the column name.
+            label (str): the column label.
 
         Returns:
             True if the column values are valid, False otherwise.
         """
-        # FIXME: only use col label???
-        if col_idx is not None:
-            label = self.get_column_label(col_idx)
-        if not self.is_calculated_column(col_label=label):
+        if not self.is_calculated_column(label):
             # values are not calculated, so are always valid
             return True
         else:
-            return self._is_calculated_column_valid.get(col_name, False)
+            return self._is_calculated_column_valid(label)
 
     def _create_new_column_label(self):
         """Create a label for a new column.

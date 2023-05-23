@@ -157,7 +157,7 @@ class TestDataModel:
             [1.0, np.nan, 6.0, 11.0], nan_ok=True
         )
 
-    def test_insert_calculated_column_uses_label(
+    def test_insert_calculated_column_sets_attributes(
         self, bare_bones_data: DataModel, mocker: MockerFixture
     ):
         mocker.patch.object(bare_bones_data, "insert_columns")
@@ -165,7 +165,8 @@ class TestDataModel:
 
         bare_bones_data.insert_calculated_column(column=1)
 
-        assert sentinel.label in bare_bones_data._calculated_column_expression
+        assert bare_bones_data._calculated_column_expression[sentinel.label] is None
+        assert bare_bones_data._is_calculated_column_valid[sentinel.label] is False
 
     def test_get_column_label(self, bare_bones_data: DataModel):
         expected = ["col1", "col2", "col3"]
@@ -189,17 +190,7 @@ class TestDataModel:
         assert model.normalize_column_name("x  ") == "x"
         assert model.normalize_column_name("1x") == "_1x"
 
-    def test_is_calculated_column_col_idx(self, bare_bones_data: DataModel):
+    def test_is_calculated_column(self, bare_bones_data: DataModel):
         bare_bones_data.insert_calculated_column(column=1)
-        assert bare_bones_data.is_calculated_column(col_idx=0) is False
-        assert bare_bones_data.is_calculated_column(col_idx=1) is True
-
-    def test_is_calculated_column_col_label(self, bare_bones_data: DataModel):
-        bare_bones_data.insert_calculated_column(column=1)
-        assert bare_bones_data.is_calculated_column(col_label="col1") is False
-        assert bare_bones_data.is_calculated_column(col_label="col4") is True
-
-    def test_is_calculated_column_col_name(self, bare_bones_data: DataModel):
-        bare_bones_data.insert_calculated_column(column=1)
-        assert bare_bones_data.is_calculated_column(col_name="col1") is False
-        assert bare_bones_data.is_calculated_column(col_name="col4") is True
+        assert bare_bones_data.is_calculated_column("col1") is False
+        assert bare_bones_data.is_calculated_column("col4") is True
