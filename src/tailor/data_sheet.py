@@ -16,10 +16,10 @@ class DataSheet(QtWidgets.QWidget):
         self.main_window = main_window
         self.clipboard = QtWidgets.QApplication.clipboard()
 
+        self.setup_data_model()
+
         self.connect_ui_events()
         self.setup_keyboard_shortcuts()
-
-        self.setup_data_model()
 
     def connect_ui_events(self):
         # connect button signals
@@ -32,6 +32,9 @@ class DataSheet(QtWidgets.QWidget):
         self.ui.create_plot_button.clicked.connect(
             self.main_window.ask_and_create_plot_tab
         )
+        # Set up selection events
+        self.selection = self.ui.data_view.selectionModel()
+        self.selection.selectionChanged.connect(self.selection_changed)
 
     def setup_keyboard_shortcuts(self):
         # Create shortcut for return/enter keys
@@ -60,10 +63,6 @@ class DataSheet(QtWidgets.QWidget):
         header.setSectionsMovable(True)
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         header.setMinimumSectionSize(header.defaultSectionSize())
-
-        # Set up selection events
-        self.selection = self.ui.data_view.selectionModel()
-        self.selection.selectionChanged.connect(self.selection_changed)
 
         # Start at (0, 0)
         self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))

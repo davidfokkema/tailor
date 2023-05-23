@@ -84,9 +84,12 @@ class TestQtRequired:
         assert value is None
 
     def test_headerData_for_columns(self, qmodel: QDataModel):
+        qmodel._data.get_column_label.return_value = sentinel.label
+
         actual = qmodel.headerData(sentinel.colidx, QtCore.Qt.Horizontal)
 
-        qmodel._data.get_column_name.assert_called_once_with(sentinel.colidx)
+        qmodel._data.get_column_label.assert_called_once_with(sentinel.colidx)
+        qmodel._data.get_column_name.assert_called_once_with(sentinel.label)
         assert actual == qmodel._data.get_column_name.return_value
 
     @pytest.mark.parametrize("rowidx, expected", [(0, 1), (1, 2), (7, 8), (20, 21)])

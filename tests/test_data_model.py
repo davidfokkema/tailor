@@ -31,6 +31,7 @@ def bare_bones_data(model):
             "col3": [11.0, 12.0, 13.0, 14.0, 15.0],
         }
     )
+    model._col_names = {"col1": "x", "col2": "y", "col3": "z"}
     model._new_col_num += 3
     return model
 
@@ -61,10 +62,6 @@ class TestDataModel:
     def test_set_value(self, bare_bones_data: DataModel, value):
         bare_bones_data.set_value(2, 1, value)
         assert bare_bones_data.get_value(2, 1) == pytest.approx(value, nan_ok=True)
-
-    @pytest.mark.parametrize("colidx, name", [(0, "col1"), (1, "col2"), (2, "col3")])
-    def test_get_column_name(self, bare_bones_data: DataModel, colidx, name):
-        assert bare_bones_data.get_column_name(colidx) == name
 
     def test_insert_rows(self, bare_bones_data: DataModel):
         bare_bones_data.insert_rows(3, 4)
@@ -109,6 +106,11 @@ class TestDataModel:
             "col4",
             "col5",
         ]
+
+    def test_insert_columns_names(self, bare_bones_data: DataModel):
+        assert "col4" not in bare_bones_data._col_names
+        bare_bones_data.insert_columns(0, 1)
+        assert bare_bones_data._col_names["col4"] == "col4"
 
     def test_remove_columns(self, bare_bones_data: DataModel):
         bare_bones_data.remove_columns(1, 2)
@@ -169,6 +171,23 @@ class TestDataModel:
         expected = ["col1", "col2", "col3"]
         actual = [bare_bones_data.get_column_label(idx) for idx in range(3)]
         assert actual == expected
+
+    def test_get_column_name(self, bare_bones_data: DataModel):
+        labels = ["col1", "col2", "col3"]
+        expected = ["x", "y", "z"]
+        actual = [bare_bones_data.get_column_name(label) for label in labels]
+        assert actual == expected
+
+    def test_rename_column(self, bare_bones_data: DataModel):
+        bare_bones_data.rename_column("col1", "t null")
+        # rewrites spaces to underscores
+        assert bare_bones_data.get_column_name("col1") == "t_null"
+
+    def test_normalize_column_name(self, model: DataModel):
+        assert model.normalize_column_name("t x y") == "t_x_y"
+        assert model.normalize_column_name("  x") == "x"
+        assert model.normalize_column_name("x  ") == "x"
+        assert model.normalize_column_name("1x") == "_1x"
 
     def test_is_calculated_column_col_idx(self, bare_bones_data: DataModel):
         bare_bones_data.insert_calculated_column(column=1)

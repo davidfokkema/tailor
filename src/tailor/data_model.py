@@ -22,12 +22,10 @@ class DataModel:
     """
 
     _new_col_num = 0
-    _data = None
-    _calculated_column_expression = None
-    _is_calculated_column_valid = None
 
     def __init__(self) -> None:
         self._data = pd.DataFrame()
+        self._col_names = {}
         self._calculated_column_expression = {}
         self._is_calculated_column_valid = {}
 
@@ -102,6 +100,7 @@ class DataModel:
         labels = [self._create_new_column_label() for _ in range(count)]
         for idx, label in zip(range(column, column + count), labels):
             self._data.insert(idx, label, np.nan)
+            self._col_names[label] = label
         return labels
 
     def remove_columns(self, column: int, count: int):
@@ -167,27 +166,21 @@ class DataModel:
         (label,) = self.insert_columns(column, count=1)
         self._calculated_column_expression[label] = None
 
-    def rename_column(self, col_idx, new_name):
+    def rename_column(self, label: str, name: str):
         """Rename a column.
 
-        Renames the column at the specified index.
-
         Args:
-            col_idx: an integer column number.
-            new_name: a string with the new column name.
+            label (str): the column label
+            name (str): the new name for the column
         """
-        old_name = self._data.columns[col_idx]
-        new_name = self.normalize_column_name(new_name)
-        self._data.rename(columns={old_name: new_name}, inplace=True)
-        if self.is_calculated_column(col_name=old_name):
-            for d in (
-                self._calculated_column_expression,
-                self._is_calculated_column_valid,
-            ):
-                d[new_name] = d.pop(old_name, False)
-        self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
-        self.show_status("Renamed column.")
-        return new_name
+        old_name = self.get_column_name(label)
+        new_name = self.normalize_column_name(name)
+        self._col_names[label] = new_name
+
+        # FIXME rename all expressions
+
+        # FIXME self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
+        # FIXME self.show_status("Renamed column.")
 
     def normalize_column_name(self, name):
         """Normalize column name.
@@ -201,7 +194,7 @@ class DataModel:
         Returns:
             str: the normalized name.
         """
-        return re.sub(r"\W+|^(?=\d)", "_", name)
+        return re.sub(r"\W+|^(?=\d)", "_", name.strip())
 
     def update_column_expression(self, col_idx, expression):
         """Update a calculated column with a new expression.
@@ -311,7 +304,7 @@ class DataModel:
         """
         return self._data.columns[col_idx]
 
-    def get_column_name(self, col_idx: int):
+    def get_column_name(self, label: str):
         """Get column name.
 
         Get column name at the given index.
@@ -322,8 +315,7 @@ class DataModel:
         Returns:
             The column name as a string.
         """
-        # WIP this is the label, not the name
-        return self._data.columns[col_idx]
+        return self._col_names[label]
 
     def get_column_names(self):
         """Get list of all column names."""
@@ -411,9 +403,10 @@ class DataModel:
         Returns:
             True if the column values are valid, False otherwise.
         """
+        # FIXME: only use col label???
         if col_idx is not None:
-            col_name = self.get_column_name(col_idx)
-        if not self.is_calculated_column(col_name=col_name):
+            label = self.get_column_label(col_idx)
+        if not self.is_calculated_column(col_label=label):
             # values are not calculated, so are always valid
             return True
         else:

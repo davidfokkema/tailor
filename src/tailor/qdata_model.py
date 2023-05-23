@@ -129,7 +129,8 @@ class QDataModel(QtCore.QAbstractTableModel):
         """
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
-                return self._data.get_column_name(section)
+                label = self._data.get_column_label(section)
+                return self._data.get_column_name(label)
             else:
                 # return row number (starting from 1)
                 return section + 1
