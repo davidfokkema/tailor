@@ -166,11 +166,9 @@ class DataSheet(QtWidgets.QWidget):
             first_selection = selected.first()
             col_idx = first_selection.left()
             self._selected_col_idx = col_idx
-            self.ui.name_edit.setText(self.data_model._data.get_column_name(col_idx))
-            self.ui.formula_edit.setText(
-                self.data_model._data.get_column_expression(col_idx)
-            )
-            if self.data_model._data.is_calculated_column(col_idx):
+            self.ui.name_edit.setText(self.data_model.columnName(col_idx))
+            self.ui.formula_edit.setText(self.data_model.columnExpression(col_idx))
+            if self.data_model.isCalculatedColumn(col_idx):
                 self.ui.formulaLabel.setEnabled(True)
                 self.ui.formula_edit.setEnabled(True)
             else:

@@ -277,7 +277,7 @@ class DataModel:
         data = {
             k: self._data[k]
             for k in accessible_columns
-            if self.is_calculated_column_valid(col_name=k)
+            if self.is_column_valid(col_name=k)
         }
         return data
 
@@ -287,23 +287,25 @@ class DataModel:
         If data is entered or changed, the calculated column values must be
         updated. This method will manually recalculate all column values, from left to right.
         """
+        # FIXME
+        return
         column_names = self.get_column_names()
         for col_idx in range(self.num_columns()):
             if self.is_calculated_column(col_idx):
                 self.recalculate_column(column_names[col_idx])
 
-    def get_column_label(self, col_idx: int):
+    def get_column_label(self, column: int):
         """Get column label.
 
         Get column label at the given index.
 
         Args:
-            col_idx: an integer column number.
+            column: an integer column number.
 
         Returns:
             The column label as a string.
         """
-        return self._data.columns[col_idx]
+        return self._data.columns[column]
 
     def get_column_name(self, label: str):
         """Get column name.
@@ -311,56 +313,42 @@ class DataModel:
         Get column name at the given index.
 
         Args:
-            col_idx: an integer column number.
+            label (str): the column label.
 
         Returns:
             The column name as a string.
         """
         return self._col_names[label]
 
-    def get_column_names(self):
-        """Get list of all column names."""
-        return list(self._data.columns)
+    # FIXME
+    # def get_column_names(self):
+    #     """Get list of all column names."""
+    #     return list(self._data.columns)
 
-    def get_column_expression(self, col_idx):
+    def get_column_expression(self, label: str):
         """Get column expression.
 
-        Get the mathematical expression used to calculate values in the column
-        at the given index.
+        Get the mathematical expression used to calculate values in the
+        calculated column.
 
         Args:
-            col_idx: an integer column number.
+            label (str): the column label.
 
         Returns:
             A string containing the mathematical expression or None.
         """
-        col_name = self.get_column_name(col_idx)
-        try:
-            return self._calculated_column_expression[col_name]
-        except KeyError:
-            return None
+        return self._calculated_column_expression.get(label, None)
 
-    def get_column(self, col_name):
+    def get_column(self, label: str):
         """Return column values.
 
         Args:
-            col_name: a string containing the column name.
+            label (str): the column label.
 
         Returns:
-            A pandas.Series containing the column values.
+            An np.ndarray containing the column values.
         """
-        return self._data[col_name]
-
-    def get_columns(self, col_names):
-        """Return values for multiple columns.
-
-        Args:
-            col_names: a list of strings containing the column names.
-
-        Returns:
-            A list of pandas.Series containing the column values.
-        """
-        return [self._data[c] for c in col_names]
+        return self._data[label].to_numpy()
 
     def is_calculated_column(self, label: str):
         """Check if column is calculated.
@@ -375,12 +363,13 @@ class DataModel:
         """
         return label in self._calculated_column_expression
 
-    def is_calculated_column_valid(self, label: str):
-        """Check if a calculated column has valid values.
+    def is_column_valid(self, label: str):
+        """Check if a column has valid values.
 
-        Checks whether the column contains the results of a valid calculation.
-        When a calculation fails due to an invalid expression the values are
-        invalid.
+        Checks whether the column contains the results of a valid calculation if
+        it is a calculated column. When a calculation fails due to an invalid
+        expression the values are invalid. If it is a regular data column, the
+        values are always valid.
 
         Args:
             label (str): the column label.
@@ -392,7 +381,7 @@ class DataModel:
             # values are not calculated, so are always valid
             return True
         else:
-            return self._is_calculated_column_valid(label)
+            return self._is_calculated_column_valid[label]
 
     def _create_new_column_label(self):
         """Create a label for a new column.

@@ -82,11 +82,12 @@ class QDataModel(QtCore.QAbstractTableModel):
         """
         row = index.row()
         col = index.column()
+        label = self._data.get_column_label(col)
 
         if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
             # request for the data itself
             value = self._data.get_value(row, col)
-            if np.isnan(value) and not self._data.is_calculated_column(col):
+            if np.isnan(value) and not self._data.is_calculated_column(label):
                 # NaN in a data column, show as empty
                 return ""
             else:
@@ -94,8 +95,8 @@ class QDataModel(QtCore.QAbstractTableModel):
                 return f"{value:.10g}"
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell
-            if self._data.is_calculated_column(col):
-                if self._data.is_calculated_column_valid(col):
+            if self._data.is_calculated_column(label):
+                if self._data.is_column_valid(label):
                     # Yellow
                     return QtGui.QBrush(QtGui.QColor(255, 255, 200))
                 else:
@@ -395,6 +396,36 @@ class QDataModel(QtCore.QAbstractTableModel):
         self._data.insert_calculated_column(column)
         self.endInsertColumns()
         return True
+
+    def columnName(self, column: int):
+        """Get column name.
+
+        Args:
+            column (int): the column index.
+
+        Returns:
+            str: the column name
+        """
+        label = self._data.get_column_label(column)
+        return self._data.get_column_name(label)
+
+    def isCalculatedColumn(self, column: int):
+        label = self._data.get_column_label(column)
+        return self._data.is_calculated_column(label)
+
+    def columnExpression(self, column: int):
+        """Get column expression.
+
+        Get the mathematical expression for a calculated column.
+
+        Args:
+            column (int): the column index.
+
+        Returns:
+            str | None: the mathematical expression
+        """
+        label = self._data.get_column_label(column)
+        return self._data.get_column_expression(label)
 
     # def show_status(self, msg):
     #     """Show message in statusbar.

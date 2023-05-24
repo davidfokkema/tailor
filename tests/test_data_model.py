@@ -14,7 +14,7 @@ def model():
 
 
 @pytest.fixture()
-def bare_bones_data(model):
+def bare_bones_data(model: DataModel):
     """Create a bare bones data model.
 
     This is an instance of QDataModel with a very basic data structure (five
@@ -32,6 +32,8 @@ def bare_bones_data(model):
         }
     )
     model._col_names = {"col1": "x", "col2": "y", "col3": "z"}
+    model._calculated_column_expression["col3"] = "y + 5"
+    model._is_calculated_column_valid["col3"] = True
     model._new_col_num += 3
     return model
 
@@ -118,11 +120,10 @@ class TestDataModel:
         assert bare_bones_data._data.columns == ["col1"]
 
     def test_remove_columns_removes_calculated_column(self, bare_bones_data: DataModel):
-        bare_bones_data.insert_calculated_column(column=0)
-        bare_bones_data.remove_columns(column=1, count=1)
+        bare_bones_data.remove_columns(column=0, count=1)
         assert len(bare_bones_data._calculated_column_expression) == 1
 
-        bare_bones_data.remove_columns(column=0, count=1)
+        bare_bones_data.remove_columns(column=1, count=1)
         assert len(bare_bones_data._calculated_column_expression) == 0
 
     def test_remove_columns_calls_recalculate(
@@ -146,12 +147,12 @@ class TestDataModel:
         assert list(bare_bones_data._data.columns) == order
 
     def test_insert_calculated_column(self, bare_bones_data: DataModel):
-        assert len(bare_bones_data._calculated_column_expression) == 0
+        assert len(bare_bones_data._calculated_column_expression) == 1
         assert bare_bones_data._data.shape == (5, 3)
 
         bare_bones_data.insert_calculated_column(column=1)
 
-        assert len(bare_bones_data._calculated_column_expression) == 1
+        assert len(bare_bones_data._calculated_column_expression) == 2
         assert bare_bones_data._data.shape == (5, 4)
         assert list(bare_bones_data._data.iloc[0]) == pytest.approx(
             [1.0, np.nan, 6.0, 11.0], nan_ok=True
@@ -179,6 +180,12 @@ class TestDataModel:
         actual = [bare_bones_data.get_column_name(label) for label in labels]
         assert actual == expected
 
+    def test_get_column(self, bare_bones_data: DataModel):
+        expected = [6.0, 7.0, 8.0, 9.0, 10.0]
+        actual = bare_bones_data.get_column("col2")
+        assert isinstance(actual, np.ndarray)
+        assert list(actual) == pytest.approx(expected)
+
     def test_rename_column(self, bare_bones_data: DataModel):
         bare_bones_data.rename_column("col1", "t null")
         # rewrites spaces to underscores
@@ -191,6 +198,16 @@ class TestDataModel:
         assert model.normalize_column_name("1x") == "_1x"
 
     def test_is_calculated_column(self, bare_bones_data: DataModel):
-        bare_bones_data.insert_calculated_column(column=1)
         assert bare_bones_data.is_calculated_column("col1") is False
+        assert bare_bones_data.is_calculated_column("col3") is True
+
+    def test_is_column_valid(self, bare_bones_data: DataModel):
+        # not calculated
+        assert bare_bones_data.is_column_valid("col1") is True
+        # calculated, valid
+        assert bare_bones_data.is_calculated_column("col3") is True
+        assert bare_bones_data.is_column_valid("col3") is True
+        # just added, not yet a valid expression
+        bare_bones_data.insert_calculated_column(0)
         assert bare_bones_data.is_calculated_column("col4") is True
+        assert bare_bones_data.is_column_valid("col4") is False

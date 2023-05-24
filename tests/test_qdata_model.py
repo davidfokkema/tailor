@@ -83,6 +83,18 @@ class TestQtRequired:
         value = qmodel.data(index, QtCore.Qt.DecorationRole)
         assert value is None
 
+    @pytest.mark.parametrize("role", [QtCore.Qt.DisplayRole, QtCore.Qt.BackgroundRole])
+    def test_data_uses_column_label(self, qmodel: QDataModel, role):
+        index = qmodel.createIndex(2, 1)
+        qmodel._data.get_value.return_value = np.nan
+        qmodel._data.get_column_label.return_value = sentinel.label
+
+        qmodel.data(index, role)
+
+        qmodel._data.is_calculated_column.assert_called_with(sentinel.label)
+        if role == QtCore.Qt.BackgroundRole:
+            qmodel._data.is_column_valid.assert_called_with(sentinel.label)
+
     def test_headerData_for_columns(self, qmodel: QDataModel):
         qmodel._data.get_column_label.return_value = sentinel.label
 
@@ -278,3 +290,33 @@ class TestAPI:
         assert (
             qmodel.insertCalculatedColumn(0, parent=qmodel.createIndex(0, 0)) is False
         )
+
+    def test_columnName(self, qmodel: QDataModel):
+        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel._data.get_column_name.return_value = sentinel.name
+
+        name = qmodel.columnName(sentinel.idx)
+
+        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
+        qmodel._data.get_column_name.assert_called_with(sentinel.label)
+        assert name == sentinel.name
+
+    def test_isCalculatedColumn(self, qmodel: QDataModel):
+        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel._data.is_calculated_column.return_value = sentinel.is_calculated
+
+        actual = qmodel.isCalculatedColumn(sentinel.idx)
+
+        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
+        qmodel._data.is_calculated_column.assert_called_with(sentinel.label)
+        assert actual == sentinel.is_calculated
+
+    def test_columnExpression(self, qmodel: QDataModel):
+        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel._data.get_column_expression.return_value = sentinel.expression
+
+        expression = qmodel.columnExpression(sentinel.idx)
+
+        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
+        qmodel._data.get_column_expression.assert_called_with(sentinel.label)
+        assert expression == sentinel.expression
