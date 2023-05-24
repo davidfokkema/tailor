@@ -21,6 +21,9 @@ class DataSheet(QtWidgets.QWidget):
         self.connect_ui_events()
         self.setup_keyboard_shortcuts()
 
+        # Start at (0, 0)
+        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+
     def connect_ui_events(self):
         # connect button signals
         self.ui.add_column_button.clicked.connect(self.add_column)
@@ -63,9 +66,6 @@ class DataSheet(QtWidgets.QWidget):
         header.setSectionsMovable(True)
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         header.setMinimumSectionSize(header.defaultSectionSize())
-
-        # Start at (0, 0)
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
 
     def add_column(self):
         """Add column to data model and select it."""
