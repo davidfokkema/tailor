@@ -397,7 +397,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.endInsertColumns()
         return True
 
-    def columnName(self, column: int):
+    def columnName(self, column: int) -> str:
         """Get column name.
 
         Args:
@@ -408,6 +408,18 @@ class QDataModel(QtCore.QAbstractTableModel):
         """
         label = self._data.get_column_label(column)
         return self._data.get_column_name(label)
+
+    def columnNames(self) -> list[str]:
+        """Get all column names.
+
+        Returns:
+            list[str]: a list of all column names.
+        """
+        return self._data.get_column_names()
+
+    def renameColumn(self, column: int, name: str) -> str:
+        label = self._data.get_column_label(column)
+        return self._data.rename_column(label, name)
 
     def isCalculatedColumn(self, column: int):
         label = self._data.get_column_label(column)

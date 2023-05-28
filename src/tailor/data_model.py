@@ -174,9 +174,10 @@ class DataModel:
             label (str): the column label
             name (str): the new name for the column
         """
-        old_name = self.get_column_name(label)
+        # old_name = self.get_column_name(label)
         new_name = self.normalize_column_name(name)
         self._col_names[label] = new_name
+        return new_name
 
         # FIXME rename all expressions
 
@@ -319,6 +320,14 @@ class DataModel:
             The column name as a string.
         """
         return self._col_names[label]
+
+    def get_column_names(self):
+        """Get all column names.
+
+        Returns:
+            list[str]: a list of all column names.
+        """
+        return list(self._col_names.values())
 
     # FIXME
     # def get_column_names(self):

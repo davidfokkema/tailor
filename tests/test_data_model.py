@@ -180,6 +180,10 @@ class TestDataModel:
         actual = [bare_bones_data.get_column_name(label) for label in labels]
         assert actual == expected
 
+    def test_get_column_names(self, bare_bones_data: DataModel):
+        expected = ["x", "y", "z"]
+        assert bare_bones_data.get_column_names() == expected
+
     def test_get_column(self, bare_bones_data: DataModel):
         expected = [6.0, 7.0, 8.0, 9.0, 10.0]
         actual = bare_bones_data.get_column("col2")
@@ -187,9 +191,14 @@ class TestDataModel:
         assert list(actual) == pytest.approx(expected)
 
     def test_rename_column(self, bare_bones_data: DataModel):
-        bare_bones_data.rename_column("col1", "t null")
+        name = "t null"
+        expected = "t_null"
+
         # rewrites spaces to underscores
-        assert bare_bones_data.get_column_name("col1") == "t_null"
+        new_name = bare_bones_data.rename_column("col1", name)
+
+        assert new_name == expected
+        assert bare_bones_data.get_column_name("col1") == expected
 
     def test_normalize_column_name(self, model: DataModel):
         assert model.normalize_column_name("t x y") == "t_x_y"

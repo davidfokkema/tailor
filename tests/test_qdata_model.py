@@ -301,6 +301,21 @@ class TestAPI:
         qmodel._data.get_column_name.assert_called_with(sentinel.label)
         assert name == sentinel.name
 
+    def test_columnNames(self, qmodel: QDataModel):
+        qmodel._data.get_column_names.return_value = sentinel.names
+
+        assert qmodel.columnNames() == sentinel.names
+
+    def test_renameColumn(self, qmodel: QDataModel):
+        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel._data.rename_column.return_value = sentinel.new_name
+
+        new_name = qmodel.renameColumn(sentinel.idx, sentinel.name)
+
+        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
+        qmodel._data.rename_column.assert_called_with(sentinel.label, sentinel.name)
+        assert new_name == sentinel.new_name
+
     def test_isCalculatedColumn(self, qmodel: QDataModel):
         qmodel._data.get_column_label.return_value = sentinel.label
         qmodel._data.is_calculated_column.return_value = sentinel.is_calculated
