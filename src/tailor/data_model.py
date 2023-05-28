@@ -195,7 +195,7 @@ class DataModel:
         Returns:
             str: the normalized name.
         """
-        return re.sub(r"\W+|^(?=\d)", "_", name.strip())
+        return re.sub(r"\W|^(?=\d)", "_", name)
 
     def update_column_expression(self, col_idx, expression):
         """Update a calculated column with a new expression.

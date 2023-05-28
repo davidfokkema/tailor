@@ -193,8 +193,8 @@ class TestDataModel:
 
     def test_normalize_column_name(self, model: DataModel):
         assert model.normalize_column_name("t x y") == "t_x_y"
-        assert model.normalize_column_name("  x") == "x"
-        assert model.normalize_column_name("x  ") == "x"
+        assert model.normalize_column_name("  x") == "__x"
+        assert model.normalize_column_name("x  ") == "x__"
         assert model.normalize_column_name("1x") == "_1x"
 
     def test_is_calculated_column(self, bare_bones_data: DataModel):
