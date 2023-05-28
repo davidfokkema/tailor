@@ -251,7 +251,6 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.beginRemoveRows(parent, row, row + count - 1)
         self._data.remove_rows(row, count)
         self.endRemoveRows()
-        self._data.recalculate_all_columns()
         return True
 
     def insertColumns(

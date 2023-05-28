@@ -179,7 +179,6 @@ class TestQtRequired:
         # four rows: 3 (first), 4, 5, 6 (last)
         qmodel.beginRemoveRows.assert_called_with(parent, 3, 6)
         qmodel.endRemoveRows.assert_called()
-        qmodel._data.recalculate_all_columns.assert_called()
 
     def test_removeRows_valid_parent(self, qmodel: QDataModel):
         """You can't remove rows inside cells."""
