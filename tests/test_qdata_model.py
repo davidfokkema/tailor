@@ -334,3 +334,19 @@ class TestAPI:
         qmodel._data.get_column_label.assert_called_with(sentinel.idx)
         qmodel._data.get_column_expression.assert_called_with(sentinel.label)
         assert expression == sentinel.expression
+
+    def test_updateColumnExpression(self, qmodel: QDataModel):
+        qmodel._data.get_column_label.return_value = sentinel.label
+
+        assert qmodel.updateColumnExpression(sentinel.idx, sentinel.expr) is True
+        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
+        qmodel._data.update_column_expression.assert_called_with(
+            sentinel.label, sentinel.expr
+        )
+
+    def test_updateColumnExpression_returns_false(
+        self, qmodel: QDataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(qmodel, "isCalculatedColumn").return_value = False
+        print(qmodel.isCalculatedColumn(0))
+        assert qmodel.updateColumnExpression(0, "Foo") is False

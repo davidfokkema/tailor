@@ -1,4 +1,4 @@
-from unittest.mock import sentinel
+from unittest.mock import call, sentinel
 
 import numpy as np
 import pandas as pd
@@ -31,7 +31,8 @@ def bare_bones_data(model: DataModel):
             "col3": [11.0, 12.0, 13.0, 14.0, 15.0],
         }
     )
-    model._col_names = {"col1": "x", "col2": "y", "col3": "z"}
+    # there is no guaranteed order in _col_names
+    model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
     model._calculated_column_expression["col3"] = "y + 5"
     model._is_calculated_column_valid["col3"] = True
     model._new_col_num += 3
@@ -181,7 +182,10 @@ class TestDataModel:
         assert actual == expected
 
     def test_get_column_names(self, bare_bones_data: DataModel):
-        expected = ["x", "y", "z"]
+        # column names may not be in the order they appear in the data
+        # the 'expected' order in this case is copied from the _col_names
+        # attribute
+        expected = ["y", "z", "x"]
         assert bare_bones_data.get_column_names() == expected
 
     def test_get_column(self, bare_bones_data: DataModel):
@@ -220,3 +224,35 @@ class TestDataModel:
         bare_bones_data.insert_calculated_column(0)
         assert bare_bones_data.is_calculated_column("col4") is True
         assert bare_bones_data.is_column_valid("col4") is False
+
+    def test_get_column_expression(self, bare_bones_data: DataModel):
+        assert bare_bones_data.get_column_expression("col3") == "y + 5"
+
+    def test_get_column_expression_returns_None(self, bare_bones_data: DataModel):
+        assert bare_bones_data.get_column_expression("col1") is None
+
+    def test_update_column_expression(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "recalculate_columns_from")
+
+        bare_bones_data.update_column_expression("col3", sentinel.expr)
+
+        assert bare_bones_data._calculated_column_expression["col3"] == sentinel.expr
+        bare_bones_data.recalculate_columns_from.assert_called_with("col3")
+
+    def test_update_column_expression_nop(self, bare_bones_data: DataModel):
+        bare_bones_data.update_column_expression("col1", "x ** 2")
+        assert "col1" not in bare_bones_data._calculated_column_expression
+
+    def test_recalculate_columns_from(self, model: DataModel, mocker: MockerFixture):
+        model._data = pd.DataFrame.from_dict(
+            {k: [1, 2, 3] for k in ["col1", "col2", "col3", "col4"]}
+        )
+        model._calculated_column_expression = {"col1": "x", "col2": "y", "col4": "z"}
+        mocker.patch.object(model, "recalculate_column")
+
+        model.recalculate_columns_from("col2")
+
+        expected = [call("col2"), call("col4")]
+        assert model.recalculate_column.call_args_list == expected

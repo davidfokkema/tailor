@@ -147,7 +147,7 @@ class DataSheet(QtWidgets.QWidget):
             expression: a QString containing the mathematical expression.
         """
         if self._selected_col_idx is not None:
-            self.data_model.update_column_expression(self._selected_col_idx, expression)
+            self.data_model.updateColumnExpression(self._selected_col_idx, expression)
 
     def selection_changed(self, selected, deselected):
         """Handle selectionChanged events in the data view.

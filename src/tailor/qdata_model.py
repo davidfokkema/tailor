@@ -438,6 +438,13 @@ class QDataModel(QtCore.QAbstractTableModel):
         label = self._data.get_column_label(column)
         return self._data.get_column_expression(label)
 
+    def updateColumnExpression(self, column: int, expression: str) -> bool:
+        if not self.isCalculatedColumn(column):
+            return False
+        label = self._data.get_column_label(column)
+        self._data.update_column_expression(label, expression)
+        return True
+
     # def show_status(self, msg):
     #     """Show message in statusbar.
 

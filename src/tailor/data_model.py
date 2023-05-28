@@ -181,7 +181,6 @@ class DataModel:
 
         # FIXME rename all expressions
 
-        # FIXME self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
         # FIXME self.show_status("Renamed column.")
 
     def normalize_column_name(self, name):
@@ -198,7 +197,21 @@ class DataModel:
         """
         return re.sub(r"\W|^(?=\d)", "_", name)
 
-    def update_column_expression(self, col_idx, expression):
+    def get_column_expression(self, label: str):
+        """Get column expression.
+
+        Get the mathematical expression used to calculate values in the
+        calculated column.
+
+        Args:
+            label (str): the column label.
+
+        Returns:
+            A string containing the mathematical expression or None.
+        """
+        return self._calculated_column_expression.get(label, None)
+
+    def update_column_expression(self, label: str, expression: str):
         """Update a calculated column with a new expression.
 
         Args:
@@ -206,12 +219,24 @@ class DataModel:
             expression: a string with a mathematical expression used to
                 calculate the column values.
         """
-        col_name = self.get_column_name(col_idx)
-        if self.is_calculated_column(col_idx):
-            self._calculated_column_expression[col_name] = expression
-            if self.recalculate_column(col_name, expression):
-                # calculation was successful
-                self.show_status("Updated column values.")
+        if self.is_calculated_column(label):
+            self._calculated_column_expression[label] = expression
+            self.recalculate_columns_from(label)
+
+    def recalculate_columns_from(self, label: str):
+        """Recalculate all columns starting from the given column.
+
+        When updating values or a column expression, you may want to also update
+        all calculated columns to the right of the updated column. This method
+        will evaluate all calculated columns starting from the specified label.
+
+        Args:
+            label (str): the column label to start from.
+        """
+        idx = self._data.columns.get_loc(label)
+        for column in self._data.columns[idx:]:
+            if self.is_calculated_column(column):
+                self.recalculate_column(column)
 
     def recalculate_column(self, col_name, expression=None):
         """Recalculate column values.
@@ -324,29 +349,13 @@ class DataModel:
     def get_column_names(self):
         """Get all column names.
 
+        Note: the column names may _not_ be in the order they appear in the
+        data.
+
         Returns:
             list[str]: a list of all column names.
         """
         return list(self._col_names.values())
-
-    # FIXME
-    # def get_column_names(self):
-    #     """Get list of all column names."""
-    #     return list(self._data.columns)
-
-    def get_column_expression(self, label: str):
-        """Get column expression.
-
-        Get the mathematical expression used to calculate values in the
-        calculated column.
-
-        Args:
-            label (str): the column label.
-
-        Returns:
-            A string containing the mathematical expression or None.
-        """
-        return self._calculated_column_expression.get(label, None)
 
     def get_column(self, label: str):
         """Return column values.
