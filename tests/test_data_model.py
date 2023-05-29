@@ -9,12 +9,12 @@ from tailor.data_model import DataModel
 
 
 @pytest.fixture()
-def model():
+def model() -> DataModel:
     return DataModel()
 
 
 @pytest.fixture()
-def bare_bones_data(model: DataModel):
+def bare_bones_data(model: DataModel) -> DataModel:
     """Create a bare bones data model.
 
     This is an instance of QDataModel with a very basic data structure (five
@@ -33,9 +33,27 @@ def bare_bones_data(model: DataModel):
     )
     # there is no guaranteed order in _col_names
     model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
-    model._calculated_column_expression["col3"] = "y + 5"
+    model._calculated_column_expression["col3"] = "col2 + 5"
     model._is_calculated_column_valid["col3"] = True
     model._new_col_num += 3
+    return model
+
+
+@pytest.fixture()
+def calc_model(model: DataModel) -> DataModel:
+    """Create a data model with multiple calculated columns.
+
+    This fixture depends on certain implementation details.
+    """
+    model._data = pd.DataFrame.from_dict(
+        {k: [1.0, 2.0, 3.0] for k in ["col1", "col2", "col3", "col4"]}
+    )
+    model._calculated_column_expression = {
+        "col1": "3.14",
+        "col2": "col1 ** 2",
+        "col4": "sqrt(col2)",
+    }
+    model._is_calculated_column_valid = {k: True for k in ["col1", "col2", "col4"]}
     return model
 
 
@@ -237,7 +255,7 @@ class TestDataModel:
         assert bare_bones_data.is_column_valid("col4") is False
 
     def test_get_column_expression(self, bare_bones_data: DataModel):
-        assert bare_bones_data.get_column_expression("col3") == "y + 5"
+        assert bare_bones_data.get_column_expression("col3") == "col2 + 5"
 
     def test_get_column_expression_returns_None(self, bare_bones_data: DataModel):
         assert bare_bones_data.get_column_expression("col1") is None
@@ -256,26 +274,83 @@ class TestDataModel:
         bare_bones_data.update_column_expression("col1", "x ** 2")
         assert "col1" not in bare_bones_data._calculated_column_expression
 
-    def test_recalculate_columns_from(self, model: DataModel, mocker: MockerFixture):
-        model._data = pd.DataFrame.from_dict(
-            {k: [1, 2, 3] for k in ["col1", "col2", "col3", "col4"]}
-        )
-        model._calculated_column_expression = {"col1": "x", "col2": "y", "col4": "z"}
-        mocker.patch.object(model, "recalculate_column")
+    def test_recalculate_columns_from(
+        self, calc_model: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(calc_model, "recalculate_column")
 
-        model.recalculate_columns_from("col2")
+        calc_model.recalculate_columns_from("col2")
 
         expected = [call("col2"), call("col4")]
-        assert model.recalculate_column.call_args_list == expected
+        assert calc_model.recalculate_column.call_args_list == expected
 
-    def test_recalculate_all_columns(self, model: DataModel, mocker: MockerFixture):
-        model._data = pd.DataFrame.from_dict(
-            {k: [1, 2, 3] for k in ["col1", "col2", "col3", "col4"]}
-        )
-        model._calculated_column_expression = {"col1": "x", "col2": "y", "col4": "z"}
-        mocker.patch.object(model, "recalculate_column")
+    def test_recalculate_all_columns(
+        self, calc_model: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(calc_model, "recalculate_column")
 
-        model.recalculate_all_columns()
+        calc_model.recalculate_all_columns()
 
         expected = [call("col1"), call("col2"), call("col4")]
-        assert model.recalculate_column.call_args_list == expected
+        assert calc_model.recalculate_column.call_args_list == expected
+
+    def test_accessible_columns_are_present(self, calc_model: DataModel):
+        objects = calc_model._get_accessible_columns("col3")
+        assert "col1" in objects
+        assert "col2" in objects
+        assert "col4" not in objects
+
+    def test_invalid_columns_are_not_accessible(self, calc_model: DataModel):
+        calc_model._is_calculated_column_valid["col1"] = False
+        objects = calc_model._get_accessible_columns("col2")
+        assert "col1" not in objects
+
+    def test_accessible_column_values(self, calc_model: DataModel):
+        objects = calc_model._get_accessible_columns("col2")
+        assert objects["col1"] is calc_model._data["col1"]
+
+    def test_recalculate_column_as_series(
+        self, calc_model: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(calc_model, "get_column_expression")
+        calc_model.get_column_expression.return_value = "col1 ** 2"
+
+        is_valid = calc_model.recalculate_column("col2")
+
+        assert is_valid is True
+        assert calc_model.is_column_valid("col2") is True
+        assert list(calc_model._data["col2"]) == pytest.approx([1.0, 4.0, 9.0])
+
+    def test_recalculate_column_as_array(
+        self, calc_model: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(calc_model, "get_column_expression")
+        calc_model.get_column_expression.return_value = "gradient(col1)"
+
+        is_valid = calc_model.recalculate_column("col2")
+
+        assert is_valid is True
+        assert calc_model.is_column_valid("col2") is True
+
+    def test_recalculate_column_as_integer(
+        self, calc_model: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(calc_model, "get_column_expression")
+        calc_model.get_column_expression.return_value = "4"
+
+        is_valid = calc_model.recalculate_column("col2")
+
+        assert is_valid is True
+        assert calc_model.is_column_valid("col2") is True
+        assert calc_model._data["col2"].dtype == np.float64
+
+    def test_recalculate_column_using_invalid_data(
+        self, calc_model: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(calc_model, "get_column_expression")
+        calc_model.get_column_expression.return_value = "col3 ** 2"
+
+        is_valid = calc_model.recalculate_column("col2")
+
+        assert is_valid is False
+        assert calc_model.is_column_valid("col2") is False

@@ -250,32 +250,23 @@ class DataModel:
             if self.is_calculated_column(column):
                 self.recalculate_column(column)
 
-    def recalculate_column(self, col_name, expression=None):
+    def recalculate_column(self, label: str) -> bool:
         """Recalculate column values.
 
         Calculate column values based on its expression. Each column can use
         values from columns to the left of itself. Those values can be accessed
-        by using the column name as a variable in the expression.
+        by using the column label (not the user-defined name!) as a variable in
+        the expression.
 
         Args:
-            col_name: a string containing the column name.
-            expression: an optional string that contains the mathematical
-                expression. If None (the default) the expression is taken from the
-                column information.
+            label (str): the column label.
 
         Returns:
             True if the calculation was successful, False otherwise.
         """
-        # UI must be updated to reflect changes in column values
-        # FIXME how to handle this in UI layer
-        # self.emit_column_changed(col_name)
-
-        if expression is None:
-            # expression must be retrieved from column information
-            expression = self._calculated_column_expression[col_name]
-
+        expression = self.get_column_expression(label)
         # set up interpreter
-        objects = self._get_accessible_columns(col_name)
+        objects = self._get_accessible_columns(label)
         aeval = asteval.Interpreter(usersyms=objects)
         try:
             # try to evaluate expression and cast output to a float (series)
@@ -286,38 +277,35 @@ class DataModel:
                 output = float(output)
         except Exception as exc:
             # error in evaluation or output cannot be cast to a float (series)
-            self._is_calculated_column_valid[col_name] = False
+            self._is_calculated_column_valid[label] = False
             # FIXME self.show_status(f"Error evaluating expression: {exc}")
             return False
         else:
             # evaluation was successful
-            self._data[col_name] = output
-            self._is_calculated_column_valid[col_name] = True
+            self._data[label] = output
+            self._is_calculated_column_valid[label] = True
             # FIXME self.show_status(f"Recalculated column values.")
             return True
 
-    def _get_accessible_columns(self, col_name):
+    def _get_accessible_columns(self, label: str) -> dict[str, pd.Series]:
         """Get accessible column data for use in expressions.
 
         When calculating column values each column can access the values of the
         columns to its left by using the column name as a variable. This method
-        returns the column data for the accessible columns.
+        returns the column data for the accessible columns. If the column data
+        is not valid, the data is not returned and that will invalidate every
+        calculated column using that column in an expression.
 
         Args:
-            col_name (str): the name of the column that wants to access data.
+            label (str): the label of the column that wants to access data.
 
         Returns:
-            dict: a dictionary of column_name, data pairs.
+            dict: a dictionary of column label, data value pairs.
         """
         # accessible columns to the left of current column
-        idx = self._data.columns.get_loc(col_name)
+        idx = self._data.columns.get_loc(label)
         accessible_columns = self._data.columns[:idx]
-        data = {
-            k: self._data[k]
-            for k in accessible_columns
-            if self.is_column_valid(col_name=k)
-        }
-        return data
+        return {k: self._data[k] for k in accessible_columns if self.is_column_valid(k)}
 
     def get_column_label(self, column: int):
         """Get column label.

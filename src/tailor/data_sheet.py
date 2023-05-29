@@ -148,6 +148,7 @@ class DataSheet(QtWidgets.QWidget):
         """
         if self._selected_col_idx is not None:
             self.data_model.updateColumnExpression(self._selected_col_idx, expression)
+        # FIXME emit column changed for all columns to the right
 
     def selection_changed(self, selected, deselected):
         """Handle selectionChanged events in the data view.
