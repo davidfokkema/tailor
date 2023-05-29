@@ -120,7 +120,15 @@ class TestDataModel:
         assert bare_bones_data._data.shape == (5, 1)
         assert bare_bones_data._data.columns == ["col1"]
 
-    def test_remove_columns_removes_calculated_column(self, bare_bones_data: DataModel):
+    def test_remove_last_column(self, bare_bones_data: DataModel):
+        # this should not crash
+        bare_bones_data.remove_columns(2, 1)
+
+    def test_remove_columns_removes_calculated_column(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "recalculate_columns_from")
+
         bare_bones_data.remove_columns(column=0, count=1)
         assert len(bare_bones_data._calculated_column_expression) == 1
 
@@ -130,9 +138,12 @@ class TestDataModel:
     def test_remove_columns_calls_recalculate(
         self, bare_bones_data: DataModel, mocker: MockerFixture
     ):
-        mocker.patch.object(bare_bones_data, "recalculate_all_columns")
+        mocker.patch.object(bare_bones_data, "get_column_label")
+        bare_bones_data.get_column_label.return_value = sentinel.label
+        mocker.patch.object(bare_bones_data, "recalculate_columns_from")
         bare_bones_data.remove_columns(1, 1)
-        bare_bones_data.recalculate_all_columns.assert_called()
+        bare_bones_data.get_column_label.assert_called_with(1)
+        bare_bones_data.recalculate_columns_from.assert_called_with(sentinel.label)
 
     @pytest.mark.parametrize(
         "source, dest, order",
@@ -255,4 +266,16 @@ class TestDataModel:
         model.recalculate_columns_from("col2")
 
         expected = [call("col2"), call("col4")]
+        assert model.recalculate_column.call_args_list == expected
+
+    def test_recalculate_all_columns(self, model: DataModel, mocker: MockerFixture):
+        model._data = pd.DataFrame.from_dict(
+            {k: [1, 2, 3] for k in ["col1", "col2", "col3", "col4"]}
+        )
+        model._calculated_column_expression = {"col1": "x", "col2": "y", "col4": "z"}
+        mocker.patch.object(model, "recalculate_column")
+
+        model.recalculate_all_columns()
+
+        expected = [call("col1"), call("col2"), call("col4")]
         assert model.recalculate_column.call_args_list == expected

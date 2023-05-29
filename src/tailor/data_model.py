@@ -115,12 +115,14 @@ class DataModel:
         labels = self._data.columns[column : column + count]
         self._data.drop(columns=labels, inplace=True)
         for label in labels:
-            try:
+            if self.is_calculated_column(label):
                 del self._calculated_column_expression[label]
-            except KeyError:
-                # not a calculated column
-                pass
-        self.recalculate_all_columns()
+
+        # if there are columns left to the right of the removed column(s),
+        # recalculate them
+        if column < self.num_columns():
+            new_label_at_idx = self.get_column_label(column)
+            self.recalculate_columns_from(new_label_at_idx)
 
     def move_column(self, source: int, dest: int):
         """Move a column in the table.
@@ -238,6 +240,16 @@ class DataModel:
             if self.is_calculated_column(column):
                 self.recalculate_column(column)
 
+    def recalculate_all_columns(self):
+        """Recalculate all columns.
+
+        If data is entered or changed, the calculated column values must be
+        updated. This method will manually recalculate all column values, from left to right.
+        """
+        for column in self._data.columns:
+            if self.is_calculated_column(column):
+                self.recalculate_column(column)
+
     def recalculate_column(self, col_name, expression=None):
         """Recalculate column values.
 
@@ -306,19 +318,6 @@ class DataModel:
             if self.is_column_valid(col_name=k)
         }
         return data
-
-    def recalculate_all_columns(self):
-        """Recalculate all columns.
-
-        If data is entered or changed, the calculated column values must be
-        updated. This method will manually recalculate all column values, from left to right.
-        """
-        # FIXME
-        return
-        column_names = self.get_column_names()
-        for col_idx in range(self.num_columns()):
-            if self.is_calculated_column(col_idx):
-                self.recalculate_column(column_names[col_idx])
 
     def get_column_label(self, column: int):
         """Get column label.
