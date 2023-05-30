@@ -197,8 +197,8 @@ class QDataModel(QtCore.QAbstractTableModel):
             The requested flags.
         """
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-        col = index.column()
-        if not self._data.is_calculated_column(col):
+        label = self._data.get_column_label(index.column())
+        if not self._data.is_calculated_column(label):
             # You can only edit data if the column values are not calculated
             flags |= QtCore.Qt.ItemIsEditable
         return flags

@@ -154,6 +154,7 @@ class TestQtRequired:
 
     @pytest.mark.parametrize("is_calculated", [True, False])
     def test_flags(self, qmodel: QDataModel, is_calculated):
+        qmodel._data.get_column_label.return_value = sentinel.label
         qmodel._data.is_calculated_column.return_value = is_calculated
         expected = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
         if not is_calculated:
@@ -162,7 +163,8 @@ class TestQtRequired:
         index = qmodel.createIndex(2, 123)
         flags = qmodel.flags(index)
 
-        qmodel._data.is_calculated_column.assert_called_once_with(123)
+        qmodel._data.get_column_label.assert_called_with(123)
+        qmodel._data.is_calculated_column.assert_called_once_with(sentinel.label)
         assert flags == expected
 
     def test_insertRows(self, qmodel: QDataModel, mocker: MockerFixture):
