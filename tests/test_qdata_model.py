@@ -248,6 +248,7 @@ class TestQtRequired:
     def test_moveColumn_right(self, qmodel: QDataModel, mocker: MockerFixture):
         mocker.patch.object(qmodel, "beginMoveColumns")
         mocker.patch.object(qmodel, "endMoveColumns")
+        qmodel._data.get_column_label.return_value = sentinel.label
         parent = QtCore.QModelIndex()
 
         retvalue = qmodel.moveColumn(parent, 3, parent, 5)
@@ -257,11 +258,16 @@ class TestQtRequired:
         assert retvalue is True
         qmodel.beginMoveColumns.assert_called_with(parent, 3, 3, parent, 5)
         qmodel.endMoveColumns.assert_called()
+        # recalculate from column 3 (from index 3, all columns are potentially displaced)
+        qmodel._data.get_column_label.assert_called_with(3)
+        qmodel._data.recalculate_columns_from.assert_called_with(sentinel.label)
 
     def test_moveColumn_left(self, qmodel: QDataModel, mocker: MockerFixture):
         mocker.patch.object(qmodel, "beginMoveColumns")
         mocker.patch.object(qmodel, "endMoveColumns")
+        qmodel._data.get_column_label.return_value = sentinel.label
         parent = QtCore.QModelIndex()
+
         retvalue = qmodel.moveColumn(parent, 5, parent, 3)
 
         # pay attention to Qt conventions, see method docstring
@@ -269,6 +275,9 @@ class TestQtRequired:
         assert retvalue is True
         qmodel.beginMoveColumns.assert_called_with(parent, 5, 5, parent, 3)
         qmodel.endMoveColumns.assert_called()
+        # recalculate from column 3 (from index 3, all columns are potentially displaced)
+        qmodel._data.get_column_label.assert_called_with(3)
+        qmodel._data.recalculate_columns_from.assert_called_with(sentinel.label)
 
     def test_moveColumn_invalid_move(self, qmodel: QDataModel):
         parent = QtCore.QModelIndex()

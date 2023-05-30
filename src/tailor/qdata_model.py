@@ -369,6 +369,9 @@ class QDataModel(QtCore.QAbstractTableModel):
                 # Adjust for Qt conventions, undo +1, see docstring
                 dest_idx -= 1
             self._data.move_column(source_idx, dest_idx)
+            label = self._data.get_column_label(min(source_idx, dest_idx))
+            self._data.recalculate_columns_from(label)
+            # endMoveColumns triggers a dataChanged for all columns, apparently
             self.endMoveColumns()
             return True
         else:
