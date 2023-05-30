@@ -27,6 +27,15 @@ def qmodel(mocker: MockerFixture):
     return model
 
 
+@pytest.fixture()
+def calc_data():
+    model = QDataModel()
+    for _ in range(5):
+        model.insertCalculatedColumn(0)
+    model.insertRows(0, 10)
+    return model
+
+
 class TestQtRequired:
     def test_rowCount(self, qmodel: QDataModel):
         assert qmodel.rowCount() == qmodel._data.num_rows.return_value
@@ -118,7 +127,15 @@ class TestQtRequired:
     @pytest.mark.parametrize("role", [None, QtCore.Qt.EditRole])
     def test_setData(self, qmodel: QDataModel, mocker: MockerFixture, role):
         mocker.patch.object(qmodel, "dataChanged")
+        mocker.patch.object(qmodel, "columnCount")
+        qmodel._data.get_column_label.return_value = sentinel.label
         index = qmodel.createIndex(1, 2)
+        # the current cell has changed, as well as potentially all cells in the
+        # same row to the right of the current cell due to recalculating values.
+        qmodel.columnCount.return_value = 10
+        top_left = qmodel.createIndex(1, 2)
+        # 10 columns, last column is number 9
+        bottom_right = qmodel.createIndex(1, 9)
 
         if role:
             qmodel.setData(index, 3, role)
@@ -126,8 +143,9 @@ class TestQtRequired:
             qmodel.setData(index, 3)
 
         qmodel._data.set_value.assert_called_once_with(1, 2, 3.0)
-        qmodel.dataChanged.emit.assert_called_once_with(index, index)
-        qmodel._data.recalculate_all_columns.assert_called()
+        qmodel._data.get_column_label.assert_called_with(2)
+        qmodel._data.recalculate_columns_from.assert_called_with(sentinel.label)
+        qmodel.dataChanged.emit.assert_called_once_with(top_left, bottom_right)
 
     def test_setData_with_unsupported_role(self, qmodel: QDataModel):
         index = qmodel.createIndex(2, 1)
@@ -335,10 +353,14 @@ class TestAPI:
         qmodel._data.get_column_expression.assert_called_with(sentinel.label)
         assert expression == sentinel.expression
 
-    def test_updateColumnExpression(self, qmodel: QDataModel):
+    def test_updateColumnExpression(self, qmodel: QDataModel, mocker: MockerFixture):
+        mocker.patch.object(qmodel, "createIndex")
+        mocker.patch.object(qmodel, "dataChanged")
         qmodel._data.get_column_label.return_value = sentinel.label
 
-        assert qmodel.updateColumnExpression(sentinel.idx, sentinel.expr) is True
+        success = qmodel.updateColumnExpression(sentinel.idx, sentinel.expr)
+
+        assert success is True
         qmodel._data.get_column_label.assert_called_with(sentinel.idx)
         qmodel._data.update_column_expression.assert_called_with(
             sentinel.label, sentinel.expr
@@ -350,3 +372,14 @@ class TestAPI:
         mocker.patch.object(qmodel, "isCalculatedColumn").return_value = False
         print(qmodel.isCalculatedColumn(0))
         assert qmodel.updateColumnExpression(0, "Foo") is False
+
+    def test_updateColumnExpression_emits_dataChanged(
+        self, calc_data: QDataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(calc_data, "dataChanged")
+        top_left = calc_data.createIndex(0, 2)
+        bottom_right = calc_data.createIndex(9, 4)
+
+        calc_data.updateColumnExpression(2, "x ** 2")
+
+        calc_data.dataChanged.emit.assert_called_with(top_left, bottom_right)

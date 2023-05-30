@@ -174,10 +174,13 @@ class QDataModel(QtCore.QAbstractTableModel):
             finally:
                 self._data.set_value(row, col, value)
                 # FIXME: data changed, recalculate all columns; better to only
-                # recalculate the current row
+                # recalculate the current row (not possible). Emit datachanged
+                # for all columns to the right of this column.
                 if not skip_update:
-                    self._data.recalculate_all_columns()
-                    self.dataChanged.emit(index, index)
+                    label = self._data.get_column_label(col)
+                    self._data.recalculate_columns_from(label)
+                    num_columns = self.columnCount()
+                    self.dataChanged.emit(index, self.createIndex(row, num_columns - 1))
             return True
         # Role not implemented
         return False
@@ -223,8 +226,8 @@ class QDataModel(QtCore.QAbstractTableModel):
 
         self.beginInsertRows(parent, row, row + count - 1)
         self._data.insert_rows(row, count)
-        self.endInsertRows()
         self._data.recalculate_all_columns()
+        self.endInsertRows()
         return True
 
     def removeRows(
@@ -443,6 +446,9 @@ class QDataModel(QtCore.QAbstractTableModel):
             return False
         label = self._data.get_column_label(column)
         self._data.update_column_expression(label, expression)
+        top_left = self.createIndex(0, column)
+        bottom_right = self.createIndex(self.rowCount() - 1, self.columnCount() - 1)
+        self.dataChanged.emit(top_left, bottom_right)
         return True
 
     # def show_status(self, msg):
