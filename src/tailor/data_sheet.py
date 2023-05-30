@@ -158,11 +158,20 @@ class DataSheet(QtWidgets.QWidget):
         These values are used to update the column information in the user
         interface.
 
+        Note: the selected and deselected parameters are ignored. They only tell
+        you about the changes in selection being made. So, for example, if you
+        first select a column and then select a single cell within that column,
+        selected will be empty (no extra cells selected) and deselected will
+        contain all other cells in the column. This is not very useful to
+        determine the current selection. Therefore, the current selection is
+        retrieved instead of using the arguments.
+
         Args:
-            selected: QItemSelection containing the newly selected events.
+            selected: QItemSelection containing the newly selected cells.
             deselected: QItemSelection containing previously selected, and now
             deselected, items.
         """
+        selected = self.selection.selection()
         if not selected.isEmpty():
             self.ui.nameLabel.setEnabled(True)
             self.ui.name_edit.setEnabled(True)

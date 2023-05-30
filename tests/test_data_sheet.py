@@ -47,6 +47,13 @@ class TestDataSheet:
             sentinel.num_columns
         )
 
+    def test_selection_changed_uses_full_selection(
+        self, bare_bones_data_sheet: DataSheet, mocker: MockerFixture
+    ):
+        bare_bones_data_sheet.selection = mocker.Mock()
+        bare_bones_data_sheet.selection_changed(sentinel.new, sentinel.old)
+        bare_bones_data_sheet.selection.selection.assert_called()
+
 
 class TestIntegratedDataSheet:
     def test_fixture_properties(self, data_sheet: DataSheet):
