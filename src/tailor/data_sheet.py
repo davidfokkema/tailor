@@ -206,20 +206,54 @@ class DataSheet(QtWidgets.QWidget):
         underlying data instead. That way, visual and logical ordering are
         always in sync.
 
+        Qt conventions are a bit weird and inconsistent, unfortunately. Moving a
+        column requires calling the moveColumn() method with sourceIndex and
+        destinationChild parameters. DestinationChild is the would-be index in
+        the initial table, _before_ the move operation is completed. So, if you
+        have the initial state:
+
+            col0, col1, col2, col3
+
+        and you want to end up with the final state:
+
+            col1, col2, col0, col3
+
+        you want the operation:
+
+            col0, col1, col2, col3
+              |--------------^
+
+        and you should call `moveColumn(0, 3)` to move col0 from index 0 to be
+        inserted at index 3, i.e. you want to place col0 _before_ col3. This +1
+        behaviour does not occur when moving a column to the left instead of to
+        the right since then you don't have to adjust for the removal of the
+        source column.
+
+        The problem is that newidx does _not_ behave that way. The argument
+        oldidx works on the initial state and the argument newidx works on the
+        final state. So the above move operation `moveColumn(0, 3)` has
+        oldidx = 0 and newidx = 2 (check the final state).
+
         Args:
             logidx (int): the logical column index (index in the dataframe)
             oldidx (int): the old visual index newidx (int): the new visual
             index
         """
-        print(f"Column moved from {oldidx=} to {newidx=}")
+        # Raise an exception when column ordering has been messed up
+        assert logidx == oldidx
+
         header = self.ui.data_view.horizontalHeader()
         header.blockSignals(True)
         # move the column back, keep the header in logical order
         header.moveSection(newidx, oldidx)
         header.blockSignals(False)
         # move the underlying data column instead
-        self.data_model.moveColumn(None, oldidx, None, newidx)
-        self.data_model.recalculate_all_columns()
+        if newidx > oldidx:
+            # moving to the right
+            destidx = newidx + 1
+        else:
+            destidx = newidx
+        self.data_model.moveColumn(sourceColumn=oldidx, destinationChild=destidx)
         # select the column that was just moved at the new location
         self.ui.data_view.selectColumn(newidx)
 
