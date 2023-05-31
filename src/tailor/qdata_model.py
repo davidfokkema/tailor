@@ -59,7 +59,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self,
         index: QtCore.QModelIndex,
         role: QtCore.Qt.ItemDataRole = QtCore.Qt.DisplayRole,
-    ) -> str | QtGui.QBrush:
+    ) -> str | QtGui.QBrush | None:
         """Return (attributes of) the data.
 
         This method is called by the table view to request data points or its
