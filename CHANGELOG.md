@@ -5,12 +5,23 @@
 ### :rocket: Features
 
 * Added `--no-update-check` flag to skip updates on startup
+* Added lots of tests.
+* Upgraded to Qt/PySide 6.5
 
 ### :beetle: Fixes
 
 * Check for both OS and CPU hardware for updates (e.g. differentiate between Intel and Apple Silicon)
 * Include link to release notes in update window
 * Much improved dialog for available updates
+* Fixed selection bug where first selecting a column and then selecting a single
+  cell within that column did not update all column information correctly
+
+### :hammer: Refactoring
+
+* Completely overhauled separation of concerns between GUI and data model
+  layers. There are now more layers and many methods are now more focused and
+  well tested. Should also make it easier to switch GUI toolkits in the future.
+
 
 ## 1.7.0
 
