@@ -125,16 +125,7 @@ class TestQtRequired:
 
     @pytest.mark.parametrize("role", [None, QtCore.Qt.EditRole])
     def test_setData(self, qmodel: QDataModel, mocker: MockerFixture, role):
-        mocker.patch.object(qmodel, "dataChanged")
-        mocker.patch.object(qmodel, "columnCount")
-        qmodel._data.get_column_label.return_value = sentinel.label
         index = qmodel.createIndex(1, 2)
-        # the current cell has changed, as well as potentially all cells in the
-        # same row to the right of the current cell due to recalculating values.
-        qmodel.columnCount.return_value = 10
-        top_left = qmodel.createIndex(1, 2)
-        # 10 columns, last column is number 9
-        bottom_right = qmodel.createIndex(1, 9)
 
         if role:
             qmodel.setData(index, 3, role)
@@ -142,9 +133,6 @@ class TestQtRequired:
             qmodel.setData(index, 3)
 
         qmodel._data.set_value.assert_called_once_with(1, 2, 3.0)
-        qmodel._data.get_column_label.assert_called_with(2)
-        qmodel._data.recalculate_columns_from.assert_called_with(sentinel.label)
-        qmodel.dataChanged.emit.assert_called_once_with(top_left, bottom_right)
 
     def test_setData_with_unsupported_role(self, qmodel: QDataModel):
         index = qmodel.createIndex(2, 1)
@@ -177,7 +165,6 @@ class TestQtRequired:
         # four rows: 3 (first), 4, 5, 6 (last)
         qmodel.beginInsertRows.assert_called_with(parent, 3, 6)
         qmodel.endInsertRows.assert_called()
-        qmodel._data.recalculate_all_columns.assert_called()
 
     def test_insertRows_valid_parent(self, qmodel: QDataModel):
         """You can't add rows inside cells."""
@@ -262,9 +249,6 @@ class TestQtRequired:
         assert retvalue is True
         qmodel.beginMoveColumns.assert_called_with(parent, 3, 3, parent, 5)
         qmodel.endMoveColumns.assert_called()
-        # recalculate from column 3 (from index 3, all columns are potentially displaced)
-        qmodel._data.get_column_label.assert_called_with(3)
-        qmodel._data.recalculate_columns_from.assert_called_with(sentinel.label)
 
     def test_moveColumn_left(self, qmodel: QDataModel, mocker: MockerFixture):
         mocker.patch.object(qmodel, "beginMoveColumns")
@@ -279,9 +263,6 @@ class TestQtRequired:
         assert retvalue is True
         qmodel.beginMoveColumns.assert_called_with(parent, 5, 5, parent, 3)
         qmodel.endMoveColumns.assert_called()
-        # recalculate from column 3 (from index 3, all columns are potentially displaced)
-        qmodel._data.get_column_label.assert_called_with(3)
-        qmodel._data.recalculate_columns_from.assert_called_with(sentinel.label)
 
     def test_moveColumn_invalid_move(self, qmodel: QDataModel):
         parent = QtCore.QModelIndex()

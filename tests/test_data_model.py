@@ -84,6 +84,19 @@ class TestDataModel:
         bare_bones_data.set_value(2, 1, value)
         assert bare_bones_data.get_value(2, 1) == pytest.approx(value, nan_ok=True)
 
+    def test_set_value_triggers_recalculation(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "recalculate_columns_from")
+        mocker.patch.object(bare_bones_data, "get_column_label")
+        bare_bones_data.get_column_label.return_value = sentinel.label
+
+        bare_bones_data.set_value(row=1, column=2, value=3.0)
+
+        # recalculate all columns starting from start_column
+        bare_bones_data.get_column_label.assert_called_with(2)
+        bare_bones_data.recalculate_columns_from.assert_called_with(sentinel.label)
+
     def test_set_values(self, bare_bones_data: DataModel):
         # no calculated columns, only data
         bare_bones_data._calculated_column_expression = {}
@@ -132,6 +145,13 @@ class TestDataModel:
             ],
             nan_ok=True,
         )
+
+    def test_insert_rows_triggers_recalculation(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "recalculate_all_columns")
+        bare_bones_data.insert_rows(3, 4)
+        bare_bones_data.recalculate_all_columns.assert_called()
 
     def test_remove_rows(self, bare_bones_data: DataModel):
         bare_bones_data.remove_rows(1, 2)
@@ -200,9 +220,18 @@ class TestDataModel:
             (2, 1, ["col1", "col3", "col2"]),
         ],
     )
-    def test_move_column(self, bare_bones_data: DataModel, source, dest, order):
+    def test_move_column(
+        self, bare_bones_data: DataModel, mocker: MockerFixture, source, dest, order
+    ):
+        mocker.patch.object(bare_bones_data, "get_column_label")
+        mocker.patch.object(bare_bones_data, "recalculate_columns_from")
+        bare_bones_data.get_column_label.return_value = sentinel.label
+
         bare_bones_data.move_column(source, dest)
+
         assert list(bare_bones_data._data.columns) == order
+        bare_bones_data.get_column_label.assert_called_with(min(source, dest))
+        bare_bones_data.recalculate_columns_from.assert_called_with(sentinel.label)
 
     def test_insert_calculated_column(self, bare_bones_data: DataModel):
         assert len(bare_bones_data._calculated_column_expression) == 1

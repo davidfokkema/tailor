@@ -143,8 +143,6 @@ class QDataModel(QtCore.QAbstractTableModel):
         index: QtCore.QModelIndex,
         value: float,
         role: QtCore.Qt.ItemDataRole = QtCore.Qt.EditRole,
-        *,
-        skip_update=False,
     ) -> bool:
         """Set (attributes of) data values.
 
@@ -157,9 +155,6 @@ class QDataModel(QtCore.QAbstractTableModel):
             value: the value to set.
             role: an ItemDataRole to indicate what type of information is
                 requested.
-            skip_update (boolean): if True, do not recalculate computed
-                cell values or signal that the current cell has changed. These
-                are both time-consuming operations.
 
         Returns:
             True if the data could be set. False otherwise.
@@ -173,12 +168,6 @@ class QDataModel(QtCore.QAbstractTableModel):
                 value = np.nan
             finally:
                 self._data.set_value(row, col, value)
-                # Emit datachanged for all columns to the right of this column.
-                if not skip_update:
-                    label = self._data.get_column_label(col)
-                    self._data.recalculate_columns_from(label)
-                    num_columns = self.columnCount()
-                    self.dataChanged.emit(index, self.createIndex(row, num_columns - 1))
             return True
         # Role not implemented
         return False
@@ -230,7 +219,6 @@ class QDataModel(QtCore.QAbstractTableModel):
 
         self.beginInsertRows(parent, row, row + count - 1)
         self._data.insert_rows(row, count)
-        self._data.recalculate_all_columns()
         self.endInsertRows()
         return True
 
@@ -373,8 +361,6 @@ class QDataModel(QtCore.QAbstractTableModel):
                 # Adjust for Qt conventions, undo +1, see docstring
                 dest_idx -= 1
             self._data.move_column(source_idx, dest_idx)
-            label = self._data.get_column_label(min(source_idx, dest_idx))
-            self._data.recalculate_columns_from(label)
             # endMoveColumns triggers a dataChanged for all columns, apparently
             self.endMoveColumns()
             return True

@@ -55,6 +55,8 @@ class DataModel:
             value (float): value to insert
         """
         self._data.iat[row, column] = value
+        label = self.get_column_label(column)
+        self.recalculate_columns_from(label)
 
     def set_values(
         self,
@@ -97,6 +99,7 @@ class DataModel:
         self._data = pd.concat(
             [self._data.iloc[:row], new_data, self._data.iloc[row:]]
         ).reset_index(drop=True)
+        self.recalculate_all_columns()
 
     def remove_rows(self, row: int, count: int):
         """Remove rows from the table.
@@ -172,9 +175,13 @@ class DataModel:
             source (int): the original index of the column
             dest (int): the final index of the column
         """
+        # reorder column labels
         cols = list(self._data.columns)
         cols.insert(dest, cols.pop(source))
+        # reorder dataframe to conform to column labels
         self._data = self._data.reindex(columns=cols)
+        label = self.get_column_label(min(source, dest))
+        self.recalculate_columns_from(label)
 
     def is_empty(self):
         """Check whether all cells are empty."""
