@@ -173,9 +173,7 @@ class QDataModel(QtCore.QAbstractTableModel):
                 value = np.nan
             finally:
                 self._data.set_value(row, col, value)
-                # FIXME: data changed, recalculate all columns; better to only
-                # recalculate the current row (not possible). Emit datachanged
-                # for all columns to the right of this column.
+                # Emit datachanged for all columns to the right of this column.
                 if not skip_update:
                     label = self._data.get_column_label(col)
                     self._data.recalculate_columns_from(label)
@@ -209,12 +207,14 @@ class QDataModel(QtCore.QAbstractTableModel):
         """Insert rows into the table.
 
         Insert `count` rows into the table at position `row`. Returns True if
-        the insertion was succesful.
+        the insertion was succesful and False otherwise. Note that you cannot
+        insert rows into a table which has no columns. So, first ensure the
+        table contains some columns before inserting rows.
 
         Args:
             row: an integer row number to indicate the place of insertion.
-            count: number of rows to insert
-            parent: a QModelIndex pointing into the model. Must be invalid since
+            count: number of rows to insert parent: a QModelIndex pointing into
+            the model. Must be invalid since
                 you cannot insert rows into a cell.
 
         Returns:
@@ -222,6 +222,10 @@ class QDataModel(QtCore.QAbstractTableModel):
         """
         if parent.isValid():
             # a table cell can _not_ insert rows
+            return False
+
+        if self._data.num_columns() == 0:
+            # you can not insert rows when there are no columns
             return False
 
         self.beginInsertRows(parent, row, row + count - 1)
@@ -452,6 +456,31 @@ class QDataModel(QtCore.QAbstractTableModel):
         top_left = self.createIndex(0, column)
         bottom_right = self.createIndex(self.rowCount() - 1, self.columnCount() - 1)
         self.dataChanged.emit(top_left, bottom_right)
+        return True
+
+    def clearData(self, selection: QtCore.QItemSelection) -> bool:
+        """Clear all cell contents within a selection.
+
+        Args:
+            selection (QtCore.QItemSelection): selection of cells to clear
+
+        Returns:
+            bool: True if successful.
+        """
+        for selection_range in selection.toList():
+            self._data.set_values(
+                selection_range.top(),
+                selection_range.left(),
+                selection_range.bottom(),
+                selection_range.right(),
+                np.nan,
+            )
+            # recalculating vales may have changed all columns to the far right
+            num_columns = self.columnCount()
+            self.dataChanged.emit(
+                selection_range.topLeft(),
+                self.createIndex(selection_range.bottom(), num_columns - 1),
+            )
         return True
 
     # def show_status(self, msg):

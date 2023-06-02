@@ -1,7 +1,6 @@
-from unittest.mock import sentinel
+from unittest.mock import call, sentinel
 
 import numpy as np
-import pandas as pd
 import pytest
 from PySide6 import QtCore
 from pytest_mock import MockerFixture
@@ -186,6 +185,11 @@ class TestQtRequired:
 
     def test_insertRows_no_parent(self, qmodel: QDataModel):
         assert qmodel.insertRows(3, 4) is True
+
+    def test_insertRows_no_columns(self, qmodel: QDataModel):
+        qmodel._data.num_columns.return_value = 0
+
+        assert qmodel.insertRows(0, 10) is False
 
     def test_removeRows(self, qmodel: QDataModel, mocker: MockerFixture):
         # WIP: test that begin/endRemoveRows is called
@@ -394,3 +398,46 @@ class TestAPI:
         calc_data.updateColumnExpression(2, "x ** 2")
 
         calc_data.dataChanged.emit.assert_called_with(top_left, bottom_right)
+
+    def test_clearData(self, qmodel: QDataModel):
+        selection = QtCore.QItemSelection(
+            qmodel.createIndex(0, 1), qmodel.createIndex(1, 1)
+        )
+
+        qmodel.clearData(selection)
+
+        qmodel._data.set_values.assert_called_with(0, 1, 1, 1, np.nan)
+
+    def test_clearData_with_multiple_selections(self, qmodel: QDataModel):
+        selection = QtCore.QItemSelection(
+            qmodel.createIndex(0, 1), qmodel.createIndex(1, 1)
+        )
+        selection.append(
+            QtCore.QItemSelection(qmodel.createIndex(2, 2), qmodel.createIndex(2, 2))
+        )
+
+        qmodel.clearData(selection)
+
+        expected = [call(0, 1, 1, 1, np.nan), call(2, 2, 2, 2, np.nan)]
+        assert qmodel._data.set_values.call_args_list == expected
+
+    def test_clearData_calls_dataChanged(
+        self, qmodel: QDataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(qmodel, "dataChanged")
+        mocker.patch.object(qmodel, "columnCount")
+        qmodel.columnCount.return_value = 10
+        topleft1 = qmodel.createIndex(0, 1)
+        bottomright1 = qmodel.createIndex(2, 3)
+        bottomfarright1 = qmodel.createIndex(2, 10 - 1)
+        topleft2 = qmodel.createIndex(4, 5)
+        bottomright2 = qmodel.createIndex(6, 7)
+        bottomfarright2 = qmodel.createIndex(6, 10 - 1)
+
+        selection = QtCore.QItemSelection(topleft1, bottomright1)
+        selection.append(QtCore.QItemSelection(topleft2, bottomright2))
+
+        qmodel.clearData(selection)
+
+        expected = [call(topleft1, bottomfarright1), call(topleft2, bottomfarright2)]
+        assert qmodel.dataChanged.emit.call_args_list == expected

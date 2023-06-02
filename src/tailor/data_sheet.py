@@ -280,13 +280,7 @@ class DataSheet(QtWidgets.QWidget):
 
     def clear_selected_cells(self):
         """Clear contents of selected cells."""
-        for index in self.selection.selectedIndexes():
-            self.data_model.setData(index, "", skip_update=True)
-        # signal that ALL values may have changed using an invalid index
-        # this can be MUCH quicker than emitting signals for each cell
-        self.data_model.dataChanged.emit(QtCore.QModelIndex(), QtCore.QModelIndex())
-        # recalculate computed values once
-        self.data_model.recalculate_all_columns()
+        self.data_model.clearData(self.selection.selection())
 
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""

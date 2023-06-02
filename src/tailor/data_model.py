@@ -56,6 +56,32 @@ class DataModel:
         """
         self._data.iat[row, column] = value
 
+    def set_values(
+        self,
+        start_row: int,
+        start_column: int,
+        end_row: int,
+        end_column: int,
+        value: float,
+    ):
+        """Set a block of table cells to some value.
+
+        The block of cells is specified using start and end indexes for rows and
+        columns. Interpreted as a rectangular selection, the starting indexes
+        specify the location of the topleft corner while the ending indexes
+        specify the bottomright corner. All cells within this selection are set
+        to the same specified value.
+
+        Args:
+            start_row (int): top left row number. start_column (int): top left
+            column number. end_row (int): bottom right row number. end_column
+            (int): bottom right column number. value (float): the value to set
+            all cells to.
+        """
+        self._data.iloc[start_row : end_row + 1, start_column : end_column + 1] = value
+        label = self.get_column_label(start_column)
+        self.recalculate_columns_from(label)
+
     def insert_rows(self, row: int, count: int):
         """Insert rows into the table.
 
