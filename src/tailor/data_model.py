@@ -10,6 +10,8 @@ import asteval
 import numpy as np
 import pandas as pd
 
+from tailor.ast_names import get_variable_names, rename_variables
+
 # treat Inf and -Inf as missing values (e.g. when calling dropna())
 pd.options.mode.use_inf_as_na = True
 
@@ -21,7 +23,11 @@ class DataModel:
     table view used in the app. This class provides an API specific to Tailor.
     """
 
-    _new_col_num = 0
+    _new_col_num: int = 0
+    # column labels -> names
+    _col_names: dict[str, str]
+    _calculated_column_expression: dict[str, str]
+    _is_calculated_column_valid: dict[str, bool]
 
     def __init__(self) -> None:
         self._data = pd.DataFrame()
@@ -244,7 +250,25 @@ class DataModel:
         Returns:
             A string containing the mathematical expression or None.
         """
-        return self._calculated_column_expression.get(label, None)
+        expression = self._calculated_column_expression.get(label, None)
+
+        if expression is not None:
+            if get_variable_names(expression) & set(self._col_names.values()):
+                # There seems to be a raw variable name (not label) stored in
+                # the expression. This can happen if you use a variable in your
+                # expression which does not yet exist. When a column with that
+                # name is created, the name (and not the label) is still stored
+                # in the expression. Because the label is not stored, renaming
+                # the column will not result in an updated expression. Try to
+                # update the expression so that the name will be transformed
+                # into a label. After that the column is locked in and can
+                # safely be further renamed if necessary. False positives may
+                # occur if columns are still named col1, col2, etc., but that is
+                # ok.
+                self.update_column_expression(label, expression)
+            return rename_variables(expression, self._col_names)
+        else:
+            return None
 
     def update_column_expression(self, label: str, expression: str):
         """Update a calculated column with a new expression.
@@ -255,7 +279,10 @@ class DataModel:
                 calculate the column values.
         """
         if self.is_calculated_column(label):
-            self._calculated_column_expression[label] = expression
+            # mapping: names -> labels, so must reverse _col_names mapping
+            mapping = {v: k for k, v in self._col_names.items()}
+            transformed = rename_variables(expression, mapping)
+            self._calculated_column_expression[label] = transformed
             self.recalculate_columns_from(label)
 
     def recalculate_columns_from(self, label: str):
@@ -338,7 +365,11 @@ class DataModel:
         # accessible columns to the left of current column
         idx = self._data.columns.get_loc(label)
         accessible_columns = self._data.columns[:idx]
-        return {k: self._data[k] for k in accessible_columns if self.is_column_valid(k)}
+        return {
+            self.get_column_name(k): self._data[k]
+            for k in accessible_columns
+            if self.is_column_valid(k)
+        }
 
     def get_column_label(self, column: int):
         """Get column label.

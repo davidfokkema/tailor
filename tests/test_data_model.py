@@ -48,6 +48,7 @@ def calc_model(model: DataModel) -> DataModel:
     model._data = pd.DataFrame.from_dict(
         {k: [1.0, 2.0, 3.0] for k in ["col1", "col2", "col3", "col4"]}
     )
+    model._col_names = {"col1": "x", "col2": "y", "col3": "z", "col4": "t"}
     model._calculated_column_expression = {
         "col1": "3.14",
         "col2": "col1 ** 2",
@@ -312,22 +313,36 @@ class TestDataModel:
         assert bare_bones_data.is_column_valid("col4") is False
 
     def test_get_column_expression(self, bare_bones_data: DataModel):
-        assert bare_bones_data.get_column_expression("col3") == "col2 + 5"
+        # variables are renamed from column labels -> names
+        assert bare_bones_data.get_column_expression("col3") == "y + 5"
 
     def test_get_column_expression_returns_None(self, bare_bones_data: DataModel):
         assert bare_bones_data.get_column_expression("col1") is None
+
+    def test_get_column_expression_locks_in_variable(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "update_column_expression")
+        # stored expression should not contain variable names but labels
+        bare_bones_data._calculated_column_expression["col3"] = "y + 5"
+
+        bare_bones_data.get_column_expression("col3")
+
+        bare_bones_data.update_column_expression.assert_called_with("col3", "y + 5")
 
     def test_update_column_expression(
         self, bare_bones_data: DataModel, mocker: MockerFixture
     ):
         mocker.patch.object(bare_bones_data, "recalculate_columns_from")
 
-        bare_bones_data.update_column_expression("col3", sentinel.expr)
+        bare_bones_data.update_column_expression("col3", "y + 5")
 
-        assert bare_bones_data._calculated_column_expression["col3"] == sentinel.expr
+        # expression variables are stored using column labels, not names
+        assert bare_bones_data._calculated_column_expression["col3"] == "col2 + 5"
         bare_bones_data.recalculate_columns_from.assert_called_with("col3")
 
     def test_update_column_expression_nop(self, bare_bones_data: DataModel):
+        # col1 is not a calculated column
         bare_bones_data.update_column_expression("col1", "x ** 2")
         assert "col1" not in bare_bones_data._calculated_column_expression
 
@@ -352,25 +367,26 @@ class TestDataModel:
         assert calc_model.recalculate_column.call_args_list == expected
 
     def test_accessible_columns_are_present(self, calc_model: DataModel):
+        # accessible objects are returned by their names
         objects = calc_model._get_accessible_columns("col3")
-        assert "col1" in objects
-        assert "col2" in objects
-        assert "col4" not in objects
+        assert "x" in objects
+        assert "y" in objects
+        assert "t" not in objects
 
     def test_invalid_columns_are_not_accessible(self, calc_model: DataModel):
         calc_model._is_calculated_column_valid["col1"] = False
         objects = calc_model._get_accessible_columns("col2")
-        assert "col1" not in objects
+        assert "x" not in objects
 
     def test_accessible_column_values(self, calc_model: DataModel):
         objects = calc_model._get_accessible_columns("col2")
-        assert objects["col1"] is calc_model._data["col1"]
+        assert objects["x"] is calc_model._data["col1"]
 
     def test_recalculate_column_as_series(
         self, calc_model: DataModel, mocker: MockerFixture
     ):
         mocker.patch.object(calc_model, "get_column_expression")
-        calc_model.get_column_expression.return_value = "col1 ** 2"
+        calc_model.get_column_expression.return_value = "x ** 2"
 
         is_valid = calc_model.recalculate_column("col2")
 
@@ -382,7 +398,7 @@ class TestDataModel:
         self, calc_model: DataModel, mocker: MockerFixture
     ):
         mocker.patch.object(calc_model, "get_column_expression")
-        calc_model.get_column_expression.return_value = "gradient(col1)"
+        calc_model.get_column_expression.return_value = "gradient(x)"
 
         is_valid = calc_model.recalculate_column("col2")
 
