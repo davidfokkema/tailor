@@ -304,6 +304,7 @@ class DataSheet(QtWidgets.QWidget):
             current_index = self.ui.data_view.currentIndex()
             self.data_model.setDataFromArray(current_index, values)
 
+        # FIXME
         # # reset current index and focus
         # self.ui.data_view.setFocus()
         # # set selection to pasted cells
