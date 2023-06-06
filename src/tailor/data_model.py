@@ -87,10 +87,11 @@ class DataModel:
         to the same specified value.
 
         Args:
-            start_row (int): top left row number. start_column (int): top left
-            column number. end_row (int): bottom right row number. end_column
-            (int): bottom right column number. value (float): the value to set
-            all cells to.
+            start_row (int): top left row number.
+            start_column (int): top left column number.
+            end_row (int): bottom right row number.
+            end_column (int): bottom right column number.
+            value (float): the value to set all cells to.
         """
         self._data.iloc[start_row : end_row + 1, start_column : end_column + 1] = value
         label = self.get_column_label(start_column)
@@ -102,8 +103,8 @@ class DataModel:
         Insert `count` rows into the table at position `row`.
 
         Args:
-            row: an integer row number to indicate the place of insertion.
-            count: number of rows to insert
+            row (int): an integer row number to indicate the place of insertion.
+            count (int): number of rows to insert
         """
         new_data = pd.DataFrame.from_dict(
             {col: count * [np.nan] for col in self._data.columns}
