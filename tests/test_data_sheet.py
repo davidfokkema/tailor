@@ -58,12 +58,13 @@ class TestDataSheet:
         bare_bones_data_sheet.selection_changed(sentinel.new, sentinel.old)
         bare_bones_data_sheet.selection.selection.assert_called()
 
-    def test_copy_selected_cells(self, bare_bones_data_sheet: DataSheet):
+    def test_copy_selected_cells(
+        self, bare_bones_data_sheet: DataSheet, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data_sheet, "array_to_text")
         bare_bones_data_sheet.selection.selection.return_value = sentinel.selection
-        bare_bones_data_sheet.data_model.dataFromSelection.return_value = np.array(
-            [[9.0, 10.0, np.nan], [15.0, 16.0, np.nan], [21.0, 22.0, 23.0]]
-        )
-        expected = "9.0\t10.0\t\n15.0\t16.0\t\n21.0\t22.0\t23.0"
+        bare_bones_data_sheet.data_model.dataFromSelection.return_value = sentinel.data
+        bare_bones_data_sheet.array_to_text.return_value = sentinel.text
 
         bare_bones_data_sheet.copy_selected_cells()
 
@@ -71,7 +72,7 @@ class TestDataSheet:
         bare_bones_data_sheet.data_model.dataFromSelection.assert_called_with(
             sentinel.selection
         )
-        bare_bones_data_sheet.clipboard.setText.assert_called_with(expected)
+        bare_bones_data_sheet.clipboard.setText.assert_called_with(sentinel.text)
 
     def test_paste_cells_sets_data(
         self, bare_bones_data_sheet: DataSheet, mocker: MockerFixture
@@ -88,6 +89,12 @@ class TestDataSheet:
         bare_bones_data_sheet.data_model.setDataFromArray.assert_called_with(
             sentinel.index, data
         )
+
+    def test_array_to_text(self, bare_bones_data_sheet: DataSheet):
+        data = np.array([[9.0, 10.0, np.nan], [15.0, 16.0, np.nan], [21.0, 22.0, 23.0]])
+        expected = "9.0\t10.0\t\n15.0\t16.0\t\n21.0\t22.0\t23.0"
+
+        assert bare_bones_data_sheet.array_to_text(data) == expected
 
     def test_text_to_array(self, bare_bones_data_sheet: DataSheet):
         data = "1.0\t\n3.0\t4.0\n5.0\t6.0"

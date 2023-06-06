@@ -292,29 +292,14 @@ class DataSheet(QtWidgets.QWidget):
         """Copy selected cells to clipboard."""
 
         data = self.data_model.dataFromSelection(self.selection.selection())
-
-        # create tab separated values from data, NaN -> empty string, e.g.
-        # 1 2 3
-        # 2   4
-        # 5 5 6
-        text = "\n".join(
-            [
-                "\t".join([str(v) if not np.isnan(v) else "" for v in row])
-                for row in data
-            ]
-        )
-
-        # write TSV text to clipboard
+        text = self.array_to_text(data)
         self.clipboard.setText(text)
 
     def paste_cells(self):
         """Paste cells from clipboard."""
 
-        # get data from clipboard
         text = self.clipboard.text()
-
         values = self.text_to_array(text)
-
         if isinstance(values, np.ndarray):
             current_index = self.ui.data_view.currentIndex()
             self.data_model.setDataFromArray(current_index, values)
@@ -324,6 +309,18 @@ class DataSheet(QtWidgets.QWidget):
         # # set selection to pasted cells
         # selection = QtCore.QItemSelection(top_left, bottom_right)
         # self.selection.select(selection, self.selection.ClearAndSelect)
+
+    def array_to_text(self, data: np.ndarray) -> str:
+        # create tab separated values from data, NaN -> empty string, e.g.
+        # 1 2 3
+        # 2   4
+        # 5 5 6
+        return "\n".join(
+            [
+                "\t".join([str(v) if not np.isnan(v) else "" for v in row])
+                for row in data
+            ]
+        )
 
     def text_to_array(self, text: str) -> np.ndarray | None:
         """Convert tab-separated values to an array.
