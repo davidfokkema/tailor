@@ -366,7 +366,23 @@ class TestDataModel:
 
         bare_bones_data.get_column_expression("col3")
 
+        # update_column_expression will try renaming variable to label
         bare_bones_data.update_column_expression.assert_called_with("col3", "y + 5")
+
+    def test_get_column_expression_prevents_infinite_locking_loop(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "update_column_expression")
+        # stored expression should not contain variable names but labels
+        # but if columns are still named col1, col2, etc. false positives may
+        # occur resulting in a infinite rename loop.
+        bare_bones_data._col_names = {"col1": "col1", "col2": "col2", "col3": "col3"}
+        bare_bones_data._calculated_column_expression["col3"] = "col1 + 5"
+
+        bare_bones_data.get_column_expression("col3")
+
+        # update_column_expression will try renaming variable to label
+        bare_bones_data.update_column_expression.assert_not_called()
 
     def test_update_column_expression(
         self, bare_bones_data: DataModel, mocker: MockerFixture

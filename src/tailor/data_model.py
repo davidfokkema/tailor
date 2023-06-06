@@ -286,8 +286,10 @@ class DataModel:
         expression = self._calculated_column_expression.get(label, None)
 
         if expression is not None:
-            if get_variable_names(expression) & set(self._col_names.values()):
-                # There seems to be a raw variable name (not label) stored in
+            if (get_variable_names(expression) - set(self._col_names.keys())) & set(
+                self._col_names.values()
+            ):
+                # There seems to be a raw variable name (not label!) stored in
                 # the expression. This can happen if you use a variable in your
                 # expression which does not yet exist. When a column with that
                 # name is created, the name (and not the label) is still stored
