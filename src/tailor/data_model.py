@@ -121,7 +121,6 @@ class DataModel:
             start_row : start_row + height, start_column : start_column + width
         ] = values
         label = self.get_column_label(start_column)
-        print(f"{label=}")
         self.recalculate_columns_from(label)
 
     def insert_rows(self, row: int, count: int):
