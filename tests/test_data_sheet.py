@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, sentinel
 
+import numpy as np
 import pytest
 from PySide6 import QtWidgets
 from pytest_mock import MockerFixture
@@ -22,8 +23,11 @@ def bare_bones_data_sheet(mocker: MockerFixture):
     mocker.patch.object(tailor.data_sheet, "QDataModel")
     mocker.patch.object(DataSheet, "connect_ui_events")
     mocker.patch.object(DataSheet, "setup_keyboard_shortcuts")
+    mocker.patch.object(QtWidgets.QApplication, "clipboard")
     main_window = mocker.Mock()
-    return DataSheet("sheet1", main_window)
+    data_sheet = DataSheet("sheet1", main_window)
+    data_sheet.selection = mocker.Mock()
+    return data_sheet
 
 
 class TestDataSheet:
@@ -53,6 +57,21 @@ class TestDataSheet:
         bare_bones_data_sheet.selection = mocker.Mock()
         bare_bones_data_sheet.selection_changed(sentinel.new, sentinel.old)
         bare_bones_data_sheet.selection.selection.assert_called()
+
+    def test_copy_selected_cells(self, bare_bones_data_sheet: DataSheet):
+        bare_bones_data_sheet.selection.selection.return_value = sentinel.selection
+        bare_bones_data_sheet.data_model.dataFromSelection.return_value = np.array(
+            [[9.0, 10.0, np.nan], [15.0, 16.0, np.nan], [21.0, 22.0, 23.0]]
+        )
+        expected = "9.0\t10.0\t\n15.0\t16.0\t\n21.0\t22.0\t23.0"
+
+        bare_bones_data_sheet.copy_selected_cells()
+
+        bare_bones_data_sheet.selection.selection.assert_called()
+        bare_bones_data_sheet.data_model.dataFromSelection.assert_called_with(
+            sentinel.selection
+        )
+        bare_bones_data_sheet.clipboard.setText.assert_called_with(expected)
 
 
 class TestIntegratedDataSheet:

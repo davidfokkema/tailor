@@ -76,9 +76,17 @@ class TestDataModel:
     def test_num_columns(self, bare_bones_data: DataModel):
         assert bare_bones_data.num_columns() == 3
 
-    def test_data_returns_data(self, bare_bones_data: DataModel):
+    def test_get_value_returns_data(self, bare_bones_data: DataModel):
         assert bare_bones_data.get_value(2, 1) == 8.0
         assert bare_bones_data.get_value(3, 0) == 4.0
+
+    def test_get_values_returns_data(self, bare_bones_data: DataModel):
+        values = bare_bones_data.get_values(1, 1, 4, 2)
+
+        assert values.shape == (4, 2)
+        assert values.flatten().tolist() == pytest.approx(
+            [7.0, 12.0, 8.0, 13.0, 9.0, 14.0, 10.0, 15.0]
+        )
 
     @pytest.mark.parametrize("value", [4.7, np.nan])
     def test_set_value(self, bare_bones_data: DataModel, value):

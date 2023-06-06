@@ -291,19 +291,7 @@ class DataSheet(QtWidgets.QWidget):
     def copy_selected_cells(self):
         """Copy selected cells to clipboard."""
 
-        # get bounding rectangle coordinates and sizes
-        selection = self.selection.selection().toList()
-        left = min(r.left() for r in selection)
-        width = max(r.right() for r in selection) - left + 1
-        top = min(r.top() for r in selection)
-        height = max(r.bottom() for r in selection) - top + 1
-
-        # fill data from selected indexes, not selected -> NaN
-        data = np.full((height, width), np.nan)
-        for index in self.selection.selectedIndexes():
-            if (value := index.data()) == "":
-                value = np.nan
-            data[index.row() - top, index.column() - left] = value
+        data = self.data_model.dataFromSelection(self.selection.selection())
 
         # create tab separated values from data, NaN -> empty string, e.g.
         # 1 2 3

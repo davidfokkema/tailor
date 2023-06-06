@@ -52,6 +52,12 @@ class DataModel:
         """
         return self._data.iat[row, column]
 
+    def get_values(
+        self, start_row: int, start_column: int, end_row: int, end_column: int
+    ) -> np.ndarray:
+        values = self._data.iloc[start_row : end_row + 1, start_column : end_column + 1]
+        return values.to_numpy()
+
     def set_value(self, row: int, column: int, value: float):
         """Set value at row, column in table.
 

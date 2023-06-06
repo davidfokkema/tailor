@@ -422,3 +422,48 @@ class TestAPI:
 
         expected = [call(topleft1, bottomfarright1), call(topleft2, bottomfarright2)]
         assert qmodel.dataChanged.emit.call_args_list == expected
+
+    def test_dataFromSelection(self, qmodel: QDataModel, mocker: MockerFixture):
+        """Test copying data from a selection.
+
+        Given the data and selection:
+
+             1  2  3  4  5  6
+                 ┌─────┐
+             7  8│ 9 10│11 12
+                 │     │
+            13 14│15 16│17 18
+                 │     ├──┐
+            19 20│21 22│23│24
+                 └─────┴──┘
+            25 26 27 28 29 30
+
+        The result should be:
+
+             9 10 NaN
+
+            15 16 NaN
+
+            21 22 223
+        """
+        qmodel._data.get_values.side_effect = (
+            np.array([[9.0, 10.0], [15.0, 16.0], [21.0, 22.0]]),
+            np.array([[23.0]]),
+        )
+        selection = QtCore.QItemSelection(
+            qmodel.createIndex(1, 2), qmodel.createIndex(3, 3)
+        )
+        selection.append(
+            QtCore.QItemSelection(qmodel.createIndex(3, 4), qmodel.createIndex(3, 4))
+        )
+
+        values = qmodel.dataFromSelection(selection)
+
+        assert qmodel._data.get_values.call_args_list == [
+            call(1, 2, 3, 3),
+            call(3, 4, 3, 4),
+        ]
+        assert values.shape == (3, 3)
+        assert values.flatten().tolist() == pytest.approx(
+            [9.0, 10.0, np.nan, 15.0, 16.0, np.nan, 21.0, 22.0, 23.0], nan_ok=True
+        )

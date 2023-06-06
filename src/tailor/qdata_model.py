@@ -469,6 +469,63 @@ class QDataModel(QtCore.QAbstractTableModel):
             )
         return True
 
+    def dataFromSelection(self, selection: QtCore.QItemSelection) -> np.ndarray:
+        """Get data in a selection.
+
+        Return all data values in a selection. The selection can consist of
+        multiple selection ranges but the returned data is always a rectangular
+        array. Positions inside the bounding rectangle which have not been
+        selected will yield a NaN value.
+
+        For example, given the data and selection:
+
+             1  2  3  4  5  6
+                 ┌─────┐
+             7  8│ 9 10│11 12
+                 │     │
+            13 14│15 16│17 18
+                 │     ├──┐
+            19 20│21 22│23│24
+                 └─────┴──┘
+            25 26 27 28 29 30
+
+        The result should be:
+
+             9 10 NaN
+
+            15 16 NaN
+
+            21 22 223
+
+        Args:
+            selection (QtCore.QItemSelection): the selected data.
+
+        Returns:
+            np.ndarray: the data values in the selection.
+        """
+        # get bounding rectangle coordinates and sizes
+        ranges = selection.toList()
+        column_offset = min(r.left() for r in ranges)
+        width = max(r.right() for r in ranges) - column_offset + 1
+        row_offset = min(r.top() for r in ranges)
+        height = max(r.bottom() for r in ranges) - row_offset + 1
+
+        # fill data from selected indexes, not selected -> NaN
+        data = np.full((height, width), np.nan)
+
+        # copy values from each rectangular selection range
+        for selection_range in ranges:
+            top = selection_range.top()
+            left = selection_range.left()
+            bottom = selection_range.bottom()
+            right = selection_range.right()
+            values = self._data.get_values(top, left, bottom, right)
+            data[
+                top - row_offset : bottom - row_offset + 1,
+                left - column_offset : right - column_offset + 1,
+            ] = values
+        return data
+
     # def show_status(self, msg):
     #     """Show message in statusbar.
 
