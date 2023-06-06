@@ -97,6 +97,33 @@ class DataModel:
         label = self.get_column_label(start_column)
         self.recalculate_columns_from(label)
 
+    def set_values_from_array(
+        self,
+        start_row: int,
+        start_column: int,
+        values: np.ndarray,
+    ):
+        """Set a block of table cells to values from an array.
+
+        The block of cells is specified using only start indexes for rows and
+        columns. The width and height of the block are determined by the size of
+        the array. All cells within this block are set to the values contained
+        within the array. The end result is pasting the array directly into the
+        table.
+
+        Args:
+            start_row (int): top left row number.
+            start_column (int): top left column number.
+            values (np.ndarray): the values to insert into the cells.
+        """
+        height, width = values.shape
+        self._data.iloc[
+            start_row : start_row + height, start_column : start_column + width
+        ] = values
+        label = self.get_column_label(start_column)
+        print(f"{label=}")
+        self.recalculate_columns_from(label)
+
     def insert_rows(self, row: int, count: int):
         """Insert rows into the table.
 

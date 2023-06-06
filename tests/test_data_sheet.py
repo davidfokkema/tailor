@@ -73,6 +73,41 @@ class TestDataSheet:
         )
         bare_bones_data_sheet.clipboard.setText.assert_called_with(expected)
 
+    def test_paste_cells_sets_data(
+        self, bare_bones_data_sheet: DataSheet, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data_sheet, "text_to_array")
+        bare_bones_data_sheet.ui.data_view.currentIndex.return_value = sentinel.index
+        bare_bones_data_sheet.clipboard.text.return_value = sentinel.text
+        data = np.array([[1.0, 2.0]])
+        bare_bones_data_sheet.text_to_array.return_value = data
+
+        bare_bones_data_sheet.paste_cells()
+
+        bare_bones_data_sheet.text_to_array.assert_called_with(sentinel.text)
+        bare_bones_data_sheet.data_model.setDataFromArray.assert_called_with(
+            sentinel.index, data
+        )
+
+    def test_text_to_array(self, bare_bones_data_sheet: DataSheet):
+        data = "1.0\t\n3.0\t4.0\n5.0\t6.0"
+        expected = np.array([[1.0, np.nan], [3.0, 4.0], [5.0, 6.0]])
+
+        actual = bare_bones_data_sheet.text_to_array(data)
+
+        assert actual.shape == expected.shape
+        assert actual.flatten().tolist() == pytest.approx(
+            expected.flatten().tolist(), nan_ok=True
+        )
+
+    def test_text_to_array_corrupt_data(self, bare_bones_data_sheet: DataSheet):
+        data = "foobar"
+        assert bare_bones_data_sheet.text_to_array(data) is None
+
+    def test_text_to_array_no_data(self, bare_bones_data_sheet: DataSheet):
+        data = ""
+        assert bare_bones_data_sheet.text_to_array(data) is None
+
 
 class TestIntegratedDataSheet:
     def test_fixture_properties(self, data_sheet: DataSheet):

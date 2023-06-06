@@ -313,9 +313,32 @@ class DataSheet(QtWidgets.QWidget):
         # get data from clipboard
         text = self.clipboard.text()
 
-        # create array from tab separated values, "" -> NaN
+        values = self.text_to_array(text)
+
+        if isinstance(values, np.ndarray):
+            current_index = self.ui.data_view.currentIndex()
+            self.data_model.setDataFromArray(current_index, values)
+
+        # # reset current index and focus
+        # self.ui.data_view.setFocus()
+        # # set selection to pasted cells
+        # selection = QtCore.QItemSelection(top_left, bottom_right)
+        # self.selection.select(selection, self.selection.ClearAndSelect)
+
+    def text_to_array(self, text: str) -> np.ndarray | None:
+        """Convert tab-separated values to an array.
+
+        Args:
+            text (str): a multi-line string of tab-separated values.
+
+        Returns:
+            np.ndarray: the data as a NumPy array
+        """
+        if not text:
+            return None
         try:
-            data = np.array(
+            # create array from tab separated values, "" -> NaN
+            values = np.array(
                 [
                     [float(v) if v != "" else np.nan for v in row.split("\t")]
                     for row in text.split("\n")
@@ -325,43 +348,6 @@ class DataSheet(QtWidgets.QWidget):
             self.main_window.ui.statusbar.showMessage(
                 f"Error pasting from clipboard: {exc}", timeout=MSG_TIMEOUT
             )
-            return
-
-        # get current coordinates and data size
-        current_index = self.ui.data_view.currentIndex()
-        start_row, start_column = current_index.row(), current_index.column()
-        height, width = data.shape
-
-        # extend rows and columns if necessary
-        last_table_column = self.data_model.columnCount() - 1
-        if (last_data_column := start_column + width - 1) > last_table_column:
-            for _ in range(last_data_column - last_table_column):
-                self.add_column()
-        last_table_row = self.data_model.rowCount() - 1
-        if (last_data_row := start_row + height - 1) > last_table_row:
-            for _ in range(last_data_row - last_table_row):
-                self.add_row()
-
-        # write clipboard data to data model
-        it = np.nditer(data, flags=["multi_index"])
-        for value in it:
-            row, column = it.multi_index
-            self.data_model.setData(
-                self.data_model.createIndex(row + start_row, column + start_column),
-                value,
-                skip_update=True,
-            )
-
-        # signal that values have changed
-        top_left = self.data_model.createIndex(start_row, start_column)
-        bottom_right = self.data_model.createIndex(
-            start_row + height - 1, start_column + width - 1
-        )
-        self.data_model.dataChanged.emit(top_left, bottom_right)
-        # recalculate computed values once
-        self.data_model.recalculate_all_columns()
-        # reset current index and focus
-        self.ui.data_view.setFocus()
-        # set selection to pasted cells
-        selection = QtCore.QItemSelection(top_left, bottom_right)
-        self.selection.select(selection, self.selection.ClearAndSelect)
+            return None
+        else:
+            return values

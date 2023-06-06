@@ -35,6 +35,14 @@ def calc_data():
     return model
 
 
+@pytest.fixture()
+def data():
+    model = QDataModel()
+    model.insertColumns(0, 5)
+    model.insertRows(0, 10)
+    return model
+
+
 class TestQtRequired:
     def test_rowCount(self, qmodel: QDataModel):
         assert qmodel.rowCount() == qmodel._data.num_rows.return_value
@@ -467,3 +475,35 @@ class TestAPI:
         assert values.flatten().tolist() == pytest.approx(
             [9.0, 10.0, np.nan, 15.0, 16.0, np.nan, 21.0, 22.0, 23.0], nan_ok=True
         )
+
+    def test_setDataFromArray(self, qmodel: QDataModel, mocker: MockerFixture):
+        mocker.patch.object(qmodel, "rowCount")
+        mocker.patch.object(qmodel, "columnCount")
+        mocker.patch.object(qmodel, "insertRows")
+        mocker.patch.object(qmodel, "insertColumns")
+        qmodel.rowCount.return_value = 5
+        qmodel.columnCount.return_value = 3
+        values = np.zeros(shape=(7, 8))
+        index = qmodel.createIndex(1, 2)
+
+        qmodel.setDataFromArray(index, values)
+
+        # (7 + 1) - 5 = 3 rows too short
+        # (8 + 2) - 3 = 7 columns too short
+        qmodel.insertRows.assert_called_with(5, 3)
+        qmodel.insertColumns.assert_called_with(3, 7)
+        qmodel._data.set_values_from_array.assert_called_with(1, 2, values)
+
+    def test_setDataFromArray_emits_dataChanged(
+        self, data: QDataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(data, "dataChanged")
+        index = data.createIndex(1, 2)
+        values = np.zeros(shape=(4, 1))
+        # all columns to the right may have changed (updated calculations)
+        # 'data' object has 5 columns, so last column has index 4
+        bottomfarright = data.createIndex(1 + 4 - 1, 4)
+
+        data.setDataFromArray(index, values)
+
+        data.dataChanged.emit.assert_called_with(index, bottomfarright)

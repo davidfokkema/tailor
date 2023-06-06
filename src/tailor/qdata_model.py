@@ -526,6 +526,33 @@ class QDataModel(QtCore.QAbstractTableModel):
             ] = values
         return data
 
+    def setDataFromArray(self, index: QtCore.QModelIndex, values: np.ndarray):
+        """Fill a block of table cells with the contents of an array.
+
+        Args:
+            index (QtCore.QModelIndex): the top left corner of the block of
+                cells.
+            values (np.ndarray): the array containing the values.
+
+        Returns:
+            bool: True if successful.
+        """
+        row = index.row()
+        column = index.column()
+        height, width = values.shape
+        if (delta_columns := column + width - self.columnCount()) > 0:
+            self.insertColumns(self.columnCount(), delta_columns)
+        if (delta_rows := row + height - self.rowCount()) > 0:
+            self.insertRows(self.rowCount(), delta_rows)
+        self._data.set_values_from_array(row, column, values)
+
+        # recalculating vales may have changed all columns to the far right
+        num_columns = self.columnCount()
+        self.dataChanged.emit(
+            index, self.createIndex(row + height - 1, num_columns - 1)
+        )
+        return True
+
     # def show_status(self, msg):
     #     """Show message in statusbar.
 

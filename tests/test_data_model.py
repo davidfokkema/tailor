@@ -134,6 +134,36 @@ class TestDataModel:
         bare_bones_data.get_column_label.assert_called_with(2)
         bare_bones_data.recalculate_columns_from.assert_called_with(sentinel.label)
 
+    def test_set_values_from_array(self, bare_bones_data: DataModel):
+        # no calculated columns, only data
+        bare_bones_data._calculated_column_expression = {}
+
+        bare_bones_data.set_values_from_array(
+            start_row=1,
+            start_column=1,
+            values=np.array([[-1.0, -2.0, -3.0], [-4.0, -5.0, -6.0]]).T,
+        )
+
+        data = bare_bones_data._data.to_dict("list")
+        assert data["col1"] == pytest.approx([1.0, 2.0, 3.0, 4.0, 5.0])
+        assert data["col2"] == pytest.approx([6.0, -1.0, -2.0, -3.0, 10.0])
+        assert data["col3"] == pytest.approx([11.0, -4.0, -5.0, -6.0, 15.0])
+
+    def test_set_values_from_array_triggers_recalculation(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(bare_bones_data, "recalculate_columns_from")
+        mocker.patch.object(bare_bones_data, "get_column_label")
+        bare_bones_data.get_column_label.return_value = sentinel.label
+
+        bare_bones_data.set_values_from_array(
+            start_row=1, start_column=2, values=np.array([[1.0]])
+        )
+
+        # recalculate all columns starting from start_column
+        bare_bones_data.get_column_label.assert_called_with(2)
+        bare_bones_data.recalculate_columns_from.assert_called_with(sentinel.label)
+
     def test_insert_rows(self, bare_bones_data: DataModel):
         bare_bones_data.insert_rows(3, 4)
         # check that all values in inserted rows are NaN
