@@ -392,6 +392,17 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.endInsertColumns()
         return True
 
+    def columnLabel(self, column: int) -> str:
+        """Get column label.
+
+        Args:
+            column (int): the column index.
+
+        Returns:
+            str: the column label
+        """
+        return self._data.get_column_label(column)
+
     def columnName(self, column: int) -> str:
         """Get column name.
 
@@ -403,6 +414,14 @@ class QDataModel(QtCore.QAbstractTableModel):
         """
         label = self._data.get_column_label(column)
         return self._data.get_column_name(label)
+
+    def columnLabels(self) -> list[str]:
+        """Get all column labels.
+
+        Returns:
+            list[str]: a list of all column labels.
+        """
+        return self._data.get_column_labels()
 
     def columnNames(self) -> list[str]:
         """Get all column names.

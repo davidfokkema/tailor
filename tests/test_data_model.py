@@ -300,6 +300,14 @@ class TestDataModel:
         actual = [bare_bones_data.get_column_label(idx) for idx in range(3)]
         assert actual == expected
 
+    def test_get_column_labels(self, bare_bones_data: DataModel):
+        # column names may not be in the order they appear in the data
+        # the 'expected' order in this case is copied from the _col_names
+        # attribute
+        expected = ["col2", "col3", "col1"]
+        actual = bare_bones_data.get_column_labels()
+        assert actual == expected
+
     def test_get_column_name(self, bare_bones_data: DataModel):
         labels = ["col1", "col2", "col3"]
         expected = ["x", "y", "z"]

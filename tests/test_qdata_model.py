@@ -312,6 +312,19 @@ class TestAPI:
             qmodel.insertCalculatedColumn(0, parent=qmodel.createIndex(0, 0)) is False
         )
 
+    def test_columnLabel(self, qmodel: QDataModel):
+        qmodel._data.get_column_label.return_value = sentinel.label
+
+        name = qmodel.columnLabel(sentinel.idx)
+
+        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
+        assert name == sentinel.label
+
+    def test_columnLabels(self, qmodel: QDataModel):
+        qmodel._data.get_column_labels.return_value = sentinel.labels
+
+        assert qmodel.columnLabels() == sentinel.labels
+
     def test_columnName(self, qmodel: QDataModel):
         qmodel._data.get_column_label.return_value = sentinel.label
         qmodel._data.get_column_name.return_value = sentinel.name

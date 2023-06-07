@@ -403,7 +403,7 @@ class DataModel:
             if self.is_column_valid(k)
         }
 
-    def get_column_label(self, column: int):
+    def get_column_label(self, column: int) -> str:
         """Get column label.
 
         Get column label at the given index.
@@ -416,7 +416,19 @@ class DataModel:
         """
         return self._data.columns[column]
 
-    def get_column_name(self, label: str):
+    def get_column_labels(self) -> list[str]:
+        """Get all column labels.
+
+        Note: the column labels may _not_ be in the order they appear in the
+        data, but the order is guaranteed to be the same as the order of the
+        names retrieved from get_column_names().
+
+        Returns:
+            list[str]: a list of all column labels.
+        """
+        return list(self._col_names.keys())
+
+    def get_column_name(self, label: str) -> str:
         """Get column name.
 
         Get column name at the given index.
@@ -429,11 +441,12 @@ class DataModel:
         """
         return self._col_names[label]
 
-    def get_column_names(self):
+    def get_column_names(self) -> list[str]:
         """Get all column names.
 
         Note: the column names may _not_ be in the order they appear in the
-        data.
+        data, but the order is guaranteed to be the same as the order of the
+        labels retrieved from get_column_labels().
 
         Returns:
             list[str]: a list of all column names.
