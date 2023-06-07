@@ -129,9 +129,7 @@ class DataSheet(QtWidgets.QWidget):
         if col_idx is not None:
             # Do not allow empty names or duplicate column names
             if name and name not in self.data_model.columnNames():
-                # old_name = self.data_model.columnName(col_idx)
                 new_name = self.data_model.renameColumn(col_idx, name)
-                # FIXME self.main_window.rename_plot_variables(self, old_name, new_name)
                 # set the normalized name to the name edit field
                 self.ui.name_edit.setText(new_name)
                 header = self.ui.data_view.horizontalHeader()

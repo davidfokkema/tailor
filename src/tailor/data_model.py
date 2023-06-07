@@ -248,12 +248,9 @@ class DataModel:
             label (str): the column label
             name (str): the new name for the column
         """
-        # old_name = self.get_column_name(label)
         new_name = self.normalize_column_name(name)
         self._col_names[label] = new_name
         return new_name
-
-        # FIXME rename all expressions
 
         # FIXME self.show_status("Renamed column.")
 
