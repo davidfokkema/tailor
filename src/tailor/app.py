@@ -342,10 +342,12 @@ class Application(QtWidgets.QMainWindow):
         if data_sheet := self._on_data_sheet():
             dialog = self.create_plot_dialog(data_sheet)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
-                x_var = dialog.ui.x_axis_box.currentText()
-                y_var = dialog.ui.y_axis_box.currentText()
-                x_err = dialog.ui.x_err_box.currentText()
-                y_err = dialog.ui.y_err_box.currentText()
+                labels = [None] + data_sheet.data_model.columnLabels()
+                x_var = labels[dialog.ui.x_axis_box.currentIndex()]
+                y_var = labels[dialog.ui.y_axis_box.currentIndex()]
+                x_err = labels[dialog.ui.x_err_box.currentIndex()]
+                y_err = labels[dialog.ui.y_err_box.currentIndex()]
+                print(f"{x_var=} {y_var=} {x_err=} {y_err=}")
                 if x_var and y_var:
                     self.create_plot_tab(data_sheet, x_var, y_var, x_err, y_err)
 
@@ -363,15 +365,13 @@ class Application(QtWidgets.QMainWindow):
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(data_sheet, main_window=self)
+        plot_tab = PlotTab(data_sheet, x_var, y_var, x_err, y_err)
         idx = self.ui.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
         self._plot_num += 1
-        plot_tab.create_plot(x_var, y_var, x_err, y_err)
-
         self.ui.tabWidget.setCurrentIndex(idx)
         return plot_tab
 
-    def create_plot_dialog(self, data_tab):
+    def create_plot_dialog(self, data_sheet: DataSheet) -> QtWidgets.QDialog:
         """Create a dialog to request variables for creating a plot."""
 
         class Dialog(QtWidgets.QDialog):
@@ -380,7 +380,7 @@ class Application(QtWidgets.QMainWindow):
                 self.ui = Ui_CreatePlotDialog()
                 self.ui.setupUi(self)
 
-        choices = [None] + data_tab.data_model.get_column_names()
+        choices = [None] + data_sheet.data_model.columnNames()
         create_dialog = Dialog()
         create_dialog.ui.x_axis_box.addItems(choices)
         create_dialog.ui.y_axis_box.addItems(choices)

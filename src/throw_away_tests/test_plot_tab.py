@@ -7,18 +7,30 @@ import pandas as pd
 from PySide6 import QtWidgets
 
 from tailor.app import Application
+from tailor.data_sheet import DataSheet
 
 
 def test_plot_tab(app: Application):
-    x = np.arange(20)
-    app.data_model.beginResetModel()
-    app.data_model._data = pd.DataFrame.from_dict({"x": x, "y": x**2})
-    app.data_model.endResetModel()
+    # set up data
+    sheet: DataSheet = app.ui.tabWidget.widget(0)
+    sheet.data_model.removeColumn(1)
+    sheet.data_model.insertCalculatedColumn(1)
+    sheet.data_model.renameColumn(0, "x")
+    sheet.data_model.renameColumn(1, "y")
+    sheet.data_model.insertRows(0, 5)
+    sheet.data_model.setDataFromArray(
+        sheet.data_model.createIndex(0, 0),
+        values=np.linspace(0, np.pi, 10).reshape((10, 1)),
+    )
+    sheet.data_model.updateColumnExpression(1, "sin(x)")
 
-    app.create_plot_tab("x", "y")
-    plottab = app.ui.tabWidget.currentWidget()
-    plottab.ui.model_func.setPlainText("a * x**2 + b * x + c + d + f + g")
-    plottab.ui.model_func.setPlainText("a * x")
+    # create plot
+    app.create_plot_tab(sheet, "x", "y", None, None)
+
+
+#     plottab = app.ui.tabWidget.currentWidget()
+#     plottab.ui.model_func.setPlainText("a * x**2 + b * x + c + d + f + g")
+#     plottab.ui.model_func.setPlainText("a * x")
 
 
 if __name__ == "__main__":
@@ -27,7 +39,7 @@ if __name__ == "__main__":
 
     test_plot_tab(app)
 
-    app.ui.show()
+    app.show()
     qapp.exec()
 
     qapp.quit()
