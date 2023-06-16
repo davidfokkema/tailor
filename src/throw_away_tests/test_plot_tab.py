@@ -25,7 +25,9 @@ def test_plot_tab(app: Application):
     sheet.data_model.updateColumnExpression(1, "sin(x)")
 
     # create plot
-    app.create_plot_tab(sheet, "x", "y", None, None)
+    x_col = sheet.data_model.columnLabel(0)
+    y_col = sheet.data_model.columnLabel(1)
+    app.create_plot_tab(sheet, x_col, y_col, None, None)
 
 
 #     plottab = app.ui.tabWidget.currentWidget()

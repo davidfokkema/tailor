@@ -54,7 +54,7 @@ class PlotModel:
 
         return x, y, x_err, y_err
 
-    def get_limits_from_data(self, padding=0.05):
+    def get_limits_from_data(self, padding=0.05) -> tuple[float]:
         """Get plot limits from the data points.
 
         Return the minimum and maximum values of the data points, taking the

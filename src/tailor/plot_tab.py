@@ -74,11 +74,11 @@ class PlotTab(QtWidgets.QWidget):
         self.model = PlotModel(
             data_sheet.data_model._data, x_col, y_col, x_err_col, y_err_col
         )
-
         self.data_sheet = data_sheet
 
-        # self.create_plot()
+        self.create_plot()
         self.finish_ui()
+        # self.update_ui()
 
         # # lambda is necessary to gobble the 'index' parameter of the
         # # currentIndexChanged signal
@@ -153,16 +153,18 @@ class PlotTab(QtWidgets.QWidget):
         )
         self.ui.fit_domain_area = pg.LinearRegionItem(movable=True, brush="#00F1")
 
-        self.update_function_label(self.y_var)
-        self.ui.xlabel.setText(self.x_var)
-        self.ui.ylabel.setText(self.y_var)
-        self.update_info_box()
-
-        self.update_plot()
+        self.ui.xlabel.setText(self.model.x_col)
+        self.ui.ylabel.setText(self.model.y_col)
 
         # set fit domain
-        self.ui.fit_start_box.setValue(self.x.min())
-        self.ui.fit_end_box.setValue(self.x.max())
+        x_min, x_max, _, _ = self.model.get_limits_from_data()
+        self.ui.fit_start_box.setValue(x_min)
+        self.ui.fit_end_box.setValue(x_max)
+
+    def update_ui(self):
+        self.update_function_label(self.y_var)
+        self.update_info_box()
+        self.update_plot()
 
     def update_plot(self):
         """Update plot to reflect any data changes."""
