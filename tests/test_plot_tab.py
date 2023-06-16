@@ -12,6 +12,7 @@ from tailor.plot_tab import PlotTab
 @pytest.fixture()
 def plot_tab(mocker: MockerFixture):
     mocker.patch.object(tailor.plot_tab, "PlotModel")
+    mocker.patch.object(PlotTab, "connect_ui_events")
     return PlotTab(
         Mock(spec=DataSheet),
         sentinel.x_col,
@@ -44,3 +45,6 @@ class TestImplementationDetails:
             sentinel.y_err_col,
         )
         assert isinstance(plot_tab.data_sheet, DataSheet) is True
+
+    def test_init_calls_setup(self, plot_tab: PlotTab):
+        plot_tab.connect_ui_events.assert_called_once()

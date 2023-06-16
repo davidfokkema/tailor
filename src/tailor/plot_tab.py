@@ -86,7 +86,11 @@ class PlotTab(QtWidgets.QWidget):
         #     lambda index: self.update_best_fit_plot()
         # )
 
-        # # Connect signals
+        self.connect_ui_events()
+
+    def connect_ui_events(self):
+        ...
+        # Connect signals
         # self.ui.model_func.textChanged.connect(self.update_fit_params)
         # self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
         # self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
@@ -102,9 +106,6 @@ class PlotTab(QtWidgets.QWidget):
         # self.ui.ymax.textChanged.connect(self.update_limits)
         # self.ui.set_limits_button.clicked.connect(self.update_limits)
         # self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
-
-        # self.ui.plot_widget.setMenuEnabled(False)
-        # self.ui.plot_widget.hideButtons()
 
     def finish_ui(self):
         self.ui.param_layout = QtWidgets.QVBoxLayout()
@@ -125,6 +126,9 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.fit_start_box.setMaximumWidth(75)
         self.ui.fit_end_box.setMaximumWidth(75)
         self.ui.draw_curve_option.addItems(DRAW_CURVE_OPTIONS)
+
+        self.ui.plot_widget.setMenuEnabled(False)
+        self.ui.plot_widget.hideButtons()
 
     def create_plot(self):
         """Create a plot in the widget.
