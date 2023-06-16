@@ -34,8 +34,10 @@ class TestDataSheet:
     def test_fixture_properties(self, bare_bones_data_sheet: DataSheet):
         assert isinstance(bare_bones_data_sheet, DataSheet)
         assert isinstance(bare_bones_data_sheet.ui, MagicMock)
-        DataSheet.connect_ui_events.assert_called_once()
-        DataSheet.setup_keyboard_shortcuts.assert_called_once()
+
+    def test_init_calls_setup(self, bare_bones_data_sheet: DataSheet):
+        bare_bones_data_sheet.connect_ui_events.assert_called_once()
+        bare_bones_data_sheet.setup_keyboard_shortcuts.assert_called_once()
 
     def test_add_column(self, bare_bones_data_sheet: DataSheet):
         bare_bones_data_sheet.data_model.columnCount.return_value = sentinel.num_columns
