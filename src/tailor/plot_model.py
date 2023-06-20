@@ -8,16 +8,16 @@ class PlotModel:
     data_model: DataModel
     x_col: str
     y_col: str
-    x_err_col: str
-    y_err_col: str
+    x_err_col: str | None
+    y_err_col: str | None
 
     def __init__(
         self,
         data_model: DataModel,
         x_col: str,
         y_col: str,
-        x_err_col: str,
-        y_err_col: str,
+        x_err_col: str | None = None,
+        y_err_col: str | None = None,
     ) -> None:
         self.data_model = data_model
         self.x_col = x_col
@@ -36,6 +36,28 @@ class PlotModel:
     def get_y_col_name(self) -> str:
         """Get the name of the y variable."""
         return self.data_model.get_column_name(self.y_col)
+
+    def get_x_err_col_name(self) -> str:
+        """Get the name of the x error variable.
+
+        Returns:
+            A string with the name of the variable or None if there is no such variable.
+        """
+        try:
+            return self.data_model.get_column_name(self.x_err_col)
+        except KeyError:
+            return None
+
+    def get_y_err_col_name(self) -> str:
+        """Get the name of the y error variable.
+
+        Returns:
+            A string with the name of the variable or None if there is no such variable.
+        """
+        try:
+            return self.data_model.get_column_name(self.y_err_col)
+        except KeyError:
+            return None
 
     def get_data(self) -> tuple[np.ndarray]:
         """Get data values from model.

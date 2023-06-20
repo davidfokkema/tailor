@@ -8,6 +8,7 @@ from tailor.ui_data_sheet import Ui_DataSheet
 
 class DataSheet(QtWidgets.QWidget):
     data_model: QDataModel = None
+    name: str = None
 
     def __init__(self, name, main_window):
         super().__init__()

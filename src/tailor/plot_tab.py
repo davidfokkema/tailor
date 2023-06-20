@@ -40,19 +40,7 @@ class PlotTab(QtWidgets.QWidget):
     data_sheet: DataSheet
     model: PlotModel
 
-    # x = None
-    # x_var = None
-    # y = None
-    # y_var = None
-    # x_err = None
-    # x_err_var = None
-    # y_err = None
-    # y_err_var = None
-    # err_width = None
-    # err_height = None
-    # fit = None
-    # fit_domain = None, None
-    # model = None
+    fit = None
 
     def __init__(
         self,
@@ -504,16 +492,16 @@ class PlotTab(QtWidgets.QWidget):
                 # make sure everything is a string, even None
                 (
                     "X: ",
-                    str(self.x_var),
+                    str(self.model.get_x_col_name()),
                     " +- ",
-                    str(self.x_err_var),
+                    str(self.model.get_x_err_col_name()),
                     f" (from {self.data_sheet.name})",
                 ),
                 (
                     "Y: ",
-                    str(self.y_var),
+                    str(self.model.get_y_col_name()),
                     " +- ",
-                    str(self.y_err_var),
+                    str(self.model.get_y_err_col_name()),
                     f" (from {self.data_sheet.name})",
                 ),
             ]

@@ -107,8 +107,8 @@ class TestPlotTab:
         assert kwargs["height"] == pytest.approx([0.8, 1.0, 0.6])
         plot_tab.update_limits.assert_called()
 
-    def test_info_box(self):
-        ...
+    def test_info_box(self, plot_tab: PlotTab):
+        plot_tab.update_info_box()
 
     def test_get_adjusted_limits(self, plot_tab: PlotTab, mocker: MockerFixture):
         # minimal testing, otherwise we're just copying the implementation

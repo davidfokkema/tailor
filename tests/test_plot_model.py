@@ -39,6 +39,24 @@ class TestPlotModel:
         assert name == model.data_model.get_column_name.return_value
         model.data_model.get_column_name.assert_called_with(sentinel.y_col)
 
+    def test_get_x_err_col_name(self, model: PlotModel):
+        name = model.get_x_err_col_name()
+        assert name == model.data_model.get_column_name.return_value
+        model.data_model.get_column_name.assert_called_with(sentinel.x_err_col)
+
+    def test_get_x_err_col_name_without_errors(self, model: PlotModel):
+        model.data_model.get_column_name.side_effect = KeyError
+        assert model.get_x_err_col_name() is None
+
+    def test_get_y_err_col_name(self, model: PlotModel):
+        name = model.get_y_err_col_name()
+        assert name == model.data_model.get_column_name.return_value
+        model.data_model.get_column_name.assert_called_with(sentinel.y_err_col)
+
+    def test_get_y_err_col_name_without_errors(self, model: PlotModel):
+        model.data_model.get_column_name.side_effect = KeyError
+        assert model.get_y_err_col_name() is None
+
     def test_get_data_returns_tuple(self, model: PlotModel):
         model.data_model.get_column.side_effect = [[1, 2], [1, 2], [1, 2], [1, 2]]
         x, y, x_err, y_err = model.get_data()
