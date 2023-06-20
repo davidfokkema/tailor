@@ -221,9 +221,10 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setRange(
             xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
-        self.main_window.ui.statusbar.showMessage(
-            "Updated limits.", timeout=MSG_TIMEOUT
-        )
+        # FIXME
+        # self.main_window.ui.statusbar.showMessage(
+        #     "Updated limits.", timeout=MSG_TIMEOUT
+        # )
 
     def get_adjusted_limits(self):
         """Get adjusted plot limits from the data points and text fields.
@@ -235,7 +236,7 @@ class PlotTab(QtWidgets.QWidget):
         Returns:
             Tuple of four float values (xmin, xmax, ymin, ymax).
         """
-        xmin, xmax, ymin, ymax = self.get_limits_from_data()
+        xmin, xmax, ymin, ymax = self.model.get_limits_from_data()
         xmin = self.update_value_from_text(xmin, self.ui.xmin)
         xmax = self.update_value_from_text(xmax, self.ui.xmax)
         ymin = self.update_value_from_text(ymin, self.ui.ymin)

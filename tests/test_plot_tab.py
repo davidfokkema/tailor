@@ -109,3 +109,22 @@ class TestPlotTab:
 
     def test_info_box(self):
         ...
+
+    def test_get_adjusted_limits(self, plot_tab: PlotTab, mocker: MockerFixture):
+        # minimal testing, otherwise we're just copying the implementation
+        mocker.patch.object(plot_tab, "update_value_from_text")
+        plot_tab.model.get_limits_from_data.return_value = 0.0, 10.0, 20.0, 30.0
+
+        actual = plot_tab.get_adjusted_limits()
+
+        assert len(actual) == 4
+        plot_tab.model.get_limits_from_data.assert_called()
+        assert plot_tab.update_value_from_text.call_count == 4
+
+    def test_update_value_from_text(self, plot_tab: PlotTab, mocker: MockerFixture):
+        widget = mocker.Mock()
+
+        widget.text.return_value = ""
+        assert plot_tab.update_value_from_text(4.0, widget) == 4.0
+        widget.text.return_value = "5.5"
+        assert plot_tab.update_value_from_text(4.0, widget) == 5.5
