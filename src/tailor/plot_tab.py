@@ -135,6 +135,10 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.fit_start_box.setValue(x_min)
         self.ui.fit_end_box.setValue(x_max)
 
+        # set initial x and y labels
+        self.ui.xlabel.setText(self.model.get_x_col_name())
+        self.ui.ylabel.setText(self.model.get_y_col_name())
+
     def create_plot(self):
         """Create a plot in the widget.
 
@@ -159,9 +163,6 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_domain_area = pg.LinearRegionItem(movable=True, brush="#00F1")
 
     def update_ui(self):
-        self.ui.xlabel.setText(self.model.x_col)
-        self.ui.ylabel.setText(self.model.y_col)
-
         self.update_function_label(self.y_var)
         self.update_info_box()
         self.update_plot()

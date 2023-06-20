@@ -29,6 +29,12 @@ class PlotModel:
         # self._params = {}
         # self._symbols = set(asteval.Interpreter().symtable.keys())
 
+    def get_x_col_name(self) -> str:
+        return self.data_model.get_column_name(self.x_col)
+
+    def get_y_col_name(self) -> str:
+        return self.data_model.get_column_name(self.y_col)
+
     def get_data(self) -> tuple[np.ndarray]:
         """Get data values from model.
 

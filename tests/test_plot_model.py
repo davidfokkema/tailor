@@ -29,6 +29,16 @@ class TestImplementationDetails:
 
 
 class TestPlotModel:
+    def test_get_x_col_name(self, model: PlotModel):
+        name = model.get_x_col_name()
+        assert name == model.data_model.get_column_name.return_value
+        model.data_model.get_column_name.assert_called_with(sentinel.x_col)
+
+    def test_get_y_col_name(self, model: PlotModel):
+        name = model.get_y_col_name()
+        assert name == model.data_model.get_column_name.return_value
+        model.data_model.get_column_name.assert_called_with(sentinel.y_col)
+
     def test_get_data_returns_tuple(self, model: PlotModel):
         model.data_model.get_column.side_effect = [[1, 2], [1, 2], [1, 2], [1, 2]]
         x, y, x_err, y_err = model.get_data()

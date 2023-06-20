@@ -288,7 +288,7 @@ class Application(QtWidgets.QMainWindow):
         """
         tab = self.ui.tabWidget.widget(idx)
         if type(tab) == PlotTab:
-            tab.update_plot()
+            tab.update_ui()
 
     def update_all_plots(self):
         """Update all plot tabs.
