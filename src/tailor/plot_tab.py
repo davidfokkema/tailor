@@ -163,26 +163,42 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_domain_area = pg.LinearRegionItem(movable=True, brush="#00F1")
 
     def update_ui(self):
-        self.update_function_label(self.y_var)
-        self.update_info_box()
+        """Update UI after switching tabs.
+
+        When the plot tab becomes visible again, update all data and information.
+        """
+        self.update_function_label()
         self.update_plot()
+        self.update_info_box()
+
+    def update_function_label(self):
+        """Update function label."""
+        variable = self.model.get_y_col_name()
+        new_label_text = f"Function: {variable} ="
+        self.ui.model_func_label.setText(new_label_text)
 
     def update_plot(self):
         """Update plot to reflect any data changes."""
-        # FIXME
-        # self.update_data()
 
-        # # set data for scatter plot and error bars
-        # self.plot.setData(self.x, self.y)
-        # if self.x_err is not None:
-        #     self.err_width = 2 * self.x_err
-        # if self.y_err is not None:
-        #     self.err_height = 2 * self.y_err
-        # self.error_bars.setData(
-        #     x=self.x, y=self.y, width=self.err_width, height=self.err_height
-        # )
+        x, y, x_err, y_err = self.model.get_data()
 
-        # self.update_limits()
+        # set data for scatter plot and error bars
+        self.plot.setData(x, y)
+        if x_err is not None:
+            err_width = 2 * x_err
+        if y_err is not None:
+            err_height = 2 * y_err
+        self.error_bars.setData(x=x, y=y, width=err_width, height=err_height)
+
+        self.update_limits()
+
+    def update_info_box(self):
+        """Update the information box."""
+        msgs = []
+        if self.fit:
+            msgs.append(self.format_fit_results())
+        msgs.append(self.format_plot_info())
+        self.ui.result_box.setPlainText("\n".join(msgs))
 
     def update_xlabel(self):
         """Update the x-axis label of the plot."""
@@ -193,14 +209,6 @@ class PlotTab(QtWidgets.QWidget):
         """Update the y-axis label of the plot."""
         self.ui.plot_widget.setLabel("left", self.ui.ylabel.text())
         self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
-
-    def update_info_box(self):
-        """Update the information box."""
-        msgs = []
-        if self.fit:
-            msgs.append(self.format_fit_results())
-        msgs.append(self.format_plot_info())
-        self.ui.result_box.setPlainText("\n".join(msgs))
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -249,20 +257,6 @@ class PlotTab(QtWidgets.QWidget):
         except ValueError:
             pass
         return value
-
-    def update_function_label(self, variable):
-        """Update function label.
-
-        Updates the text label next to the model function input field. The label
-        will contain the name of the dependent variable. For example, "y = ".
-
-        Args:
-            variable: a string containing the name of the dependent variable.
-        """
-        label_text = self.ui.model_func_label.text()
-        title, _, _ = label_text.partition(":")
-        new_label_text = f"{title}:  {variable} ="
-        self.ui.model_func_label.setText(new_label_text)
 
     def update_fit_params(self):
         """Update fit parameters.

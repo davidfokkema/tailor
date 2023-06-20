@@ -79,6 +79,7 @@ class TestPlotModel:
 
         _, _, x_err, y_err = model.get_data()
 
+        # without error values, should return 0.0
         assert x_err == pytest.approx(0.0)
         assert y_err == pytest.approx(0.0)
 

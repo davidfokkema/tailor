@@ -1,5 +1,6 @@
 from unittest.mock import sentinel
 
+import numpy as np
 import pyqtgraph
 import pytest
 from pytest_mock import MockerFixture
@@ -66,3 +67,45 @@ class TestPlotTab:
         assert plot_tab.initial_param_plot == plot_tab.ui.plot_widget.plot.return_value
         assert plot_tab.fit_plot == plot_tab.ui.plot_widget.plot.return_value
         assert plot_tab.fit_domain_area == pg.LinearRegionItem.return_value
+
+    def test_update_ui(self, plot_tab: PlotTab, mocker: MockerFixture):
+        mocker.patch.object(plot_tab, "update_function_label")
+        mocker.patch.object(plot_tab, "update_info_box")
+        mocker.patch.object(plot_tab, "update_plot")
+
+        plot_tab.update_ui()
+
+        plot_tab.update_function_label.assert_called()
+        plot_tab.update_plot.assert_called()
+        plot_tab.update_info_box.assert_called()
+
+    def test_update_function_label(self, plot_tab: PlotTab, mocker: MockerFixture):
+        mocker.patch.object(plot_tab.model, "get_y_col_name")
+        plot_tab.model.get_y_col_name.return_value = "foo"
+
+        plot_tab.update_function_label()
+
+        plot_tab.model.get_y_col_name.assert_called()
+        plot_tab.ui.model_func_label.setText.assert_called_with("Function: foo =")
+
+    def test_update_plot_with_errors(self, plot_tab: PlotTab, mocker: MockerFixture):
+        mocker.patch.object(plot_tab, "error_bars")
+        mocker.patch.object(plot_tab, "update_limits")
+        x = np.array([0, 1, 2])
+        y = np.array([0, 1, 4])
+        xerr = np.array([0.5, 0.7, 0.4])
+        yerr = np.array([0.4, 0.5, 0.3])
+        plot_tab.model.get_data.return_value = (x, y, xerr, yerr)
+
+        plot_tab.update_plot()
+
+        plot_tab.plot.setData.assert_called_with(x, y)
+        kwargs = plot_tab.error_bars.setData.call_args.kwargs
+        assert kwargs["x"] == pytest.approx(x)
+        assert kwargs["y"] == pytest.approx(y)
+        assert kwargs["width"] == pytest.approx([1, 1.4, 0.8])
+        assert kwargs["height"] == pytest.approx([0.8, 1.0, 0.6])
+        plot_tab.update_limits.assert_called()
+
+    def test_info_box(self):
+        ...

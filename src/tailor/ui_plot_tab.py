@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'plot_tab.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.2
+## Created by: Qt User Interface Compiler version 6.5.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -307,7 +307,7 @@ class Ui_PlotTab(object):
         self.fit_button.setText(QCoreApplication.translate("PlotTab", u"(Re)Fit model", None))
         self.set_limits_button.setText(QCoreApplication.translate("PlotTab", u"(Re)Set plot limits", None))
         self.groupBox.setTitle(QCoreApplication.translate("PlotTab", u"Model", None))
-        self.model_func_label.setText(QCoreApplication.translate("PlotTab", u"Function:", None))
+        self.model_func_label.setText(QCoreApplication.translate("PlotTab", u"Placeholder:", None))
         self.show_initial_fit.setText(QCoreApplication.translate("PlotTab", u"Show initial fit", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("PlotTab", u"Fit options", None))
         self.label_7.setText(QCoreApplication.translate("PlotTab", u"Start:", None))
