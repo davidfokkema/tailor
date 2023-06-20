@@ -83,7 +83,7 @@ class PlotTab(QtWidgets.QWidget):
         # # lambda is necessary to gobble the 'index' parameter of the
         # # currentIndexChanged signal
         # self.ui.draw_curve_option.currentIndexChanged.connect(
-        #     lambda index: self.update_best_fit_plot()
+        #     lambda index: self.update_bestfit_plot()
         # )
 
         self.connect_ui_events()
@@ -96,7 +96,7 @@ class PlotTab(QtWidgets.QWidget):
         # self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
         # self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
         # self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
-        # self.ui.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
+        # self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
         # self.ui.fit_button.clicked.connect(self.perform_fit)
         # self.ui.xlabel.textChanged.connect(self.update_xlabel)
         # self.ui.ylabel.textChanged.connect(self.update_ylabel)
@@ -130,6 +130,11 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setMenuEnabled(False)
         self.ui.plot_widget.hideButtons()
 
+        # set fit domain
+        x_min, x_max, _, _ = self.model.get_limits_from_data()
+        self.ui.fit_start_box.setValue(x_min)
+        self.ui.fit_end_box.setValue(x_max)
+
     def create_plot(self):
         """Create a plot in the widget.
 
@@ -145,23 +150,18 @@ class PlotTab(QtWidgets.QWidget):
         )
         self.error_bars = pg.ErrorBarItem()
         self.ui.plot_widget.addItem(self.error_bars)
-        self._initial_param_plot = self.ui.plot_widget.plot(
+        self.initial_param_plot = self.ui.plot_widget.plot(
             symbol=None, pen=pg.mkPen(color="#00F4", width=4)
         )
-        self._fit_plot = self.ui.plot_widget.plot(
+        self.fit_plot = self.ui.plot_widget.plot(
             symbol=None, pen=pg.mkPen(color="r", width=4)
         )
-        self.ui.fit_domain_area = pg.LinearRegionItem(movable=True, brush="#00F1")
+        self.fit_domain_area = pg.LinearRegionItem(movable=True, brush="#00F1")
 
+    def update_ui(self):
         self.ui.xlabel.setText(self.model.x_col)
         self.ui.ylabel.setText(self.model.y_col)
 
-        # set fit domain
-        x_min, x_max, _, _ = self.model.get_limits_from_data()
-        self.ui.fit_start_box.setValue(x_min)
-        self.ui.fit_end_box.setValue(x_max)
-
-    def update_ui(self):
         self.update_function_label(self.y_var)
         self.update_info_box()
         self.update_plot()
@@ -404,10 +404,10 @@ class PlotTab(QtWidgets.QWidget):
             state: integer (enum Qt::CheckState) with the checkbox state.
         """
         if state == QtCore.Qt.Checked:
-            self.ui.plot_widget.addItem(self.ui.fit_domain_area)
+            self.ui.plot_widget.addItem(self.fit_domain_area)
             self.update_fit_domain()
         else:
-            self.ui.plot_widget.removeItem(self.ui.fit_domain_area)
+            self.ui.plot_widget.removeItem(self.fit_domain_area)
 
     def fit_domain_region_changed(self):
         """Update the fit domain values.
@@ -415,10 +415,10 @@ class PlotTab(QtWidgets.QWidget):
         When the fit domain region is dragged by the user, the values in the
         start and end boxes need to be updated.
         """
-        xmin, xmax = self.ui.fit_domain_area.getRegion()
+        xmin, xmax = self.fit_domain_area.getRegion()
         self.ui.fit_start_box.setValue(xmin)
         self.ui.fit_end_box.setValue(xmax)
-        self.update_best_fit_plot()
+        self.update_bestfit_plot()
 
     def update_fit_domain(self):
         """Update the fit domain and indicate with vertical lines."""
@@ -426,7 +426,7 @@ class PlotTab(QtWidgets.QWidget):
         end = self.ui.fit_end_box.value()
         if start <= end:
             self.fit_domain = start, end
-            self.ui.fit_domain_area.setRegion((start, end))
+            self.fit_domain_area.setRegion((start, end))
         else:
             self.main_window.ui.statusbar.showMessage(
                 "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
@@ -445,9 +445,9 @@ class PlotTab(QtWidgets.QWidget):
         y = self.model.eval(**kwargs)
 
         if self.ui.show_initial_fit.isChecked():
-            self._initial_param_plot.setData(x, y)
+            self.initial_param_plot.setData(x, y)
         else:
-            self._initial_param_plot.setData([], [])
+            self.initial_param_plot.setData([], [])
 
     def updated_plot_range(self):
         """Handle updated plot range.
@@ -456,9 +456,9 @@ class PlotTab(QtWidgets.QWidget):
         when the plot range is changed.
         """
         if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
-            self.update_best_fit_plot()
+            self.update_bestfit_plot()
 
-    def update_best_fit_plot(self, x_var=None):
+    def update_bestfit_plot(self, x_var=None):
         """Update the plot of the best-fit model curve.
 
         Args:
@@ -473,7 +473,7 @@ class PlotTab(QtWidgets.QWidget):
             xmin, xmax = self.get_fit_curve_x_limits()
             x = np.linspace(xmin, xmax, NUM_POINTS)
             y = self.fit.eval(**{x_var: x})
-            self._fit_plot.setData(x, y)
+            self.fit_plot.setData(x, y)
 
     def get_fit_curve_x_limits(self):
         """Get x-axis limits for fit curve.
@@ -702,7 +702,7 @@ class PlotTab(QtWidgets.QWidget):
             )
 
             self.update_info_box()
-            self.update_best_fit_plot(x_var)
+            self.update_bestfit_plot(x_var)
 
         # set state of show_initial_fit, will have changed when setting parameters
         state = save_obj["show_initial_fit"]
