@@ -40,8 +40,6 @@ class PlotTab(QtWidgets.QWidget):
     data_sheet: DataSheet
     model: PlotModel
 
-    fit = None
-
     def __init__(
         self,
         data_sheet: DataSheet,
@@ -183,7 +181,7 @@ class PlotTab(QtWidgets.QWidget):
     def update_info_box(self):
         """Update the information box."""
         msgs = []
-        if self.fit:
+        if self.model.fit:
             msgs.append(self.format_fit_results())
         msgs.append(self.format_plot_info())
         self.ui.result_box.setPlainText("\n".join(msgs))

@@ -108,6 +108,8 @@ class TestPlotTab:
         plot_tab.update_limits.assert_called()
 
     def test_info_box(self, plot_tab: PlotTab):
+        plot_tab.model.fit = None
+
         plot_tab.update_info_box()
 
     def test_get_adjusted_limits(self, plot_tab: PlotTab, mocker: MockerFixture):

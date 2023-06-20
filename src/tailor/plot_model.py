@@ -11,6 +11,8 @@ class PlotModel:
     x_err_col: str | None
     y_err_col: str | None
 
+    fit = None
+
     def __init__(
         self,
         data_model: DataModel,
