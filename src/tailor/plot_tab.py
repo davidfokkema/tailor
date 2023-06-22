@@ -64,7 +64,6 @@ class PlotTab(QtWidgets.QWidget):
 
         self.create_plot()
         self.finish_ui()
-        # self.update_ui()
 
         # # lambda is necessary to gobble the 'index' parameter of the
         # # currentIndexChanged signal
@@ -75,7 +74,6 @@ class PlotTab(QtWidgets.QWidget):
         self.connect_ui_events()
 
     def connect_ui_events(self):
-        ...
         # Connect signals
         # self.ui.model_func.textChanged.connect(self.update_fit_params)
         # self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
@@ -84,8 +82,8 @@ class PlotTab(QtWidgets.QWidget):
         # self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
         # self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
         # self.ui.fit_button.clicked.connect(self.perform_fit)
-        # self.ui.xlabel.textChanged.connect(self.update_xlabel)
-        # self.ui.ylabel.textChanged.connect(self.update_ylabel)
+        self.ui.xlabel.textChanged.connect(self.update_xlabel)
+        self.ui.ylabel.textChanged.connect(self.update_ylabel)
         # self.ui.xmin.textChanged.connect(self.update_limits)
         # self.ui.xmax.textChanged.connect(self.update_limits)
         # self.ui.ymin.textChanged.connect(self.update_limits)
@@ -148,6 +146,9 @@ class PlotTab(QtWidgets.QWidget):
         )
         self.fit_domain_area = pg.LinearRegionItem(movable=True, brush="#00F1")
 
+        self.ui.plot_widget.setLabel("bottom", self.model.x_label)
+        self.ui.plot_widget.setLabel("left", self.model.y_label)
+
     def update_ui(self):
         """Update UI after switching tabs.
 
@@ -188,13 +189,15 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_xlabel(self):
         """Update the x-axis label of the plot."""
-        self.ui.plot_widget.setLabel("bottom", self.ui.xlabel.text())
-        self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+        self.model.x_label = self.ui.xlabel.text()
+        self.ui.plot_widget.setLabel("bottom", self.model.x_label)
+        # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
 
     def update_ylabel(self):
         """Update the y-axis label of the plot."""
-        self.ui.plot_widget.setLabel("left", self.ui.ylabel.text())
-        self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+        self.model.y_label = self.ui.ylabel.text()
+        self.ui.plot_widget.setLabel("left", self.model.y_label)
+        # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
 
     def update_limits(self):
         """Update the axis limits of the plot."""

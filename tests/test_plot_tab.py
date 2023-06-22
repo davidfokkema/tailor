@@ -130,3 +130,13 @@ class TestPlotTab:
         assert plot_tab.update_value_from_text(4.0, widget) == 4.0
         widget.text.return_value = "5.5"
         assert plot_tab.update_value_from_text(4.0, widget) == 5.5
+
+    def test_update_xlabel_sets_model_attr(self, plot_tab: PlotTab):
+        plot_tab.update_xlabel()
+
+        assert plot_tab.model.x_label == plot_tab.ui.xlabel.text.return_value
+
+    def test_update_ylabel_sets_model_attr(self, plot_tab: PlotTab):
+        plot_tab.update_ylabel()
+
+        assert plot_tab.model.y_label == plot_tab.ui.ylabel.text.return_value

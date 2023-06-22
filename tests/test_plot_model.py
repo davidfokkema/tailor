@@ -27,6 +27,15 @@ class TestImplementationDetails:
         assert model.y_err_col == sentinel.y_err_col
         assert isinstance(model.data_model, DataModel) is True
 
+    def test_init_sets_axis_labels(self, mocker: MockerFixture):
+        mocker.patch.object(PlotModel, "get_x_col_name")
+        mocker.patch.object(PlotModel, "get_y_col_name")
+
+        model = PlotModel(None, sentinel.x, sentinel.y, None, None)
+
+        assert model.x_label == model.get_x_col_name.return_value
+        assert model.y_label == model.get_y_col_name.return_value
+
 
 class TestPlotModel:
     def test_get_x_col_name(self, model: PlotModel):

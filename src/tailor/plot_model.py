@@ -10,6 +10,8 @@ class PlotModel:
     y_col: str
     x_err_col: str | None
     y_err_col: str | None
+    x_label: str
+    y_label: str
 
     fit = None
 
@@ -26,6 +28,8 @@ class PlotModel:
         self.y_col = y_col
         self.x_err_col = x_err_col
         self.y_err_col = y_err_col
+        self.x_label = self.get_x_col_name()
+        self.y_label = self.get_y_col_name()
 
         # FIXME
         # self._params = {}
