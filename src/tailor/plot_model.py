@@ -13,6 +13,11 @@ class PlotModel:
     x_label: str
     y_label: str
 
+    x_min: float | None = None
+    x_max: float | None = None
+    y_min: float | None = None
+    y_max: float | None = None
+
     fit = None
 
     def __init__(

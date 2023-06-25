@@ -84,10 +84,10 @@ class PlotTab(QtWidgets.QWidget):
         # self.ui.fit_button.clicked.connect(self.perform_fit)
         self.ui.xlabel.textChanged.connect(self.update_xlabel)
         self.ui.ylabel.textChanged.connect(self.update_ylabel)
-        # self.ui.xmin.textChanged.connect(self.update_limits)
-        # self.ui.xmax.textChanged.connect(self.update_limits)
-        # self.ui.ymin.textChanged.connect(self.update_limits)
-        # self.ui.ymax.textChanged.connect(self.update_limits)
+        self.ui.x_min.textChanged.connect(self.update_x_min)
+        self.ui.x_max.textChanged.connect(self.update_x_max)
+        self.ui.y_min.textChanged.connect(self.update_y_min)
+        self.ui.y_max.textChanged.connect(self.update_y_max)
         # self.ui.set_limits_button.clicked.connect(self.update_limits)
         # self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
 
@@ -199,6 +199,42 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setLabel("left", self.model.y_label)
         # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
 
+    def update_x_min(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.x_min.text())
+        except ValueError:
+            value = None
+        self.model.x_min = value
+        self.update_limits()
+
+    def update_x_max(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.x_max.text())
+        except ValueError:
+            value = None
+        self.model.x_max = value
+        self.update_limits()
+
+    def update_y_min(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.y_min.text())
+        except ValueError:
+            value = None
+        self.model.y_min = value
+        self.update_limits()
+
+    def update_y_max(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.y_max.text())
+        except ValueError:
+            value = None
+        self.model.y_max = value
+        self.update_limits()
+
     def update_limits(self):
         """Update the axis limits of the plot."""
         xmin, xmax, ymin, ymax = self.get_adjusted_limits()
@@ -219,34 +255,17 @@ class PlotTab(QtWidgets.QWidget):
         """Get adjusted plot limits from the data points and text fields.
 
         Return the minimum and maximum values of the data points, taking the
-        error bars into account and adjust those values using the text fields
-        for manual limits in the UI.
+        error bars into account but override with any limits specified.
 
         Returns:
             Tuple of four float values (xmin, xmax, ymin, ymax).
         """
-        xmin, xmax, ymin, ymax = self.model.get_limits_from_data()
-        xmin = self.update_value_from_text(xmin, self.ui.xmin)
-        xmax = self.update_value_from_text(xmax, self.ui.xmax)
-        ymin = self.update_value_from_text(ymin, self.ui.ymin)
-        ymax = self.update_value_from_text(ymax, self.ui.ymax)
-        return xmin, xmax, ymin, ymax
-
-    def update_value_from_text(self, value, widget):
-        """Update value from using a widget's text.
-
-        Args:
-            value: the original value, if update fails.
-            widget: the widget containing the updated value.
-
-        Returns:
-            The updated value, or the original value if the update fails.
-        """
-        try:
-            value = float(widget.text())
-        except ValueError:
-            pass
-        return value
+        x_min, x_max, y_min, y_max = self.model.get_limits_from_data()
+        x_min = self.model.x_min or x_min
+        x_max = self.model.x_max or x_max
+        y_min = self.model.y_min or y_min
+        y_max = self.model.y_max or y_max
+        return x_min, x_max, y_min, y_max
 
     def update_fit_params(self):
         """Update fit parameters.

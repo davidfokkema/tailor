@@ -50,11 +50,11 @@ class Ui_PlotTab(object):
         self.gridLayout = QGridLayout(self.groupBox_2)
         self.gridLayout.setObjectName(u"gridLayout")
         self.gridLayout.setContentsMargins(4, 4, 4, 4)
-        self.xmax = QLineEdit(self.groupBox_2)
-        self.xmax.setObjectName(u"xmax")
-        self.xmax.setMaximumSize(QSize(50, 16777215))
+        self.x_max = QLineEdit(self.groupBox_2)
+        self.x_max.setObjectName(u"x_max")
+        self.x_max.setMaximumSize(QSize(50, 16777215))
 
-        self.gridLayout.addWidget(self.xmax, 0, 5, 1, 1)
+        self.gridLayout.addWidget(self.x_max, 0, 5, 1, 1)
 
         self.ylabel = QLineEdit(self.groupBox_2)
         self.ylabel.setObjectName(u"ylabel")
@@ -66,11 +66,11 @@ class Ui_PlotTab(object):
 
         self.gridLayout.addWidget(self.xlabel, 0, 1, 1, 1)
 
-        self.xmin = QLineEdit(self.groupBox_2)
-        self.xmin.setObjectName(u"xmin")
-        self.xmin.setMaximumSize(QSize(50, 16777215))
+        self.x_min = QLineEdit(self.groupBox_2)
+        self.x_min.setObjectName(u"x_min")
+        self.x_min.setMaximumSize(QSize(50, 16777215))
 
-        self.gridLayout.addWidget(self.xmin, 0, 3, 1, 1)
+        self.gridLayout.addWidget(self.x_min, 0, 3, 1, 1)
 
         self.label_5 = QLabel(self.groupBox_2)
         self.label_5.setObjectName(u"label_5")
@@ -97,22 +97,22 @@ class Ui_PlotTab(object):
 
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
 
-        self.ymax = QLineEdit(self.groupBox_2)
-        self.ymax.setObjectName(u"ymax")
-        self.ymax.setMaximumSize(QSize(50, 16777215))
+        self.y_max = QLineEdit(self.groupBox_2)
+        self.y_max.setObjectName(u"y_max")
+        self.y_max.setMaximumSize(QSize(50, 16777215))
 
-        self.gridLayout.addWidget(self.ymax, 1, 5, 1, 1)
+        self.gridLayout.addWidget(self.y_max, 1, 5, 1, 1)
 
         self.label_4 = QLabel(self.groupBox_2)
         self.label_4.setObjectName(u"label_4")
 
         self.gridLayout.addWidget(self.label_4, 1, 2, 1, 1)
 
-        self.ymin = QLineEdit(self.groupBox_2)
-        self.ymin.setObjectName(u"ymin")
-        self.ymin.setMaximumSize(QSize(50, 16777215))
+        self.y_min = QLineEdit(self.groupBox_2)
+        self.y_min.setObjectName(u"y_min")
+        self.y_min.setMaximumSize(QSize(50, 16777215))
 
-        self.gridLayout.addWidget(self.ymin, 1, 3, 1, 1)
+        self.gridLayout.addWidget(self.y_min, 1, 3, 1, 1)
 
 
         self.horizontalLayout_2.addWidget(self.groupBox_2)
@@ -284,11 +284,11 @@ class Ui_PlotTab(object):
         QWidget.setTabOrder(self.use_fit_domain, self.draw_curve_option)
         QWidget.setTabOrder(self.draw_curve_option, self.result_box)
         QWidget.setTabOrder(self.result_box, self.xlabel)
-        QWidget.setTabOrder(self.xlabel, self.xmin)
-        QWidget.setTabOrder(self.xmin, self.xmax)
-        QWidget.setTabOrder(self.xmax, self.ylabel)
-        QWidget.setTabOrder(self.ylabel, self.ymin)
-        QWidget.setTabOrder(self.ymin, self.ymax)
+        QWidget.setTabOrder(self.xlabel, self.x_min)
+        QWidget.setTabOrder(self.x_min, self.x_max)
+        QWidget.setTabOrder(self.x_max, self.ylabel)
+        QWidget.setTabOrder(self.ylabel, self.y_min)
+        QWidget.setTabOrder(self.y_min, self.y_max)
 
         self.retranslateUi(PlotTab)
 

@@ -112,25 +112,6 @@ class TestPlotTab:
 
         plot_tab.update_info_box()
 
-    def test_get_adjusted_limits(self, plot_tab: PlotTab, mocker: MockerFixture):
-        # minimal testing, otherwise we're just copying the implementation
-        mocker.patch.object(plot_tab, "update_value_from_text")
-        plot_tab.model.get_limits_from_data.return_value = 0.0, 10.0, 20.0, 30.0
-
-        actual = plot_tab.get_adjusted_limits()
-
-        assert len(actual) == 4
-        plot_tab.model.get_limits_from_data.assert_called()
-        assert plot_tab.update_value_from_text.call_count == 4
-
-    def test_update_value_from_text(self, plot_tab: PlotTab, mocker: MockerFixture):
-        widget = mocker.Mock()
-
-        widget.text.return_value = ""
-        assert plot_tab.update_value_from_text(4.0, widget) == 4.0
-        widget.text.return_value = "5.5"
-        assert plot_tab.update_value_from_text(4.0, widget) == 5.5
-
     def test_update_xlabel_sets_model_attr(self, plot_tab: PlotTab):
         plot_tab.update_xlabel()
 
@@ -140,3 +121,71 @@ class TestPlotTab:
         plot_tab.update_ylabel()
 
         assert plot_tab.model.y_label == plot_tab.ui.ylabel.text.return_value
+
+    @pytest.mark.parametrize("textvalue, value", [("4.4", 4.4), ("", None)])
+    def test_update_x_min_sets_model_attr(
+        self, plot_tab: PlotTab, mocker: MockerFixture, textvalue, value
+    ):
+        mocker.patch.object(plot_tab, "update_limits")
+        plot_tab.ui.x_min.text.return_value = textvalue
+
+        plot_tab.update_x_min()
+
+        assert plot_tab.model.x_min == value
+        plot_tab.update_limits.assert_called()
+
+    @pytest.mark.parametrize("textvalue, value", [("4.4", 4.4), ("", None)])
+    def test_update_x_max_sets_model_attr(
+        self, plot_tab: PlotTab, mocker: MockerFixture, textvalue, value
+    ):
+        mocker.patch.object(plot_tab, "update_limits")
+        plot_tab.ui.x_max.text.return_value = textvalue
+
+        plot_tab.update_x_max()
+
+        assert plot_tab.model.x_max == value
+        plot_tab.update_limits.assert_called()
+
+    @pytest.mark.parametrize("textvalue, value", [("4.4", 4.4), ("", None)])
+    def test_update_y_min_sets_model_attr(
+        self, plot_tab: PlotTab, mocker: MockerFixture, textvalue, value
+    ):
+        mocker.patch.object(plot_tab, "update_limits")
+        plot_tab.ui.y_min.text.return_value = textvalue
+
+        plot_tab.update_y_min()
+
+        assert plot_tab.model.y_min == value
+        plot_tab.update_limits.assert_called()
+
+    @pytest.mark.parametrize("textvalue, value", [("4.4", 4.4), ("", None)])
+    def test_update_y_max_sets_model_attr(
+        self, plot_tab: PlotTab, mocker: MockerFixture, textvalue, value
+    ):
+        mocker.patch.object(plot_tab, "update_limits")
+        plot_tab.ui.y_max.text.return_value = textvalue
+
+        plot_tab.update_y_max()
+
+        assert plot_tab.model.y_max == value
+        plot_tab.update_limits.assert_called()
+
+    @pytest.mark.parametrize(
+        "x_min, x_max, y_min, y_max, expected",
+        [
+            (None, None, None, None, (1.0, 2.0, 3.0, 4.0)),
+            (1.5, 2.5, 3.5, 4.5, (1.5, 2.5, 3.5, 4.5)),
+        ],
+    )
+    def test_get_adjusted_limits(
+        self, plot_tab: PlotTab, x_min, x_max, y_min, y_max, expected
+    ):
+        plot_tab.model.get_limits_from_data.return_value = (1.0, 2.0, 3.0, 4.0)
+        plot_tab.model.x_min = x_min
+        plot_tab.model.x_max = x_max
+        plot_tab.model.y_min = y_min
+        plot_tab.model.y_max = y_max
+
+        actual = plot_tab.get_adjusted_limits()
+
+        assert actual == expected
