@@ -1,6 +1,9 @@
+import re
+
 import numpy as np
 import pandas as pd
 
+from tailor.ast_names import get_variable_names, rename_variables
 from tailor.data_model import DataModel
 
 
@@ -18,6 +21,7 @@ class PlotModel:
     y_min: float | None = None
     y_max: float | None = None
 
+    model_expression: str = ""
     fit = None
 
     def __init__(
@@ -124,6 +128,39 @@ class PlotModel:
         ymax += padding * yrange
 
         return xmin, xmax, ymin, ymax
+
+    def update_model_expression(self, expression: str) -> None:
+        """Update the model expression.
+
+        Stores the (transformed) model expression independent of column names.
+
+        Args:
+            expression (str): the model expression.
+        """
+        # remove whitespace after newlines to prevent identation errors
+        expression = re.sub(r"\n\s*", "\n", expression)
+        # mapping: names -> labels, so must reverse _col_names mapping
+        mapping = {v: k for k, v in self.data_model._col_names.items()}
+        try:
+            transformed = rename_variables(expression, mapping)
+        except SyntaxError:
+            # expression could not be parsed
+            self.model_expression = expression
+        else:
+            self.model_expression = transformed
+
+    def get_model_expression(self) -> str:
+        """Get model expression.
+
+        Returns:
+            str: the model expression.
+        """
+        mapping = dict(self.data_model._col_names.items())
+        try:
+            return rename_variables(self.model_expression, mapping)
+        except SyntaxError:
+            # expression could not be parsed
+            return self.model_expression
 
     # def get_params_and_update_model(self):
     #     """Get parameter names and update the model function.

@@ -40,6 +40,8 @@ class PlotTab(QtWidgets.QWidget):
     data_sheet: DataSheet
     model: PlotModel
 
+    _cursor_pos: int = 0
+
     def __init__(
         self,
         data_sheet: DataSheet,
@@ -75,7 +77,8 @@ class PlotTab(QtWidgets.QWidget):
 
     def connect_ui_events(self):
         # Connect signals
-        # self.ui.model_func.textChanged.connect(self.update_fit_params)
+        self.ui.model_func.textChanged.connect(self.update_model_expression)
+        self.ui.model_func.cursorPositionChanged.connect(self.store_cursor_position)
         # self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
         # self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
         # self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
@@ -154,15 +157,21 @@ class PlotTab(QtWidgets.QWidget):
 
         When the plot tab becomes visible again, update all data and information.
         """
-        self.update_function_label()
+        self.update_model_widget()
         self.update_plot()
         self.update_info_box()
 
-    def update_function_label(self):
+    def update_model_widget(self):
         """Update function label."""
         variable = self.model.get_y_col_name()
         new_label_text = f"Function: {variable} ="
         self.ui.model_func_label.setText(new_label_text)
+        cursor_pos = self._cursor_pos
+        self.ui.model_func.setPlainText(self.model.get_model_expression())
+        # cursor is reset after setting text
+        cursor = self.ui.model_func.textCursor()
+        cursor.setPosition(cursor_pos)
+        self.ui.model_func.setTextCursor(cursor)
 
     def update_plot(self):
         """Update plot to reflect any data changes."""
@@ -266,6 +275,13 @@ class PlotTab(QtWidgets.QWidget):
         y_min = self.model.y_min or y_min
         y_max = self.model.y_max or y_max
         return x_min, x_max, y_min, y_max
+
+    def update_model_expression(self):
+        expression = self.ui.model_func.toPlainText()
+        self.model.update_model_expression(expression)
+
+    def store_cursor_position(self):
+        self._cursor_pos = self.ui.model_func.textCursor().position()
 
     def update_fit_params(self):
         """Update fit parameters.

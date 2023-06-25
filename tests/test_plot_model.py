@@ -25,7 +25,8 @@ class TestImplementationDetails:
         assert model.y_col == sentinel.y_col
         assert model.x_err_col == sentinel.x_err_col
         assert model.y_err_col == sentinel.y_err_col
-        assert isinstance(model.data_model, DataModel) is True
+        assert isinstance(model.data_model, DataModel)
+        assert isinstance(model.model_expression, str)
 
     def test_init_sets_axis_labels(self, mocker: MockerFixture):
         mocker.patch.object(PlotModel, "get_x_col_name")
@@ -156,3 +157,38 @@ class TestPlotModel:
         assert x_max == pytest.approx(4.0)
         assert y_min == pytest.approx(3.5)
         assert y_max == pytest.approx(5.5)
+
+    @pytest.mark.parametrize(
+        "expression, transformed",
+        [
+            ("y ** 2 + 2 * z", "col2 ** 2 + 2 * col3"),
+            ("y + 2 * x", "col2 + 2 * col1"),
+            ("y + 2 * t", "col2 + 2 * t"),
+            ("y ** 2\n+    2 * z", "col2 ** 2\n+2 * col3"),
+            ("y ** 2\n    +2 * z", "col2 ** 2\n+2 * col3"),
+            ("x + (2 * ", "x + (2 * "),
+        ],
+    )
+    def test_update_model_expression(self, model: PlotModel, expression, transformed):
+        model.data_model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
+        model.update_model_expression(expression)
+        assert model.model_expression == transformed
+
+    @pytest.mark.parametrize(
+        "expression, expected",
+        [
+            ("col2 ** 2 + 2 * col3", "y ** 2 + 2 * z"),
+            ("col2 + 2 * col1", "y + 2 * x"),
+            ("col2 + 2 * t", "y + 2 * t"),
+            ("col2 ** 2\n+2 * col3", "y ** 2\n+2 * z"),
+            ("col2 ** 2\n+2 * col3", "y ** 2\n+2 * z"),
+            ("x + (2 * ", "x + (2 * "),
+        ],
+    )
+    def test_get_model_expression(self, model: PlotModel, expression, expected):
+        model.data_model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
+        model.model_expression = expression
+
+        actual = model.get_model_expression()
+
+        assert actual == expected

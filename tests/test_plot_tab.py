@@ -69,13 +69,13 @@ class TestPlotTab:
         assert plot_tab.fit_domain_area == pg.LinearRegionItem.return_value
 
     def test_update_ui(self, plot_tab: PlotTab, mocker: MockerFixture):
-        mocker.patch.object(plot_tab, "update_function_label")
+        mocker.patch.object(plot_tab, "update_model_widget")
         mocker.patch.object(plot_tab, "update_info_box")
         mocker.patch.object(plot_tab, "update_plot")
 
         plot_tab.update_ui()
 
-        plot_tab.update_function_label.assert_called()
+        plot_tab.update_model_widget.assert_called()
         plot_tab.update_plot.assert_called()
         plot_tab.update_info_box.assert_called()
 
@@ -83,7 +83,7 @@ class TestPlotTab:
         mocker.patch.object(plot_tab.model, "get_y_col_name")
         plot_tab.model.get_y_col_name.return_value = "foo"
 
-        plot_tab.update_function_label()
+        plot_tab.update_model_widget()
 
         plot_tab.model.get_y_col_name.assert_called()
         plot_tab.ui.model_func_label.setText.assert_called_with("Function: foo =")
