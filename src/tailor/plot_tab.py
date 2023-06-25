@@ -88,7 +88,7 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.x_max.textChanged.connect(self.update_x_max)
         self.ui.y_min.textChanged.connect(self.update_y_min)
         self.ui.y_max.textChanged.connect(self.update_y_max)
-        # self.ui.set_limits_button.clicked.connect(self.update_limits)
+        self.ui.set_limits_button.clicked.connect(self.update_limits)
         # self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
 
     def finish_ui(self):
