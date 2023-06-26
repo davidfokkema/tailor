@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 
 import asteval
 import lmfit
@@ -7,6 +8,17 @@ import pandas as pd
 
 from tailor.ast_names import get_variable_names, rename_variables
 from tailor.data_model import DataModel
+
+
+@dataclass
+class Parameter:
+    """A fit parameter with boundaries."""
+
+    name: str
+    value: float = 1.0
+    min: float = float("-inf")
+    max: float = float("inf")
+    vary: bool = True
 
 
 class PlotModel:
@@ -24,6 +36,7 @@ class PlotModel:
     y_max: float | None = None
 
     model_expression: str = ""
+    parameters: dict[str, Parameter]
     has_fit: bool = False
 
     def __init__(
@@ -42,6 +55,7 @@ class PlotModel:
         self.x_label = self.get_x_col_name()
         self.y_label = self.get_y_col_name()
 
+        self.parameters = {}
         self._math_symbols = set(asteval.Interpreter().symtable.keys())
 
         # FIXME
@@ -163,7 +177,19 @@ class PlotModel:
                 self.update_model_parameters()
 
     def update_model_parameters(self):
-        ...
+        stored = set(self.parameters.keys())
+        current = set(self.model.param_names)
+
+        new = current - stored
+        discard = stored - current
+
+        # discard unneeded parameters
+        for key in discard:
+            self.parameters.pop(key)
+
+        # add new parameters
+        for key in new:
+            self.parameters[key] = Parameter(name=key)
 
     def get_model_expression(self) -> str:
         """Get model expression.

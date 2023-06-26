@@ -39,6 +39,7 @@ class TestImplementationDetails:
         assert model.y_err_col == sentinel.y_err_col
         assert isinstance(model.data_model, DataModel)
         assert isinstance(model.model_expression, str)
+        assert isinstance(model.parameters, dict)
 
     def test_init_sets_axis_labels(self, mocker: MockerFixture):
         mocker.patch.object(PlotModel, "get_x_col_name")
@@ -241,3 +242,16 @@ class TestPlotModel:
         actual = bare_bones_data.get_model_parameters()
         assert isinstance(actual, set)
         assert actual == expected
+
+    @pytest.mark.parametrize("extra", [{}, {"d": sentinel.d}])
+    def test_update_model_parameters(self, bare_bones_data: PlotModel, extra):
+        bare_bones_data.model = lmfit.models.ExpressionModel(
+            "a * x ** 2 + b * x + c", independent_vars=["x"]
+        )
+        bare_bones_data.parameters = {"a": sentinel.a, "b": sentinel.b} | extra
+
+        bare_bones_data.update_model_parameters()
+
+        assert set(bare_bones_data.parameters.keys()) == {"a", "b", "c"}
+        assert bare_bones_data.parameters["a"] == sentinel.a
+        assert bare_bones_data.parameters["b"] == sentinel.b
