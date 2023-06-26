@@ -228,21 +228,6 @@ class TestPlotModel:
 
         assert actual == expected
 
-    @pytest.mark.parametrize(
-        "expression, expected",
-        [
-            ("a * x + b", set(["a", "b"])),
-            ("N_0 * exp(-mu * x) + N_bkg", set(["N_0", "mu", "N_bkg"])),
-        ],
-    )
-    def test_get_model_parameters(
-        self, bare_bones_data: PlotModel, expression, expected
-    ):
-        bare_bones_data.model_expression = expression
-        actual = bare_bones_data.get_model_parameters()
-        assert isinstance(actual, set)
-        assert actual == expected
-
     @pytest.mark.parametrize("extra", [{}, {"d": sentinel.d}])
     def test_update_model_parameters(self, bare_bones_data: PlotModel, extra):
         bare_bones_data.model = lmfit.models.ExpressionModel(

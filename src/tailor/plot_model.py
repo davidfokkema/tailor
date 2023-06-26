@@ -149,7 +149,9 @@ class PlotModel:
     def update_model_expression(self, expression: str) -> None:
         """Update the model expression.
 
-        Stores the (transformed) model expression independent of column names.
+        Update the stored (transformed) model expression independent of column
+        names. After calling this method, the `parameters` attribute has an
+        updated dictionary of model parameters.
 
         Args:
             expression (str): the model expression.
@@ -203,23 +205,6 @@ class PlotModel:
         except SyntaxError:
             # expression could not be parsed
             return self.model_expression
-
-    def get_model_parameters(self) -> set[str]:
-        """Get model parameters.
-
-        Get the parameters of the model. That is, all symbols minus mathematical
-        functions and the names of data columns.
-
-        Returns:
-            set[str]: a set of parameter names.
-        """
-        expression = self.get_model_expression()
-        code = compile(expression, "<string>", "eval")
-        return (
-            set(code.co_names)
-            - set(self.data_model.get_column_names())
-            - self._math_symbols
-        )
 
     # def get_params_and_update_model(self):
     #     """Get parameter names and update the model function.
