@@ -27,7 +27,11 @@ def bare_bones_data(mocker: MockerFixture):
     data_model.get_column_names.return_value = data_model._col_names.values()
 
     return PlotModel(
-        data_model=data_model, x_col="x", y_col="y", x_err_col=None, y_err_col=None
+        data_model=data_model,
+        x_col="col1",
+        y_col="col2",
+        x_err_col=None,
+        y_err_col=None,
     )
 
 
@@ -174,6 +178,7 @@ class TestPlotModel:
     @pytest.mark.parametrize(
         "expression, transformed",
         [
+            ("a * x + b", "a * col1 + b"),
             ("y ** 2 + 2 * x", "col2 ** 2 + 2 * col1"),
             ("y + 2 * x", "col2 + 2 * col1"),
             ("x + 2 * t", "col1 + 2 * t"),

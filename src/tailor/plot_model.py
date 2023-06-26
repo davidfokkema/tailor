@@ -58,9 +58,6 @@ class PlotModel:
         self.parameters = {}
         self._math_symbols = set(asteval.Interpreter().symtable.keys())
 
-        # FIXME
-        # self._params = {}
-
     def get_x_col_name(self) -> str:
         """Get the name of the x variable."""
         return self.data_model.get_column_name(self.x_col)
@@ -170,7 +167,7 @@ class PlotModel:
             self.model_expression = transformed
             try:
                 self.model = lmfit.models.ExpressionModel(
-                    expression, independent_vars=[self.x_col]
+                    transformed, independent_vars=[self.x_col]
                 )
             except ValueError:
                 # independent (x) variable not present in expression

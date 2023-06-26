@@ -39,7 +39,7 @@ class PlotTab(QtWidgets.QWidget):
 
     data_sheet: DataSheet
     model: PlotModel
-
+    _params: dict[str, QtWidgets.QWidget]
     _cursor_pos: int = 0
 
     def __init__(
@@ -63,6 +63,7 @@ class PlotTab(QtWidgets.QWidget):
             data_sheet.data_model._data, x_col, y_col, x_err_col, y_err_col
         )
         self.data_sheet = data_sheet
+        self._params = {}
 
         self.create_plot()
         self.finish_ui()
@@ -277,42 +278,22 @@ class PlotTab(QtWidgets.QWidget):
         return x_min, x_max, y_min, y_max
 
     def update_model_expression(self):
+        """Update the model expression and related UI."""
         expression = self.ui.model_func.toPlainText()
         self.model.update_model_expression(expression)
+        self.update_params_ui()
+        # self.plot_initial_model()
 
     def store_cursor_position(self):
+        """Store the cursor position inside the model expression."""
         self._cursor_pos = self.ui.model_func.textCursor().position()
 
-    def update_fit_params(self):
-        """Update fit parameters.
-
-        Gets parameter names from the model function and updates the layout to
-        add new parameters and remove parameters which are no longer part of the
-        model.
-        """
-        try:
-            params = self.get_params_and_update_model()
-        except (SyntaxError, VariableError) as exc:
-            self.main_window.ui.statusbar.showMessage(
-                f"ERROR: {exc!s}", timeout=MSG_TIMEOUT
-            )
-            self.model = None
-        else:
-            self.update_params_ui(params)
-            self.plot_initial_model()
-            self.main_window.ui.statusbar.showMessage(
-                "Updated model.", timeout=MSG_TIMEOUT
-            )
-
-    def update_params_ui(self, params):
-        """Add and/or remove parameters if necessary.
-
-        Args:
-            params: list of parameter names which should be in the user interface.
-        """
+    def update_params_ui(self):
+        """Add and/or remove parameters if necessary."""
         old_params = set(self._params)
-        self.add_params_to_ui(params - old_params)
-        self.remove_params_from_ui(old_params - params)
+        current_params = set(self.model.parameters)
+        self.add_params_to_ui(current_params - old_params)
+        self.remove_params_from_ui(old_params - current_params)
 
     def add_params_to_ui(self, params):
         """Add parameters to user interface.
