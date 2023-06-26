@@ -1,5 +1,6 @@
 import re
 
+import asteval
 import numpy as np
 import pandas as pd
 
@@ -40,9 +41,10 @@ class PlotModel:
         self.x_label = self.get_x_col_name()
         self.y_label = self.get_y_col_name()
 
+        self._math_symbols = set(asteval.Interpreter().symtable.keys())
+
         # FIXME
         # self._params = {}
-        # self._symbols = set(asteval.Interpreter().symtable.keys())
 
     def get_x_col_name(self) -> str:
         """Get the name of the x variable."""
@@ -161,6 +163,23 @@ class PlotModel:
         except SyntaxError:
             # expression could not be parsed
             return self.model_expression
+
+    def get_model_parameters(self) -> set[str]:
+        """Get model parameters.
+
+        Get the parameters of the model. That is, all symbols minus mathematical
+        functions and the names of data columns.
+
+        Returns:
+            set[str]: a set of parameter names.
+        """
+        expression = self.get_model_expression()
+        code = compile(expression, "<string>", "eval")
+        return (
+            set(code.co_names)
+            - set(self.data_model.get_column_names())
+            - self._math_symbols
+        )
 
     # def get_params_and_update_model(self):
     #     """Get parameter names and update the model function.

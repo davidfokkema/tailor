@@ -19,6 +19,17 @@ def model(mocker: MockerFixture):
     )
 
 
+@pytest.fixture()
+def bare_bones_data(mocker: MockerFixture):
+    data_model = Mock(spec=DataModel)
+    data_model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
+    data_model.get_column_names.return_value = data_model._col_names.values()
+
+    return PlotModel(
+        data_model=data_model, x_col="x", y_col="y", x_err_col=None, y_err_col=None
+    )
+
+
 class TestImplementationDetails:
     def test_init_sets_attributes(self, model: PlotModel):
         assert model.x_col == sentinel.x_col
@@ -191,4 +202,19 @@ class TestPlotModel:
 
         actual = model.get_model_expression()
 
+        assert actual == expected
+
+    @pytest.mark.parametrize(
+        "expression, expected",
+        [
+            ("a * x + b", set(["a", "b"])),
+            ("N_0 * exp(-mu * x) + N_bkg", set(["N_0", "mu", "N_bkg"])),
+        ],
+    )
+    def test_get_model_parameters(
+        self, bare_bones_data: PlotModel, expression, expected
+    ):
+        bare_bones_data.model_expression = expression
+        actual = bare_bones_data.get_model_parameters()
+        assert isinstance(actual, set)
         assert actual == expected
