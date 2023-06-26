@@ -191,7 +191,7 @@ class PlotTab(QtWidgets.QWidget):
     def update_info_box(self):
         """Update the information box."""
         msgs = []
-        if self.model.fit:
+        if self.model.has_fit:
             msgs.append(self.format_fit_results())
         msgs.append(self.format_plot_info())
         self.ui.result_box.setPlainText("\n".join(msgs))

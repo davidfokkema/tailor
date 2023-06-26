@@ -24,7 +24,7 @@ class PlotModel:
     y_max: float | None = None
 
     model_expression: str = ""
-    fit = None
+    has_fit: bool = False
 
     def __init__(
         self,
