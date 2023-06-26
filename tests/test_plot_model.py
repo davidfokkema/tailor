@@ -1,5 +1,6 @@
 from unittest.mock import Mock, call, sentinel
 
+import lmfit
 import numpy as np
 import pytest
 from pytest_mock import MockerFixture
@@ -172,18 +173,40 @@ class TestPlotModel:
     @pytest.mark.parametrize(
         "expression, transformed",
         [
-            ("y ** 2 + 2 * z", "col2 ** 2 + 2 * col3"),
+            ("y ** 2 + 2 * x", "col2 ** 2 + 2 * col1"),
             ("y + 2 * x", "col2 + 2 * col1"),
-            ("y + 2 * t", "col2 + 2 * t"),
-            ("y ** 2\n+    2 * z", "col2 ** 2\n+2 * col3"),
-            ("y ** 2\n    +2 * z", "col2 ** 2\n+2 * col3"),
-            ("x + (2 * ", "x + (2 * "),
+            ("x + 2 * t", "col1 + 2 * t"),
+            ("x ** 2\n+    2 * z", "col1 ** 2\n+2 * col3"),
+            ("x ** 2\n    +2 * z", "col1 ** 2\n+2 * col3"),
         ],
     )
-    def test_update_model_expression(self, model: PlotModel, expression, transformed):
-        model.data_model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
-        model.update_model_expression(expression)
-        assert model.model_expression == transformed
+    def test_update_model_expression(
+        self, bare_bones_data: PlotModel, mocker: MockerFixture, expression, transformed
+    ):
+        mocker.patch.object(bare_bones_data, "update_model_parameters")
+        bare_bones_data.update_model_expression(expression)
+        assert bare_bones_data.model_expression == transformed
+        assert isinstance(bare_bones_data.model, lmfit.models.ExpressionModel)
+        bare_bones_data.update_model_parameters.assert_called()
+
+    @pytest.mark.parametrize(
+        "expression, transformed",
+        [("x + (2 * ", "x + (2 * "), ("a * y + b", "a * col2 + b")],
+    )
+    def test_update_broken_model_expression(
+        self, bare_bones_data: PlotModel, mocker: MockerFixture, expression, transformed
+    ):
+        mocker.patch.object(bare_bones_data, "update_model_parameters")
+        # first run: create a working model
+        bare_bones_data.update_model_expression("a * x")
+        bare_bones_data.update_model_parameters.reset_mock()
+
+        # now see if it breaks correctly
+        bare_bones_data.update_model_expression(expression)
+
+        assert bare_bones_data.model_expression == transformed
+        assert bare_bones_data.model is None
+        bare_bones_data.update_model_parameters.assert_not_called()
 
     @pytest.mark.parametrize(
         "expression, expected",

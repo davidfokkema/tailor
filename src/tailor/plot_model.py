@@ -1,6 +1,7 @@
 import re
 
 import asteval
+import lmfit
 import numpy as np
 import pandas as pd
 
@@ -139,7 +140,7 @@ class PlotModel:
         Args:
             expression (str): the model expression.
         """
-        # remove whitespace after newlines to prevent identation errors
+        # remove whitespace after newlines to prevent indentation errors
         expression = re.sub(r"\n\s*", "\n", expression)
         # mapping: names -> labels, so must reverse _col_names mapping
         mapping = {v: k for k, v in self.data_model._col_names.items()}
@@ -148,8 +149,21 @@ class PlotModel:
         except SyntaxError:
             # expression could not be parsed
             self.model_expression = expression
+            self.model = None
         else:
             self.model_expression = transformed
+            try:
+                self.model = lmfit.models.ExpressionModel(
+                    expression, independent_vars=[self.x_col]
+                )
+            except ValueError:
+                # independent (x) variable not present in expression
+                self.model = None
+            else:
+                self.update_model_parameters()
+
+    def update_model_parameters(self):
+        ...
 
     def get_model_expression(self) -> str:
         """Get model expression.
