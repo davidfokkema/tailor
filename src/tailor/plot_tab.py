@@ -441,6 +441,7 @@ class PlotTab(QtWidgets.QWidget):
         interface.
         """
         # FIXME Problem for constants like y = a
+
         x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
         kwargs = self.get_parameter_values()
         kwargs[self.x_var] = x
@@ -483,20 +484,20 @@ class PlotTab(QtWidgets.QWidget):
         This method respects the choice in the 'Draw curve' option box.
 
         Returns:
-            xmin, xmax: tuple of floats with the x-axis limits
+            x_min, x_max: tuple of floats with the x-axis limits
         """
         option_idx = self.ui.draw_curve_option.currentIndex()
         if option_idx == DRAW_CURVE_ON_DATA:
-            xmin, xmax = min(self.x), max(self.x)
+            x_min, x_max, _, _ = self.model.get_limits_from_data()
         elif option_idx == DRAW_CURVE_ON_DOMAIN:
-            xmin, xmax = self.fit_domain
+            x_min, x_max = self.model.fit_domain
         elif option_idx == DRAW_CURVE_ON_AXIS:
-            [[xmin, xmax], _] = self.ui.plot_widget.viewRange()
+            [[x_min, x_max], _] = self.ui.plot_widget.viewRange()
         else:
             raise NotImplementedError(
                 f"Draw curve option {option_idx} not implemented."
             )
-        return xmin, xmax
+        return x_min, x_max
 
     def format_plot_info(self):
         """Format basic plot information in the results box.

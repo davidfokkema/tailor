@@ -238,3 +238,41 @@ class TestPlotTab:
         # nothing should have been updated
         plot_tab.fit_domain_area.setRegion.assert_not_called()
         assert plot_tab.model.fit_domain == sentinel.domain
+
+    def test_get_fit_curve_x_limits_on_data(self, plot_tab: PlotTab):
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = (
+            tailor.plot_tab.DRAW_CURVE_ON_DATA
+        )
+        plot_tab.model.get_limits_from_data.return_value = (
+            sentinel.x_min,
+            sentinel.x_max,
+            None,
+            None,
+        )
+
+        assert plot_tab.get_fit_curve_x_limits() == (sentinel.x_min, sentinel.x_max)
+
+    def test_get_fit_curve_x_limits_on_domain(self, plot_tab: PlotTab):
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = (
+            tailor.plot_tab.DRAW_CURVE_ON_DOMAIN
+        )
+        plot_tab.model.fit_domain = (sentinel.x_min, sentinel.x_max)
+
+        assert plot_tab.get_fit_curve_x_limits() == (sentinel.x_min, sentinel.x_max)
+
+    def test_get_fit_curve_x_limits_on_axis(self, plot_tab: PlotTab):
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = (
+            tailor.plot_tab.DRAW_CURVE_ON_AXIS
+        )
+        plot_tab.ui.plot_widget.viewRange.return_value = [
+            [sentinel.x_min, sentinel.x_max],
+            [None, None],
+        ]
+
+        assert plot_tab.get_fit_curve_x_limits() == (sentinel.x_min, sentinel.x_max)
+
+    def test_get_fit_curve_x_limits_not_implemented(self, plot_tab: PlotTab):
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = 10
+
+        with pytest.raises(NotImplementedError):
+            plot_tab.get_fit_curve_x_limits()
