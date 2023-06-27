@@ -3,6 +3,7 @@ from unittest.mock import sentinel
 import numpy as np
 import pyqtgraph
 import pytest
+from PySide6 import QtCore
 from pytest_mock import MockerFixture
 
 import tailor.plot_tab
@@ -188,6 +189,20 @@ class TestPlotTab:
         actual = plot_tab.get_adjusted_limits()
 
         assert actual == expected
+
+    def test_use_fit_domain(self, plot_tab: PlotTab):
+        state = QtCore.Qt.Checked.value
+
+        plot_tab.toggle_use_fit_domain(state)
+
+        plot_tab.ui.plot_widget.addItem.assert_called_with(plot_tab.fit_domain_area)
+
+    def test_dont_use_fit_domain(self, plot_tab: PlotTab):
+        state = QtCore.Qt.Unchecked.value
+
+        plot_tab.toggle_use_fit_domain(state)
+
+        plot_tab.ui.plot_widget.removeItem.assert_called_with(plot_tab.fit_domain_area)
 
     def test_fit_domain_region_changed(self, plot_tab: PlotTab, mocker: MockerFixture):
         mocker.patch.object(plot_tab, "fit_domain_area")
