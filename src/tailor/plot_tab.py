@@ -434,6 +434,15 @@ class PlotTab(QtWidgets.QWidget):
             #     "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
             # )
 
+    # def updated_plot_range(self):
+    #     """Handle updated plot range.
+
+    #     If the fitted curves are drawn on the full axis, they need to be updated
+    #     when the plot range is changed.
+    #     """
+    #     if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
+    #         self.update_bestfit_plot()
+
     def plot_initial_model(self):
         """Plot model with initial parameters.
 
@@ -451,15 +460,6 @@ class PlotTab(QtWidgets.QWidget):
             self.initial_param_plot.setData(x, y)
         else:
             self.initial_param_plot.setData([], [])
-
-    def updated_plot_range(self):
-        """Handle updated plot range.
-
-        If the fitted curves are drawn on the full axis, they need to be updated
-        when the plot range is changed.
-        """
-        if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
-            self.update_bestfit_plot()
 
     def update_bestfit_plot(self, x_var=None):
         """Update the plot of the best-fit model curve.
