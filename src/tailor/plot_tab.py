@@ -419,7 +419,7 @@ class PlotTab(QtWidgets.QWidget):
         xmin, xmax = self.fit_domain_area.getRegion()
         self.ui.fit_start_box.setValue(xmin)
         self.ui.fit_end_box.setValue(xmax)
-        # self.update_bestfit_plot()
+        # FIXME: self.update_bestfit_plot()
 
     def update_fit_domain(self):
         """Update the fit domain and indicate with vertical lines."""
@@ -428,7 +428,6 @@ class PlotTab(QtWidgets.QWidget):
         if start <= end:
             self.model.fit_domain = start, end
             self.fit_domain_area.setRegion((start, end))
-            print(f"{start=}, {end=}")
             # else:
             # FIXME
             # self.main_window.ui.statusbar.showMessage(
