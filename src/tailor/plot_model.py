@@ -37,6 +37,7 @@ class PlotModel:
 
     model_expression: str = ""
     parameters: dict[str, Parameter]
+    fit_domain: tuple[float, float]
     has_fit: bool = False
 
     def __init__(
@@ -56,6 +57,8 @@ class PlotModel:
         self.y_label = self.get_y_col_name()
 
         self.parameters = {}
+        x = self.data_model.get_column(x_col)
+        self.fit_domain = min(x), max(x)
         self._math_symbols = set(asteval.Interpreter().symtable.keys())
 
     def get_x_col_name(self) -> str:

@@ -188,3 +188,38 @@ class TestPlotTab:
         actual = plot_tab.get_adjusted_limits()
 
         assert actual == expected
+
+    def test_fit_domain_region_changed(self, plot_tab: PlotTab, mocker: MockerFixture):
+        mocker.patch.object(plot_tab, "fit_domain_area")
+        plot_tab.fit_domain_area.getRegion.return_value = sentinel.x_min, sentinel.x_max
+
+        plot_tab.fit_domain_region_changed()
+
+        plot_tab.ui.fit_start_box.setValue.assert_called_with(sentinel.x_min)
+        plot_tab.ui.fit_end_box.setValue.assert_called_with(sentinel.x_max)
+
+    def test_update_fit_domain_sets_model_attribute(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "fit_domain_area")
+        plot_tab.ui.fit_start_box.value.return_value = -10.0
+        plot_tab.ui.fit_end_box.value.return_value = 5.0
+
+        plot_tab.update_fit_domain()
+
+        plot_tab.fit_domain_area.setRegion.assert_called_with((-10.0, 5.0))
+        assert plot_tab.model.fit_domain == (-10.0, 5.0)
+
+    def test_update_fit_domain_with_invalid_domain(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "fit_domain_area")
+        plot_tab.model.fit_domain = sentinel.domain
+        plot_tab.ui.fit_start_box.value.return_value = 5.0
+        plot_tab.ui.fit_end_box.value.return_value = -10
+
+        plot_tab.update_fit_domain()
+
+        # nothing should have been updated
+        plot_tab.fit_domain_area.setRegion.assert_not_called()
+        assert plot_tab.model.fit_domain == sentinel.domain

@@ -81,10 +81,10 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.model_func.textChanged.connect(self.update_model_expression)
         self.ui.model_func.cursorPositionChanged.connect(self.store_cursor_position)
         # self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
-        # self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
-        # self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
-        # self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
-        # self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
+        self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
+        self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
+        self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
+        self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
         # self.ui.fit_button.clicked.connect(self.perform_fit)
         self.ui.xlabel.textChanged.connect(self.update_xlabel)
         self.ui.ylabel.textChanged.connect(self.update_ylabel)
@@ -404,7 +404,7 @@ class PlotTab(QtWidgets.QWidget):
         Args:
             state: integer (enum Qt::CheckState) with the checkbox state.
         """
-        if state == QtCore.Qt.Checked:
+        if state == QtCore.Qt.Checked.value:
             self.ui.plot_widget.addItem(self.fit_domain_area)
             self.update_fit_domain()
         else:
@@ -419,19 +419,21 @@ class PlotTab(QtWidgets.QWidget):
         xmin, xmax = self.fit_domain_area.getRegion()
         self.ui.fit_start_box.setValue(xmin)
         self.ui.fit_end_box.setValue(xmax)
-        self.update_bestfit_plot()
+        # self.update_bestfit_plot()
 
     def update_fit_domain(self):
         """Update the fit domain and indicate with vertical lines."""
         start = self.ui.fit_start_box.value()
         end = self.ui.fit_end_box.value()
         if start <= end:
-            self.fit_domain = start, end
+            self.model.fit_domain = start, end
             self.fit_domain_area.setRegion((start, end))
-        else:
-            self.main_window.ui.statusbar.showMessage(
-                "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
-            )
+            print(f"{start=}, {end=}")
+            # else:
+            # FIXME
+            # self.main_window.ui.statusbar.showMessage(
+            #     "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
+            # )
 
     def plot_initial_model(self):
         """Plot model with initial parameters.

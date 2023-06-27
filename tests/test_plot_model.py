@@ -11,13 +11,19 @@ from tailor.plot_model import PlotModel
 
 @pytest.fixture()
 def model(mocker: MockerFixture):
-    return PlotModel(
-        data_model=Mock(spec=DataModel),
+    data_model = Mock(spec=DataModel)
+    data_model.get_column.return_value = [0.0, 0.5, 1.0]
+
+    model = PlotModel(
+        data_model=data_model,
         x_col=sentinel.x_col,
         y_col=sentinel.y_col,
         x_err_col=sentinel.x_err_col,
         y_err_col=sentinel.y_err_col,
     )
+
+    data_model.get_column.reset_mock()
+    return model
 
 
 @pytest.fixture()
@@ -25,6 +31,7 @@ def bare_bones_data(mocker: MockerFixture):
     data_model = Mock(spec=DataModel)
     data_model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
     data_model.get_column_names.return_value = data_model._col_names.values()
+    data_model.get_column.return_value = [0.0, 0.5, 1.0]
 
     return PlotModel(
         data_model=data_model,
@@ -44,15 +51,22 @@ class TestImplementationDetails:
         assert isinstance(model.data_model, DataModel)
         assert isinstance(model.model_expression, str)
         assert isinstance(model.parameters, dict)
+        assert isinstance(model.fit_domain, tuple)
+        assert len(model.fit_domain) == 2
 
     def test_init_sets_axis_labels(self, mocker: MockerFixture):
         mocker.patch.object(PlotModel, "get_x_col_name")
         mocker.patch.object(PlotModel, "get_y_col_name")
+        data_model = Mock(DataModel)
+        data_model.get_column.return_value = [0.0, 0.5, 1.0]
 
-        model = PlotModel(None, sentinel.x, sentinel.y, None, None)
+        model = PlotModel(data_model, sentinel.x, sentinel.y, None, None)
 
         assert model.x_label == model.get_x_col_name.return_value
         assert model.y_label == model.get_y_col_name.return_value
+
+    def test_init_sets_fit_domain(self, model: PlotModel):
+        assert model.fit_domain == (0.0, 1.0)
 
 
 class TestPlotModel:
