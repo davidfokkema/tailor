@@ -80,7 +80,7 @@ class PlotTab(QtWidgets.QWidget):
         # Connect signals
         self.ui.model_func.textChanged.connect(self.update_model_expression)
         self.ui.model_func.cursorPositionChanged.connect(self.store_cursor_position)
-        # self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
+        self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
         self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
         self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
         self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
@@ -283,7 +283,7 @@ class PlotTab(QtWidgets.QWidget):
         expression = self.ui.model_func.toPlainText()
         self.model.update_model_expression(expression)
         self.update_params_ui()
-        # self.plot_initial_model()
+        self.plot_initial_model()
 
     def store_cursor_position(self):
         """Store the cursor position inside the model expression."""
@@ -376,12 +376,15 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_parameter_value(self, widget, value):
         self.model.parameters[widget._parameter].value = value
+        self.plot_initial_model()
 
     def update_parameter_min_bound(self, widget, value):
         self.model.parameters[widget._parameter].min = value
+        self.plot_initial_model()
 
     def update_parameter_max_bound(self, widget, value):
         self.model.parameters[widget._parameter].max = value
+        self.plot_initial_model()
 
     # def get_parameter_values(self):
     #     """Get current parameter values."""
@@ -461,16 +464,15 @@ class PlotTab(QtWidgets.QWidget):
         interface.
         """
         # FIXME Problem for constants like y = a
-
-        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
-        kwargs = self.get_parameter_values()
-        kwargs[self.x_var] = x
-        y = self.model.eval(**kwargs)
-
         if self.ui.show_initial_fit.isChecked():
-            self.initial_param_plot.setData(x, y)
-        else:
-            self.initial_param_plot.setData([], [])
+            x_min, x_max = self.get_fit_curve_x_limits()
+            x = np.linspace(x_min, x_max, NUM_POINTS)
+            y = self.model.evaluate_model(x)
+            if y is not None:
+                self.initial_param_plot.setData(x, y)
+                return
+        # in all other cases: reset data
+        self.initial_param_plot.setData([], [])
 
     def update_bestfit_plot(self, x_var=None):
         """Update the plot of the best-fit model curve.

@@ -204,6 +204,26 @@ class PlotModel:
             # expression could not be parsed
             return self.model_expression
 
+    def evaluate_model(self, x: np.ndarray) -> np.ndarray | None:
+        """Evaluate the fit model.
+
+        Evaluate the fit model using the current values for the initial
+        parameters at the supplied x-values. If no model is currently defined,
+        return None.
+
+        Args:
+            x (np.ndarray): the x-values for which to evaluate the model.
+
+        Returns:
+            np.ndarray | None: the evaluated y-values or None
+        """
+        if self.model:
+            kwargs = {k: v.value for k, v in self.parameters.items()}
+            kwargs[self.x_col] = x
+            return self.model.eval(**kwargs)
+        else:
+            return None
+
     # def get_params_and_update_model(self):
     #     """Get parameter names and update the model function.
 
