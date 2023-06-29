@@ -29,10 +29,8 @@ def test_plot_tab(app: Application):
     y_col = sheet.data_model.columnLabel(1)
     app.create_plot_tab(sheet, x_col, y_col, None, None)
 
-
-#     plottab = app.ui.tabWidget.currentWidget()
-#     plottab.ui.model_func.setPlainText("a * x**2 + b * x + c + d + f + g")
-#     plottab.ui.model_func.setPlainText("a * x")
+    plottab = app.ui.tabWidget.currentWidget()
+    plottab.ui.model_func.setPlainText("a * x**2 + b")
 
 
 if __name__ == "__main__":

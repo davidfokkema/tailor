@@ -317,20 +317,22 @@ class PlotTab(QtWidgets.QWidget):
                 compactHeight=False,
             )
             value_box.setObjectName("value")
+            value_box._parameter = param
             min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
             min_box.setObjectName("min")
+            min_box._parameter = param
             max_box = pg.SpinBox(value=+np.inf, finite=False, compactHeight=False)
             max_box.setObjectName("max")
+            max_box._parameter = param
             is_fixed_checkbox = QtWidgets.QCheckBox("Fixed", objectName="is_fixed")
             create_leq_sign = lambda: QtWidgets.QLabel(
                 "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
             )
 
-            # connect signals to changes in parameter value
-            value_box.sigValueChanging.connect(
-                lambda: self.ui.show_initial_fit.setChecked(True)
-            )
-            value_box.sigValueChanging.connect(self.plot_initial_model)
+            # connect signals to changes in parameter values or bounds
+            value_box.sigValueChanging.connect(self.update_parameter_value)
+            min_box.sigValueChanging.connect(self.update_parameter_min_bound)
+            max_box.sigValueChanging.connect(self.update_parameter_max_bound)
 
             # build parameter layout
             layout = QtWidgets.QHBoxLayout()
@@ -371,6 +373,15 @@ class PlotTab(QtWidgets.QWidget):
             layout_widget = self._params.pop(param)
             self.ui.param_layout.removeWidget(layout_widget)
             layout_widget.deleteLater()
+
+    def update_parameter_value(self, widget, value):
+        self.model.parameters[widget._parameter].value = value
+
+    def update_parameter_min_bound(self, widget, value):
+        self.model.parameters[widget._parameter].min = value
+
+    def update_parameter_max_bound(self, widget, value):
+        self.model.parameters[widget._parameter].max = value
 
     # def get_parameter_values(self):
     #     """Get current parameter values."""
