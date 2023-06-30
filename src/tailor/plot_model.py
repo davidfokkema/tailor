@@ -36,6 +36,7 @@ class PlotModel:
     y_max: float | None = None
 
     model_expression: str = ""
+    model: lmfit.models.ExpressionModel | None = None
     parameters: dict[str, Parameter]
     fit_domain: tuple[float, float] | None = None
     has_fit: bool = False

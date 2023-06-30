@@ -3,10 +3,11 @@ from unittest.mock import Mock, call, sentinel
 import lmfit
 import numpy as np
 import pytest
+from numpy.testing import assert_array_equal
 from pytest_mock import MockerFixture
 
 from tailor.data_model import DataModel
-from tailor.plot_model import PlotModel
+from tailor.plot_model import Parameter, PlotModel
 
 
 @pytest.fixture()
@@ -247,3 +248,19 @@ class TestPlotModel:
         assert set(bare_bones_data.parameters.keys()) == {"a", "b", "c"}
         assert bare_bones_data.parameters["a"] == sentinel.a
         assert bare_bones_data.parameters["b"] == sentinel.b
+
+    def test_evaluate_model(self, bare_bones_data: PlotModel):
+        bare_bones_data.model = lmfit.models.ExpressionModel(
+            "a * col1 ** 2 + b", independent_vars=["col1"]
+        )
+        bare_bones_data.parameters["a"] = Parameter("a", 2.0)
+        bare_bones_data.parameters["b"] = Parameter("b", 0.5)
+        x = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+        expected = np.array([0.5, 2.5, 8.5, 18.5, 32.5])
+
+        actual = bare_bones_data.evaluate_model(x)
+
+        assert_array_equal(actual, expected)
+
+    def test_evaluate_model_without_model(self, model: PlotModel):
+        assert model.evaluate_model(x=[1, 2, 3]) is None
