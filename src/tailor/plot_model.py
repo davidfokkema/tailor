@@ -178,6 +178,12 @@ class PlotModel:
                 self.update_model_parameters()
 
     def update_model_parameters(self):
+        """Update model parameters.
+
+        Comparing the stored model to the stored parameters, determine which
+        parameters are newly-defined in the model and must be created and which
+        stored parameters are no longer used in the model and must be discarded.
+        """
         stored = set(self.parameters.keys())
         current = set(self.model.param_names)
 
