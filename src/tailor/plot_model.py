@@ -189,8 +189,8 @@ class PlotModel:
         """
         # remove whitespace after newlines to prevent indentation errors
         expression = re.sub(r"\n\s*", "\n", expression)
-        # mapping: names -> labels, so must reverse _col_names mapping
-        mapping = {v: k for k, v in self.data_model._col_names.items()}
+        # mapping: name -> label
+        mapping = {"x": self.x_col}
         try:
             transformed = rename_variables(expression, mapping)
         except SyntaxError:
@@ -237,7 +237,7 @@ class PlotModel:
         Returns:
             str: the model expression.
         """
-        mapping = dict(self.data_model._col_names.items())
+        mapping = {self.x_col: "x"}
         try:
             return rename_variables(self.model_expression, mapping)
         except SyntaxError:

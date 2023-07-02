@@ -258,21 +258,29 @@ class TestPlotModel:
         assert y_max == pytest.approx(5.5)
 
     @pytest.mark.parametrize(
-        "expression, transformed",
+        "x_col, expression, transformed",
         [
-            ("a * x + b", "a * col1 + b"),
-            ("y ** 2 + 2 * x", "col2 ** 2 + 2 * col1"),
-            ("y + 2 * x", "col2 + 2 * col1"),
-            ("x + 2 * t", "col1 + 2 * t"),
-            ("x ** 2\n+    2 * z", "col1 ** 2\n+2 * col3"),
-            ("x ** 2\n    +2 * z", "col1 ** 2\n+2 * col3"),
+            ("col1", "a * x + b", "a * col1 + b"),
+            ("col1", "y ** 2 + 2 * x", "y ** 2 + 2 * col1"),
+            ("col2", "y + 2 * x", "y + 2 * col2"),
+            ("col3", "x + 2 * t", "col3 + 2 * t"),
+            ("col1", "x ** 2\n+    2 * z", "col1 ** 2\n+2 * z"),
+            ("col1", "x ** 2\n    +2 * z", "col1 ** 2\n+2 * z"),
         ],
     )
     def test_update_model_expression(
-        self, bare_bones_data: PlotModel, mocker: MockerFixture, expression, transformed
+        self,
+        bare_bones_data: PlotModel,
+        mocker: MockerFixture,
+        x_col,
+        expression,
+        transformed,
     ):
         mocker.patch.object(bare_bones_data, "update_model_parameters")
+        bare_bones_data.x_col = x_col
+
         bare_bones_data.update_model_expression(expression)
+
         assert bare_bones_data.model_expression == transformed
         assert isinstance(bare_bones_data.model, lmfit.models.ExpressionModel)
         bare_bones_data.update_model_parameters.assert_called()
@@ -284,7 +292,7 @@ class TestPlotModel:
 
     @pytest.mark.parametrize(
         "expression, transformed",
-        [("x + (2 * ", "x + (2 * "), ("a * y + b", "a * col2 + b")],
+        [("x + (2 * ", "x + (2 * "), ("a * y + b", "a * y + b")],
     )
     def test_update_broken_model_expression(
         self, bare_bones_data: PlotModel, mocker: MockerFixture, expression, transformed
@@ -294,7 +302,7 @@ class TestPlotModel:
         bare_bones_data.update_model_expression("a * x")
         bare_bones_data.update_model_parameters.reset_mock()
 
-        # now see if it breaks correctly
+        # now see if it breaks correctly (syntax error or missing x)
         bare_bones_data.update_model_expression(expression)
 
         assert bare_bones_data.model_expression == transformed
@@ -302,19 +310,20 @@ class TestPlotModel:
         bare_bones_data.update_model_parameters.assert_not_called()
 
     @pytest.mark.parametrize(
-        "expression, expected",
+        "x_col, expression, expected",
         [
-            ("col2 ** 2 + 2 * col3", "y ** 2 + 2 * z"),
-            ("col2 + 2 * col1", "y + 2 * x"),
-            ("col2 + 2 * t", "y + 2 * t"),
-            ("col2 ** 2\n+2 * col3", "y ** 2\n+2 * z"),
-            ("col2 ** 2\n+2 * col3", "y ** 2\n+2 * z"),
-            ("x + (2 * ", "x + (2 * "),
+            ("col2", "col2 ** 2 + 2 * col3", "x ** 2 + 2 * col3"),
+            ("col1", "col2 + 2 * col1", "col2 + 2 * x"),
+            ("col2", "col2 + 2 * t", "x + 2 * t"),
+            ("col2", "col2 ** 2\n+2 * col3", "x ** 2\n+2 * col3"),
+            ("col3", "col2 ** 2\n+2 * col3", "col2 ** 2\n+2 * x"),
+            ("col1", "x + (2 * ", "x + (2 * "),
         ],
     )
-    def test_get_model_expression(self, model: PlotModel, expression, expected):
+    def test_get_model_expression(self, model: PlotModel, x_col, expression, expected):
         model.data_model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
         model.model_expression = expression
+        model.x_col = x_col
 
         actual = model.get_model_expression()
 
