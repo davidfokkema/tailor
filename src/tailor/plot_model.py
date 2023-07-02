@@ -39,6 +39,7 @@ class PlotModel:
     model: lmfit.models.ExpressionModel | None = None
     parameters: dict[str, Parameter]
     fit_domain: tuple[float, float] | None = None
+    use_fit_domain: bool = False
     best_fit: lmfit.model.ModelResult | None = None
 
     def __init__(
@@ -111,7 +112,7 @@ class PlotModel:
         Returns:
             A tuple of NumPy arrays containing x, y, x-error and y-error values.
         """
-        if self.fit_domain is None:
+        if self.fit_domain is None or self.use_fit_domain is False:
             return self.get_data()
 
         df = self._get_data_as_dataframe()

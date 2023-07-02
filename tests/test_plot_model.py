@@ -91,6 +91,7 @@ class TestImplementationDetails:
         assert isinstance(model.model_expression, str)
         assert isinstance(model.parameters, dict)
         assert model.fit_domain is None
+        assert model.use_fit_domain is False
 
     def test_init_sets_axis_labels(self, mocker: MockerFixture):
         mocker.patch.object(PlotModel, "get_x_col_name")
@@ -194,6 +195,7 @@ class TestPlotModel:
 
     def test_get_data_in_fit_domain(self, simple_data_with_errors: PlotModel):
         simple_data_with_errors.fit_domain = (1.5, 3.5)
+        simple_data_with_errors.use_fit_domain = True
 
         x, y, x_err, y_err = simple_data_with_errors.get_data_in_fit_domain()
 
@@ -206,6 +208,17 @@ class TestPlotModel:
         self, model: PlotModel, mocker: MockerFixture
     ):
         mocker.patch.object(model, "get_data")
+
+        actual = model.get_data_in_fit_domain()
+
+        model.get_data.assert_called()
+        assert actual == model.get_data.return_value
+
+    def test_get_data_in_fit_domain_dont_use_fit_domain(
+        self, model: PlotModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(model, "get_data")
+        model.fit_domain = (1.5, 3.5)
 
         actual = model.get_data_in_fit_domain()
 
@@ -362,6 +375,7 @@ class TestPlotModel:
     def test_perform_fit_with_domain(self, simple_data_no_errors: PlotModel):
         simple_data_no_errors.update_model_expression("a * x ** 2 + b")
         simple_data_no_errors.fit_domain = (1.5, 3.5)
+        simple_data_no_errors.use_fit_domain = True
 
         simple_data_no_errors.perform_fit()
 

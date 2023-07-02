@@ -421,8 +421,10 @@ class PlotTab(QtWidgets.QWidget):
         """
         if state == QtCore.Qt.Checked.value:
             self.ui.plot_widget.addItem(self.fit_domain_area)
+            self.model.use_fit_domain = True
         else:
             self.ui.plot_widget.removeItem(self.fit_domain_area)
+            self.model.use_fit_domain = False
 
     def fit_domain_region_changed(self):
         """Update the fit domain values.

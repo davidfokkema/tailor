@@ -196,6 +196,7 @@ class TestPlotTab:
         plot_tab.toggle_use_fit_domain(state)
 
         plot_tab.ui.plot_widget.addItem.assert_called_with(plot_tab.fit_domain_area)
+        assert plot_tab.model.use_fit_domain is True
 
     def test_dont_use_fit_domain(self, plot_tab: PlotTab):
         state = QtCore.Qt.Unchecked.value
@@ -203,6 +204,7 @@ class TestPlotTab:
         plot_tab.toggle_use_fit_domain(state)
 
         plot_tab.ui.plot_widget.removeItem.assert_called_with(plot_tab.fit_domain_area)
+        assert plot_tab.model.use_fit_domain is False
 
     def test_fit_domain_region_changed(self, plot_tab: PlotTab, mocker: MockerFixture):
         mocker.patch.object(plot_tab, "fit_domain_area")
