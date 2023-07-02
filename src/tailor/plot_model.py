@@ -208,6 +208,7 @@ class PlotModel:
                 self.model = None
             else:
                 self.update_model_parameters()
+        self.best_fit = None
 
     def update_model_parameters(self):
         """Update model parameters.

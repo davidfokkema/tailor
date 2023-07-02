@@ -190,30 +190,55 @@ class TestPlotTab:
 
         assert actual == expected
 
-    def test_use_fit_domain(self, plot_tab: PlotTab):
+    def test_use_fit_domain(self, plot_tab: PlotTab, mocker: MockerFixture):
+        mocker.patch.object(plot_tab, "get_fit_curve_x_limits")
+        plot_tab.get_fit_curve_x_limits.return_value = -1, 1
+        plot_tab.model.best_fit = sentinel.fit
         state = QtCore.Qt.Checked.value
 
         plot_tab.toggle_use_fit_domain(state)
 
         plot_tab.ui.plot_widget.addItem.assert_called_with(plot_tab.fit_domain_area)
         assert plot_tab.model.use_fit_domain is True
+        assert plot_tab.model.best_fit is None
 
-    def test_dont_use_fit_domain(self, plot_tab: PlotTab):
+    def test_dont_use_fit_domain(self, plot_tab: PlotTab, mocker: MockerFixture):
+        mocker.patch.object(plot_tab, "get_fit_curve_x_limits")
+        plot_tab.get_fit_curve_x_limits.return_value = -1, 1
+        plot_tab.model.best_fit = sentinel.fit
         state = QtCore.Qt.Unchecked.value
 
         plot_tab.toggle_use_fit_domain(state)
 
         plot_tab.ui.plot_widget.removeItem.assert_called_with(plot_tab.fit_domain_area)
         assert plot_tab.model.use_fit_domain is False
+        assert plot_tab.model.best_fit is None
 
     def test_fit_domain_region_changed(self, plot_tab: PlotTab, mocker: MockerFixture):
         mocker.patch.object(plot_tab, "fit_domain_area")
+        mocker.patch.object(plot_tab, "plot_best_fit")
         plot_tab.fit_domain_area.getRegion.return_value = sentinel.x_min, sentinel.x_max
+        plot_tab.model.best_fit = sentinel.fit
+        plot_tab.model.use_fit_domain = True
 
         plot_tab.fit_domain_region_changed()
 
         plot_tab.ui.fit_start_box.setValue.assert_called_with(sentinel.x_min)
         plot_tab.ui.fit_end_box.setValue.assert_called_with(sentinel.x_max)
+        assert plot_tab.model.best_fit is None
+        plot_tab.plot_best_fit.assert_called()
+
+    def test_fit_domain_region_changed_without_use(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "plot_best_fit")
+        plot_tab.model.best_fit = sentinel.fit
+        plot_tab.model.use_fit_domain = False
+
+        plot_tab.fit_domain_region_changed()
+
+        plot_tab.plot_best_fit.assert_not_called()
+        assert plot_tab.model.best_fit == sentinel.fit
 
     def test_update_fit_domain_sets_model_attribute(
         self, plot_tab: PlotTab, mocker: MockerFixture

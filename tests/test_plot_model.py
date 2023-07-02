@@ -277,6 +277,11 @@ class TestPlotModel:
         assert isinstance(bare_bones_data.model, lmfit.models.ExpressionModel)
         bare_bones_data.update_model_parameters.assert_called()
 
+    def test_update_model_expression_resets_fit(self, bare_bones_data: PlotModel):
+        bare_bones_data.best_fit = sentinel.fit
+        bare_bones_data.update_model_expression("a * x + b")
+        assert bare_bones_data.best_fit is None
+
     @pytest.mark.parametrize(
         "expression, transformed",
         [("x + (2 * ", "x + (2 * "), ("a * y + b", "a * col2 + b")],

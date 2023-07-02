@@ -144,10 +144,10 @@ class PlotTab(QtWidgets.QWidget):
         self.error_bars = pg.ErrorBarItem()
         self.ui.plot_widget.addItem(self.error_bars)
         self.initial_param_plot = self.ui.plot_widget.plot(
-            symbol=None, pen=pg.mkPen(color="#00F4", width=4)
+            symbol=None, pen=pg.mkPen(color="#DDF", width=4)
         )
         self.fit_plot = self.ui.plot_widget.plot(
-            symbol=None, pen=pg.mkPen(color="r", width=4)
+            symbol=None, pen=pg.mkPen(color="#00F", width=4)
         )
         self.fit_domain_area = pg.LinearRegionItem(movable=True, brush="#00F1")
 
@@ -284,6 +284,7 @@ class PlotTab(QtWidgets.QWidget):
         self.model.update_model_expression(expression)
         self.update_params_ui()
         self.plot_initial_model()
+        self.plot_best_fit()
 
     def store_cursor_position(self):
         """Store the cursor position inside the model expression."""
@@ -422,9 +423,13 @@ class PlotTab(QtWidgets.QWidget):
         if state == QtCore.Qt.Checked.value:
             self.ui.plot_widget.addItem(self.fit_domain_area)
             self.model.use_fit_domain = True
+            self.model.best_fit = None
+            self.plot_best_fit()
         else:
             self.ui.plot_widget.removeItem(self.fit_domain_area)
             self.model.use_fit_domain = False
+            self.model.best_fit = None
+            self.plot_best_fit()
 
     def fit_domain_region_changed(self):
         """Update the fit domain values.
@@ -435,7 +440,10 @@ class PlotTab(QtWidgets.QWidget):
         xmin, xmax = self.fit_domain_area.getRegion()
         self.ui.fit_start_box.setValue(xmin)
         self.ui.fit_end_box.setValue(xmax)
-        # FIXME: self.update_bestfit_plot()
+
+        if self.model.use_fit_domain:
+            self.model.best_fit = None
+            self.plot_best_fit()
 
     def update_fit_domain(self):
         """Update the fit domain and indicate with vertical lines."""
@@ -465,7 +473,6 @@ class PlotTab(QtWidgets.QWidget):
         Plots the model with the initial parameters as given in the user
         interface.
         """
-        # FIXME Problem for constants like y = a
         if self.ui.show_initial_fit.isChecked():
             x_min, x_max = self.get_fit_curve_x_limits()
             x = np.linspace(x_min, x_max, NUM_POINTS)
@@ -486,15 +493,15 @@ class PlotTab(QtWidgets.QWidget):
         Plots the model with the best fit parameters if they are previously
         determined by performing a fit.
         """
-        if self.model.best_fit is not None:
-            x_min, x_max = self.get_fit_curve_x_limits()
-            x = np.linspace(x_min, x_max, NUM_POINTS)
-            y = self.model.evaluate_best_fit(x)
-            if y is not None:
-                self.fit_plot.setData(x, y)
-                return
-        # in all other cases: reset data
-        self.fit_plot.setData([], [])
+        x_min, x_max = self.get_fit_curve_x_limits()
+        x = np.linspace(x_min, x_max, NUM_POINTS)
+        y = self.model.evaluate_best_fit(x)
+        if y is not None:
+            self.fit_plot.setData(x, y)
+            self.fit_plot.setPen(color="b", width=4)
+        else:
+            # colour outdated fit plot light red
+            self.fit_plot.setPen(color="#FBB", width=4)
 
     def get_fit_curve_x_limits(self):
         """Get x-axis limits for fit curve.
