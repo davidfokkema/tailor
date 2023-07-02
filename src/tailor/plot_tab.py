@@ -79,7 +79,6 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
         self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
         self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
-        # self.ui.fit_button.clicked.connect(self.perform_fit)
         self.ui.xlabel.textChanged.connect(self.update_xlabel)
         self.ui.ylabel.textChanged.connect(self.update_ylabel)
         self.ui.x_min.textChanged.connect(self.update_x_min)
@@ -88,12 +87,10 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.y_max.textChanged.connect(self.update_y_max)
         self.ui.set_limits_button.clicked.connect(self.update_limits)
         self.ui.fit_button.clicked.connect(self.perform_fit)
-        # self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
+        self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
         # # lambda is necessary to gobble the 'index' parameter of the
         # # currentIndexChanged signal
-        # self.ui.draw_curve_option.currentIndexChanged.connect(
-        #     lambda index: self.update_bestfit_plot()
-        # )
+        self.ui.draw_curve_option.currentIndexChanged.connect(self.update_drawn_curves)
 
     def finish_ui(self):
         self.ui.param_layout = QtWidgets.QVBoxLayout()
@@ -431,14 +428,19 @@ class PlotTab(QtWidgets.QWidget):
             #     "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
             # )
 
-    # def updated_plot_range(self):
-    #     """Handle updated plot range.
+    def update_drawn_curves(self):
+        """Update initial and best fit curves."""
+        self.plot_initial_model()
+        self.plot_best_fit()
 
-    #     If the fitted curves are drawn on the full axis, they need to be updated
-    #     when the plot range is changed.
-    #     """
-    #     if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
-    #         self.update_bestfit_plot()
+    def updated_plot_range(self):
+        """Handle updated plot range.
+
+        If the fitted curves are drawn on the full axis, they need to be updated
+        when the plot range is changed.
+        """
+        if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
+            self.update_drawn_curves()
 
     def plot_initial_model(self):
         """Plot model with initial parameters.
