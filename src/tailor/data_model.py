@@ -185,6 +185,7 @@ class DataModel:
         for label in labels:
             if self.is_calculated_column(label):
                 del self._calculated_column_expression[label]
+            del self._col_names[label]
 
         # if there are columns left to the right of the removed column(s),
         # recalculate them

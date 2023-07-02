@@ -240,6 +240,13 @@ class TestDataModel:
         bare_bones_data.remove_columns(column=1, count=1)
         assert len(bare_bones_data._calculated_column_expression) == 0
 
+    def test_remove_columns_removes_column_labels(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ):
+        assert "col1" in bare_bones_data._col_names
+        bare_bones_data.remove_columns(column=0, count=1)
+        assert "col1" not in bare_bones_data._col_names
+
     def test_remove_columns_calls_recalculate(
         self, bare_bones_data: DataModel, mocker: MockerFixture
     ):
