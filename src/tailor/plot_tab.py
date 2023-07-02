@@ -461,6 +461,7 @@ class PlotTab(QtWidgets.QWidget):
     def perform_fit(self):
         self.model.perform_fit()
         self.plot_best_fit()
+        self.update_info_box()
 
     def plot_best_fit(self):
         """Update the plot of the best-fit model curve.
@@ -513,14 +514,14 @@ class PlotTab(QtWidgets.QWidget):
                     "X: ",
                     str(self.model.get_x_col_name()),
                     " +- ",
-                    str(self.model.get_x_err_col_name()),
+                    str(self.model.get_x_err_col_name() or 0),
                     f" (from {self.data_sheet.name})",
                 ),
                 (
                     "Y: ",
                     str(self.model.get_y_col_name()),
                     " +- ",
-                    str(self.model.get_y_err_col_name()),
+                    str(self.model.get_y_err_col_name() or 0),
                     f" (from {self.data_sheet.name})",
                 ),
             ]
@@ -533,18 +534,19 @@ class PlotTab(QtWidgets.QWidget):
         Returns:
             A string containing the formatted fit results.
         """
+        fit = self.model.best_fit
         msg = make_header("Fit statistics")
         msg += make_table(
             [
-                ("function evaluations", " = ", f"{self.fit.nfev:<9.4g}"),
-                ("reduced chisquare", " = ", f"{self.fit.redchi:<9.4g}"),
-                ("degrees of freedom", " = ", f"{self.fit.nfree:<9.4g}"),
+                ("function evaluations", " = ", f"{fit.nfev:<9.4g}"),
+                ("reduced chisquare", " = ", f"{fit.redchi:<9.4g}"),
+                ("degrees of freedom", " = ", f"{fit.nfree:<9.4g}"),
             ]
         )
 
         msg += "\n\n"
         msg += make_header("Fit parameters")
-        msg += make_param_table(self.fit.params)
+        msg += make_param_table(fit.params)
 
         return msg
 
