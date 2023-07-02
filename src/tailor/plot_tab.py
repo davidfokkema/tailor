@@ -387,33 +387,6 @@ class PlotTab(QtWidgets.QWidget):
         self.model.parameters[widget._parameter].max = value
         self.plot_initial_model()
 
-    # def get_parameter_values(self):
-    #     """Get current parameter values."""
-    #     return {
-    #         k: v.findChild(QtWidgets.QWidget, "value").value()
-    #         for k, v in self._params.items()
-    #     }
-
-    # def get_parameter_hints(self):
-    #     """Get current parameter hints.
-
-    #     Return not only the current value of parameters, but also the bounds and
-    #     whether to vary the parameter or fix it.
-
-    #     Returns:
-    #         A dictionary with the parameter names as keys, and a tuple (min,
-    #         value, max, fixed) as values.
-    #     """
-    #     return {
-    #         k: {
-    #             "min": v.findChild(QtWidgets.QWidget, "min").value(),
-    #             "value": v.findChild(QtWidgets.QWidget, "value").value(),
-    #             "max": v.findChild(QtWidgets.QWidget, "max").value(),
-    #             "vary": not v.findChild(QtWidgets.QWidget, "is_fixed").isChecked(),
-    #         }
-    #         for k, v in self._params.items()
-    #     }
-
     def toggle_use_fit_domain(self, state):
         """Enable or disable use of fit domain.
 
