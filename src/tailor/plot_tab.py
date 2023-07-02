@@ -478,9 +478,9 @@ class PlotTab(QtWidgets.QWidget):
 
     def perform_fit(self):
         self.model.perform_fit()
-        self.update_bestfit_plot()
+        self.plot_best_fit()
 
-    def update_bestfit_plot(self):
+    def plot_best_fit(self):
         """Update the plot of the best-fit model curve.
 
         Plots the model with the best fit parameters if they are previously
@@ -723,7 +723,7 @@ class PlotTab(QtWidgets.QWidget):
             )
 
             self.update_info_box()
-            self.update_bestfit_plot(x_var)
+            self.plot_best_fit(x_var)
 
         # set state of show_initial_fit, will have changed when setting parameters
         state = save_obj["show_initial_fit"]
