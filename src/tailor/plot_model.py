@@ -96,6 +96,39 @@ class PlotModel:
         Returns:
             A tuple of NumPy arrays containing x, y, x-error and y-error values.
         """
+        df = self._get_data_as_dataframe()
+        x, y, x_err, y_err = df.to_numpy().T
+
+        return x, y, x_err, y_err
+
+    def get_data_in_fit_domain(
+        self,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Get data values from model in fit domain.
+
+        If the fit domain is not specified, return all data.
+
+        Returns:
+            A tuple of NumPy arrays containing x, y, x-error and y-error values.
+        """
+        if self.fit_domain is None:
+            return self.get_data()
+
+        df = self._get_data_as_dataframe()
+        x0, x1 = self.fit_domain
+
+        x = df["x"]
+        df = df[(x0 <= x) & (x <= x1)]
+
+        x, y, x_err, y_err = df.to_numpy().T
+        return x, y, x_err, y_err
+
+    def _get_data_as_dataframe(self) -> pd.DataFrame:
+        """Get data values from model as dataframe.
+
+        Returns:
+            A Pandas DataFrame containing x, y, x-error and y-error values.
+        """
         x = self.data_model.get_column(self.x_col)
         y = self.data_model.get_column(self.y_col)
         try:
@@ -111,9 +144,7 @@ class PlotModel:
         # Drop NaN and Inf values
         df = pd.DataFrame.from_dict({"x": x, "y": y, "x_err": x_err, "y_err": y_err})
         df.dropna(inplace=True)
-        x, y, x_err, y_err = df.to_numpy().T
-
-        return x, y, x_err, y_err
+        return df
 
     def get_limits_from_data(self, padding=0.05) -> tuple[float]:
         """Get plot limits from the data points.
@@ -245,7 +276,7 @@ class PlotModel:
                 for k, v in self.parameters.items()
             }
         )
-        x, y, _, y_err = self.get_data()
+        x, y, _, y_err = self.get_data_in_fit_domain()
         self.best_fit = self.model.fit(
             data=y,
             params=params,

@@ -192,6 +192,26 @@ class TestPlotModel:
         assert x_err == pytest.approx([2.0, 5.0])
         assert y_err == pytest.approx([2.0, 5.0])
 
+    def test_get_data_in_fit_domain(self, simple_data_with_errors: PlotModel):
+        simple_data_with_errors.fit_domain = (1.5, 3.5)
+
+        x, y, x_err, y_err = simple_data_with_errors.get_data_in_fit_domain()
+
+        assert x == pytest.approx([2.0, 3.0])
+        assert y == pytest.approx([3.7, 9.5])
+        assert x_err == pytest.approx(0.0)
+        assert y_err == pytest.approx([0.2, 1.0])
+
+    def test_get_data_in_fit_domain_without_fit_domain(
+        self, model: PlotModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(model, "get_data")
+
+        actual = model.get_data_in_fit_domain()
+
+        model.get_data.assert_called()
+        assert actual == model.get_data.return_value
+
     def test_get_limits_from_data(self, model: PlotModel, mocker: MockerFixture):
         mocker.patch.object(model, "get_data").return_value = [
             np.array([1.0, 3.0]),
@@ -337,6 +357,19 @@ class TestPlotModel:
         )
         assert simple_data_with_errors.best_fit.params["b"].value == pytest.approx(
             -0.142706, abs=1e-6
+        )
+
+    def test_perform_fit_with_domain(self, simple_data_no_errors: PlotModel):
+        simple_data_no_errors.update_model_expression("a * x ** 2 + b")
+        simple_data_no_errors.fit_domain = (1.5, 3.5)
+
+        simple_data_no_errors.perform_fit()
+
+        assert simple_data_no_errors.best_fit.params["a"].value == pytest.approx(
+            1.16, abs=1e-2
+        )
+        assert simple_data_no_errors.best_fit.params["b"].value == pytest.approx(
+            -0.94, abs=1e-2
         )
 
     @pytest.mark.filterwarnings("ignore:divide by zero")
