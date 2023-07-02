@@ -68,12 +68,6 @@ class PlotTab(QtWidgets.QWidget):
         self.create_plot()
         self.finish_ui()
 
-        # # lambda is necessary to gobble the 'index' parameter of the
-        # # currentIndexChanged signal
-        # self.ui.draw_curve_option.currentIndexChanged.connect(
-        #     lambda index: self.update_bestfit_plot()
-        # )
-
         self.connect_ui_events()
 
     def connect_ui_events(self):
@@ -93,7 +87,13 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.y_min.textChanged.connect(self.update_y_min)
         self.ui.y_max.textChanged.connect(self.update_y_max)
         self.ui.set_limits_button.clicked.connect(self.update_limits)
+        self.ui.fit_button.clicked.connect(self.perform_fit)
         # self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
+        # # lambda is necessary to gobble the 'index' parameter of the
+        # # currentIndexChanged signal
+        # self.ui.draw_curve_option.currentIndexChanged.connect(
+        #     lambda index: self.update_bestfit_plot()
+        # )
 
     def finish_ui(self):
         self.ui.param_layout = QtWidgets.QVBoxLayout()
@@ -193,7 +193,7 @@ class PlotTab(QtWidgets.QWidget):
     def update_info_box(self):
         """Update the information box."""
         msgs = []
-        if self.model.has_fit:
+        if self.model.best_fit is not None:
             msgs.append(self.format_fit_results())
         msgs.append(self.format_plot_info())
         self.ui.result_box.setPlainText("\n".join(msgs))
@@ -474,22 +474,25 @@ class PlotTab(QtWidgets.QWidget):
         # in all other cases: reset data
         self.initial_param_plot.setData([], [])
 
-    def update_bestfit_plot(self, x_var=None):
+    def perform_fit(self):
+        self.model.perform_fit()
+        self.update_bestfit_plot()
+
+    def update_bestfit_plot(self):
         """Update the plot of the best-fit model curve.
 
-        Args:
-            x_var: optional name of the x-variable to use for the model. Only
-                useful for loading project files which have an outdated fit object
-                with an outdated x-variable name (i.e. shortly after renaming a
-                column and not updating the model function).
+        Plots the model with the best fit parameters if they are previously
+        determined by performing a fit.
         """
-        if self.fit:
-            if x_var is None:
-                x_var = self.x_var
-            xmin, xmax = self.get_fit_curve_x_limits()
-            x = np.linspace(xmin, xmax, NUM_POINTS)
-            y = self.fit.eval(**{x_var: x})
-            self.fit_plot.setData(x, y)
+        if self.model.best_fit is not None:
+            x_min, x_max = self.get_fit_curve_x_limits()
+            x = np.linspace(x_min, x_max, NUM_POINTS)
+            y = self.model.evaluate_best_fit(x)
+            if y is not None:
+                self.fit_plot.setData(x, y)
+                return
+        # in all other cases: reset data
+        self.fit_plot.setData([], [])
 
     def get_fit_curve_x_limits(self):
         """Get x-axis limits for fit curve.

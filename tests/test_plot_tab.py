@@ -109,7 +109,7 @@ class TestPlotTab:
         plot_tab.update_limits.assert_called()
 
     def test_info_box(self, plot_tab: PlotTab):
-        plot_tab.model.has_fit = False
+        plot_tab.model.best_fit = None
         plot_tab.update_info_box()
 
     def test_update_xlabel_sets_model_attr(self, plot_tab: PlotTab):

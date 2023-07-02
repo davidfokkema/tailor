@@ -35,6 +35,52 @@ def bare_bones_data(mocker: MockerFixture):
     )
 
 
+@pytest.fixture()
+def simple_data_model():
+    data_model = DataModel()
+    data_model.insert_columns(0, 3)
+    data_model.insert_rows(0, 5)
+    data_model.rename_column("col1", "x")
+    data_model.rename_column("col2", "y")
+    data_model.rename_column("col3", "y_err")
+    data_model.set_values_from_array(
+        0,
+        0,
+        np.array(
+            [
+                [0.0, 0.0, 0.2],
+                [1.0, 0.9, 0.2],
+                [2.0, 3.7, 0.2],
+                [3.0, 9.5, 1.0],
+                [4.0, 16.2, 0.2],
+            ]
+        ),
+    )
+    return data_model
+
+
+@pytest.fixture()
+def simple_data_no_errors(simple_data_model):
+    return PlotModel(
+        data_model=simple_data_model,
+        x_col="col1",
+        y_col="col2",
+        x_err_col=None,
+        y_err_col=None,
+    )
+
+
+@pytest.fixture()
+def simple_data_with_errors(simple_data_model):
+    return PlotModel(
+        data_model=simple_data_model,
+        x_col="col1",
+        y_col="col2",
+        x_err_col=None,
+        y_err_col="col3",
+    )
+
+
 class TestImplementationDetails:
     def test_init_sets_attributes(self, model: PlotModel):
         assert model.x_col == sentinel.x_col
@@ -264,3 +310,49 @@ class TestPlotModel:
 
     def test_evaluate_model_without_model(self, model: PlotModel):
         assert model.evaluate_model(x=[1, 2, 3]) is None
+
+    def test_perform_fit_without_model(self, model: PlotModel):
+        model.perform_fit()
+        assert model.best_fit is None
+
+    def test_perform_fit_without_errors(self, simple_data_no_errors: PlotModel):
+        simple_data_no_errors.update_model_expression("a * x ** 2 + b")
+
+        simple_data_no_errors.perform_fit()
+
+        assert simple_data_no_errors.best_fit.params["a"].value == pytest.approx(
+            1.02644, abs=1e-5
+        )
+        assert simple_data_no_errors.best_fit.params["b"].value == pytest.approx(
+            -0.0986207, abs=1e-7
+        )
+
+    def test_perform_fit_with_errors(self, simple_data_with_errors: PlotModel):
+        simple_data_with_errors.update_model_expression("a * x ** 2 + b")
+
+        simple_data_with_errors.perform_fit()
+
+        assert simple_data_with_errors.best_fit.params["a"].value == pytest.approx(
+            1.01856, abs=1e-5
+        )
+        assert simple_data_with_errors.best_fit.params["b"].value == pytest.approx(
+            -0.142706, abs=1e-6
+        )
+
+    @pytest.mark.filterwarnings("ignore:divide by zero")
+    def test_perform_fit_with_nans(self, simple_data_with_errors: PlotModel):
+        simple_data_with_errors.update_model_expression("a / x")
+        # make sure fit does not crash due to NaNs for x = 0
+        simple_data_with_errors.perform_fit()
+
+    def test_evaluate_best_fit(self, bare_bones_data: PlotModel, mocker: MockerFixture):
+        mocker.patch.object(bare_bones_data, "best_fit")
+        bare_bones_data.best_fit.eval.return_value = sentinel.values
+
+        actual = bare_bones_data.evaluate_best_fit(sentinel.x_values)
+
+        bare_bones_data.best_fit.eval.assert_called_with(col1=sentinel.x_values)
+        assert actual == sentinel.values
+
+    def test_evaluate_best_fit_without_fit(self, bare_bones_data: PlotModel):
+        assert bare_bones_data.evaluate_best_fit([1, 2, 3]) is None

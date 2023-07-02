@@ -39,7 +39,7 @@ class PlotModel:
     model: lmfit.models.ExpressionModel | None = None
     parameters: dict[str, Parameter]
     fit_domain: tuple[float, float] | None = None
-    has_fit: bool = False
+    best_fit: lmfit.model.ModelResult | None = None
 
     def __init__(
         self,
@@ -90,7 +90,7 @@ class PlotModel:
         except KeyError:
             return None
 
-    def get_data(self) -> tuple[np.ndarray]:
+    def get_data(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get data values from model.
 
         Returns:
@@ -231,89 +231,42 @@ class PlotModel:
         else:
             return None
 
-    # def get_params_and_update_model(self):
-    #     """Get parameter names and update the model function.
+    def perform_fit(self):
+        """Fit the model to the data points.
 
-    #     Based on the mathematical expression for the model function, determine
-    #     what are the parameters of the model. If the model compiles, the model
-    #     object is updated as well.
+        Fit the model to the data points starting with the initial values for the parameters. If the fit is successful, the `best_fit` object can be used to determine the best-fit values of the parameters.
+        """
+        if self.model is None:
+            return
 
-    #     Raises VariableError when the dependent variable is part of the model
-    #     function.
+        params = self.model.make_params(
+            **{
+                k: {"min": v.min, "value": v.value, "max": v.max, "vary": v.vary}
+                for k, v in self.parameters.items()
+            }
+        )
+        x, y, _, y_err = self.get_data()
+        self.best_fit = self.model.fit(
+            data=y,
+            params=params,
+            weights=1 / (y_err + 1e-99),
+            **{self.x_col: x},
+            nan_policy="omit"
+        )
 
-    #     Returns:
-    #         A set of parameter names.
-    #     """
-    #     model_expr = self.ui.model_func.toPlainText().replace("\n", "")
-    #     code = compile(model_expr, "<string>", "eval")
-    #     params = set(code.co_names) - set([self.x_var]) - self._symbols
-    #     if self.y_var in params:
-    #         raise VariableError(
-    #             f"Dependent variable {self.y_var} must not be in function definition"
-    #         )
-    #     else:
-    #         try:
-    #             self.model = models.ExpressionModel(
-    #                 model_expr, independent_vars=[self.x_var]
-    #             )
-    #         except ValueError as exc:
-    #             raise VariableError(exc)
-    #         return params
+    def evaluate_best_fit(self, x: np.ndarray) -> np.ndarray | None:
+        """Evaluate the fit model with best-fit parameters.
 
-    # def perform_fit(self):
-    #     """Perform fit and plot best fit model.
+        Evaluate the fit model using the values for the best-fit parameters at
+        the supplied x-values. If no model is currently defined, return None.
 
-    #     Fits the model function to the data to estimate best fit parameters.
-    #     When the fit is successful, the results are given in the result box and
-    #     the best fit is plotted on top of the data.
-    #     """
-    #     if self.model is None:
-    #         self.main_window.ui.statusbar.showMessage(
-    #             "FIT FAILED: please fix your model first."
-    #         )
-    #         return
+        Args:
+            x (np.ndarray): the x-values for which to evaluate the model.
 
-    #     # set model parameter hints
-    #     param_hints = self.get_parameter_hints()
-    #     for p, hints in param_hints.items():
-    #         self.model.set_param_hint(p, **hints)
-
-    #     # select data for fit
-    #     if self.ui.use_fit_domain.isChecked():
-    #         xmin = self.ui.fit_start_box.value()
-    #         xmax = self.ui.fit_end_box.value()
-    #         if xmin > xmax:
-    #             self.main_window.ui.statusbar.showMessage(
-    #                 "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
-    #             )
-    #             return
-    #         condition = (xmin <= self.x) & (self.x <= xmax)
-    #         x = self.x[condition]
-    #         y = self.y[condition]
-    #         if self.y_err_var is not None:
-    #             y_err = self.y_err[condition]
-    #         else:
-    #             y_err = None
-    #     else:
-    #         x = self.x
-    #         y = self.y
-    #         if self.y_err_var is not None:
-    #             y_err = self.y_err
-    #         else:
-    #             y_err = None
-
-    #     # perform fit
-    #     kwargs = {self.x_var: x}
-    #     if y_err is not None:
-    #         kwargs["weights"] = 1 / y_err
-    #     try:
-    #         self.fit = self.model.fit(y, **kwargs)
-    #     except Exception as exc:
-    #         self.main_window.ui.statusbar.showMessage(f"FIT FAILED: {exc}")
-    #     else:
-    #         self.update_info_box()
-    #         self.update_best_fit_plot()
-    #         self.ui.show_initial_fit.setChecked(False)
-    #         self.main_window.ui.statusbar.showMessage(
-    #             "Updated fit.", timeout=MSG_TIMEOUT
-    #         )
+        Returns:
+            np.ndarray | None: the evaluated y-values or None
+        """
+        if self.best_fit:
+            return self.best_fit.eval(**{self.x_col: x})
+        else:
+            return None
