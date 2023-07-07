@@ -11,7 +11,7 @@ jobs:
           # - os: macos-latest
           #   filename: macOS/*.dmg
           - os: windows-latest
-            filename: windows/*.msi
+            filename: dist/*.msi
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
