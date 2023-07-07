@@ -1,6 +1,6 @@
 # Changelog
 
-## Draft
+## 1.8.0
 
 ### :rocket: Features
 
