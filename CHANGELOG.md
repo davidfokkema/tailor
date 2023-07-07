@@ -5,6 +5,7 @@
 ### :rocket: Features
 
 * Added `--no-update-check` flag to skip updates on startup
+* Improved resilience against NaNs when fitting a model
 
 ### :beetle: Fixes
 
