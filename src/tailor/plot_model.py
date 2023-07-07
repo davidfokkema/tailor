@@ -190,7 +190,7 @@ class PlotModel:
         # remove whitespace after newlines to prevent indentation errors
         expression = re.sub(r"\n\s*", "\n", expression)
         # mapping: name -> label
-        mapping = {"x": self.x_col}
+        mapping = {self.data_model.get_column_name(self.x_col): self.x_col}
         try:
             transformed = rename_variables(expression, mapping)
         except SyntaxError:
@@ -237,7 +237,7 @@ class PlotModel:
         Returns:
             str: the model expression.
         """
-        mapping = {self.x_col: "x"}
+        mapping = {self.x_col: self.data_model.get_column_name(self.x_col)}
         try:
             return rename_variables(self.model_expression, mapping)
         except SyntaxError:

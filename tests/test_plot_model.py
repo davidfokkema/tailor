@@ -262,28 +262,32 @@ class TestPlotModel:
         [
             ("col1", "a * x + b", "a * col1 + b"),
             ("col1", "y ** 2 + 2 * x", "y ** 2 + 2 * col1"),
-            ("col2", "y + 2 * x", "y + 2 * col2"),
-            ("col3", "x + 2 * t", "col3 + 2 * t"),
+            ("col2", "y + 2 * x", "col2 + 2 * x"),
+            ("col3", "x + 2 * z", "x + 2 * col3"),
             ("col1", "x ** 2\n+    2 * z", "col1 ** 2\n+2 * z"),
             ("col1", "x ** 2\n    +2 * z", "col1 ** 2\n+2 * z"),
         ],
     )
     def test_update_model_expression(
         self,
-        bare_bones_data: PlotModel,
+        model: PlotModel,
         mocker: MockerFixture,
         x_col,
         expression,
         transformed,
     ):
-        mocker.patch.object(bare_bones_data, "update_model_parameters")
-        bare_bones_data.x_col = x_col
+        col_names = {"col2": "y", "col3": "z", "col1": "x"}
+        mocker.patch.object(model, "update_model_parameters")
+        # return column name ('col1' -> 'x')
+        model.data_model.get_column_name.return_value = col_names[x_col]
+        model.x_col = x_col
 
-        bare_bones_data.update_model_expression(expression)
+        model.update_model_expression(expression)
 
-        assert bare_bones_data.model_expression == transformed
-        assert isinstance(bare_bones_data.model, lmfit.models.ExpressionModel)
-        bare_bones_data.update_model_parameters.assert_called()
+        model.data_model.get_column_name.assert_called_with(x_col)
+        assert model.model_expression == transformed
+        assert isinstance(model.model, lmfit.models.ExpressionModel)
+        model.update_model_parameters.assert_called()
 
     def test_update_model_expression_resets_fit(self, bare_bones_data: PlotModel):
         bare_bones_data.best_fit = sentinel.fit
@@ -312,21 +316,24 @@ class TestPlotModel:
     @pytest.mark.parametrize(
         "x_col, expression, expected",
         [
-            ("col2", "col2 ** 2 + 2 * col3", "x ** 2 + 2 * col3"),
+            ("col2", "col2 ** 2 + 2 * col3", "y ** 2 + 2 * col3"),
             ("col1", "col2 + 2 * col1", "col2 + 2 * x"),
-            ("col2", "col2 + 2 * t", "x + 2 * t"),
-            ("col2", "col2 ** 2\n+2 * col3", "x ** 2\n+2 * col3"),
-            ("col3", "col2 ** 2\n+2 * col3", "col2 ** 2\n+2 * x"),
+            ("col2", "col2 + 2 * t", "y + 2 * t"),
+            ("col2", "col2 ** 2\n+2 * col3", "y ** 2\n+2 * col3"),
+            ("col3", "col2 ** 2\n+2 * col3", "col2 ** 2\n+2 * z"),
             ("col1", "x + (2 * ", "x + (2 * "),
         ],
     )
     def test_get_model_expression(self, model: PlotModel, x_col, expression, expected):
-        model.data_model._col_names = {"col2": "y", "col3": "z", "col1": "x"}
+        col_names = {"col2": "y", "col3": "z", "col1": "x"}
         model.model_expression = expression
+        # return column name ('col1' -> 'x')
+        model.data_model.get_column_name.return_value = col_names[x_col]
         model.x_col = x_col
 
         actual = model.get_model_expression()
 
+        model.data_model.get_column_name.assert_called_with(x_col)
         assert actual == expected
 
     @pytest.mark.parametrize("extra", [{}, {"d": sentinel.d}])
