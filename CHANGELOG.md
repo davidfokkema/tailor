@@ -1,16 +1,18 @@
 # Changelog
 
-## Draft
+## 1.8.0
 
 ### :rocket: Features
 
 * Added `--no-update-check` flag to skip updates on startup
+* Improved resilience against NaNs when fitting a model
 
 ### :beetle: Fixes
 
 * Check for both OS and CPU hardware for updates (e.g. differentiate between Intel and Apple Silicon)
 * Include link to release notes in update window
 * Much improved dialog for available updates
+* Slim down Windows application
 
 ## 1.7.0
 

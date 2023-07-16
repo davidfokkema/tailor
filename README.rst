@@ -5,6 +5,8 @@ Tailor
 
 Tailor is an application for data analysis and curve fitting. You can fit custom models to your data, simply by entering the mathematical expression and choosing suitable initial values. The application is tailored to giving you an intuitive interface for entering or inspecting your data, calculating additional quantities and comparing different model curves to give you a best fit. Fashion and math do have a bit of shared vocabulary. Hence the name, *Tailor*. Also, at both the Vrije Universiteit Amsterdam and the University of Amsterdam we use the book "An Introduction to Error Analysis" by John R. Taylor in our inquiry-based physics labs for students. Taylor discusses least-squares fitting in chapter 8.
 
+**Note:** If you want to try out Tailor please visit the `materials <https://davidfokkema.github.io/BFY4-workshop/>`_ from the 
+workshop on Tailor for the *Beyond the First Year 4 (2023)* conference.
 
 Features
 --------
