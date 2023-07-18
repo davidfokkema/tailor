@@ -313,7 +313,7 @@ class PlotModel:
         """
         return xxhash.xxh3_64(np.array(data)).intdigest()
 
-    def is_best_fit_data(self, data: ArrayLike) -> bool:
+    def verify_best_fit_data(self, data: ArrayLike) -> bool:
         """Determine if the given data is identical to the fitted data.
 
         Sometime after a best fit of the model to the experimental data has been
@@ -328,7 +328,12 @@ class PlotModel:
         Returns:
             bool: whether the given data is identical or not
         """
-        return self.hash_data(data) == self.fit_data_checksum
+        if self.hash_data(data) == self.fit_data_checksum:
+            return True
+        else:
+            self.best_fit = None
+            self.fit_data_checksum = None
+            return False
 
     def evaluate_best_fit(self, x: np.ndarray) -> np.ndarray | None:
         """Evaluate the fit model with best-fit parameters.

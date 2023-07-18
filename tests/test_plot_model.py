@@ -471,23 +471,35 @@ class TestPlotModel:
     def test_hash_data_for_nonidentical_data(self, model: PlotModel, data1, data2):
         assert model.hash_data(data1) != model.hash_data(data2)
 
-    def test_is_best_fit_data_identical(self, model: PlotModel, mocker: MockerFixture):
+    def test_verify_best_fit_data_identical(
+        self, model: PlotModel, mocker: MockerFixture
+    ):
         mocker.patch.object(model, "hash_data")
         model.hash_data.return_value = sentinel.hash
         model.fit_data_checksum = sentinel.hash
+        model.best_fit = sentinel.best_fit
 
-        assert model.is_best_fit_data(sentinel.data) is True
+        result = model.verify_best_fit_data(sentinel.data)
+
+        assert result is True
         model.hash_data.assert_called_with(sentinel.data)
+        assert model.best_fit is sentinel.best_fit
+        assert model.fit_data_checksum is sentinel.hash
 
-    def test_is_best_fit_data_nonidentical(
+    def test_verify_best_fit_data_nonidentical(
         self, model: PlotModel, mocker: MockerFixture
     ):
         mocker.patch.object(model, "hash_data")
         model.hash_data.return_value = sentinel.hash2
         model.fit_data_checksum = sentinel.hash1
+        model.best_fit = sentinel.best_fit
 
-        assert model.is_best_fit_data(sentinel.data) is False
+        result = model.verify_best_fit_data(sentinel.data)
+
+        assert result is False
         model.hash_data.assert_called_with(sentinel.data)
+        assert model.best_fit is None
+        assert model.fit_data_checksum is None
 
     def test_evaluate_best_fit(self, bare_bones_data: PlotModel, mocker: MockerFixture):
         mocker.patch.object(bare_bones_data, "best_fit")
