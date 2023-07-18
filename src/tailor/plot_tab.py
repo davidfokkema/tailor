@@ -164,6 +164,7 @@ class PlotTab(QtWidgets.QWidget):
         """
         self.update_model_widget()
         self.update_plot()
+        self.model.verify_best_fit_data()
         self.update_model_curves()
         self.update_info_box()
 

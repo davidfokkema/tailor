@@ -79,6 +79,7 @@ class TestPlotTab:
 
         plot_tab.update_model_widget.assert_called()
         plot_tab.update_plot.assert_called()
+        plot_tab.model.verify_best_fit_data.assert_called()
         plot_tab.update_model_curves.assert_called()
         plot_tab.update_info_box.assert_called()
 

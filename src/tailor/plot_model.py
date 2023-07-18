@@ -283,9 +283,10 @@ class PlotModel:
                 for k, v in self.parameters.items()
             }
         )
-        x, y, _, y_err = self.get_data_in_fit_domain()
-        self.fit_data_checksum = self.hash_data([x, y, y_err])
+        data = self.get_data_in_fit_domain()
+        self.fit_data_checksum = self.hash_data(data)
 
+        x, y, _, y_err = data
         self.best_fit = self.model.fit(
             data=y,
             params=params,
@@ -313,7 +314,7 @@ class PlotModel:
         """
         return xxhash.xxh3_64(np.array(data)).intdigest()
 
-    def verify_best_fit_data(self, data: ArrayLike) -> bool:
+    def verify_best_fit_data(self) -> bool:
         """Determine if the given data is identical to the fitted data.
 
         Sometime after a best fit of the model to the experimental data has been
@@ -322,12 +323,10 @@ class PlotModel:
         identical to the data that was used in the fitting procedure. It returns
         a boolean; True means that the data is identical, False means it is not.
 
-        Args:
-            data (ArrayLike): the given data to compare with.
-
         Returns:
             bool: whether the given data is identical or not
         """
+        data = self.get_data_in_fit_domain()
         if self.hash_data(data) == self.fit_data_checksum:
             return True
         else:

@@ -437,17 +437,21 @@ class TestPlotModel:
         mocker.patch.object(model, "get_data_in_fit_domain")
         mocker.patch.object(model, "hash_data")
         model.x_col = "x"
+        y_err = mocker.MagicMock(name="y_err")
         model.get_data_in_fit_domain.return_value = (
             sentinel.x,
             sentinel.y,
             sentinel.x_err,
-            mocker.MagicMock(name="y_err"),
+            y_err,
         )
         model.hash_data.return_value = sentinel.hash
 
         model.perform_fit()
 
         assert model.fit_data_checksum == sentinel.hash
+        model.hash_data.assert_called_with(
+            (sentinel.x, sentinel.y, sentinel.x_err, y_err)
+        )
 
     @pytest.mark.parametrize(
         "data",
@@ -474,12 +478,14 @@ class TestPlotModel:
     def test_verify_best_fit_data_identical(
         self, model: PlotModel, mocker: MockerFixture
     ):
+        mocker.patch.object(model, "get_data_in_fit_domain")
         mocker.patch.object(model, "hash_data")
+        model.get_data_in_fit_domain.return_value = sentinel.data
         model.hash_data.return_value = sentinel.hash
         model.fit_data_checksum = sentinel.hash
         model.best_fit = sentinel.best_fit
 
-        result = model.verify_best_fit_data(sentinel.data)
+        result = model.verify_best_fit_data()
 
         assert result is True
         model.hash_data.assert_called_with(sentinel.data)
@@ -489,12 +495,14 @@ class TestPlotModel:
     def test_verify_best_fit_data_nonidentical(
         self, model: PlotModel, mocker: MockerFixture
     ):
+        mocker.patch.object(model, "get_data_in_fit_domain")
         mocker.patch.object(model, "hash_data")
+        model.get_data_in_fit_domain.return_value = sentinel.data
         model.hash_data.return_value = sentinel.hash2
         model.fit_data_checksum = sentinel.hash1
         model.best_fit = sentinel.best_fit
 
-        result = model.verify_best_fit_data(sentinel.data)
+        result = model.verify_best_fit_data()
 
         assert result is False
         model.hash_data.assert_called_with(sentinel.data)
