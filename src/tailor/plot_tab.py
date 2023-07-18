@@ -151,13 +151,20 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
         self.ui.plot_widget.setLabel("left", self.model.y_label)
 
-    def update_ui(self):
-        """Update UI after switching tabs.
+    def refresh_ui(self):
+        """Refresh UI after switching tabs.
 
-        When the plot tab becomes visible again, update all data and information.
+        When the plot tab becomes visible again, update all data and
+        information. Explicitly refresh all things that may have changed: the
+        model (x-axis name change), plot curves and info box (x- and y-axis name
+        changes) and possibly invalidated best fit. Because changes are
+        propagated this may actually result in certain methods being called
+        multiple times. Since this only happens on tab switches, we don't
+        optimize that away to keep the code simple.
         """
         self.update_model_widget()
         self.update_plot()
+        self.update_drawn_curves()
         self.update_info_box()
 
     def update_model_widget(self):
