@@ -90,7 +90,7 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
         # # lambda is necessary to gobble the 'index' parameter of the
         # # currentIndexChanged signal
-        self.ui.draw_curve_option.currentIndexChanged.connect(self.update_drawn_curves)
+        self.ui.draw_curve_option.currentIndexChanged.connect(self.update_model_curves)
 
     def finish_ui(self):
         self.ui.param_layout = QtWidgets.QVBoxLayout()
@@ -164,7 +164,7 @@ class PlotTab(QtWidgets.QWidget):
         """
         self.update_model_widget()
         self.update_plot()
-        self.update_drawn_curves()
+        self.update_model_curves()
         self.update_info_box()
 
     def update_model_widget(self):
@@ -435,7 +435,7 @@ class PlotTab(QtWidgets.QWidget):
             #     "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
             # )
 
-    def update_drawn_curves(self):
+    def update_model_curves(self):
         """Update initial and best fit curves."""
         self.plot_initial_model()
         self.plot_best_fit()
@@ -447,7 +447,7 @@ class PlotTab(QtWidgets.QWidget):
         when the plot range is changed.
         """
         if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
-            self.update_drawn_curves()
+            self.update_model_curves()
 
     def plot_initial_model(self):
         """Plot model with initial parameters.

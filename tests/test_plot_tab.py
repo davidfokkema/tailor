@@ -72,14 +72,14 @@ class TestPlotTab:
     def test_refresh_ui(self, plot_tab: PlotTab, mocker: MockerFixture):
         mocker.patch.object(plot_tab, "update_model_widget")
         mocker.patch.object(plot_tab, "update_plot")
-        mocker.patch.object(plot_tab, "update_drawn_curves")
+        mocker.patch.object(plot_tab, "update_model_curves")
         mocker.patch.object(plot_tab, "update_info_box")
 
         plot_tab.refresh_ui()
 
         plot_tab.update_model_widget.assert_called()
         plot_tab.update_plot.assert_called()
-        plot_tab.update_drawn_curves.assert_called()
+        plot_tab.update_model_curves.assert_called()
         plot_tab.update_info_box.assert_called()
 
     def test_update_function_label(self, plot_tab: PlotTab, mocker: MockerFixture):
