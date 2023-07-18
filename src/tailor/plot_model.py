@@ -5,6 +5,8 @@ import asteval
 import lmfit
 import numpy as np
 import pandas as pd
+import xxhash
+from numpy.typing import ArrayLike
 
 from tailor.ast_names import get_variable_names, rename_variables
 from tailor.data_model import DataModel
@@ -41,6 +43,7 @@ class PlotModel:
     fit_domain: tuple[float, float] | None = None
     use_fit_domain: bool = False
     best_fit: lmfit.model.ModelResult | None = None
+    fit_data_checksum: int | None = None
 
     def __init__(
         self,
@@ -281,6 +284,8 @@ class PlotModel:
             }
         )
         x, y, _, y_err = self.get_data_in_fit_domain()
+        self.fit_data_checksum = self.hash_data([x, y, y_err])
+
         self.best_fit = self.model.fit(
             data=y,
             params=params,
@@ -288,6 +293,42 @@ class PlotModel:
             **{self.x_col: x},
             nan_policy="omit"
         )
+
+    def hash_data(self, data: ArrayLike) -> int:
+        """Calculate a hash (checksum) of the data.
+
+        A deterministic hash is calculated for the provided data. This hash can
+        then be used as a checksum to determine if some other data is identical
+        or different. This determination is slower using checksums than by
+        direct comparison, but the checksum has the benefit of being able to
+        store just a hash and not a complete copy of the data. Also, by using a
+        fast hashing algorithm like xxHash, the slowdown is only a factor 1.5x -
+        2x for larger datasets and almost 1x for small datasets.
+
+        Args:
+            data (ArrayLike): the data for which to calculate the hash.
+
+        Returns:
+            int: the calculated hash (checksum).
+        """
+        return xxhash.xxh3_64(np.array(data)).intdigest()
+
+    def is_best_fit_data(self, data: ArrayLike) -> bool:
+        """Determine if the given data is identical to the fitted data.
+
+        Sometime after a best fit of the model to the experimental data has been
+        determined, that data may change due to the user changing values or
+        expressions. This method can determine if the possibly new data is
+        identical to the data that was used in the fitting procedure. It returns
+        a boolean; True means that the data is identical, False means it is not.
+
+        Args:
+            data (ArrayLike): the given data to compare with.
+
+        Returns:
+            bool: whether the given data is identical or not
+        """
+        return self.hash_data(data) == self.fit_data_checksum
 
     def evaluate_best_fit(self, x: np.ndarray) -> np.ndarray | None:
         """Evaluate the fit model with best-fit parameters.

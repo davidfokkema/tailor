@@ -92,6 +92,8 @@ class TestImplementationDetails:
         assert isinstance(model.parameters, dict)
         assert model.fit_domain is None
         assert model.use_fit_domain is False
+        assert model.best_fit is None
+        assert model.fit_data_checksum is None
 
     def test_init_sets_axis_labels(self, mocker: MockerFixture):
         mocker.patch.object(PlotModel, "get_x_col_name")
@@ -428,6 +430,64 @@ class TestPlotModel:
         simple_data_with_errors.update_model_expression("a / x")
         # make sure fit does not crash due to NaNs for x = 0
         simple_data_with_errors.perform_fit()
+
+    def test_perform_fit_saves_checksum(self, model: PlotModel, mocker: MockerFixture):
+        # mock everything needed to be able to perform the 'fit'
+        mocker.patch.object(model, "model")
+        mocker.patch.object(model, "get_data_in_fit_domain")
+        mocker.patch.object(model, "hash_data")
+        model.x_col = "x"
+        model.get_data_in_fit_domain.return_value = (
+            sentinel.x,
+            sentinel.y,
+            sentinel.x_err,
+            mocker.MagicMock(name="y_err"),
+        )
+        model.hash_data.return_value = sentinel.hash
+
+        model.perform_fit()
+
+        assert model.fit_data_checksum == sentinel.hash
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            ([1, 2, 3]),
+            ([4, 5, 6]),
+            ([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]),
+        ],
+    )
+    def test_hash_data_for_identical_data(self, model: PlotModel, data):
+        assert model.hash_data(data) == model.hash_data(data)
+
+    @pytest.mark.parametrize(
+        "data1, data2",
+        [
+            ([1, 2, 3], [1, 2, 4]),
+            ([4, 5, 6], [5, 5, 6]),
+            ([[1, 2], [3, 4]], [[1, 1], [3, 4]]),
+        ],
+    )
+    def test_hash_data_for_nonidentical_data(self, model: PlotModel, data1, data2):
+        assert model.hash_data(data1) != model.hash_data(data2)
+
+    def test_is_best_fit_data_identical(self, model: PlotModel, mocker: MockerFixture):
+        mocker.patch.object(model, "hash_data")
+        model.hash_data.return_value = sentinel.hash
+        model.fit_data_checksum = sentinel.hash
+
+        assert model.is_best_fit_data(sentinel.data) is True
+        model.hash_data.assert_called_with(sentinel.data)
+
+    def test_is_best_fit_data_nonidentical(
+        self, model: PlotModel, mocker: MockerFixture
+    ):
+        mocker.patch.object(model, "hash_data")
+        model.hash_data.return_value = sentinel.hash2
+        model.fit_data_checksum = sentinel.hash1
+
+        assert model.is_best_fit_data(sentinel.data) is False
+        model.hash_data.assert_called_with(sentinel.data)
 
     def test_evaluate_best_fit(self, bare_bones_data: PlotModel, mocker: MockerFixture):
         mocker.patch.object(bare_bones_data, "best_fit")
