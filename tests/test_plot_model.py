@@ -289,10 +289,24 @@ class TestPlotModel:
         assert isinstance(model.model, lmfit.models.ExpressionModel)
         model.update_model_parameters.assert_called()
 
-    def test_update_model_expression_resets_fit(self, bare_bones_data: PlotModel):
+    def test_update_model_expression_resets_fit_on_changes(
+        self, bare_bones_data: PlotModel
+    ):
+        bare_bones_data.model_expression = "a * col1 + b"
         bare_bones_data.best_fit = sentinel.fit
-        bare_bones_data.update_model_expression("a * x + b")
+
+        bare_bones_data.update_model_expression("a * x")
         assert bare_bones_data.best_fit is None
+
+    def test_update_model_expression_keeps_fit_if_no_changes(
+        self, bare_bones_data: PlotModel
+    ):
+        bare_bones_data.model_expression = "a * col1 + b"
+        bare_bones_data.data_model.get_column_name.return_value = "x"
+        bare_bones_data.best_fit = sentinel.fit
+
+        bare_bones_data.update_model_expression("a*x+b")
+        assert bare_bones_data.best_fit is sentinel.fit
 
     @pytest.mark.parametrize(
         "expression, transformed",
@@ -304,6 +318,7 @@ class TestPlotModel:
         mocker.patch.object(bare_bones_data, "update_model_parameters")
         # first run: create a working model
         bare_bones_data.update_model_expression("a * x")
+        bare_bones_data.best_fit = sentinel.fit
         bare_bones_data.update_model_parameters.reset_mock()
 
         # now see if it breaks correctly (syntax error or missing x)
@@ -311,6 +326,7 @@ class TestPlotModel:
 
         assert bare_bones_data.model_expression == transformed
         assert bare_bones_data.model is None
+        assert bare_bones_data.best_fit is None
         bare_bones_data.update_model_parameters.assert_not_called()
 
     @pytest.mark.parametrize(

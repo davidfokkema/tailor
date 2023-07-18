@@ -197,18 +197,20 @@ class PlotModel:
             # expression could not be parsed
             self.model_expression = expression
             self.model = None
+            self.best_fit = None
         else:
-            self.model_expression = transformed
-            try:
-                self.model = lmfit.models.ExpressionModel(
-                    transformed, independent_vars=[self.x_col]
-                )
-            except ValueError:
-                # independent (x) variable not present in expression
-                self.model = None
-            else:
-                self.update_model_parameters()
-        self.best_fit = None
+            if self.model_expression != transformed:
+                self.model_expression = transformed
+                try:
+                    self.model = lmfit.models.ExpressionModel(
+                        transformed, independent_vars=[self.x_col]
+                    )
+                except ValueError:
+                    # independent (x) variable not present in expression
+                    self.model = None
+                else:
+                    self.update_model_parameters()
+                self.best_fit = None
 
     def update_model_parameters(self):
         """Update model parameters.
