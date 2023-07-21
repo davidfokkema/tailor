@@ -30,6 +30,7 @@
 * Much improved dialog for available updates
 * Slim down Windows application
 
+
 ## 1.7.0
 
 ### What's Changed
