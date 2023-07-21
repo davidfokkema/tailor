@@ -58,7 +58,7 @@
            <number>4</number>
           </property>
           <item row="0" column="5">
-           <widget class="QLineEdit" name="xmax">
+           <widget class="QLineEdit" name="x_max">
             <property name="maximumSize">
              <size>
               <width>50</width>
@@ -74,7 +74,7 @@
            <widget class="QLineEdit" name="xlabel"/>
           </item>
           <item row="0" column="3">
-           <widget class="QLineEdit" name="xmin">
+           <widget class="QLineEdit" name="x_min">
             <property name="maximumSize">
              <size>
               <width>50</width>
@@ -119,7 +119,7 @@
            </widget>
           </item>
           <item row="1" column="5">
-           <widget class="QLineEdit" name="ymax">
+           <widget class="QLineEdit" name="y_max">
             <property name="maximumSize">
              <size>
               <width>50</width>
@@ -136,7 +136,7 @@
            </widget>
           </item>
           <item row="1" column="3">
-           <widget class="QLineEdit" name="ymin">
+           <widget class="QLineEdit" name="y_min">
             <property name="maximumSize">
              <size>
               <width>50</width>
@@ -214,7 +214,7 @@
         <item row="0" column="0">
          <widget class="QLabel" name="model_func_label">
           <property name="text">
-           <string>Function:</string>
+           <string>Placeholder:</string>
           </property>
          </widget>
         </item>
@@ -455,11 +455,11 @@
   <tabstop>draw_curve_option</tabstop>
   <tabstop>result_box</tabstop>
   <tabstop>xlabel</tabstop>
-  <tabstop>xmin</tabstop>
-  <tabstop>xmax</tabstop>
+  <tabstop>x_min</tabstop>
+  <tabstop>x_max</tabstop>
   <tabstop>ylabel</tabstop>
-  <tabstop>ymin</tabstop>
-  <tabstop>ymax</tabstop>
+  <tabstop>y_min</tabstop>
+  <tabstop>y_max</tabstop>
  </tabstops>
  <resources/>
  <connections/>

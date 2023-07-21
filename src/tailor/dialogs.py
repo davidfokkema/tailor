@@ -9,7 +9,7 @@ def show_warning_dialog(parent, msg):
         msg (str): the message
     """
     dialog = QtWidgets.QMessageBox(parent=parent)
-    dialog.setIcon(dialog.Warning)
+    dialog.setIcon(QtWidgets.QMessageBox.Warning)
     dialog.setText(msg)
     dialog.exec()
 
@@ -22,6 +22,6 @@ def show_error_dialog(parent, msg):
         msg (str): the message
     """
     dialog = QtWidgets.QMessageBox(parent=parent)
-    dialog.setIcon(dialog.Critical)
+    dialog.setIcon(QtWidgets.QMessageBox.Critical)
     dialog.setText(msg)
     dialog.exec()

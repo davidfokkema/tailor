@@ -1,316 +1,259 @@
 """Data model for the tailor app.
 
-Implements a QAbstractDataModel to contain the data values as a backend for the
-table view used in the app.
+Implements a model to contain the data values as a backend for the
+table view used in the app. This class provides an API specific to Tailor.
 """
+
 import re
 
 import asteval
 import numpy as np
 import pandas as pd
-from PySide6 import QtCore, QtGui
+
+from tailor.ast_names import get_variable_names, rename_variables
 
 # treat Inf and -Inf as missing values (e.g. when calling dropna())
 pd.options.mode.use_inf_as_na = True
 
 
-MSG_TIMEOUT = 0
-
-
-class DataModel(QtCore.QAbstractTableModel):
+class DataModel:
     """Data model for the tailor app.
 
-    Implements a QAbstractDataModel to contain the data values as a backend for the
-    table view used in the app.
+    Implements a model to contain the data values as a backend for the
+    table view used in the app. This class provides an API specific to Tailor.
     """
 
-    _new_col_num = 0
-    _data = None
-    _calculated_column_expression = None
-    _is_calculated_column_valid = None
+    _new_col_num: int = 0
+    # column labels -> names
+    _col_names: dict[str, str]
+    _calculated_column_expression: dict[str, str]
+    _is_calculated_column_valid: dict[str, bool]
 
-    def __init__(self, main_window):
-        """Instantiate the class."""
-        super().__init__()
-
-        self.main_window = main_window
-
-        self._data = pd.DataFrame.from_dict({"x": 5 * [np.nan], "y": 5 * [np.nan]})
+    def __init__(self) -> None:
+        self._data = pd.DataFrame()
+        self._col_names = {}
         self._calculated_column_expression = {}
         self._is_calculated_column_valid = {}
 
-    def rowCount(self, parent=None):
-        """Return the number of rows in the data."""
+    def num_rows(self):
+        """Return the number of rows in the table."""
         return len(self._data)
 
-    def columnCount(self, parent=None):
-        """Return the number of columns in the data."""
+    def num_columns(self):
+        """Return the number of columns in the table."""
         return len(self._data.columns)
 
-    def data(self, index, role):
-        """Return (attributes of) the data.
-
-        This method is called by the table view to request data points or its
-        attributes. For each table cell multiple calls are made, one for each
-        'role'. The role indicates the type of data that is requested. For
-        example, the DisplayRole indicates a string is requested to display in
-        the cell. Also, a BackgroundRole indicates that the background color for
-        the cell is requested. You can use this to indicate different types of
-        data, e.g. calculated or input data.
-
-        If a role is requested that is not implemented an invalid QVariant
-        (None) is returned.
+    def get_value(self, row: int, column: int):
+        """Get value at row, column in table
 
         Args:
-            index: a QModelIndex referencing the requested data item.
-            role: an ItemDataRole to indicate what type of information is
-                requested.
-
-        Returns: The requested data or an invalid QVariant (None).
+            row (int): row number
+            column (int): column number
         """
-        row = index.row()
-        col = index.column()
+        return self._data.iat[row, column]
 
-        if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
-            # request for the data itself
-            value = self._data.iat[row, col]
-            if np.isnan(value) and not self.is_calculated_column(col):
-                # NaN in a data column, show as empty
-                return ""
-            else:
-                return f"{value:.10g}"
-        elif role == QtCore.Qt.BackgroundRole:
-            # request for the background fill of the cell
-            if self.is_calculated_column(col):
-                if self.is_calculated_column_valid(col):
-                    # Yellow
-                    return QtGui.QBrush(QtGui.QColor(255, 255, 200))
-                else:
-                    # Red
-                    return QtGui.QBrush(QtGui.QColor(255, 200, 200))
-        # not implemented, return an invalid QVariant (None) per the docs
-        # See Qt for Python docs -> Considerations -> API Changes
-        return None
+    def get_values(
+        self, start_row: int, start_column: int, end_row: int, end_column: int
+    ) -> np.ndarray:
+        values = self._data.iloc[start_row : end_row + 1, start_column : end_column + 1]
+        return values.to_numpy()
 
-    def setData(self, index, value, role=QtCore.Qt.EditRole, *, skip_update=False):
-        """Set (attributes of) data values.
-
-        This method is used to set data values in the model. The role indicates
-        the type of data to set. Currently, only the EditRole is supported for
-        setting values through the table view's cell editing machinery.
+    def set_value(self, row: int, column: int, value: float):
+        """Set value at row, column in table.
 
         Args:
-            index: a QModelIndex referencing the requested data item.
-            value: the value to set.
-            role: an ItemDataRole to indicate what type of information is
-                requested.
-            skip_update (boolean): if True, do not recalculate computed
-                cell values or signal that the current cell has changed. These
-                are both time-consuming operations.
+            row (int): row number
+            column (int): column number
+            value (float): value to insert
+        """
+        self._data.iat[row, column] = value
+        label = self.get_column_label(column)
+        self.recalculate_columns_from(label)
+
+    def set_values(
+        self,
+        start_row: int,
+        start_column: int,
+        end_row: int,
+        end_column: int,
+        value: float,
+    ):
+        """Set a block of table cells to some value.
+
+        The block of cells is specified using start and end indexes for rows and
+        columns. Interpreted as a rectangular selection, the starting indexes
+        specify the location of the topleft corner while the ending indexes
+        specify the bottomright corner. All cells within this selection are set
+        to the same specified value.
+
+        Args:
+            start_row (int): top left row number.
+            start_column (int): top left column number.
+            end_row (int): bottom right row number.
+            end_column (int): bottom right column number.
+            value (float): the value to set all cells to.
+        """
+        self._data.iloc[start_row : end_row + 1, start_column : end_column + 1] = value
+        label = self.get_column_label(start_column)
+        self.recalculate_columns_from(label)
+
+    def set_values_from_array(
+        self,
+        start_row: int,
+        start_column: int,
+        values: np.ndarray,
+    ):
+        """Set a block of table cells to values from an array.
+
+        The block of cells is specified using only start indexes for rows and
+        columns. The width and height of the block are determined by the size of
+        the array. All cells within this block are set to the values contained
+        within the array. The end result is pasting the array directly into the
+        table.
+
+        Args:
+            start_row (int): top left row number.
+            start_column (int): top left column number.
+            values (np.ndarray): the values to insert into the cells.
+        """
+        height, width = values.shape
+        self._data.iloc[
+            start_row : start_row + height, start_column : start_column + width
+        ] = values
+        label = self.get_column_label(start_column)
+        self.recalculate_columns_from(label)
+
+    def insert_rows(self, row: int, count: int):
+        """Insert rows into the table.
+
+        Insert `count` rows into the table at position `row`.
+
+        Args:
+            row (int): an integer row number to indicate the place of insertion.
+            count (int): number of rows to insert
+        """
+        new_data = pd.DataFrame.from_dict(
+            {col: count * [np.nan] for col in self._data.columns}
+        )
+        self._data = pd.concat(
+            [self._data.iloc[:row], new_data, self._data.iloc[row:]]
+        ).reset_index(drop=True)
+        self.recalculate_all_columns()
+
+    def remove_rows(self, row: int, count: int):
+        """Remove rows from the table.
+
+        Removes a row at the specified row number.
+
+        Args:
+            row (int): the first row to remove.
+            count (int): the number of rows to remove.
+        """
+        self._data = self._data.drop(index=range(row, row + count)).reset_index(
+            drop=True
+        )
+
+    def insert_columns(self, column: int, count: int):
+        """Insert columns into the table.
+
+        Insert columns *before* the specified column number.
+
+        Args:
+            column (int): a column number to indicate the place of insertion.
+            count (int): the number of columns to insert.
 
         Returns:
-            True if the data could be set. False otherwise.
+            A list of inserted column labels.
         """
-        if role == QtCore.Qt.EditRole:
-            row = index.row()
-            col = index.column()
-            try:
-                self._data.iat[row, col] = float(value)
-            except ValueError:
-                self._data.iat[row, col] = np.nan
-            finally:
-                # FIXME: data changed, recalculate all columns; better to only
-                # recalculate the current row
-                if not skip_update:
-                    self.recalculate_all_columns()
-                    self.dataChanged.emit(index, index)
-            return True
-        # Role not implemented
-        return False
+        labels = [self._create_new_column_label() for _ in range(count)]
+        for idx, label in zip(range(column, column + count), labels):
+            self._data.insert(idx, label, np.nan)
+            self._col_names[label] = label
+        return labels
 
-    def headerData(self, section, orientation, role):
-        """Return row and column information.
+    def remove_columns(self, column: int, count: int):
+        """Remove columns from the table.
 
-        Return data on the row and column headers. Mainly useful for displaying
-        the names of the columns and the row numbers in the table view. The
-        orientation should be specified as Qt.Horizontal for column headers and
-        Qt.Vertical for row headers. The role should specify what type of data is requested.
+        Removes a column at the specified column number.
 
         Args:
-            section: an integer section (row or column) number.
-            orientation: the orientation of the header.
-            role: an ItemDataRole to indicate what type of information is
-                requested.
-
-        Returns:
-            The data, if available, or an invalid QVariant (None).
+            column (int): a column number to indicate the place of removal.
+            count (int): the number of columns to remove.
         """
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
-                return self._data.columns[section]
-            else:
-                return str(self._data.index[section] + 1)
-        # See Qt for Python docs -> Considerations -> API Changes
-        return None
+        labels = self._data.columns[column : column + count]
+        self._data.drop(columns=labels, inplace=True)
+        for label in labels:
+            if self.is_calculated_column(label):
+                del self._calculated_column_expression[label]
+            del self._col_names[label]
+
+        # if there are columns left to the right of the removed column(s),
+        # recalculate them
+        if column < self.num_columns():
+            new_label_at_idx = self.get_column_label(column)
+            self.recalculate_columns_from(new_label_at_idx)
+
+    def move_column(self, source: int, dest: int):
+        """Move a column in the table.
+
+        Moves a column from the source index to the dest index. Contrary to Qt
+        conventions the dest index is the index in the final table, _after_ the
+        move operation is completed. So, if you have the initial state:
+
+            col0, col1, col2, col3
+
+        and you want to end up with the final state:
+
+            col1, col2, col0, col3
+
+        you should call `move_column(0, 2)` to move col0 from index 0 to index
+        2. By Qt conventions, you should call the Qt function with
+        `moveColumn(0, 3)` because you want to place col0 _before_ col3. So pay
+        attention to the correct arguments.
+
+        Args:
+            source (int): the original index of the column
+            dest (int): the final index of the column
+        """
+        # reorder column labels
+        cols = list(self._data.columns)
+        cols.insert(dest, cols.pop(source))
+        # reorder dataframe to conform to column labels
+        self._data = self._data.reindex(columns=cols)
+        label = self.get_column_label(min(source, dest))
+        self.recalculate_columns_from(label)
 
     def is_empty(self):
         """Check whether all cells are empty."""
         # check for *all* nans in a row or column
         return self._data.dropna(how="all").empty
 
-    def moveColumn(
-        self, sourceParent, sourceColumn, destinationParent, destinationChild
-    ):
-        """Move column.
-
-        Move a column from sourceColumn to destinationChild. Alas, the Qt naming
-        scheme remains a bit of a mystery.
-
-        Args:
-            sourceParent: ignored.
-            sourceColumn (int): the source column number.
-            destinationParent: ignored.
-            destinationChild (int): the destination column number.
-
-        Returns:
-            bool: True if the column was moved.
-        """
-        cols = list(self._data.columns)
-        cols.insert(destinationChild, cols.pop(sourceColumn))
-        self._data = self._data[cols]
-        return True
-
-    def insertColumn(self, column, parent=None, column_name=None):
-        """Insert a single column.
-
-        Insert a column *before* the specified column number. Returns True if
-        the insertion was succesful.
-
-        Args:
-            column: an integer column number to indicate the place of insertion.
-            parent: a QModelIndex pointing to the model (ignored).
-            column_name: the name of the new column.
-
-        Returns:
-            True if the insertion was succesful, False otherwise.
-        """
-        if column_name is None:
-            column_name = self._create_new_column_name()
-
-        self.beginInsertColumns(QtCore.QModelIndex(), column, column)
-        self._data.insert(column, column_name, np.nan)
-        self.endInsertColumns()
-        return True
-
-    def removeColumn(self, column, parent=None):
-        """Remove a single column.
-
-        Removes a column at the specified column number. Returns True if the
-        removal was succesful.
-
-        Args:
-            column: an integer column number to indicate the place of removal.
-            parent: a QModelIndex pointing to the model (ignored).
-
-        Returns:
-            True if the removal was succesful, False otherwise.
-        """
-        column_name = self.get_column_name(column)
-        self.beginRemoveColumns(QtCore.QModelIndex(), column, column)
-        self._data.drop(column_name, axis=1, inplace=True)
-        try:
-            del self._calculated_column_expression[column_name]
-        except KeyError:
-            # not a calculated column
-            pass
-        self.endRemoveColumns()
-        self.recalculate_all_columns()
-        return True
-
-    def removeRow(self, row, parent=None):
-        """Remove a single row.
-
-        Removes a row at the specified row number. Returns True if the
-        removal was succesful.
-
-        Args:
-            row: an integer row number to indicate the place of removal.
-            parent: a QModelIndex pointing to the model (ignored).
-
-        Returns:
-            True if the removal was succesful, False otherwise.
-        """
-        index = self._data.index[row]
-        self.beginRemoveRows(QtCore.QModelIndex(), row, row)
-        self._data.drop(index, axis=0, inplace=True)
-        self._data.reset_index(drop=True, inplace=True)
-        self.endRemoveRows()
-        self.recalculate_all_columns()
-        return True
-
-    def insertRow(self, row, parent=None):
-        """Insert a single row.
-
-        Append a row to the table, ignoring the specified row number. Returns
-        True if the insertion was succesful.
-
-        Args:
-            row: an integer row number to indicate the place of insertion
-                (ignored).
-            parent: a QModelIndex pointing to the model (ignored).
-
-        Returns:
-            True if the insertion was succesful, False otherwise.
-        """
-        row = self.rowCount()
-        self.beginInsertRows(QtCore.QModelIndex(), row, row)
-        num_col = len(self._data.columns)
-        self._data.loc[row] = num_col * [np.nan]
-        self.endInsertRows()
-        self.recalculate_all_columns()
-        return True
-
-    def insert_calculated_column(self, column):
+    def insert_calculated_column(self, column: int):
         """Insert a calculated column.
 
         Insert a column *before* the specified column number. Returns True if
         the insertion was succesful.
 
         Args:
-            column: an integer column number to indicate the place of insertion.
-
-        Returns:
-            True if the insertion was succesful, False otherwise.
+            column (int): an integer column number to indicate the place of
+                insertion.
         """
-        column_name = self._create_new_column_name()
+        (label,) = self.insert_columns(column, count=1)
+        self._calculated_column_expression[label] = None
+        self._is_calculated_column_valid[label] = False
 
-        if self.insertColumn(column, column_name=column_name) is True:
-            self._calculated_column_expression[column_name] = None
-            return True
-        else:
-            return False
-
-    def rename_column(self, col_idx, new_name):
+    def rename_column(self, label: str, name: str):
         """Rename a column.
 
-        Renames the column at the specified index.
-
         Args:
-            col_idx: an integer column number.
-            new_name: a string with the new column name.
+            label (str): the column label
+            name (str): the new name for the column
         """
-        old_name = self._data.columns[col_idx]
-        new_name = self.normalize_column_name(new_name)
-        self._data.rename(columns={old_name: new_name}, inplace=True)
-        if self.is_calculated_column(col_name=old_name):
-            for d in (
-                self._calculated_column_expression,
-                self._is_calculated_column_valid,
-            ):
-                d[new_name] = d.pop(old_name, False)
-        self.headerDataChanged.emit(QtCore.Qt.Horizontal, col_idx, col_idx)
-        self.show_status("Renamed column.")
+        new_name = self.normalize_column_name(name)
+        self._col_names[label] = new_name
         return new_name
+
+        # FIXME self.show_status("Renamed column.")
 
     def normalize_column_name(self, name):
         """Normalize column name.
@@ -324,9 +267,43 @@ class DataModel(QtCore.QAbstractTableModel):
         Returns:
             str: the normalized name.
         """
-        return re.sub(r"\W+|^(?=\d)", "_", name)
+        return re.sub(r"\W|^(?=\d)", "_", name)
 
-    def update_column_expression(self, col_idx, expression):
+    def get_column_expression(self, label: str):
+        """Get column expression.
+
+        Get the mathematical expression used to calculate values in the
+        calculated column.
+
+        Args:
+            label (str): the column label.
+
+        Returns:
+            A string containing the mathematical expression or None.
+        """
+        expression = self._calculated_column_expression.get(label, None)
+
+        if expression is not None:
+            if (get_variable_names(expression) - set(self._col_names.keys())) & set(
+                self._col_names.values()
+            ):
+                # There seems to be a raw variable name (not label!) stored in
+                # the expression. This can happen if you use a variable in your
+                # expression which does not yet exist. When a column with that
+                # name is created, the name (and not the label) is still stored
+                # in the expression. Because the label is not stored, renaming
+                # the column will not result in an updated expression. Try to
+                # update the expression so that the name will be transformed
+                # into a label. After that the column is locked in and can
+                # safely be further renamed if necessary. False positives may
+                # occur if columns are still named col1, col2, etc., but that is
+                # ok.
+                self.update_column_expression(label, expression)
+            return rename_variables(expression, self._col_names)
+        else:
+            return None
+
+    def update_column_expression(self, label: str, expression: str):
         """Update a calculated column with a new expression.
 
         Args:
@@ -334,38 +311,55 @@ class DataModel(QtCore.QAbstractTableModel):
             expression: a string with a mathematical expression used to
                 calculate the column values.
         """
-        col_name = self.get_column_name(col_idx)
-        if self.is_calculated_column(col_idx):
-            self._calculated_column_expression[col_name] = expression
-            if self.recalculate_column(col_name, expression):
-                # calculation was successful
-                self.show_status("Updated column values.")
+        if self.is_calculated_column(label):
+            # mapping: names -> labels, so must reverse _col_names mapping
+            mapping = {v: k for k, v in self._col_names.items()}
+            transformed = rename_variables(expression, mapping)
+            self._calculated_column_expression[label] = transformed
+            self.recalculate_columns_from(label)
 
-    def recalculate_column(self, col_name, expression=None):
+    def recalculate_columns_from(self, label: str):
+        """Recalculate all columns starting from the given column.
+
+        When updating values or a column expression, you may want to also update
+        all calculated columns to the right of the updated column. This method
+        will evaluate all calculated columns starting from the specified label.
+
+        Args:
+            label (str): the column label to start from.
+        """
+        idx = self._data.columns.get_loc(label)
+        for column in self._data.columns[idx:]:
+            if self.is_calculated_column(column):
+                self.recalculate_column(column)
+
+    def recalculate_all_columns(self):
+        """Recalculate all columns.
+
+        If data is entered or changed, the calculated column values must be
+        updated. This method will manually recalculate all column values, from left to right.
+        """
+        for column in self._data.columns:
+            if self.is_calculated_column(column):
+                self.recalculate_column(column)
+
+    def recalculate_column(self, label: str) -> bool:
         """Recalculate column values.
 
         Calculate column values based on its expression. Each column can use
         values from columns to the left of itself. Those values can be accessed
-        by using the column name as a variable in the expression.
+        by using the column label (not the user-defined name!) as a variable in
+        the expression.
 
         Args:
-            col_name: a string containing the column name.
-            expression: an optional string that contains the mathematical
-                expression. If None (the default) the expression is taken from the
-                column information.
+            label (str): the column label.
 
         Returns:
             True if the calculation was successful, False otherwise.
         """
-        # UI must be updated to reflect changes in column values
-        self.emit_column_changed(col_name)
-
-        if expression is None:
-            # expression must be retrieved from column information
-            expression = self._calculated_column_expression[col_name]
-
+        expression = self.get_column_expression(label)
         # set up interpreter
-        objects = self._get_accessible_columns(col_name)
+        objects = self._get_accessible_columns(label)
         aeval = asteval.Interpreter(usersyms=objects)
         try:
             # try to evaluate expression and cast output to a float (series)
@@ -376,201 +370,144 @@ class DataModel(QtCore.QAbstractTableModel):
                 output = float(output)
         except Exception as exc:
             # error in evaluation or output cannot be cast to a float (series)
-            self._is_calculated_column_valid[col_name] = False
-            self.show_status(f"Error evaluating expression: {exc}")
+            self._is_calculated_column_valid[label] = False
+            # FIXME self.show_status(f"Error evaluating expression: {exc}")
             return False
         else:
             # evaluation was successful
-            self._data[col_name] = output
-            self._is_calculated_column_valid[col_name] = True
-            self.show_status(f"Recalculated column values.")
+            self._data[label] = output
+            self._is_calculated_column_valid[label] = True
+            # FIXME self.show_status(f"Recalculated column values.")
             return True
 
-    def show_status(self, msg):
-        """Show message in statusbar.
-
-        Args:
-            msg (str): the error message.
-        """
-        self.main_window.ui.statusbar.showMessage(msg, timeout=MSG_TIMEOUT)
-
-    def emit_column_changed(self, col_name):
-        """Emit dataChanged signal for a given column.
-
-        Args:
-            col_name (str): name of the column that contains updated values.
-        """
-        col = self._data.columns.get_loc(col_name)
-        n_rows = len(self._data)
-        begin = self.createIndex(0, col)
-        end = self.createIndex(n_rows - 1, col)
-        self.dataChanged.emit(begin, end)
-
-    def _get_accessible_columns(self, col_name):
+    def _get_accessible_columns(self, label: str) -> dict[str, pd.Series]:
         """Get accessible column data for use in expressions.
 
         When calculating column values each column can access the values of the
         columns to its left by using the column name as a variable. This method
-        returns the column data for the accessible columns.
+        returns the column data for the accessible columns. If the column data
+        is not valid, the data is not returned and that will invalidate every
+        calculated column using that column in an expression.
 
         Args:
-            col_name (str): the name of the column that wants to access data.
+            label (str): the label of the column that wants to access data.
 
         Returns:
-            dict: a dictionary of column_name, data pairs.
+            dict: a dictionary of column label, data value pairs.
         """
         # accessible columns to the left of current column
-        idx = self._data.columns.get_loc(col_name)
+        idx = self._data.columns.get_loc(label)
         accessible_columns = self._data.columns[:idx]
-        data = {
-            k: self._data[k]
+        return {
+            self.get_column_name(k): self._data[k]
             for k in accessible_columns
-            if self.is_calculated_column_valid(col_name=k)
+            if self.is_column_valid(k)
         }
-        return data
 
-    def recalculate_all_columns(self):
-        """Recalculate all columns.
+    def get_column_label(self, column: int) -> str:
+        """Get column label.
 
-        If data is entered or changed, the calculated column values must be
-        updated. This method will manually recalculate all column values, from left to right.
-        """
-        column_names = self.get_column_names()
-        for col_idx in range(self.columnCount()):
-            if self.is_calculated_column(col_idx):
-                self.recalculate_column(column_names[col_idx])
-
-    def flags(self, index):
-        """Returns item flags.
-
-        Returns the item flags for the given index.
+        Get column label at the given index.
 
         Args:
-            index: a QModelIndex referencing the requested data item.
+            column: an integer column number.
 
         Returns:
-            The requested flags.
+            The column label as a string.
         """
-        flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-        col = index.column()
-        if not self.is_calculated_column(col):
-            # You can only edit data if the column values are not calculated
-            flags |= QtCore.Qt.ItemIsEditable
-        return flags
+        return self._data.columns[column]
 
-    def get_column_name(self, col_idx):
+    def get_column_labels(self) -> list[str]:
+        """Get all column labels.
+
+        Note: the column labels may _not_ be in the order they appear in the
+        data, but the order is guaranteed to be the same as the order of the
+        names retrieved from get_column_names().
+
+        Returns:
+            list[str]: a list of all column labels.
+        """
+        return list(self._col_names.keys())
+
+    def get_column_name(self, label: str) -> str:
         """Get column name.
 
         Get column name at the given index.
 
         Args:
-            col_idx: an integer column number.
+            label (str): the column label.
 
         Returns:
             The column name as a string.
         """
-        return self._data.columns[col_idx]
+        return self._col_names[label]
 
-    def get_column_names(self):
-        """Get list of all column names."""
-        return list(self._data.columns)
+    def get_column_names(self) -> list[str]:
+        """Get all column names.
 
-    def get_column_expression(self, col_idx):
-        """Get column expression.
-
-        Get the mathematical expression used to calculate values in the column
-        at the given index.
-
-        Args:
-            col_idx: an integer column number.
+        Note: the column names may _not_ be in the order they appear in the
+        data, but the order is guaranteed to be the same as the order of the
+        labels retrieved from get_column_labels().
 
         Returns:
-            A string containing the mathematical expression or None.
+            list[str]: a list of all column names.
         """
-        col_name = self.get_column_name(col_idx)
-        try:
-            return self._calculated_column_expression[col_name]
-        except KeyError:
-            return None
+        return list(self._col_names.values())
 
-    def get_column(self, col_name):
+    def get_column(self, label: str):
         """Return column values.
 
         Args:
-            col_name: a string containing the column name.
+            label (str): the column label.
 
         Returns:
-            A pandas.Series containing the column values.
+            An np.ndarray containing the column values.
         """
-        return self._data[col_name]
+        return self._data[label].to_numpy()
 
-    def get_columns(self, col_names):
-        """Return values for multiple columns.
-
-        Args:
-            col_names: a list of strings containing the column names.
-
-        Returns:
-            A list of pandas.Series containing the column values.
-        """
-        return [self._data[c] for c in col_names]
-
-    def is_calculated_column(self, col_idx=None, col_name=None):
+    def is_calculated_column(self, label: str):
         """Check if column is calculated.
 
-        Supplied with either a column index or a column name (index takes
-        precedence), checks whether the column is calculated from a mathematical
-        expression.
+        Checks whether a column is calculated from a mathematical expression.
 
         Args:
-            col_idx: an integer column index (takes precedence over name).
-            col_name: a string containing the column name.
+            label (str): the column label.
 
         Returns:
             True if the column is calculated, False otherwise.
         """
-        if col_idx is not None:
-            col_name = self.get_column_name(col_idx)
-        return col_name in self._calculated_column_expression
+        return label in self._calculated_column_expression
 
-    def is_calculated_column_valid(self, col_idx=None, col_name=None):
-        """Check if a calculated column has valid values.
+    def is_column_valid(self, label: str):
+        """Check if a column has valid values.
 
-        Supplied with either a column index or a column name (index takes
-        precedence), checks whether the column contains the results of a valid
-        calculation. When a calculation fails due to an invalid expression the
-        values are invalid.
+        Checks whether the column contains the results of a valid calculation if
+        it is a calculated column. When a calculation fails due to an invalid
+        expression the values are invalid. If it is a regular data column, the
+        values are always valid.
 
         Args:
-            col_idx: an integer column index (takes precedence over name).
-            col_name: a string containing the column name.
+            label (str): the column label.
 
         Returns:
             True if the column values are valid, False otherwise.
         """
-        if col_idx is not None:
-            col_name = self.get_column_name(col_idx)
-        if not self.is_calculated_column(col_name=col_name):
+        if not self.is_calculated_column(label):
             # values are not calculated, so are always valid
             return True
         else:
-            return self._is_calculated_column_valid.get(col_name, False)
+            return self._is_calculated_column_valid[label]
 
-    def _create_new_column_name(self):
-        """Create a name for a new column.
+    def _create_new_column_label(self):
+        """Create a label for a new column.
 
-        Creates column names like new1, new2, etc. while making sure the new
-        name is not yet taken.
+        Creates column labels like col1, col2, etc.
 
         Returns:
-            A string containing the new name.
+            A string containing the new label.
         """
-        col_names = self.get_column_names()
-        while True:
-            self._new_col_num += 1
-            new_name = f"new{self._new_col_num}"
-            if new_name not in col_names:
-                return new_name
+        self._new_col_num += 1
+        return f"col{self._new_col_num}"
 
     def save_state_to_obj(self, save_obj):
         """Save all data and state to save object.

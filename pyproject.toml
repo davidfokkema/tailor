@@ -12,6 +12,9 @@ formal_name = "Tailor"
 description = "Explore datasets and fit models."
 icon = "src/tailor/resources/tailor"
 sources = ['src/tailor']
+test_sources = [
+    "tests",
+]
 requires = [
     'std-nslog',
     'appdirs>=1.4.4,<2.0.0',
@@ -25,6 +28,11 @@ requires = [
     'PySide6_essentials>=6.5.0,<6.6.0',
     'pyqtgraph>=0.13.3,<0.14.0',
     'matplotlib>=3.5.1,<4.0.0',
+    'xxhash>=3.2.0,<4.0.0',
+]
+test_requires = [
+    "pytest", 
+    "pytest-mock",
 ]
 
 [tool.briefcase.app.tailor.document_type.tlr]

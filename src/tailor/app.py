@@ -18,7 +18,6 @@ from importlib import resources
 from textwrap import dedent
 from typing import Optional
 
-import numpy as np
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -77,17 +76,23 @@ class Application(QtWidgets.QMainWindow):
             QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
         )
 
+        self.connect_menu_items()
+        self.connect_ui_events()
+        self.setup_keyboard_shortcuts()
+        self.fill_recent_menu()
+
+        # install event filter to capture UI events (which are not signals)
+        # necessary to capture closeEvent inside QMainWindow widget
+        self.installEventFilter(self)
+
         # set up dirty timer
         self._dirty_timer = QtCore.QTimer()
         self._dirty_timer.timeout.connect(self.mark_project_dirty)
 
-        # clear all program state
+        # clear all program state and set up as new project
         self.clear_all()
 
-        # Enable close buttons...
-        self.ui.tabWidget.setTabsClosable(True)
-
-        # connect menu items
+    def connect_menu_items(self):
         self.ui.actionQuit.triggered.connect(self.close)
         self.ui.actionAbout_Tailor.triggered.connect(self.show_about_dialog)
         self.ui.actionNew.triggered.connect(self.new_project)
@@ -117,21 +122,11 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
         self.ui.actionPaste.triggered.connect(self.paste_cells)
 
-        # set up the open recent menu
-        self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
-            self.ui.actionClear_Menu
-        )
-        self.update_recent_files()
-        self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
-
-        # user interface events
+    def connect_ui_events(self):
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
 
-        # install event filter to capture UI events (which are not signals)
-        # necessary to capture closeEvent inside QMainWindow widget
-        self.installEventFilter(self)
-
+    def setup_keyboard_shortcuts(self):
         # Set standard shortcuts for menu items
         self.ui.actionNew.setShortcut(QtGui.QKeySequence.New)
         self.ui.actionOpen.setShortcut(QtGui.QKeySequence.Open)
@@ -151,6 +146,13 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionExport_Graph_to_PNG.setShortcut(
             QtGui.QKeySequence("Shift+Ctrl+G")
         )
+
+    def fill_recent_menu(self):
+        self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
+            self.ui.actionClear_Menu
+        )
+        self.update_recent_files()
+        self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
     def mark_project_dirty(self, is_dirty=True):
         """Mark project as dirty"""
@@ -286,7 +288,7 @@ class Application(QtWidgets.QMainWindow):
         """
         tab = self.ui.tabWidget.widget(idx)
         if type(tab) == PlotTab:
-            tab.update_plot()
+            tab.refresh_ui()
 
     def update_all_plots(self):
         """Update all plot tabs.
@@ -340,10 +342,12 @@ class Application(QtWidgets.QMainWindow):
         if data_sheet := self._on_data_sheet():
             dialog = self.create_plot_dialog(data_sheet)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
-                x_var = dialog.ui.x_axis_box.currentText()
-                y_var = dialog.ui.y_axis_box.currentText()
-                x_err = dialog.ui.x_err_box.currentText()
-                y_err = dialog.ui.y_err_box.currentText()
+                labels = [None] + data_sheet.data_model.columnLabels()
+                x_var = labels[dialog.ui.x_axis_box.currentIndex()]
+                y_var = labels[dialog.ui.y_axis_box.currentIndex()]
+                x_err = labels[dialog.ui.x_err_box.currentIndex()]
+                y_err = labels[dialog.ui.y_err_box.currentIndex()]
+                print(f"{x_var=} {y_var=} {x_err=} {y_err=}")
                 if x_var and y_var:
                     self.create_plot_tab(data_sheet, x_var, y_var, x_err, y_err)
 
@@ -361,15 +365,13 @@ class Application(QtWidgets.QMainWindow):
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(data_sheet, main_window=self)
+        plot_tab = PlotTab(data_sheet, x_var, y_var, x_err, y_err)
         idx = self.ui.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
         self._plot_num += 1
-        plot_tab.create_plot(x_var, y_var, x_err, y_err)
-
         self.ui.tabWidget.setCurrentIndex(idx)
         return plot_tab
 
-    def create_plot_dialog(self, data_tab):
+    def create_plot_dialog(self, data_sheet: DataSheet) -> QtWidgets.QDialog:
         """Create a dialog to request variables for creating a plot."""
 
         class Dialog(QtWidgets.QDialog):
@@ -378,7 +380,7 @@ class Application(QtWidgets.QMainWindow):
                 self.ui = Ui_CreatePlotDialog()
                 self.ui.setupUi(self)
 
-        choices = [None] + data_tab.data_model.get_column_names()
+        choices = [None] + data_sheet.data_model.columnNames()
         create_dialog = Dialog()
         create_dialog.ui.x_axis_box.addItems(choices)
         create_dialog.ui.y_axis_box.addItems(choices)
@@ -436,6 +438,8 @@ class Application(QtWidgets.QMainWindow):
         Closes all tabs and data.
         """
         self.ui.tabWidget.clear()
+        self.ui.tabWidget.setTabsClosable(True)
+
         self._plot_num = 1
         self._sheet_num = 1
         self.add_data_sheet()

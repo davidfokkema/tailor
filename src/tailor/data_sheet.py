@@ -2,11 +2,14 @@ import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from tailor import dialogs
-from tailor.data_model import MSG_TIMEOUT, DataModel
+from tailor.qdata_model import MSG_TIMEOUT, QDataModel
 from tailor.ui_data_sheet import Ui_DataSheet
 
 
 class DataSheet(QtWidgets.QWidget):
+    data_model: QDataModel = None
+    name: str = None
+
     def __init__(self, name, main_window):
         super().__init__()
         self.ui = Ui_DataSheet()
@@ -16,10 +19,18 @@ class DataSheet(QtWidgets.QWidget):
         self.main_window = main_window
         self.clipboard = QtWidgets.QApplication.clipboard()
 
+        self.setup_data_model()
+
+        self.connect_ui_events()
+        self.setup_keyboard_shortcuts()
+
+        # Start at (0, 0)
+        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+
+    def connect_ui_events(self):
         # connect button signals
         self.ui.add_column_button.clicked.connect(self.add_column)
         self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
-
         # user interface events
         self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
         self.ui.name_edit.textEdited.connect(self.rename_column)
@@ -27,13 +38,11 @@ class DataSheet(QtWidgets.QWidget):
         self.ui.create_plot_button.clicked.connect(
             self.main_window.ask_and_create_plot_tab
         )
+        # Set up selection events
+        self.selection = self.ui.data_view.selectionModel()
+        self.selection.selectionChanged.connect(self.selection_changed)
 
-        # set up data model
-        self.data_model = DataModel(main_window=main_window)
-        self._set_view_and_selection_model()
-        # Start at (0, 0)
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
-
+    def setup_keyboard_shortcuts(self):
         # Create shortcut for return/enter keys
         for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
             QtGui.QShortcut(
@@ -45,29 +54,21 @@ class DataSheet(QtWidgets.QWidget):
                 QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
             )
 
-    def _set_view_and_selection_model(self):
-        """Set up data view and selection model.
+    def setup_data_model(self):
+        """Set up the data model with some initial data."""
+        self.data_model = QDataModel()
+        self.data_model.insertColumns(0, 2)
+        self.data_model.insertRows(0, 5)
 
-        Connects the table widget to the data model, sets up various behaviours
-        and resets visual column ordering.
-        """
+        # Set view and selection model
         self.ui.data_view.setModel(self.data_model)
         self.ui.data_view.setDragDropMode(QtWidgets.QTableView.NoDragDrop)
+
+        # Set up header
         header = self.ui.data_view.horizontalHeader()
         header.setSectionsMovable(True)
         header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         header.setMinimumSectionSize(header.defaultSectionSize())
-
-        # reset column ordering. There is, apparently, no easy way to do this :'(
-        for log_idx in range(self.data_model.columnCount()):
-            # move sections in the correct position FROM LEFT TO RIGHT
-            # so, logical indexes should be numbered [0, 1, 2, ... ]
-            # >>> header.moveSection(from, to)
-            vis_idx = header.visualIndex(log_idx)
-            header.moveSection(vis_idx, log_idx)
-
-        self.selection = self.ui.data_view.selectionModel()
-        self.selection.selectionChanged.connect(self.selection_changed)
 
     def add_column(self):
         """Add column to data model and select it."""
@@ -80,7 +81,7 @@ class DataSheet(QtWidgets.QWidget):
     def add_calculated_column(self):
         """Add a calculated column to data model and select it."""
         col_index = self.data_model.columnCount()
-        self.data_model.insert_calculated_column(col_index)
+        self.data_model.insertCalculatedColumn(col_index)
         self.ui.data_view.selectColumn(col_index)
         self.ui.name_edit.selectAll()
         self.ui.name_edit.setFocus()
@@ -127,14 +128,15 @@ class DataSheet(QtWidgets.QWidget):
         Args:
             name: a QString containing the new name.
         """
-        if self._selected_col_idx is not None:
+        col_idx = self._selected_col_idx
+        if col_idx is not None:
             # Do not allow empty names or duplicate column names
-            if name and name not in self.data_model.get_column_names():
-                old_name = self.data_model.get_column_name(self._selected_col_idx)
-                new_name = self.data_model.rename_column(self._selected_col_idx, name)
-                self.main_window.rename_plot_variables(self, old_name, new_name)
+            if name and name not in self.data_model.columnNames():
+                new_name = self.data_model.renameColumn(col_idx, name)
                 # set the normalized name to the name edit field
                 self.ui.name_edit.setText(new_name)
+                header = self.ui.data_view.horizontalHeader()
+                header.headerDataChanged(QtCore.Qt.Horizontal, col_idx, col_idx)
 
     def update_column_expression(self, expression):
         """Update a column expression.
@@ -146,7 +148,7 @@ class DataSheet(QtWidgets.QWidget):
             expression: a QString containing the mathematical expression.
         """
         if self._selected_col_idx is not None:
-            self.data_model.update_column_expression(self._selected_col_idx, expression)
+            self.data_model.updateColumnExpression(self._selected_col_idx, expression)
 
     def selection_changed(self, selected, deselected):
         """Handle selectionChanged events in the data view.
@@ -157,20 +159,29 @@ class DataSheet(QtWidgets.QWidget):
         These values are used to update the column information in the user
         interface.
 
+        Note: the selected and deselected parameters are ignored. They only tell
+        you about the changes in selection being made. So, for example, if you
+        first select a column and then select a single cell within that column,
+        selected will be empty (no extra cells selected) and deselected will
+        contain all other cells in the column. This is not very useful to
+        determine the current selection. Therefore, the current selection is
+        retrieved instead of using the arguments.
+
         Args:
-            selected: QItemSelection containing the newly selected events.
+            selected: QItemSelection containing the newly selected cells.
             deselected: QItemSelection containing previously selected, and now
             deselected, items.
         """
+        selected = self.selection.selection()
         if not selected.isEmpty():
             self.ui.nameLabel.setEnabled(True)
             self.ui.name_edit.setEnabled(True)
             first_selection = selected.first()
             col_idx = first_selection.left()
             self._selected_col_idx = col_idx
-            self.ui.name_edit.setText(self.data_model.get_column_name(col_idx))
-            self.ui.formula_edit.setText(self.data_model.get_column_expression(col_idx))
-            if self.data_model.is_calculated_column(col_idx):
+            self.ui.name_edit.setText(self.data_model.columnName(col_idx))
+            self.ui.formula_edit.setText(self.data_model.columnExpression(col_idx))
+            if self.data_model.isCalculatedColumn(col_idx):
                 self.ui.formulaLabel.setEnabled(True)
                 self.ui.formula_edit.setEnabled(True)
             else:
@@ -196,20 +207,54 @@ class DataSheet(QtWidgets.QWidget):
         underlying data instead. That way, visual and logical ordering are
         always in sync.
 
+        Qt conventions are a bit weird and inconsistent, unfortunately. Moving a
+        column requires calling the moveColumn() method with sourceIndex and
+        destinationChild parameters. DestinationChild is the would-be index in
+        the initial table, _before_ the move operation is completed. So, if you
+        have the initial state:
+
+            col0, col1, col2, col3
+
+        and you want to end up with the final state:
+
+            col1, col2, col0, col3
+
+        you want the operation:
+
+            col0, col1, col2, col3
+              |--------------^
+
+        and you should call `moveColumn(0, 3)` to move col0 from index 0 to be
+        inserted at index 3, i.e. you want to place col0 _before_ col3. This +1
+        behaviour does not occur when moving a column to the left instead of to
+        the right since then you don't have to adjust for the removal of the
+        source column.
+
+        The problem is that newidx does _not_ behave that way. The argument
+        oldidx works on the initial state and the argument newidx works on the
+        final state. So the above move operation `moveColumn(0, 3)` has
+        oldidx = 0 and newidx = 2 (check the final state).
+
         Args:
             logidx (int): the logical column index (index in the dataframe)
             oldidx (int): the old visual index newidx (int): the new visual
             index
         """
-        print(f"Column moved from {oldidx=} to {newidx=}")
+        # Raise an exception when column ordering has been messed up
+        assert logidx == oldidx
+
         header = self.ui.data_view.horizontalHeader()
         header.blockSignals(True)
         # move the column back, keep the header in logical order
         header.moveSection(newidx, oldidx)
         header.blockSignals(False)
         # move the underlying data column instead
-        self.data_model.moveColumn(None, oldidx, None, newidx)
-        self.data_model.recalculate_all_columns()
+        if newidx > oldidx:
+            # moving to the right
+            destidx = newidx + 1
+        else:
+            destidx = newidx
+        self.data_model.moveColumn(sourceColumn=oldidx, destinationChild=destidx)
         # select the column that was just moved at the new location
         self.ui.data_view.selectColumn(newidx)
 
@@ -236,13 +281,7 @@ class DataSheet(QtWidgets.QWidget):
 
     def clear_selected_cells(self):
         """Clear contents of selected cells."""
-        for index in self.selection.selectedIndexes():
-            self.data_model.setData(index, "", skip_update=True)
-        # signal that ALL values may have changed using an invalid index
-        # this can be MUCH quicker than emitting signals for each cell
-        self.data_model.dataChanged.emit(QtCore.QModelIndex(), QtCore.QModelIndex())
-        # recalculate computed values once
-        self.data_model.recalculate_all_columns()
+        self.data_model.clearData(self.selection.selection())
 
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""
@@ -253,43 +292,52 @@ class DataSheet(QtWidgets.QWidget):
     def copy_selected_cells(self):
         """Copy selected cells to clipboard."""
 
-        # get bounding rectangle coordinates and sizes
-        selection = self.selection.selection().toList()
-        left = min(r.left() for r in selection)
-        width = max(r.right() for r in selection) - left + 1
-        top = min(r.top() for r in selection)
-        height = max(r.bottom() for r in selection) - top + 1
+        data = self.data_model.dataFromSelection(self.selection.selection())
+        text = self.array_to_text(data)
+        self.clipboard.setText(text)
 
-        # fill data from selected indexes, not selected -> NaN
-        data = np.full((height, width), np.nan)
-        for index in self.selection.selectedIndexes():
-            if (value := index.data()) == "":
-                value = np.nan
-            data[index.row() - top, index.column() - left] = value
+    def paste_cells(self):
+        """Paste cells from clipboard."""
 
+        text = self.clipboard.text()
+        values = self.text_to_array(text)
+        if isinstance(values, np.ndarray):
+            current_index = self.ui.data_view.currentIndex()
+            self.data_model.setDataFromArray(current_index, values)
+
+        # FIXME
+        # # reset current index and focus
+        # self.ui.data_view.setFocus()
+        # # set selection to pasted cells
+        # selection = QtCore.QItemSelection(top_left, bottom_right)
+        # self.selection.select(selection, self.selection.ClearAndSelect)
+
+    def array_to_text(self, data: np.ndarray) -> str:
         # create tab separated values from data, NaN -> empty string, e.g.
         # 1 2 3
         # 2   4
         # 5 5 6
-        text = "\n".join(
+        return "\n".join(
             [
                 "\t".join([str(v) if not np.isnan(v) else "" for v in row])
                 for row in data
             ]
         )
 
-        # write TSV text to clipboard
-        self.clipboard.setText(text)
+    def text_to_array(self, text: str) -> np.ndarray | None:
+        """Convert tab-separated values to an array.
 
-    def paste_cells(self):
-        """Paste cells from clipboard."""
+        Args:
+            text (str): a multi-line string of tab-separated values.
 
-        # get data from clipboard
-        text = self.clipboard.text()
-
-        # create array from tab separated values, "" -> NaN
+        Returns:
+            np.ndarray: the data as a NumPy array
+        """
+        if not text:
+            return None
         try:
-            data = np.array(
+            # create array from tab separated values, "" -> NaN
+            values = np.array(
                 [
                     [float(v) if v != "" else np.nan for v in row.split("\t")]
                     for row in text.split("\n")
@@ -299,43 +347,6 @@ class DataSheet(QtWidgets.QWidget):
             self.main_window.ui.statusbar.showMessage(
                 f"Error pasting from clipboard: {exc}", timeout=MSG_TIMEOUT
             )
-            return
-
-        # get current coordinates and data size
-        current_index = self.ui.data_view.currentIndex()
-        start_row, start_column = current_index.row(), current_index.column()
-        height, width = data.shape
-
-        # extend rows and columns if necessary
-        last_table_column = self.data_model.columnCount() - 1
-        if (last_data_column := start_column + width - 1) > last_table_column:
-            for _ in range(last_data_column - last_table_column):
-                self.add_column()
-        last_table_row = self.data_model.rowCount() - 1
-        if (last_data_row := start_row + height - 1) > last_table_row:
-            for _ in range(last_data_row - last_table_row):
-                self.add_row()
-
-        # write clipboard data to data model
-        it = np.nditer(data, flags=["multi_index"])
-        for value in it:
-            row, column = it.multi_index
-            self.data_model.setData(
-                self.data_model.createIndex(row + start_row, column + start_column),
-                value,
-                skip_update=True,
-            )
-
-        # signal that values have changed
-        top_left = self.data_model.createIndex(start_row, start_column)
-        bottom_right = self.data_model.createIndex(
-            start_row + height - 1, start_column + width - 1
-        )
-        self.data_model.dataChanged.emit(top_left, bottom_right)
-        # recalculate computed values once
-        self.data_model.recalculate_all_columns()
-        # reset current index and focus
-        self.ui.data_view.setFocus()
-        # set selection to pasted cells
-        selection = QtCore.QItemSelection(top_left, bottom_right)
-        self.selection.select(selection, self.selection.ClearAndSelect)
+            return None
+        else:
+            return values
