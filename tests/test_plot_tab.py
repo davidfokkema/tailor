@@ -306,3 +306,75 @@ class TestPlotTab:
 
         with pytest.raises(NotImplementedError):
             plot_tab.get_fit_curve_x_limits()
+
+    def test_update_parameter_value_updates_parameter(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "plot_initial_model")
+        mocker.patch.object(plot_tab, "plot_best_fit")
+        widget = mocker.Mock(_parameter="param")
+        plot_tab.model.parameters = {"param": mocker.Mock()}
+
+        plot_tab.update_parameter_value(widget, 14.7)
+
+        assert plot_tab.model.parameters["param"].value == 14.7
+        plot_tab.plot_initial_model.assert_called()
+
+    def test_update_parameter_value_invalidates_fit(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "plot_initial_model")
+        mocker.patch.object(plot_tab, "plot_best_fit")
+        widget = mocker.Mock(_parameter="param")
+        plot_tab.model.parameters = {"param": mocker.Mock()}
+
+        plot_tab.update_parameter_value(widget, 14.7)
+
+        assert plot_tab.model.best_fit == None
+        plot_tab.plot_best_fit.assert_called()
+
+    def test_update_parameter_min_bound_updates_parameter(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "plot_best_fit")
+        widget = mocker.Mock(_parameter="param")
+        plot_tab.model.parameters = {"param": mocker.Mock()}
+
+        plot_tab.update_parameter_min_bound(widget, 14.7)
+
+        assert plot_tab.model.parameters["param"].min == 14.7
+
+    def test_update_parameter_min_bound_invalidates_fit(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "plot_best_fit")
+        widget = mocker.Mock(_parameter="param")
+        plot_tab.model.parameters = {"param": mocker.Mock()}
+
+        plot_tab.update_parameter_min_bound(widget, 14.7)
+
+        assert plot_tab.model.best_fit == None
+        plot_tab.plot_best_fit.assert_called()
+
+    def test_update_parameter_max_bound_updates_parameter(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "plot_best_fit")
+        widget = mocker.Mock(_parameter="param")
+        plot_tab.model.parameters = {"param": mocker.Mock()}
+
+        plot_tab.update_parameter_max_bound(widget, 14.7)
+
+        assert plot_tab.model.parameters["param"].max == 14.7
+
+    def test_update_parameter_max_bound_invalidates_fit(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "plot_best_fit")
+        widget = mocker.Mock(_parameter="param")
+        plot_tab.model.parameters = {"param": mocker.Mock()}
+
+        plot_tab.update_parameter_max_bound(widget, 14.7)
+
+        assert plot_tab.model.best_fit == None
+        plot_tab.plot_best_fit.assert_called()

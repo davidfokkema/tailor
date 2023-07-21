@@ -382,15 +382,19 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_parameter_value(self, widget, value):
         self.model.parameters[widget._parameter].value = value
+        self.model.best_fit = None
         self.plot_initial_model()
+        self.plot_best_fit()
 
     def update_parameter_min_bound(self, widget, value):
         self.model.parameters[widget._parameter].min = value
-        self.plot_initial_model()
+        self.model.best_fit = None
+        self.plot_best_fit()
 
     def update_parameter_max_bound(self, widget, value):
         self.model.parameters[widget._parameter].max = value
-        self.plot_initial_model()
+        self.model.best_fit = None
+        self.plot_best_fit()
 
     def toggle_use_fit_domain(self, state):
         """Enable or disable use of fit domain.
