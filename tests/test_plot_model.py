@@ -167,11 +167,11 @@ class TestPlotModel:
         assert y_err == pytest.approx(y_err_)
 
     def test_get_data_without_error_values(self, model: PlotModel):
+        model.x_err_col = None
+        model.y_err_col = None
         model.data_model.get_column.side_effect = [
             [1, 2],
             [3, 4],
-            KeyError,
-            KeyError,
         ]
 
         _, _, x_err, y_err = model.get_data()

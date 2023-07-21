@@ -135,14 +135,13 @@ class PlotModel:
         """
         x = self.data_model.get_column(self.x_col)
         y = self.data_model.get_column(self.y_col)
-        try:
+        if self.x_err_col is not None:
             x_err = self.data_model.get_column(self.x_err_col)
-        except KeyError:
+        else:
             x_err = 0.0
-
-        try:
+        if self.y_err_col is not None:
             y_err = self.data_model.get_column(self.y_err_col)
-        except KeyError:
+        else:
             y_err = 0.0
 
         # Drop NaN and Inf values
