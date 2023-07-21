@@ -277,10 +277,10 @@ class PlotTab(QtWidgets.QWidget):
             Tuple of four float values (xmin, xmax, ymin, ymax).
         """
         x_min, x_max, y_min, y_max = self.model.get_limits_from_data()
-        x_min = self.model.x_min or x_min
-        x_max = self.model.x_max or x_max
-        y_min = self.model.y_min or y_min
-        y_max = self.model.y_max or y_max
+        x_min = x_min if self.model.x_min is None else self.model.x_min
+        x_max = x_max if self.model.x_max is None else self.model.x_max
+        y_min = y_min if self.model.y_min is None else self.model.y_min
+        y_max = y_max if self.model.y_max is None else self.model.y_max
         return x_min, x_max, y_min, y_max
 
     def update_model_expression(self):
