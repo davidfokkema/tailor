@@ -8,7 +8,7 @@ import pandas as pd
 import xxhash
 from numpy.typing import ArrayLike
 
-from tailor.ast_names import get_variable_names, rename_variables
+from tailor.ast_names import rename_variables
 from tailor.data_model import DataModel
 
 

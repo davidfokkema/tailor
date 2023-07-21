@@ -4,15 +4,12 @@ A widget containing a scatter plot of some data columns with user interface
 elements to specify a mathematical model to fit to the model.
 """
 
-import asteval
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pyqtgraph as pg
 from lmfit import models
 from PySide6 import QtCore, QtWidgets
 
-from tailor.data_model import DataModel
 from tailor.data_sheet import DataSheet
 from tailor.plot_model import PlotModel
 from tailor.ui_plot_tab import Ui_PlotTab
