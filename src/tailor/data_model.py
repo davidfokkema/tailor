@@ -23,6 +23,7 @@ class DataModel:
     table view used in the app. This class provides an API specific to Tailor.
     """
 
+    _data: pd.DataFrame
     _new_col_num: int = 0
     # column labels -> names
     _col_names: dict[str, str]
