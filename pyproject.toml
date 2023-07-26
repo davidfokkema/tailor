@@ -12,16 +12,14 @@ formal_name = "Tailor"
 description = "Explore datasets and fit models."
 icon = "src/tailor/resources/tailor"
 sources = ['src/tailor']
-test_sources = [
-    "tests",
-]
+test_sources = ["tests"]
 requires = [
     'std-nslog',
     'appdirs>=1.4.4,<2.0.0',
     'tomli>=2.0.1,<3.0.0',
     'tomli_w>=1.0.0,<2.0.0',
     'numpy>=1.22.1,<2.0.0',
-    'pandas>=1.4.0,<2.0.0',
+    'pandas>=2.0.0,<3.0.0',
     'lmfit>=1.0.3,<2.0.0',
     'scipy>=1.8.0,<2.0.0',
     'asteval>=0.9.26,<1.0.0',
@@ -30,10 +28,7 @@ requires = [
     'matplotlib>=3.5.1,<4.0.0',
     'xxhash>=3.2.0,<4.0.0',
 ]
-test_requires = [
-    "pytest", 
-    "pytest-mock",
-]
+test_requires = ["pytest", "pytest-mock"]
 
 [tool.briefcase.app.tailor.document_type.tlr]
 extension = "tlr"
