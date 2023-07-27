@@ -34,6 +34,7 @@ class PlotTab(QtWidgets.QWidget):
     elements to specify a mathematical model to fit to the model.
     """
 
+    name: str
     data_sheet: DataSheet
     model: PlotModel
     _params: dict[str, QtWidgets.QWidget]
@@ -41,6 +42,7 @@ class PlotTab(QtWidgets.QWidget):
 
     def __init__(
         self,
+        name: str,
         data_sheet: DataSheet,
         x_col: str,
         y_col: str,
@@ -56,6 +58,7 @@ class PlotTab(QtWidgets.QWidget):
         self.ui = Ui_PlotTab()
         self.ui.setupUi(self)
 
+        self.name = name
         self.model = PlotModel(
             data_sheet.data_model._data, x_col, y_col, x_err_col, y_err_col
         )

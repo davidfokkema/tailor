@@ -347,7 +347,6 @@ class Application(QtWidgets.QMainWindow):
                 y_var = labels[dialog.ui.y_axis_box.currentIndex()]
                 x_err = labels[dialog.ui.x_err_box.currentIndex()]
                 y_err = labels[dialog.ui.y_err_box.currentIndex()]
-                print(f"{x_var=} {y_var=} {x_err=} {y_err=}")
                 if x_var and y_var:
                     self.create_plot_tab(data_sheet, x_var, y_var, x_err, y_err)
 
@@ -365,8 +364,9 @@ class Application(QtWidgets.QMainWindow):
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(data_sheet, x_var, y_var, x_err, y_err)
-        idx = self.ui.tabWidget.addTab(plot_tab, f"Plot {self._plot_num}")
+        name = f"Plot {self._plot_num}"
+        plot_tab = PlotTab(name, data_sheet, x_var, y_var, x_err, y_err)
+        idx = self.ui.tabWidget.addTab(plot_tab, name)
         self._plot_num += 1
         self.ui.tabWidget.setCurrentIndex(idx)
         return plot_tab
@@ -449,7 +449,7 @@ class Application(QtWidgets.QMainWindow):
     def add_data_sheet(self) -> DataSheet:
         """Add a new data sheet to the project."""
         name = f"Sheet{self._sheet_num}"
-        datasheet = DataSheet(name, main_window=self)
+        datasheet = DataSheet(name=name, id=self._sheet_num, main_window=self)
         idx = self.ui.tabWidget.addTab(datasheet, name)
         self.ui.tabWidget.setCurrentIndex(idx)
         datasheet.ui.data_view.setFocus()
