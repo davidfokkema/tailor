@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from PySide6 import QtWidgets
 
+from tailor import project_files
 from tailor.app import Application
 from tailor.data_sheet import DataSheet
 from tailor.plot_tab import PlotTab
@@ -52,8 +53,10 @@ if __name__ == "__main__":
     app = Application()
 
     create_test_project(app)
+    model = project_files.save_project(app)
+    print(f"{model}")
 
-    app.show()
-    qapp.exec()
+    # app.show()
+    # qapp.exec()
 
-    qapp.quit()
+    # qapp.quit()
