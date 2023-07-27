@@ -14,7 +14,7 @@ QtWidgets.QApplication()
 @pytest.fixture()
 def data_sheet(mocker: MockerFixture):
     main_window = mocker.Mock()
-    return DataSheet("sheet1", main_window)
+    return DataSheet(name="sheet1", id=1234, main_window=main_window)
 
 
 @pytest.fixture()
@@ -25,7 +25,7 @@ def bare_bones_data_sheet(mocker: MockerFixture):
     mocker.patch.object(DataSheet, "setup_keyboard_shortcuts")
     mocker.patch.object(QtWidgets.QApplication, "clipboard")
     main_window = mocker.Mock()
-    data_sheet = DataSheet("sheet1", main_window)
+    data_sheet = DataSheet(name="sheet1", id=1234, main_window=main_window)
     data_sheet.selection = mocker.Mock()
     return data_sheet
 
@@ -34,6 +34,10 @@ class TestDataSheet:
     def test_fixture_properties(self, bare_bones_data_sheet: DataSheet):
         assert isinstance(bare_bones_data_sheet, DataSheet)
         assert isinstance(bare_bones_data_sheet.ui, MagicMock)
+
+    def test_init_sets_attributes(self, bare_bones_data_sheet: DataSheet):
+        assert bare_bones_data_sheet.name == "sheet1"
+        assert bare_bones_data_sheet.id == 1234
 
     def test_init_calls_setup(self, bare_bones_data_sheet: DataSheet):
         bare_bones_data_sheet.connect_ui_events.assert_called_once()

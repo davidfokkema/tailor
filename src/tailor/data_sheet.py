@@ -9,13 +9,15 @@ from tailor.ui_data_sheet import Ui_DataSheet
 class DataSheet(QtWidgets.QWidget):
     data_model: QDataModel = None
     name: str = None
+    id: int
 
-    def __init__(self, name, main_window):
+    def __init__(self, name, id, main_window):
         super().__init__()
         self.ui = Ui_DataSheet()
         self.ui.setupUi(self)
 
         self.name = name
+        self.id = id
         self.main_window = main_window
         self.clipboard = QtWidgets.QApplication.clipboard()
 
