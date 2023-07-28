@@ -1,5 +1,7 @@
+import gzip
 import importlib
 import json
+from pathlib import Path
 
 import pandas as pd
 from pydantic import BaseModel
@@ -63,6 +65,16 @@ class Project(BaseModel):
     plot_num: int
     tabs: list[Sheet | Plot]
     current_tab: int
+
+
+def save_project_to_path(project: Application, path: Path) -> None:
+    with gzip.open(path, mode="wt", encoding="utf-8") as f:
+        f.write(save_project_to_json(project))
+
+
+def load_project_from_path(project: Application, path: Path) -> None:
+    with gzip.open(path, mode="rt", encoding="utf-8") as f:
+        load_project_from_json(project, f.read())
 
 
 def save_project_to_json(project: Application) -> str:

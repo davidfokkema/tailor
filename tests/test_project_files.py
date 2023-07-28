@@ -162,3 +162,16 @@ class TestProjectFiles:
         project = Application(add_sheet=False)
         project_files.load_project_from_json(project, json)
         assert project.ui.tabWidget.count() == 2
+
+    def test_save_project_to_path(self, simple_project: Application, tmp_path):
+        project_files.save_project_to_path(simple_project, tmp_path / "project.tlr")
+
+    def test_open_project_from_path(self, simple_project: Application, tmp_path):
+        project_files.save_project_to_path(simple_project, tmp_path / "project.tlr")
+        app = Application(add_sheet=False)
+
+        project_files.load_project_from_path(app, tmp_path / "project.tlr")
+
+        assert app.ui.tabWidget.count() == 2
+        assert isinstance(app.ui.tabWidget.widget(0), DataSheet)
+        assert isinstance(app.ui.tabWidget.widget(1), PlotTab)
