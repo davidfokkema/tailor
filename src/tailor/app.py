@@ -73,7 +73,7 @@ class Application(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setWindowIcon(
-            QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
+            QtGui.QIcon(str(resources.files("tailor.resources") / "tailor.png"))
         )
 
         self.connect_menu_items()
