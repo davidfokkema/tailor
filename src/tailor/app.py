@@ -66,7 +66,7 @@ class Application(QtWidgets.QMainWindow):
 
     _is_dirty = False
 
-    def __init__(self, add_sheet=True):
+    def __init__(self, add_sheet=False):
         """Initialize the class."""
 
         super().__init__()
@@ -445,7 +445,11 @@ class Application(QtWidgets.QMainWindow):
         self._set_project_path(None)
         self.mark_project_dirty(False)
         if add_sheet:
-            self.add_data_sheet()
+            sheet = self.add_data_sheet()
+            sheet.data_model.renameColumn(0, "x")
+            sheet.data_model.renameColumn(1, "y")
+            # force updating column information in UI
+            sheet.selection_changed()
 
     def add_data_sheet(self) -> DataSheet:
         """Add a new data sheet to the project."""
@@ -996,7 +1000,7 @@ class Application(QtWidgets.QMainWindow):
 def main():
     """Main entry point."""
     qapp = QtWidgets.QApplication()
-    app = Application()
+    app = Application(add_sheet=True)
     app.show()
     # Preflight
     if not "--no-update-check" in sys.argv:

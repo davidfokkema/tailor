@@ -152,7 +152,7 @@ class DataSheet(QtWidgets.QWidget):
         if self._selected_col_idx is not None:
             self.data_model.updateColumnExpression(self._selected_col_idx, expression)
 
-    def selection_changed(self, selected, deselected):
+    def selection_changed(self, selected=None, deselected=None):
         """Handle selectionChanged events in the data view.
 
         When the selection is changed, the column index of the left-most cell in

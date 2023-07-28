@@ -145,7 +145,7 @@ class TestProjectFiles:
         assert isinstance(plot_tab.model.best_fit, lmfit.model.ModelResult)
 
     def test_load_project_from_model(self, simple_project_model: project_files.Project):
-        app = Application(add_sheet=False)
+        app = Application()
         project_files.load_project_from_model(app, simple_project_model)
 
         sheet = app.ui.tabWidget.widget(0)
@@ -159,7 +159,7 @@ class TestProjectFiles:
 
     def test_load_project_from_json(self, simple_project: Application):
         json = project_files.save_project_to_json(simple_project)
-        project = Application(add_sheet=False)
+        project = Application()
         project_files.load_project_from_json(project, json)
         assert project.ui.tabWidget.count() == 2
 
@@ -168,7 +168,7 @@ class TestProjectFiles:
 
     def test_open_project_from_path(self, simple_project: Application, tmp_path):
         project_files.save_project_to_path(simple_project, tmp_path / "project.tlr")
-        app = Application(add_sheet=False)
+        app = Application()
 
         project_files.load_project_from_path(app, tmp_path / "project.tlr")
 

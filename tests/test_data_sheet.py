@@ -61,8 +61,13 @@ class TestDataSheet:
         self, bare_bones_data_sheet: DataSheet, mocker: MockerFixture
     ):
         bare_bones_data_sheet.selection = mocker.Mock()
-        bare_bones_data_sheet.selection_changed(sentinel.new, sentinel.old)
+        bare_bones_data_sheet.selection_changed()
         bare_bones_data_sheet.selection.selection.assert_called()
+
+    def test_selection_changed_accepts_parameters(
+        self, bare_bones_data_sheet: DataSheet
+    ):
+        bare_bones_data_sheet.selection_changed(sentinel.new, sentinel.old)
 
     def test_copy_selected_cells(
         self, bare_bones_data_sheet: DataSheet, mocker: MockerFixture
