@@ -432,7 +432,7 @@ class Application(QtWidgets.QMainWindow):
         ]
         return sum(is_data_sheet)
 
-    def clear_all(self, add_sheet=True):
+    def clear_all(self, add_sheet=False):
         """Clear all program state.
 
         Closes all tabs and data.
@@ -472,7 +472,7 @@ class Application(QtWidgets.QMainWindow):
     def new_project(self):
         """Close the current project and open a new one."""
         if self.confirm_project_close_dialog():
-            self.clear_all()
+            self.clear_all(add_sheet=True)
 
     def save_project_or_dialog(self):
         """Save project or present a dialog.
@@ -507,40 +507,19 @@ class Application(QtWidgets.QMainWindow):
             filename: a string containing the filename to save to.
         """
         try:
-            save_obj = {
-                "application": __name__,
-                "version": __version__,
-                "data_model": {},
-                "tabs": [],
-                "plot_num": self._plot_num,
-                "current_tab": self.ui.tabWidget.currentIndex(),
-            }
-
-            # save data for the data model
-            self.data_model.save_state_to_obj(save_obj["data_model"])
-
-            for idx in range(1, self.ui.tabWidget.count()):
-                # save data for each tab
-                tab = self.ui.tabWidget.widget(idx)
-                tab_data = {"label": self.ui.tabWidget.tabBar().tabText(idx)}
-                tab.save_state_to_obj(tab_data)
-                save_obj["tabs"].append(tab_data)
+            project_files.save_project_to_path(self, filename)
         except Exception as exc:
             self._show_exception(
                 exc,
                 title="Unable to save project.",
                 text="This is a bug in the application.",
             )
+        else:
+            # remember filename for subsequent call to "Save"
+            self._set_project_path(filename)
 
-        # save data to disk
-        with gzip.open(filename, "w") as f:
-            f.write(json.dumps(save_obj).encode("utf-8"))
-
-        # remember filename for subsequent call to "Save"
-        self._set_project_path(filename)
-
-        self.update_recent_files(filename)
-        self.mark_project_dirty(False)
+            self.update_recent_files(filename)
+            self.mark_project_dirty(False)
 
     def open_project_dialog(self):
         """Present open project dialog and load project."""
@@ -643,25 +622,8 @@ class Application(QtWidgets.QMainWindow):
             filename: a string containing the filename to load from.
         """
         try:
-            with gzip.open(filename) as f:
-                save_obj = json.loads(f.read().decode("utf-8"))
-
-            if save_obj["application"] == __name__:
-                self.clear_all()
-
-                # remember filename for subsequent call to "Save"
-                self._set_project_path(filename)
-
-                # load data for the data model
-                self.data_model.load_state_from_obj(save_obj["data_model"])
-
-                # create a tab and load data for each plot
-                for tab_data in save_obj["tabs"]:
-                    plot_tab = PlotTab(self.data_model, main_app=self)
-                    self.ui.tabWidget.addTab(plot_tab, tab_data["label"])
-                    plot_tab.load_state_from_obj(tab_data)
-                self._plot_num = save_obj["plot_num"]
-                self.ui.tabWidget.setCurrentIndex(save_obj["current_tab"])
+            self.clear_all()
+            project_files.load_project_from_path(self, filename)
         except Exception as exc:
             self._show_exception(
                 exc,
@@ -669,6 +631,8 @@ class Application(QtWidgets.QMainWindow):
                 text="This can happen if the file is corrupt or if there is a bug in the application.",
             )
         else:
+            # remember filename for subsequent call to "Save"
+            self._set_project_path(filename)
             self.update_recent_files(filename)
             self.mark_project_dirty(False)
             self.ui.statusbar.showMessage(

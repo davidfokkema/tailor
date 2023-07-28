@@ -155,6 +155,8 @@ def load_data_sheet(app: Application, model: Sheet) -> DataSheet:
     data_model._col_names = model.col_names
     data_model._calculated_column_expression = model.calculated_column_expression
     data_model._is_calculated_column_valid = model.is_calculated_column_valid
+    # force updating column information in UI
+    data_sheet.selection_changed()
     return data_sheet
 
 

@@ -96,6 +96,7 @@ class TestProjectFiles:
         self, data_sheet_model: project_files.Sheet, mocker: MockerFixture
     ):
         app = mocker.Mock()
+        mocker.patch.object(project_files.DataSheet, "selection_changed")
         data_sheet = project_files.load_data_sheet(app, data_sheet_model)
         assert isinstance(data_sheet, DataSheet)
         # test single value
@@ -104,6 +105,7 @@ class TestProjectFiles:
         )
         assert data_sheet.data_model.columnExpression(2) == "0.02 * x ** 2"
         assert data_sheet.data_model.columnNames() == ["x", "y", "z", "yerr"]
+        assert data_sheet.selection_changed.call_count == 2
 
     def test_save_plot(self, plot_tab: PlotTab):
         plot = project_files.save_plot(plot_tab)
