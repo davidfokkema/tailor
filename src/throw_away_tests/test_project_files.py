@@ -53,10 +53,11 @@ if __name__ == "__main__":
     app = Application()
 
     create_test_project(app)
-    model = project_files.save_project(app)
+    model = project_files.save_project_to_json(app)
     print(f"{model}")
 
-    # app.show()
-    # qapp.exec()
+    app = project_files.load_project_from_json(model)
 
-    # qapp.quit()
+    app.show()
+    qapp.exec()
+    qapp.quit()

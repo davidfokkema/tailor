@@ -1,4 +1,5 @@
 import importlib
+import json
 
 from pydantic import BaseModel
 
@@ -61,7 +62,7 @@ class Project(BaseModel):
     current_tab: int
 
 
-def save_project(project: Application):
+def save_project_to_json(project: Application) -> str:
     tabs = [
         project.ui.tabWidget.widget(idx) for idx in range(project.ui.tabWidget.count())
     ]
@@ -80,10 +81,16 @@ def save_project(project: Application):
         tabs=tab_models,
         current_tab=project.ui.tabWidget.currentIndex(),
     )
-    return model.model_dump_json(indent=4)
+    return json.dumps(model.model_dump(), indent=4)
 
 
-def save_data_sheet(data_sheet: DataSheet):
+def load_project_from_json(jsondata) -> Application:
+    model = Project.model_validate(json.loads(jsondata))
+    app = Application()
+    return app
+
+
+def save_data_sheet(data_sheet: DataSheet) -> Sheet:
     data_model = data_sheet.data_model._data
     return Sheet(
         name=data_sheet.name,
@@ -94,6 +101,12 @@ def save_data_sheet(data_sheet: DataSheet):
         calculated_column_expression=data_model._calculated_column_expression,
         is_calculated_column_valid=data_model._is_calculated_column_valid,
     )
+
+
+def load_data_sheet(app: Application, model: Sheet) -> DataSheet:
+    data_sheet = DataSheet(name=model.name, id=model.id, main_window=app)
+    app.ui.tabWidget.addTab(data_sheet, model.name)
+    return data_sheet
 
 
 def save_plot(plot: PlotTab):
