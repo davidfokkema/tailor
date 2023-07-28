@@ -1,8 +1,9 @@
+import lmfit
 import numpy as np
 import pytest
 from pytest_mock import MockerFixture, mocker
 
-from tailor import project_files
+from tailor import plot_model, project_files
 from tailor.app import Application
 from tailor.data_sheet import DataSheet
 from tailor.plot_tab import PlotTab
@@ -44,7 +45,13 @@ def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
     plot_tab.model.update_model_expression("a * x + b")
     plot_tab.model.x_label = "Time"
     plot_tab.model.y_label = "Distance"
+    plot_tab.model.perform_fit()
     return plot_tab
+
+
+@pytest.fixture()
+def plot_tab_model(plot_tab) -> project_files.Plot:
+    return project_files.save_plot(plot_tab)
 
 
 @pytest.fixture()
@@ -85,7 +92,6 @@ class TestProjectFiles:
         app = mocker.Mock()
         data_sheet = project_files.load_data_sheet(app, data_sheet_model)
         assert isinstance(data_sheet, DataSheet)
-        app.ui.tabWidget.addTab.assert_called_with(data_sheet, data_sheet.name)
         # test single value
         assert (
             data_sheet.data_model.data(data_sheet.data_model.createIndex(4, 1)) == "25"
@@ -108,9 +114,44 @@ class TestProjectFiles:
         assert "a" in param_names
         assert "b" in param_names
 
+    def test_load_plot(
+        self,
+        plot_tab_model: project_files.Plot,
+        data_sheet: DataSheet,
+        mocker: MockerFixture,
+    ):
+        app = mocker.Mock()
+        plot_tab = project_files.load_plot(app, plot_tab_model, data_sheet)
+        assert isinstance(plot_tab, PlotTab)
+
+        assert plot_tab.name == "Plot 1"
+        assert isinstance(plot_tab.data_sheet, DataSheet)
+        assert plot_tab.model.x_col == "col1"
+        assert plot_tab.model.y_col == "col2"
+        assert plot_tab.model.x_err_col == "col3"
+        assert plot_tab.model.y_err_col == "col4"
+        assert plot_tab.model.x_label == "Time"
+        assert plot_tab.model.y_label == "Distance"
+        assert plot_tab.model.model_expression == "a * col1 + b"
+        param_names = plot_tab.model.parameters.keys()
+        assert "a" in param_names
+        assert "b" in param_names
+        assert isinstance(plot_tab.model.parameters["a"], plot_model.Parameter)
+        assert isinstance(plot_tab.model.best_fit, lmfit.model.ModelResult)
+
     def test_save_project_to_json_completes(self, simple_project: Application):
         project_files.save_project_to_json(simple_project)
 
     def test_load_project_from_json_completes(self, simple_project: Application):
         json = project_files.save_project_to_json(simple_project)
         project_files.load_project_from_json(json)
+
+    def test_load_project_from_json(self, simple_project: Application):
+        json = project_files.save_project_to_json(simple_project)
+        app = project_files.load_project_from_json(json)
+
+        sheet = app.ui.tabWidget.widget(0)
+        plot = app.ui.tabWidget.widget(1)
+        assert isinstance(sheet, DataSheet)
+        assert isinstance(plot, PlotTab)
+        assert plot.data_sheet is sheet

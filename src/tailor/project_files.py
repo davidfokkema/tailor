@@ -4,6 +4,7 @@ import json
 import pandas as pd
 from pydantic import BaseModel
 
+from tailor import plot_model
 from tailor.app import Application
 from tailor.data_sheet import DataSheet
 from tailor.plot_tab import PlotTab
@@ -39,6 +40,7 @@ class Plot(BaseModel):
     y_col: str
     x_err_col: str | None
     y_err_col: str | None
+
     x_label: str
     y_label: str
 
@@ -88,9 +90,20 @@ def save_project_to_json(project: Application) -> str:
 def load_project_from_json(jsondata) -> Application:
     model = Project.model_validate(json.loads(jsondata))
     app = Application(add_sheet=False)
+    data_sheet_by_id: dict[str, DataSheet] = {}
+    # load all data sheets
     for tab in model.tabs:
         if isinstance(tab, Sheet):
-            load_data_sheet(app, tab)
+            sheet = load_data_sheet(app, tab)
+            data_sheet_by_id[sheet.id] = sheet
+    for tab in model.tabs:
+        if isinstance(tab, Sheet):
+            sheet = data_sheet_by_id[tab.id]
+            app.ui.tabWidget.addTab(sheet, sheet.name)
+        elif isinstance(tab, Plot):
+            sheet = data_sheet_by_id[tab.data_sheet_id]
+            plot_tab = load_plot(app=app, model=tab, data_sheet=sheet)
+            app.ui.tabWidget.addTab(plot_tab, plot_tab.name)
     return app
 
 
@@ -115,7 +128,6 @@ def load_data_sheet(app: Application, model: Sheet) -> DataSheet:
     data_model._col_names = model.col_names
     data_model._calculated_column_expression = model.calculated_column_expression
     data_model._is_calculated_column_valid = model.is_calculated_column_valid
-    app.ui.tabWidget.addTab(data_sheet, model.name)
     return data_sheet
 
 
@@ -144,3 +156,30 @@ def save_plot(plot: PlotTab):
         use_fit_domain=plot.model.use_fit_domain,
         best_fit=best_fit,
     )
+
+
+def load_plot(app: Application, model: Plot, data_sheet: DataSheet) -> PlotTab:
+    plot_tab = PlotTab(
+        name=model.name,
+        data_sheet=data_sheet,
+        x_col=model.x_col,
+        y_col=model.y_col,
+        x_err_col=model.x_err_col,
+        y_err_col=model.y_err_col,
+    )
+    plot_tab.model.x_label = model.x_label
+    plot_tab.model.y_label = model.y_label
+    plot_tab.model.x_min = model.x_min
+    plot_tab.model.x_max = model.x_max
+    plot_tab.model.y_min = model.y_min
+    plot_tab.model.y_max = model.y_max
+    plot_tab.model.update_model_expression(model.modelexpression)
+    for parameter in model.parameters:
+        plot_tab.model.parameters[parameter.name] = plot_model.Parameter(
+            **parameter.model_dump()
+        )
+    plot_tab.model.fit_domain = model.fit_domain
+    plot_tab.model.use_fit_domain = model.use_fit_domain
+    if model.best_fit:
+        plot_tab.model.perform_fit()
+    return plot_tab
