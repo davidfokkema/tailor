@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 import gzip
 import importlib
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from pydantic import BaseModel
 
 from tailor import plot_model
-from tailor.app import Application
 from tailor.data_sheet import DataSheet
 from tailor.plot_tab import PlotTab
+
+if TYPE_CHECKING:
+    from tailor.app import Application
 
 metadata = importlib.metadata.metadata("tailor")
 NAME = metadata["name"]

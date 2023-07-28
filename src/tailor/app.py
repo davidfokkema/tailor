@@ -22,7 +22,7 @@ import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from tailor import config, dialogs
+from tailor import config, dialogs, project_files
 from tailor.csv_format_dialog import (
     DELIMITER_CHOICES,
     NUM_FORMAT_CHOICES,
