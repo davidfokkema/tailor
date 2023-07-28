@@ -66,7 +66,7 @@ class Application(QtWidgets.QMainWindow):
 
     _is_dirty = False
 
-    def __init__(self):
+    def __init__(self, add_sheet=True):
         """Initialize the class."""
 
         super().__init__()
@@ -90,7 +90,7 @@ class Application(QtWidgets.QMainWindow):
         self._dirty_timer.timeout.connect(self.mark_project_dirty)
 
         # clear all program state and set up as new project
-        self.clear_all()
+        self.clear_all(add_sheet)
 
     def connect_menu_items(self):
         self.ui.actionQuit.triggered.connect(self.close)
@@ -432,7 +432,7 @@ class Application(QtWidgets.QMainWindow):
         ]
         return sum(is_data_sheet)
 
-    def clear_all(self):
+    def clear_all(self, add_sheet=True):
         """Clear all program state.
 
         Closes all tabs and data.
@@ -442,9 +442,10 @@ class Application(QtWidgets.QMainWindow):
 
         self._plot_num = 1
         self._sheet_num = 1
-        self.add_data_sheet()
         self._set_project_path(None)
         self.mark_project_dirty(False)
+        if add_sheet:
+            self.add_data_sheet()
 
     def add_data_sheet(self) -> DataSheet:
         """Add a new data sheet to the project."""

@@ -1,6 +1,7 @@
 import importlib
 import json
 
+import pandas as pd
 from pydantic import BaseModel
 
 from tailor.app import Application
@@ -86,7 +87,10 @@ def save_project_to_json(project: Application) -> str:
 
 def load_project_from_json(jsondata) -> Application:
     model = Project.model_validate(json.loads(jsondata))
-    app = Application()
+    app = Application(add_sheet=False)
+    for tab in model.tabs:
+        if isinstance(tab, Sheet):
+            load_data_sheet(app, tab)
     return app
 
 
@@ -105,6 +109,12 @@ def save_data_sheet(data_sheet: DataSheet) -> Sheet:
 
 def load_data_sheet(app: Application, model: Sheet) -> DataSheet:
     data_sheet = DataSheet(name=model.name, id=model.id, main_window=app)
+    data_model = data_sheet.data_model._data
+    data_model._data = pd.DataFrame.from_dict(model.data)
+    data_model._new_col_num = model.new_col_num
+    data_model._col_names = model.col_names
+    data_model._calculated_column_expression = model.calculated_column_expression
+    data_model._is_calculated_column_valid = model.is_calculated_column_valid
     app.ui.tabWidget.addTab(data_sheet, model.name)
     return data_sheet
 

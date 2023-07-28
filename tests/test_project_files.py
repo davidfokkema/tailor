@@ -86,6 +86,12 @@ class TestProjectFiles:
         data_sheet = project_files.load_data_sheet(app, data_sheet_model)
         assert isinstance(data_sheet, DataSheet)
         app.ui.tabWidget.addTab.assert_called_with(data_sheet, data_sheet.name)
+        # test single value
+        assert (
+            data_sheet.data_model.data(data_sheet.data_model.createIndex(4, 1)) == "25"
+        )
+        assert data_sheet.data_model.columnExpression(2) == "0.02 * x ** 2"
+        assert data_sheet.data_model.columnNames() == ["x", "y", "z", "yerr"]
 
     def test_save_plot(self, plot_tab: PlotTab):
         plot = project_files.save_plot(plot_tab)
