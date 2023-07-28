@@ -66,6 +66,16 @@ class Project(BaseModel):
 
 
 def save_project_to_json(project: Application) -> str:
+    model = save_project_to_model(project)
+    return json.dumps(model.model_dump(), indent=4)
+
+
+def load_project_from_json(project: Application, jsondata: str) -> None:
+    model = Project.model_validate(json.loads(jsondata))
+    load_project_from_model(project, model)
+
+
+def save_project_to_model(project: Application):
     tabs = [
         project.ui.tabWidget.widget(idx) for idx in range(project.ui.tabWidget.count())
     ]
@@ -84,27 +94,26 @@ def save_project_to_json(project: Application) -> str:
         tabs=tab_models,
         current_tab=project.ui.tabWidget.currentIndex(),
     )
-    return json.dumps(model.model_dump(), indent=4)
+
+    return model
 
 
-def load_project_from_json(jsondata) -> Application:
-    model = Project.model_validate(json.loads(jsondata))
-    app = Application(add_sheet=False)
+def load_project_from_model(project: Application, model: Project):
+    # load all data sheets for reference
     data_sheet_by_id: dict[str, DataSheet] = {}
-    # load all data sheets
     for tab in model.tabs:
         if isinstance(tab, Sheet):
-            sheet = load_data_sheet(app, tab)
+            sheet = load_data_sheet(project, tab)
             data_sheet_by_id[sheet.id] = sheet
+    # load plots and add tabs to app
     for tab in model.tabs:
         if isinstance(tab, Sheet):
             sheet = data_sheet_by_id[tab.id]
-            app.ui.tabWidget.addTab(sheet, sheet.name)
+            project.ui.tabWidget.addTab(sheet, sheet.name)
         elif isinstance(tab, Plot):
             sheet = data_sheet_by_id[tab.data_sheet_id]
-            plot_tab = load_plot(app=app, model=tab, data_sheet=sheet)
-            app.ui.tabWidget.addTab(plot_tab, plot_tab.name)
-    return app
+            plot_tab = load_plot(app=project, model=tab, data_sheet=sheet)
+            project.ui.tabWidget.addTab(plot_tab, plot_tab.name)
 
 
 def save_data_sheet(data_sheet: DataSheet) -> Sheet:

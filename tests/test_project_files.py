@@ -63,6 +63,11 @@ def simple_project(data_sheet: DataSheet, plot_tab: PlotTab) -> Application:
     return app
 
 
+@pytest.fixture()
+def simple_project_model(simple_project: Application) -> project_files.Project:
+    return project_files.save_project_to_model(simple_project)
+
+
 class TestProjectFiles:
     def test_save_data_sheet(self, data_sheet: DataSheet):
         sheet = project_files.save_data_sheet(data_sheet)
@@ -139,19 +144,21 @@ class TestProjectFiles:
         assert isinstance(plot_tab.model.parameters["a"], plot_model.Parameter)
         assert isinstance(plot_tab.model.best_fit, lmfit.model.ModelResult)
 
-    def test_save_project_to_json_completes(self, simple_project: Application):
-        project_files.save_project_to_json(simple_project)
-
-    def test_load_project_from_json_completes(self, simple_project: Application):
-        json = project_files.save_project_to_json(simple_project)
-        project_files.load_project_from_json(json)
-
-    def test_load_project_from_json(self, simple_project: Application):
-        json = project_files.save_project_to_json(simple_project)
-        app = project_files.load_project_from_json(json)
+    def test_load_project_from_model(self, simple_project_model: project_files.Project):
+        app = Application(add_sheet=False)
+        project_files.load_project_from_model(app, simple_project_model)
 
         sheet = app.ui.tabWidget.widget(0)
         plot = app.ui.tabWidget.widget(1)
         assert isinstance(sheet, DataSheet)
         assert isinstance(plot, PlotTab)
         assert plot.data_sheet is sheet
+
+    def test_save_project_to_json_completes(self, simple_project: Application):
+        project_files.save_project_to_json(simple_project)
+
+    def test_load_project_from_json(self, simple_project: Application):
+        json = project_files.save_project_to_json(simple_project)
+        project = Application(add_sheet=False)
+        project_files.load_project_from_json(project, json)
+        assert project.ui.tabWidget.count() == 2

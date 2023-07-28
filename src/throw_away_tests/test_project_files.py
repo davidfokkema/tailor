@@ -56,7 +56,8 @@ if __name__ == "__main__":
     model = project_files.save_project_to_json(app)
     print(f"{model}")
 
-    app = project_files.load_project_from_json(model)
+    app = Application(add_sheet=False)
+    project_files.load_project_from_json(app, model)
 
     app.show()
     qapp.exec()
