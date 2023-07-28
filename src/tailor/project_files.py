@@ -126,6 +126,7 @@ def load_project_from_model(project: Application, model: Project):
             sheet = data_sheet_by_id[tab.data_sheet_id]
             plot_tab = load_plot(app=project, model=tab, data_sheet=sheet)
             project.ui.tabWidget.addTab(plot_tab, plot_tab.name)
+    project.ui.tabWidget.setCurrentIndex(model.current_tab)
 
 
 def save_data_sheet(data_sheet: DataSheet) -> Sheet:

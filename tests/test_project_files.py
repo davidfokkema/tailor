@@ -60,6 +60,7 @@ def simple_project(data_sheet: DataSheet, plot_tab: PlotTab) -> Application:
     app.ui.tabWidget.removeTab(0)
     app.ui.tabWidget.addTab(data_sheet, data_sheet.name)
     app.ui.tabWidget.addTab(plot_tab, plot_tab.name)
+    app.ui.tabWidget.setCurrentIndex(1)
     return app
 
 
@@ -153,6 +154,7 @@ class TestProjectFiles:
         assert isinstance(sheet, DataSheet)
         assert isinstance(plot, PlotTab)
         assert plot.data_sheet is sheet
+        assert app.ui.tabWidget.currentIndex() == simple_project_model.current_tab
 
     def test_save_project_to_json_completes(self, simple_project: Application):
         project_files.save_project_to_json(simple_project)
