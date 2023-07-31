@@ -299,7 +299,7 @@ class TestDataModel:
 
         bare_bones_data.insert_calculated_column(column=1)
 
-        assert bare_bones_data._calculated_column_expression[sentinel.label] is None
+        assert bare_bones_data._calculated_column_expression[sentinel.label] == ""
         assert bare_bones_data._is_calculated_column_valid[sentinel.label] is False
 
     def test_get_column_label(self, bare_bones_data: DataModel):

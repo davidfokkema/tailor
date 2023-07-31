@@ -240,7 +240,7 @@ class DataModel:
                 insertion.
         """
         (label,) = self.insert_columns(column, count=1)
-        self._calculated_column_expression[label] = None
+        self._calculated_column_expression[label] = ""
         self._is_calculated_column_valid[label] = False
 
     def rename_column(self, label: str, name: str):
