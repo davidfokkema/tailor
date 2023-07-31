@@ -50,7 +50,7 @@ def create_test_project(app: Application):
 
 if __name__ == "__main__":
     qapp = QtWidgets.QApplication()
-    app = Application()
+    app = Application(add_sheet=True)
 
     create_test_project(app)
     model = project_files.save_project_to_json(app)
