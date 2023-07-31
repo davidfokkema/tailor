@@ -21,6 +21,7 @@ def data_sheet(mocker: MockerFixture) -> DataSheet:
     )
     sheet.data_model.insertCalculatedColumn(2)
     sheet.data_model.insertCalculatedColumn(3)
+    sheet.data_model.insertCalculatedColumn(4)
     sheet.data_model.renameColumn(0, "x")
     sheet.data_model.renameColumn(1, "y")
     sheet.data_model.renameColumn(2, "z")

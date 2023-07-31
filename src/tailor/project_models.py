@@ -1,0 +1,52 @@
+from pydantic import BaseModel
+
+
+class Sheet(BaseModel):
+    name: str
+    id: int
+    data: dict[str, list]
+    new_col_num: int
+    col_names: dict[str, str]
+    calculated_column_expression: dict[str, str]
+    is_calculated_column_valid: dict[str, bool]
+
+
+class Parameter(BaseModel):
+    name: str
+    value: float
+    min: float
+    max: float
+    vary: bool
+
+
+class Plot(BaseModel):
+    name: str
+    data_sheet_id: int
+
+    x_col: str
+    y_col: str
+    x_err_col: str | None
+    y_err_col: str | None
+
+    x_label: str
+    y_label: str
+
+    x_min: float | None
+    x_max: float | None
+    y_min: float | None
+    y_max: float | None
+
+    modelexpression: str
+    parameters: list[Parameter]
+    fit_domain: tuple[float, float] | None
+    use_fit_domain: bool
+    best_fit: bool
+
+
+class Project(BaseModel):
+    application: str
+    version: str
+    sheet_num: int
+    plot_num: int
+    tabs: list[Sheet | Plot]
+    current_tab: int

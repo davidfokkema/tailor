@@ -7,11 +7,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from pydantic import BaseModel
+from packaging.version import Version
 
 from tailor import plot_model
 from tailor.data_sheet import DataSheet
+from tailor.legacy_project_files import fix_legacy_project, load_legacy_project
 from tailor.plot_tab import PlotTab
+from tailor.project_models import Parameter, Plot, Project, Sheet
 
 if TYPE_CHECKING:
     from tailor.app import Application
@@ -19,57 +21,6 @@ if TYPE_CHECKING:
 metadata = importlib.metadata.metadata("tailor")
 NAME = metadata["name"]
 VERSION = metadata["version"]
-
-
-class Sheet(BaseModel):
-    name: str
-    id: int
-    data: dict[str, list]
-    new_col_num: int
-    col_names: dict[str, str]
-    calculated_column_expression: dict[str, str]
-    is_calculated_column_valid: dict[str, bool]
-
-
-class Parameter(BaseModel):
-    name: str
-    value: float
-    min: float
-    max: float
-    vary: bool
-
-
-class Plot(BaseModel):
-    name: str
-    data_sheet_id: int
-
-    x_col: str
-    y_col: str
-    x_err_col: str | None
-    y_err_col: str | None
-
-    x_label: str
-    y_label: str
-
-    x_min: float | None
-    x_max: float | None
-    y_min: float | None
-    y_max: float | None
-
-    modelexpression: str
-    parameters: list[Parameter]
-    fit_domain: tuple[float, float] | None
-    use_fit_domain: bool
-    best_fit: bool
-
-
-class Project(BaseModel):
-    application: str
-    version: str
-    sheet_num: int
-    plot_num: int
-    tabs: list[Sheet | Plot]
-    current_tab: int
 
 
 def save_project_to_path(project: Application, path: Path) -> None:
@@ -88,8 +39,16 @@ def save_project_to_json(project: Application) -> str:
 
 
 def load_project_from_json(project: Application, jsondata: str) -> None:
-    model = Project.model_validate(json.loads(jsondata))
-    load_project_from_model(project, model)
+    jsondict = json.loads(jsondata)
+    if jsondict["application"] == "tailor":
+        file_version = Version(jsondict["version"])
+        if Version(file_version.base_version) < Version("2.0"):
+            model = load_legacy_project(jsondict)
+            load_project_from_model(project, model)
+            fix_legacy_project(project)
+        else:
+            model = Project.model_validate(jsondict)
+            load_project_from_model(project, model)
 
 
 def save_project_to_model(project: Application):
