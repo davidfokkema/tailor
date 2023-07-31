@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import gzip
-import importlib
+import importlib.metadata
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
