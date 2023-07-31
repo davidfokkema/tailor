@@ -635,9 +635,9 @@ class Application(QtWidgets.QMainWindow):
             self._set_project_path(filename)
             self.update_recent_files(filename)
             self.mark_project_dirty(False)
-            self.ui.statusbar.showMessage(
-                "Finished loading project.", timeout=MSG_TIMEOUT
-            )
+            # FIXME self.ui.statusbar.showMessage(
+            #     "Finished loading project.", timeout=MSG_TIMEOUT
+            # )
 
     def export_csv(self):
         """Export all data as CSV.
