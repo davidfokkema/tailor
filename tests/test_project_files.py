@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from pytest_mock import MockerFixture, mocker
 
+import tailor.data_sheet
 from tailor import plot_model, project_files
 from tailor.app import Application
 from tailor.data_sheet import DataSheet
@@ -14,7 +15,9 @@ def data_sheet(mocker: MockerFixture) -> DataSheet:
     sheet = DataSheet(name="sheet1", id=1234, main_window=mocker.MagicMock())
     sheet.data_model.setDataFromArray(
         sheet.data_model.createIndex(0, 0),
-        np.array([[1.0, 2.0, 3.0, 4.0, 5.0], [float("nan"), 4.0, 9.0, 16.0, 25.0]]).T,
+        np.array(
+            [[0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [float("nan"), 1.0, 4.0, 9.0, 16.0, 25.0]]
+        ).T,
     )
     sheet.data_model.insertCalculatedColumn(2)
     sheet.data_model.insertCalculatedColumn(3)
@@ -80,12 +83,12 @@ class TestProjectFiles:
             "col3": "z",
             "col4": "yerr",
         }
-        assert sheet.data["col1"] == [1.0, 2.0, 3.0, 4.0, 5.0]
+        assert sheet.data["col1"] == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert sheet.data["col2"] == pytest.approx(
-            [float("nan"), 4.0, 9.0, 16.0, 25.0], nan_ok=True
+            [float("nan"), 1.0, 4.0, 9.0, 16.0, 25.0], nan_ok=True
         )
-        assert sheet.data["col3"] == [0.02, 0.08, 0.18, 0.32, 0.50]
-        assert sheet.data["col4"] == 5 * [0.1]
+        assert sheet.data["col3"] == [0.0, 0.02, 0.08, 0.18, 0.32, 0.50]
+        assert sheet.data["col4"] == 6 * [0.1]
         assert sheet.new_col_num == 4
         assert sheet.calculated_column_expression["col3"] == "0.02 * col1 ** 2"
         assert sheet.calculated_column_expression["col4"] == "0.1"
@@ -97,15 +100,23 @@ class TestProjectFiles:
     ):
         app = mocker.Mock()
         mocker.patch.object(project_files.DataSheet, "selection_changed")
+        mocker.patch.object(tailor.data_sheet.QDataModel, "beginResetModel")
+        mocker.patch.object(tailor.data_sheet.QDataModel, "endResetModel")
         data_sheet = project_files.load_data_sheet(app, data_sheet_model)
         assert isinstance(data_sheet, DataSheet)
+        assert data_sheet.data_model.rowCount() == 6
         # test single value
         assert (
-            data_sheet.data_model.data(data_sheet.data_model.createIndex(4, 1)) == "25"
+            data_sheet.data_model.data(data_sheet.data_model.createIndex(5, 1)) == "25"
         )
         assert data_sheet.data_model.columnExpression(2) == "0.02 * x ** 2"
         assert data_sheet.data_model.columnNames() == ["x", "y", "z", "yerr"]
+        # must be called twice (once implicitly, once explicitly by our code)
         assert data_sheet.selection_changed.call_count == 2
+        # begin/end reset model _must_ be called otherwise shape of data will be
+        # the default shape of two columns, five rows.
+        data_sheet.data_model.beginResetModel.assert_called()
+        data_sheet.data_model.endResetModel.assert_called()
 
     def test_save_plot(self, plot_tab: PlotTab):
         plot = project_files.save_plot(plot_tab)

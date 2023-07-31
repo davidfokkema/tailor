@@ -149,12 +149,14 @@ def save_data_sheet(data_sheet: DataSheet) -> Sheet:
 
 def load_data_sheet(app: Application, model: Sheet) -> DataSheet:
     data_sheet = DataSheet(name=model.name, id=model.id, main_window=app)
-    data_model = data_sheet.data_model._data
-    data_model._data = pd.DataFrame.from_dict(model.data)
-    data_model._new_col_num = model.new_col_num
-    data_model._col_names = model.col_names
-    data_model._calculated_column_expression = model.calculated_column_expression
-    data_model._is_calculated_column_valid = model.is_calculated_column_valid
+    data_sheet.data_model.beginResetModel()
+    data = data_sheet.data_model._data
+    data._data = pd.DataFrame.from_dict(model.data)
+    data._new_col_num = model.new_col_num
+    data._col_names = model.col_names
+    data._calculated_column_expression = model.calculated_column_expression
+    data._is_calculated_column_valid = model.is_calculated_column_valid
+    data_sheet.data_model.endResetModel()
     # force updating column information in UI
     data_sheet.selection_changed()
     return data_sheet
