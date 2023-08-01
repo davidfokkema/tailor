@@ -321,6 +321,7 @@ class PlotModel:
         expressions. This method can determine if the possibly new data is
         identical to the data that was used in the fitting procedure. It returns
         a boolean; True means that the data is identical, False means it is not.
+        Furthermore, if the data is not identical, the best fit is invalidated.
 
         Returns:
             bool: whether the given data is identical or not
