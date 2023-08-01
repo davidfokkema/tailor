@@ -26,6 +26,7 @@ def data_sheet(mocker: MockerFixture) -> DataSheet:
     sheet.data_model.renameColumn(1, "y")
     sheet.data_model.renameColumn(2, "z")
     sheet.data_model.renameColumn(3, "yerr")
+    sheet.data_model.renameColumn(4, "empty")
     sheet.data_model.updateColumnExpression(2, "0.02 * x ** 2")
     sheet.data_model.updateColumnExpression(3, "0.1")
     return sheet
@@ -83,6 +84,7 @@ class TestProjectFiles:
             "col2": "y",
             "col3": "z",
             "col4": "yerr",
+            "col5": "empty",
         }
         assert sheet.data["col1"] == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
         assert sheet.data["col2"] == pytest.approx(
@@ -90,7 +92,7 @@ class TestProjectFiles:
         )
         assert sheet.data["col3"] == [0.0, 0.02, 0.08, 0.18, 0.32, 0.50]
         assert sheet.data["col4"] == 6 * [0.1]
-        assert sheet.new_col_num == 4
+        assert sheet.new_col_num == 5
         assert sheet.calculated_column_expression["col3"] == "0.02 * col1 ** 2"
         assert sheet.calculated_column_expression["col4"] == "0.1"
         assert sheet.is_calculated_column_valid["col3"] is True
@@ -111,7 +113,7 @@ class TestProjectFiles:
             data_sheet.data_model.data(data_sheet.data_model.createIndex(5, 1)) == "25"
         )
         assert data_sheet.data_model.columnExpression(2) == "0.02 * x ** 2"
-        assert data_sheet.data_model.columnNames() == ["x", "y", "z", "yerr"]
+        assert data_sheet.data_model.columnNames() == ["x", "y", "z", "yerr", "empty"]
         # must be called twice (once implicitly, once explicitly by our code)
         assert data_sheet.selection_changed.call_count == 2
         # begin/end reset model _must_ be called otherwise shape of data will be
