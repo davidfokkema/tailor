@@ -53,19 +53,27 @@ def save_project_to_model(project: Application):
     tabs = [
         project.ui.tabWidget.widget(idx) for idx in range(project.ui.tabWidget.count())
     ]
-    tab_models = []
+    sheet_models = []
+    plot_models = []
+    tab_order = []
     for tab in tabs:
         if isinstance(tab, DataSheet):
-            tab_models.append(save_data_sheet(tab))
+            sheet = save_data_sheet(tab)
+            sheet_models.append(sheet)
+            tab_order.append(f"sheet_{sheet.id}")
         elif isinstance(tab, PlotTab):
-            tab_models.append(save_plot(tab))
+            plot = save_plot(tab)
+            plot_models.append(plot)
+            tab_order.append(f"plot_{plot.id}")
 
     model = Project(
         application=NAME,
         version=VERSION,
         sheet_num=project._sheet_num,
         plot_num=project._plot_num,
-        tabs=tab_models,
+        sheets=sheet_models,
+        plots=plot_models,
+        tab_order=tab_order,
         current_tab=project.ui.tabWidget.currentIndex(),
     )
 
@@ -75,19 +83,26 @@ def save_project_to_model(project: Application):
 def load_project_from_model(project: Application, model: Project):
     # load all data sheets for reference
     data_sheet_by_id: dict[str, DataSheet] = {}
-    for tab in model.tabs:
-        if isinstance(tab, Sheet):
-            sheet = load_data_sheet(project, tab)
-            data_sheet_by_id[sheet.id] = sheet
+    for sheet_model in model.sheets:
+        sheet = load_data_sheet(project, sheet_model)
+        data_sheet_by_id[sheet.id] = sheet
+
     # load plots and add tabs to app
-    for tab in model.tabs:
-        if isinstance(tab, Sheet):
-            sheet = data_sheet_by_id[tab.id]
-            project.ui.tabWidget.addTab(sheet, sheet.name)
-        elif isinstance(tab, Plot):
-            sheet = data_sheet_by_id[tab.data_sheet_id]
-            plot_tab = load_plot(app=project, model=tab, data_sheet=sheet)
-            project.ui.tabWidget.addTab(plot_tab, plot_tab.name)
+    plot_tab_by_id: dict[str, PlotTab] = {}
+    for plot_model in model.plots:
+        sheet = data_sheet_by_id[plot_model.data_sheet_id]
+        plot_tab = load_plot(app=project, model=plot_model, data_sheet=sheet)
+        plot_tab_by_id[plot_tab.id] = plot_tab
+
+    # restore tabs in order
+    for id_string in model.tab_order:
+        type_, id = id_string.split("_")
+        id = int(id)
+        if type_ == "sheet":
+            tab = data_sheet_by_id[id]
+        elif type_ == "plot":
+            tab = plot_tab_by_id[id]
+        project.ui.tabWidget.addTab(tab, tab.name)
     project.ui.tabWidget.setCurrentIndex(model.current_tab)
 
 

@@ -122,6 +122,7 @@ class TestProjectFiles:
 
     def test_save_plot(self, plot_tab: PlotTab):
         plot = project_files.save_plot(plot_tab)
+        assert plot.id == 12345
         assert plot.name == "Plot 1"
         assert plot.data_sheet_id == 1234
         assert plot.x_col == "col1"

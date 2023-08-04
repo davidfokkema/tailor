@@ -56,5 +56,7 @@ class Project(BaseModel):
     version: str
     sheet_num: int
     plot_num: int
-    tabs: list[Sheet | Plot]
+    sheets: list[Sheet]
+    plots: list[Plot]
+    tab_order: list[str]
     current_tab: int
