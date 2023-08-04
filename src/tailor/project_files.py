@@ -44,11 +44,9 @@ def load_project_from_json(project: Application, jsondata: str) -> None:
         file_version = Version(jsondict["version"])
         if Version(file_version.base_version) < Version("2.0"):
             model = load_legacy_project(jsondict)
-            load_project_from_model(project, model)
-            fix_legacy_project(project)
         else:
             model = Project.model_validate(jsondict)
-            load_project_from_model(project, model)
+        load_project_from_model(project, model)
 
 
 def save_project_to_model(project: Application):
@@ -102,7 +100,6 @@ def save_data_sheet(data_sheet: DataSheet) -> Sheet:
         new_col_num=data_model._new_col_num,
         col_names=data_model._col_names,
         calculated_column_expression=data_model._calculated_column_expression,
-        is_calculated_column_valid=data_model._is_calculated_column_valid,
     )
 
 
@@ -114,7 +111,7 @@ def load_data_sheet(app: Application, model: Sheet) -> DataSheet:
     data._new_col_num = model.new_col_num
     data._col_names = model.col_names
     data._calculated_column_expression = model.calculated_column_expression
-    data._is_calculated_column_valid = model.is_calculated_column_valid
+    data_sheet.data_model._data.recalculate_all_columns()
     data_sheet.data_model.endResetModel()
     # force updating column information in UI
     data_sheet.selection_changed()

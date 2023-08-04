@@ -1,17 +1,20 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Sheet(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     id: int
     data: dict[str, list]
     new_col_num: int
     col_names: dict[str, str]
     calculated_column_expression: dict[str, str]
-    is_calculated_column_valid: dict[str, bool]
 
 
 class Parameter(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     name: str
     value: float
     min: float
@@ -20,6 +23,8 @@ class Parameter(BaseModel):
 
 
 class Plot(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     name: str
     data_sheet_id: int
 
@@ -44,6 +49,8 @@ class Plot(BaseModel):
 
 
 class Project(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     application: str
     version: str
     sheet_num: int

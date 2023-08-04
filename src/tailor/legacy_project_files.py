@@ -35,7 +35,6 @@ def get_sheet_from_project(jsondict: dict) -> Sheet:
         new_col_num=jsondict["data_model"]["new_col_num"],
         col_names={k: k for k in data.keys()},
         calculated_column_expression=col_expressions,
-        is_calculated_column_valid={k: False for k in data.keys()},
     )
 
 
