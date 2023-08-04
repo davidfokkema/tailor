@@ -1104,6 +1104,7 @@ class Application(QtCore.QObject):
         elif update_link is None:
             dialog = QtWidgets.QMessageBox(parent=self.ui)
             dialog.setText("Updates")
+            dialog.setWindowIcon(QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png"))))
             dialog.setInformativeText(msg)
             dialog.setStyleSheet("QLabel{min-width: 300px;}")
             dialog.setStandardButtons(dialog.Ok)
@@ -1111,6 +1112,7 @@ class Application(QtCore.QObject):
         else:
             dialog = QtWidgets.QMessageBox(parent=self.ui)
             dialog.setText("Updates")
+            dialog.setWindowIcon(QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png"))))
             dialog.setInformativeText(msg)
             dialog.setStyleSheet("QLabel{min-width: 300px;}")
             dialog.setStandardButtons(dialog.Ok | dialog.Cancel)
