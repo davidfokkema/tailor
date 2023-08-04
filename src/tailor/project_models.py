@@ -26,6 +26,7 @@ class Plot(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     name: str
+    id: int
     data_sheet_id: int
 
     x_col: str

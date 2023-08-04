@@ -41,6 +41,7 @@ def data_sheet_model(data_sheet) -> project_files.Sheet:
 def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
     plot_tab = PlotTab(
         name="Plot 1",
+        id=12345,
         data_sheet=data_sheet,
         x_col="col1",
         y_col="col2",

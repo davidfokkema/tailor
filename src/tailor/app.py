@@ -365,7 +365,7 @@ class Application(QtWidgets.QMainWindow):
             y_err: the name of the variable to use for the y-error bars.
         """
         name = f"Plot {self._plot_num}"
-        plot_tab = PlotTab(name, data_sheet, x_var, y_var, x_err, y_err)
+        plot_tab = PlotTab(name, self._plot_num, data_sheet, x_var, y_var, x_err, y_err)
         idx = self.ui.tabWidget.addTab(plot_tab, name)
         self._plot_num += 1
         self.ui.tabWidget.setCurrentIndex(idx)

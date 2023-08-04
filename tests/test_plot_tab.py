@@ -18,12 +18,13 @@ def plot_tab(mocker: MockerFixture):
     mocker.patch.object(PlotTab, "finish_ui")
     data_sheet = mocker.Mock(spec=DataSheet)
     return PlotTab(
-        "Plot 1",
-        data_sheet,
-        sentinel.x_col,
-        sentinel.y_col,
-        sentinel.x_err_col,
-        sentinel.y_err_col,
+        name="Plot 1",
+        id=12345,
+        data_sheet=data_sheet,
+        x_col=sentinel.x_col,
+        y_col=sentinel.y_col,
+        x_err_col=sentinel.x_err_col,
+        y_err_col=sentinel.y_err_col,
     )
 
 
@@ -37,12 +38,13 @@ class TestImplementationDetails:
         mock_data_sheet.data_model._data = sentinel.data_model
 
         plot_tab = PlotTab(
-            sentinel.name,
-            mock_data_sheet,
-            sentinel.x_col,
-            sentinel.y_col,
-            sentinel.x_err_col,
-            sentinel.y_err_col,
+            name=sentinel.name,
+            id=sentinel.id,
+            data_sheet=mock_data_sheet,
+            x_col=sentinel.x_col,
+            y_col=sentinel.y_col,
+            x_err_col=sentinel.x_err_col,
+            y_err_col=sentinel.y_err_col,
         )
 
         assert plot_tab.name == sentinel.name

@@ -126,6 +126,7 @@ def save_plot(plot: PlotTab):
     best_fit = plot.model.best_fit is not None
     return Plot(
         name=plot.name,
+        id=plot.id,
         data_sheet_id=plot.data_sheet.id,
         x_col=plot.model.x_col,
         y_col=plot.model.y_col,
@@ -148,6 +149,7 @@ def save_plot(plot: PlotTab):
 def load_plot(app: Application, model: Plot, data_sheet: DataSheet) -> PlotTab:
     plot_tab = PlotTab(
         name=model.name,
+        id=model.id,
         data_sheet=data_sheet,
         x_col=model.x_col,
         y_col=model.y_col,

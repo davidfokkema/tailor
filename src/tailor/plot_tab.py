@@ -35,6 +35,7 @@ class PlotTab(QtWidgets.QWidget):
     """
 
     name: str
+    id: int
     data_sheet: DataSheet
     model: PlotModel
     _params: dict[str, QtWidgets.QWidget]
@@ -43,6 +44,7 @@ class PlotTab(QtWidgets.QWidget):
     def __init__(
         self,
         name: str,
+        id: int,
         data_sheet: DataSheet,
         x_col: str,
         y_col: str,
@@ -59,6 +61,7 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.setupUi(self)
 
         self.name = name
+        self.id = id
         self.model = PlotModel(
             data_sheet.data_model._data, x_col, y_col, x_err_col, y_err_col
         )
