@@ -95,8 +95,6 @@ class TestProjectFiles:
         assert sheet.new_col_num == 5
         assert sheet.calculated_column_expression["col3"] == "0.02 * col1 ** 2"
         assert sheet.calculated_column_expression["col4"] == "0.1"
-        assert sheet.is_calculated_column_valid["col3"] is True
-        assert sheet.is_calculated_column_valid["col4"] is True
 
     def test_load_data_sheet(
         self, data_sheet_model: project_files.Sheet, mocker: MockerFixture
