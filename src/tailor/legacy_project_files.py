@@ -69,12 +69,3 @@ def get_plots_from_project(jsondict: dict) -> list[Plot]:
             )
         )
     return plots
-
-
-def fix_legacy_project(project):
-    # force checking if calculated columns are valid
-    for tab in [
-        project.ui.tabWidget.widget(idx) for idx in range(project.ui.tabWidget.count())
-    ]:
-        if isinstance(tab, DataSheet):
-            tab.data_model._data.recalculate_all_columns()

@@ -11,7 +11,7 @@ from packaging.version import Version
 
 from tailor import plot_model
 from tailor.data_sheet import DataSheet
-from tailor.legacy_project_files import fix_legacy_project, load_legacy_project
+from tailor.legacy_project_files import load_legacy_project
 from tailor.plot_tab import PlotTab
 from tailor.project_models import Parameter, Plot, Project, Sheet
 
