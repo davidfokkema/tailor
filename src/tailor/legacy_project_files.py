@@ -13,7 +13,9 @@ def load_legacy_project(jsondict: dict) -> Project:
             version=jsondict["version"],
             sheet_num=2,
             plot_num=len(plots) + 1,
-            tabs=[sheet, *plots],
+            sheets=[sheet],
+            plots=plots,
+            tab_order=["sheet_1"] + [f"plot_{plot.id}" for plot in plots],
             current_tab=jsondict["current_tab"],
         )
         return project
@@ -40,6 +42,7 @@ def get_sheet_from_project(jsondict: dict) -> Sheet:
 
 def get_plots_from_project(jsondict: dict) -> list[Plot]:
     plots = []
+    plot_id = 1
     for tab in jsondict["tabs"]:
         parameters = [
             Parameter(
@@ -51,6 +54,7 @@ def get_plots_from_project(jsondict: dict) -> list[Plot]:
             Plot(
                 name=tab["label"],
                 data_sheet_id=1,
+                id=plot_id,
                 x_col=tab["x_var"],
                 y_col=tab["y_var"],
                 x_err_col=tab["x_err_var"],
@@ -68,4 +72,5 @@ def get_plots_from_project(jsondict: dict) -> list[Plot]:
                 best_fit=bool(tab["saved_fit"]),
             )
         )
+        plot_id += 1
     return plots
