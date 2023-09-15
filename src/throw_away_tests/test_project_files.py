@@ -63,7 +63,7 @@ if __name__ == "__main__":
     create_test_project(app)
     model = project_files.save_project_to_json(app)
 
-    app = Application(add_sheet=False)
+    app = Application()
     project_files.load_project_from_json(app, model)
 
     app.show()
