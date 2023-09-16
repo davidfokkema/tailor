@@ -186,14 +186,13 @@ class PlotTab(QtWidgets.QWidget):
     def update_plot(self):
         """Update plot to reflect any data changes."""
 
+        # x_err, y_err will be 0.0 if no errors are specified
         x, y, x_err, y_err = self.model.get_data()
 
         # set data for scatter plot and error bars
         self.plot.setData(x, y)
-        if x_err is not None:
-            err_width = 2 * x_err
-        if y_err is not None:
-            err_height = 2 * y_err
+        err_width = 2 * x_err
+        err_height = 2 * y_err
         self.error_bars.setData(x=x, y=y, width=err_width, height=err_height)
 
         self.update_limits()

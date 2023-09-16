@@ -97,6 +97,8 @@ class PlotModel:
     def get_data(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get data values from model.
 
+        If error values are not specified, returns 0.0 for all errors.
+
         Returns:
             A tuple of NumPy arrays containing x, y, x-error and y-error values.
         """
@@ -129,6 +131,8 @@ class PlotModel:
 
     def _get_data_as_dataframe(self) -> pd.DataFrame:
         """Get data values from model as dataframe.
+
+        If error values are not specified, returns 0.0 for all errors.
 
         Returns:
             A Pandas DataFrame containing x, y, x-error and y-error values.
