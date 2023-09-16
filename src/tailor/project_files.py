@@ -184,6 +184,11 @@ def load_plot(app: Application, model: Plot, data_sheet: DataSheet) -> PlotTab:
         )
     plot_tab.model.fit_domain = model.fit_domain
     plot_tab.model.use_fit_domain = model.use_fit_domain
+    # trigger updating the parameters UI to prevent the UI thinking things have
+    # changed and invalidating fits later on, mostly from restoring parameter
+    # values from the model
+    plot_tab.update_params_ui()
+    plot_tab.update_params_ui_values_from_model()
     if model.best_fit:
         plot_tab.model.perform_fit()
     return plot_tab

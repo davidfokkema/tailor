@@ -39,6 +39,7 @@ def create_test_project(app: Application):
 
     plottab: PlotTab = app.ui.tabWidget.currentWidget()
     plottab.ui.model_func.setPlainText("a * (x + x0) **2 + b")
+    plottab._params["a"].findChild(QtWidgets.QWidget, "value").setValue(2.0)
     plottab.perform_fit()
 
     # create new sheet
@@ -53,7 +54,7 @@ def create_test_project(app: Application):
     y_col = sheet2.data_model.columnLabel(1)
     app.create_plot_tab(sheet2, x_col, y_col, None, None)
 
-    app.ui.tabWidget.setCurrentWidget(sheet)
+    app.ui.tabWidget.setCurrentWidget(plottab)
 
 
 if __name__ == "__main__":

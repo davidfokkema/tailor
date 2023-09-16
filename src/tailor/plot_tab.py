@@ -399,6 +399,25 @@ class PlotTab(QtWidgets.QWidget):
         self.model.best_fit = None
         self.plot_best_fit()
 
+    def update_params_ui_values_from_model(self):
+        """Update the parameters UI to sync with model.
+
+        Changed parameter values in the UI will propagate to the PlotModel
+        instance managing all plot data, but you will need to call this method
+        to propagate changed model values back to the UI.
+
+        This method expects that all model parameters already exist within the
+        UI.
+        """
+        for parameter in self.model.parameters.values():
+            widget = self._params[parameter.name]
+            widget.findChild(QtWidgets.QWidget, "min").setValue(parameter.min)
+            widget.findChild(QtWidgets.QWidget, "value").setValue(parameter.value)
+            widget.findChild(QtWidgets.QWidget, "max").setValue(parameter.max)
+            widget.findChild(QtWidgets.QWidget, "is_fixed").setChecked(
+                not parameter.vary
+            )
+
     def toggle_use_fit_domain(self, state):
         """Enable or disable use of fit domain.
 

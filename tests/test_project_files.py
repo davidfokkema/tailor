@@ -1,6 +1,7 @@
 import lmfit
 import numpy as np
 import pytest
+from PySide6 import QtWidgets
 from pytest_mock import MockerFixture, mocker
 
 import tailor.data_sheet
@@ -48,9 +49,10 @@ def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
         x_err_col="col3",
         y_err_col="col4",
     )
-    plot_tab.model.update_model_expression("a * x + b")
     plot_tab.model.x_label = "Time"
     plot_tab.model.y_label = "Distance"
+    plot_tab.model.update_model_expression("a * x + b")
+    plot_tab.model.parameters["a"].value = 2.0
     plot_tab.model.perform_fit()
     return plot_tab
 
@@ -135,6 +137,7 @@ class TestProjectFiles:
         param_names = [p.name for p in plot.parameters]
         assert "a" in param_names
         assert "b" in param_names
+        assert next(p for p in plot.parameters if p.name == "a").value == 2.0
 
     def test_load_plot(
         self,
@@ -158,12 +161,20 @@ class TestProjectFiles:
         param_names = plot_tab.model.parameters.keys()
         assert "a" in param_names
         assert "b" in param_names
+        assert plot_tab.model.parameters["a"].value == 2.0
         assert isinstance(plot_tab.model.parameters["a"], plot_model.Parameter)
         assert isinstance(plot_tab.model.best_fit, lmfit.model.ModelResult)
+
+    def test_save_project_to_model(self, simple_project: Application):
+        # simple_project.show()
+        # QtWidgets.QApplication.instance().exec()
+        project_files.save_project_to_model(simple_project)
 
     def test_load_project_from_model(self, simple_project_model: project_files.Project):
         app = Application()
         project_files.load_project_from_model(app, simple_project_model)
+        # app.show()
+        # QtWidgets.QApplication.instance().exec()
 
         sheet = app.ui.tabWidget.widget(0)
         plot = app.ui.tabWidget.widget(1)
@@ -171,6 +182,9 @@ class TestProjectFiles:
         assert isinstance(plot, PlotTab)
         assert plot.data_sheet is sheet
         assert app.ui.tabWidget.currentIndex() == simple_project_model.current_tab
+        app.ui.tabWidget.setCurrentWidget(plot)
+        assert plot.model.best_fit is not None
+        assert plot._params["a"].findChild(QtWidgets.QWidget, "value").value() == 2.0
 
     def test_save_project_to_json_completes(self, simple_project: Application):
         project_files.save_project_to_json(simple_project)
