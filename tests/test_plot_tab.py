@@ -77,6 +77,7 @@ class TestPlotTab:
     def test_refresh_ui(self, plot_tab: PlotTab, mocker: MockerFixture):
         mocker.patch.object(plot_tab, "update_model_widget")
         mocker.patch.object(plot_tab, "update_plot")
+        mocker.patch.object(plot_tab, "update_params_ui_values_from_model")
         mocker.patch.object(plot_tab, "update_model_curves")
         mocker.patch.object(plot_tab, "update_info_box")
 
@@ -85,6 +86,7 @@ class TestPlotTab:
         plot_tab.update_model_widget.assert_called()
         plot_tab.update_plot.assert_called()
         plot_tab.model.verify_best_fit_data.assert_called()
+        plot_tab.update_params_ui_values_from_model()
         plot_tab.update_model_curves.assert_called()
         plot_tab.update_info_box.assert_called()
 
