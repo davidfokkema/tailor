@@ -168,6 +168,7 @@ class PlotTab(QtWidgets.QWidget):
         self.update_model_widget()
         self.update_plot()
         self.model.verify_best_fit_data()
+        self.update_params_ui_values_from_model()
         self.update_model_curves()
         self.update_info_box()
 
@@ -383,20 +384,26 @@ class PlotTab(QtWidgets.QWidget):
             layout_widget.deleteLater()
 
     def update_parameter_value(self, widget, value):
-        self.model.parameters[widget._parameter].value = value
-        self.model.best_fit = None
-        self.plot_initial_model()
-        self.plot_best_fit()
+        model_param = self.model.parameters[widget._parameter]
+        if model_param.value != value:
+            model_param.value = value
+            self.model.best_fit = None
+            self.plot_initial_model()
+            self.plot_best_fit()
 
     def update_parameter_min_bound(self, widget, value):
-        self.model.parameters[widget._parameter].min = value
-        self.model.best_fit = None
-        self.plot_best_fit()
+        model_param = self.model.parameters[widget._parameter]
+        if model_param.min != value:
+            model_param.min = value
+            self.model.best_fit = None
+            self.plot_best_fit()
 
     def update_parameter_max_bound(self, widget, value):
-        self.model.parameters[widget._parameter].max = value
-        self.model.best_fit = None
-        self.plot_best_fit()
+        model_param = self.model.parameters[widget._parameter]
+        if model_param.max != value:
+            model_param.max = value
+            self.model.best_fit = None
+            self.plot_best_fit()
 
     def update_params_ui_values_from_model(self):
         """Update the parameters UI to sync with model.

@@ -82,13 +82,13 @@ def save_project_to_model(project: Application):
 
 def load_project_from_model(project: Application, model: Project):
     # load all data sheets for reference
-    data_sheet_by_id: dict[str, DataSheet] = {}
+    data_sheet_by_id: dict[int, DataSheet] = {}
     for sheet_model in model.sheets:
         sheet = load_data_sheet(project, sheet_model)
         data_sheet_by_id[sheet.id] = sheet
 
     # load plots and add tabs to app
-    plot_tab_by_id: dict[str, PlotTab] = {}
+    plot_tab_by_id: dict[int, PlotTab] = {}
     for plot_model in model.plots:
         sheet = data_sheet_by_id[plot_model.data_sheet_id]
         plot_tab = load_plot(app=project, model=plot_model, data_sheet=sheet)
@@ -182,13 +182,9 @@ def load_plot(app: Application, model: Plot, data_sheet: DataSheet) -> PlotTab:
         plot_tab.model.parameters[parameter.name] = plot_model.Parameter(
             **parameter.model_dump()
         )
+    # !!! Moeten ook fit domain UI updaten vanuit het model
     plot_tab.model.fit_domain = model.fit_domain
     plot_tab.model.use_fit_domain = model.use_fit_domain
-    # trigger updating the parameters UI to prevent the UI thinking things have
-    # changed and invalidating fits later on, mostly from restoring parameter
-    # values from the model
-    plot_tab.update_params_ui()
-    plot_tab.update_params_ui_values_from_model()
     if model.best_fit:
         plot_tab.model.perform_fit()
     return plot_tab
