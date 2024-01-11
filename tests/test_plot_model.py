@@ -90,7 +90,7 @@ class TestImplementationDetails:
         assert isinstance(model.data_model, DataModel)
         assert isinstance(model._model_expression, str)
         assert isinstance(model._parameters, dict)
-        assert model.fit_domain is None
+        assert model._fit_domain is None
         assert model.use_fit_domain is False
         assert model.best_fit is None
         assert model.fit_data_checksum is None
@@ -196,7 +196,7 @@ class TestPlotModel:
         assert y_err == pytest.approx([2.0, 5.0])
 
     def test_get_data_in_fit_domain(self, simple_data_with_errors: PlotModel):
-        simple_data_with_errors.fit_domain = (1.5, 3.5)
+        simple_data_with_errors._fit_domain = (1.5, 3.5)
         simple_data_with_errors.use_fit_domain = True
 
         x, y, x_err, y_err = simple_data_with_errors.get_data_in_fit_domain()
@@ -413,7 +413,7 @@ class TestPlotModel:
 
     def test_perform_fit_with_domain(self, simple_data_no_errors: PlotModel):
         simple_data_no_errors.update_model_expression("a * x ** 2 + b")
-        simple_data_no_errors.fit_domain = (1.5, 3.5)
+        simple_data_no_errors._fit_domain = (1.5, 3.5)
         simple_data_no_errors.use_fit_domain = True
 
         simple_data_no_errors.perform_fit()
