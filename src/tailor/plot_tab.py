@@ -7,7 +7,6 @@ elements to specify a mathematical model to fit to the model.
 import matplotlib.pyplot as plt
 import numpy as np
 import pyqtgraph as pg
-from lmfit import models
 from PySide6 import QtCore, QtWidgets
 
 from tailor.data_sheet import DataSheet
@@ -69,17 +68,16 @@ class PlotTab(QtWidgets.QWidget):
         self._params = {}
 
         self.create_plot()
-        self.finish_ui()
-
         self.connect_ui_events()
+        self.finish_ui()
 
     def connect_ui_events(self):
         # Connect signals
         self.ui.model_func.textChanged.connect(self.update_model_expression)
         self.ui.model_func.cursorPositionChanged.connect(self.store_cursor_position)
         self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
-        self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
-        self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
+        self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain_xmin)
+        self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain_xmax)
         self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
         self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
         self.ui.xlabel.textChanged.connect(self.update_xlabel)
@@ -122,7 +120,6 @@ class PlotTab(QtWidgets.QWidget):
         x_min, x_max, _, _ = self.model.get_limits_from_data()
         self.ui.fit_start_box.setValue(x_min)
         self.ui.fit_end_box.setValue(x_max)
-        self.update_fit_domain()
 
         # set initial x and y labels
         self.ui.xlabel.setText(self.model.get_x_col_name())
@@ -441,22 +438,45 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.fit_start_box.setValue(xmin)
         self.ui.fit_end_box.setValue(xmax)
 
-        if self.model.use_fit_domain:
-            self.model.best_fit = None
-            self.plot_best_fit()
+    def update_fit_domain_xmin(self, widget, xmin: float) -> None:
+        """Update fit domain lower bound.
 
-    def update_fit_domain(self):
-        """Update the fit domain and indicate with vertical lines."""
-        start = self.ui.fit_start_box.value()
-        end = self.ui.fit_end_box.value()
-        if start <= end:
-            self.model.fit_domain = start, end
-            self.fit_domain_area.setRegion((start, end))
-            # else:
-            # FIXME
-            # self.main_window.ui.statusbar.showMessage(
-            #     "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
-            # )
+        Update the lower bound of the fit domain in the model and update the
+        shaded region in the plot. If the lower bound is greater than the upper
+        bound, the upper bound is pushed to the right and both bounds are equal.
+
+        Args:
+            widget (Any): the spinbox widget (ignored).
+            xmin (float): the new value for the lower bound.
+        """
+        xmax = self.ui.fit_end_box.value()
+        if xmax < xmin:
+            xmax = xmin
+            self.ui.fit_end_box.setValue(xmax)
+        self.model.set_fit_domain(xmin=xmin, xmax=xmax)
+        self.fit_domain_area.blockSignals(True)
+        self.fit_domain_area.setRegion((xmin, xmax))
+        self.fit_domain_area.blockSignals(False)
+
+    def update_fit_domain_xmax(self, widget, xmax: float) -> None:
+        """Update fit domain upper bound.
+
+        Update the upper bound of the fit domain in the model and update the
+        shaded region in the plot. If the upper bound is smaller than the lower
+        bound, the lower bound is pushed to the left and both bounds are equal.
+
+        Args:
+            widget (Any): the spinbox widget (ignored).
+            xmin (float): the new value for the upper bound.
+        """
+        xmin = self.ui.fit_start_box.value()
+        if xmin > xmax:
+            xmin = xmax
+            self.ui.fit_start_box.setValue(xmin)
+        self.model.set_fit_domain(xmin=xmin, xmax=xmax)
+        self.fit_domain_area.blockSignals(True)
+        self.fit_domain_area.setRegion((xmin, xmax))
+        self.fit_domain_area.blockSignals(False)
 
     def update_model_curves(self):
         """Update initial and best fit curves."""
@@ -521,7 +541,7 @@ class PlotTab(QtWidgets.QWidget):
         if option_idx == DRAW_CURVE_ON_DATA:
             x_min, x_max, _, _ = self.model.get_limits_from_data()
         elif option_idx == DRAW_CURVE_ON_DOMAIN:
-            x_min, x_max = self.model.fit_domain
+            x_min, x_max = self.model.get_fit_domain()
         elif option_idx == DRAW_CURVE_ON_AXIS:
             [[x_min, x_max], _] = self.ui.plot_widget.viewRange()
         else:

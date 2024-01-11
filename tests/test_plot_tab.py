@@ -228,55 +228,53 @@ class TestPlotTab:
 
     def test_fit_domain_region_changed(self, plot_tab: PlotTab, mocker: MockerFixture):
         mocker.patch.object(plot_tab, "fit_domain_area")
-        mocker.patch.object(plot_tab, "plot_best_fit")
         plot_tab.fit_domain_area.getRegion.return_value = sentinel.x_min, sentinel.x_max
         plot_tab.model.best_fit = sentinel.fit
-        plot_tab.model.use_fit_domain = True
 
         plot_tab.fit_domain_region_changed()
 
         plot_tab.ui.fit_start_box.setValue.assert_called_with(sentinel.x_min)
         plot_tab.ui.fit_end_box.setValue.assert_called_with(sentinel.x_max)
-        assert plot_tab.model.best_fit is None
-        plot_tab.plot_best_fit.assert_called()
 
-    def test_fit_domain_region_changed_without_use(
-        self, plot_tab: PlotTab, mocker: MockerFixture
-    ):
-        mocker.patch.object(plot_tab, "plot_best_fit")
-        plot_tab.model.best_fit = sentinel.fit
-        plot_tab.model.use_fit_domain = False
-
-        plot_tab.fit_domain_region_changed()
-
-        plot_tab.plot_best_fit.assert_not_called()
-        assert plot_tab.model.best_fit == sentinel.fit
-
-    def test_update_fit_domain_sets_model_attribute(
-        self, plot_tab: PlotTab, mocker: MockerFixture
+    @pytest.mark.parametrize(
+        "new_xmin, old_xmax, domain",
+        [(1.0, 3.0, (1.0, 3.0)), (4.0, 3.0, (4.0, 4.0)), (1.0, -1.0, (1.0, 1.0))],
+    )
+    def test_update_fit_domain_xmin(
+        self, plot_tab: PlotTab, mocker: MockerFixture, new_xmin, old_xmax, domain
     ):
         mocker.patch.object(plot_tab, "fit_domain_area")
-        plot_tab.ui.fit_start_box.value.return_value = -10.0
-        plot_tab.ui.fit_end_box.value.return_value = 5.0
+        plot_tab.ui.fit_end_box.value.return_value = old_xmax
 
-        plot_tab.update_fit_domain()
+        plot_tab.update_fit_domain_xmin(mocker.Mock(), new_xmin)
 
-        plot_tab.fit_domain_area.setRegion.assert_called_with((-10.0, 5.0))
-        assert plot_tab.model.fit_domain == (-10.0, 5.0)
+        xmin, xmax = domain
+        plot_tab.fit_domain_area.setRegion.assert_called_with((xmin, xmax))
+        plot_tab.model.set_fit_domain.assert_called_with(xmin=xmin, xmax=xmax)
+        if xmax != old_xmax:
+            plot_tab.ui.fit_end_box.setValue.assert_called_with(xmax)
+        else:
+            plot_tab.ui.fit_end_box.setValue.assert_not_called()
 
-    def test_update_fit_domain_with_invalid_domain(
-        self, plot_tab: PlotTab, mocker: MockerFixture
+    @pytest.mark.parametrize(
+        "old_xmin, new_xmax, domain",
+        [(1.0, 3.0, (1.0, 3.0)), (4.0, 3.0, (3.0, 3.0)), (1.0, -1.0, (-1.0, -1.0))],
+    )
+    def test_update_fit_domain_xmax(
+        self, plot_tab: PlotTab, mocker: MockerFixture, old_xmin, new_xmax, domain
     ):
         mocker.patch.object(plot_tab, "fit_domain_area")
-        plot_tab.model.fit_domain = sentinel.domain
-        plot_tab.ui.fit_start_box.value.return_value = 5.0
-        plot_tab.ui.fit_end_box.value.return_value = -10
+        plot_tab.ui.fit_start_box.value.return_value = old_xmin
 
-        plot_tab.update_fit_domain()
+        plot_tab.update_fit_domain_xmax(mocker.Mock(), new_xmax)
 
-        # nothing should have been updated
-        plot_tab.fit_domain_area.setRegion.assert_not_called()
-        assert plot_tab.model.fit_domain == sentinel.domain
+        xmin, xmax = domain
+        plot_tab.fit_domain_area.setRegion.assert_called_with((xmin, xmax))
+        plot_tab.model.set_fit_domain.assert_called_with(xmin=xmin, xmax=xmax)
+        if xmin != old_xmin:
+            plot_tab.ui.fit_start_box.setValue.assert_called_with(xmin)
+        else:
+            plot_tab.ui.fit_start_box.setValue.assert_not_called()
 
     def test_get_fit_curve_x_limits_on_data(self, plot_tab: PlotTab):
         plot_tab.ui.draw_curve_option.currentIndex.return_value = (
@@ -295,7 +293,7 @@ class TestPlotTab:
         plot_tab.ui.draw_curve_option.currentIndex.return_value = (
             tailor.plot_tab.DRAW_CURVE_ON_DOMAIN
         )
-        plot_tab.model.fit_domain = (sentinel.x_min, sentinel.x_max)
+        plot_tab.model.get_fit_domain.return_value = (sentinel.x_min, sentinel.x_max)
 
         assert plot_tab.get_fit_curve_x_limits() == (sentinel.x_min, sentinel.x_max)
 
