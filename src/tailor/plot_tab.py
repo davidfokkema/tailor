@@ -78,7 +78,7 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
         self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain_xmin)
         self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain_xmax)
-        self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
+        self.ui.use_fit_domain.stateChanged.connect(self.set_use_fit_domain)
         self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
         self.ui.xlabel.textChanged.connect(self.update_xlabel)
         self.ui.ylabel.textChanged.connect(self.update_ylabel)
@@ -411,22 +411,19 @@ class PlotTab(QtWidgets.QWidget):
                 not parameter.vary
             )
 
-    def toggle_use_fit_domain(self, state):
+    def set_use_fit_domain(self, state):
         """Enable or disable use of fit domain.
 
         Args:
             state: integer (enum Qt::CheckState) with the checkbox state.
         """
         if state == QtCore.Qt.Checked.value:
+            self.model.set_fit_domain_enabled(True)
             self.ui.plot_widget.addItem(self.fit_domain_area)
-            self.model.use_fit_domain = True
-            self.model.best_fit = None
-            self.plot_best_fit()
         else:
+            self.model.set_fit_domain_enabled(False)
             self.ui.plot_widget.removeItem(self.fit_domain_area)
-            self.model.use_fit_domain = False
-            self.model.best_fit = None
-            self.plot_best_fit()
+        self.update_model_curves()
 
     def fit_domain_region_changed(self):
         """Update the fit domain values.

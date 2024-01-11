@@ -203,28 +203,24 @@ class TestPlotTab:
         assert actual == expected
 
     def test_use_fit_domain(self, plot_tab: PlotTab, mocker: MockerFixture):
-        mocker.patch.object(plot_tab, "get_fit_curve_x_limits")
-        plot_tab.get_fit_curve_x_limits.return_value = -1, 1
-        plot_tab.model.best_fit = sentinel.fit
+        mocker.patch.object(plot_tab, "update_model_curves")
         state = QtCore.Qt.Checked.value
 
-        plot_tab.toggle_use_fit_domain(state)
+        plot_tab.set_use_fit_domain(state)
 
         plot_tab.ui.plot_widget.addItem.assert_called_with(plot_tab.fit_domain_area)
-        assert plot_tab.model.use_fit_domain is True
-        assert plot_tab.model.best_fit is None
+        plot_tab.model.set_fit_domain_enabled.assert_called_with(True)
+        plot_tab.update_model_curves.assert_called()
 
     def test_dont_use_fit_domain(self, plot_tab: PlotTab, mocker: MockerFixture):
-        mocker.patch.object(plot_tab, "get_fit_curve_x_limits")
-        plot_tab.get_fit_curve_x_limits.return_value = -1, 1
-        plot_tab.model.best_fit = sentinel.fit
+        mocker.patch.object(plot_tab, "update_model_curves")
         state = QtCore.Qt.Unchecked.value
 
-        plot_tab.toggle_use_fit_domain(state)
+        plot_tab.set_use_fit_domain(state)
 
         plot_tab.ui.plot_widget.removeItem.assert_called_with(plot_tab.fit_domain_area)
-        assert plot_tab.model.use_fit_domain is False
-        assert plot_tab.model.best_fit is None
+        plot_tab.model.set_fit_domain_enabled.assert_called_with(False)
+        plot_tab.update_model_curves.assert_called()
 
     def test_fit_domain_region_changed(self, plot_tab: PlotTab, mocker: MockerFixture):
         mocker.patch.object(plot_tab, "fit_domain_area")
