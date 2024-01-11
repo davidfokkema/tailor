@@ -37,7 +37,7 @@ class PlotModel:
     y_min: float | None = None
     y_max: float | None = None
 
-    model_expression: str = ""
+    _model_expression: str = ""
     model: lmfit.models.ExpressionModel | None = None
     parameters: dict[str, Parameter]
     fit_domain: tuple[float, float] | None = None
@@ -201,12 +201,12 @@ class PlotModel:
             transformed = rename_variables(expression, mapping)
         except SyntaxError:
             # expression could not be parsed
-            self.model_expression = expression
+            self._model_expression = expression
             self.model = None
             self.best_fit = None
         else:
-            if self.model_expression != transformed:
-                self.model_expression = transformed
+            if self._model_expression != transformed:
+                self._model_expression = transformed
                 try:
                     self.model = lmfit.models.ExpressionModel(
                         transformed, independent_vars=[self.x_col]
@@ -247,10 +247,10 @@ class PlotModel:
         """
         mapping = {self.x_col: self.data_model.get_column_name(self.x_col)}
         try:
-            return rename_variables(self.model_expression, mapping)
+            return rename_variables(self._model_expression, mapping)
         except SyntaxError:
             # expression could not be parsed
-            return self.model_expression
+            return self._model_expression
 
     def evaluate_model(self, x: np.ndarray) -> np.ndarray | None:
         """Evaluate the fit model.

@@ -88,7 +88,7 @@ class TestImplementationDetails:
         assert model.x_err_col == sentinel.x_err_col
         assert model.y_err_col == sentinel.y_err_col
         assert isinstance(model.data_model, DataModel)
-        assert isinstance(model.model_expression, str)
+        assert isinstance(model._model_expression, str)
         assert isinstance(model.parameters, dict)
         assert model.fit_domain is None
         assert model.use_fit_domain is False
@@ -287,14 +287,14 @@ class TestPlotModel:
         model.update_model_expression(expression)
 
         model.data_model.get_column_name.assert_called_with(x_col)
-        assert model.model_expression == transformed
+        assert model._model_expression == transformed
         assert isinstance(model.model, lmfit.models.ExpressionModel)
         model.update_model_parameters.assert_called()
 
     def test_update_model_expression_resets_fit_on_changes(
         self, bare_bones_data: PlotModel
     ):
-        bare_bones_data.model_expression = "a * col1 + b"
+        bare_bones_data._model_expression = "a * col1 + b"
         bare_bones_data.best_fit = sentinel.fit
 
         bare_bones_data.update_model_expression("a * x")
@@ -303,7 +303,7 @@ class TestPlotModel:
     def test_update_model_expression_keeps_fit_if_no_changes(
         self, bare_bones_data: PlotModel
     ):
-        bare_bones_data.model_expression = "a * col1 + b"
+        bare_bones_data._model_expression = "a * col1 + b"
         bare_bones_data.data_model.get_column_name.return_value = "x"
         bare_bones_data.best_fit = sentinel.fit
 
@@ -326,7 +326,7 @@ class TestPlotModel:
         # now see if it breaks correctly (syntax error or missing x)
         bare_bones_data.update_model_expression(expression)
 
-        assert bare_bones_data.model_expression == transformed
+        assert bare_bones_data._model_expression == transformed
         assert bare_bones_data.model is None
         assert bare_bones_data.best_fit is None
         bare_bones_data.update_model_parameters.assert_not_called()
@@ -344,7 +344,7 @@ class TestPlotModel:
     )
     def test_get_model_expression(self, model: PlotModel, x_col, expression, expected):
         col_names = {"col2": "y", "col3": "z", "col1": "x"}
-        model.model_expression = expression
+        model._model_expression = expression
         # return column name ('col1' -> 'x')
         model.data_model.get_column_name.return_value = col_names[x_col]
         model.x_col = x_col
