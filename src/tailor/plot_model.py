@@ -40,7 +40,7 @@ class PlotModel:
     _model_expression: str = ""
     _model: lmfit.models.ExpressionModel | None = None
     _parameters: dict[str, Parameter]
-    _fit_domain: tuple[float, float] | None = None
+    _fit_domain: tuple[float, float] = (float("-inf"), float("inf"))
     _use_fit_domain: bool = False
     _fit_data_checksum: int | None = None
 
@@ -95,6 +95,56 @@ class PlotModel:
         except KeyError:
             return None
 
+    def get_fit_domain(self) -> tuple[float, float]:
+        """Get fit domain.
+
+        Returns:
+            tuple[float, float]: a tuple of xmin, xmax values.
+        """
+        return self._fit_domain
+
+    def set_fit_domain(
+        self, xmin: float | None = None, xmax: float | None = None
+    ) -> None:
+        """Set fit domain.
+
+        Sets the fit domain to xmin, xmax. Either of these values may be None.
+        In that case that value is not updated. This allows for only setting the
+        lower or upper bound of the fit domain.
+
+        Args:
+            xmin (float | None, optional): The new lower bound. Defaults to None.
+            xmax (float | None, optional): The new upper bound. Defaults to None.
+        """
+        new_min, new_max = self._fit_domain
+        if xmin is not None:
+            new_min = xmin
+        if xmax is not None:
+            new_max = xmax
+        if (new_min, new_max) != self._fit_domain:
+            self.best_fit = None
+            self._fit_domain = (new_min, new_max)
+
+    def get_fit_domain_enabled(self) -> bool:
+        """Return if fit domain is used in fitting procedure.
+
+        Returns:
+            bool: True if fit domain is used, False otherwise.
+        """
+        return self._use_fit_domain
+
+    def set_fit_domain_enabled(self, is_enabled: bool) -> None:
+        """Set whether fit domain must be used in fitting procedure.
+
+        If this setting is changed, the best fit is invalidated.
+
+        Args:
+            is_enabled (bool): True if fit domain must be used, False otherwise.
+        """
+        if self._use_fit_domain != is_enabled:
+            self._use_fit_domain = is_enabled
+            self.best_fit = None
+
     def get_data(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get data values from model.
 
@@ -118,7 +168,7 @@ class PlotModel:
         Returns:
             A tuple of NumPy arrays containing x, y, x-error and y-error values.
         """
-        if self._fit_domain is None or self._use_fit_domain is False:
+        if self._use_fit_domain is False:
             return self.get_data()
 
         df = self._get_data_as_dataframe()

@@ -97,7 +97,7 @@ class TestImplementationDetails:
         assert isinstance(model.data_model, DataModel)
         assert isinstance(model._model_expression, str)
         assert isinstance(model._parameters, dict)
-        assert model._fit_domain is None
+        assert model._fit_domain == (float("-inf"), float("inf"))
         assert model._use_fit_domain is False
         assert model.best_fit is None
         assert model._fit_data_checksum is None
@@ -550,3 +550,70 @@ class TestPlotModel:
         simple_data_with_model.set_parameter_max_value("b", 123.4)
         assert simple_data_with_model._parameters["b"].max == 123.4
         assert simple_data_with_model.best_fit is None
+
+    def test_get_fit_domain(self, bare_bones_data: PlotModel):
+        bare_bones_data._fit_domain = sentinel.xmin, sentinel.xmax
+        assert bare_bones_data.get_fit_domain() == (sentinel.xmin, sentinel.xmax)
+
+    @pytest.mark.parametrize(
+        "xmin, xmax, domain",
+        [
+            (None, None, (float("-inf"), float("inf"))),
+            (1.0, None, (1.0, float("inf"))),
+            (None, 2.0, (float("-inf"), 2.0)),
+            (1.0, 2.0, (1.0, 2.0)),
+        ],
+    )
+    def test_set_fit_domain(self, bare_bones_data: PlotModel, xmin, xmax, domain):
+        bare_bones_data.set_fit_domain(xmin, xmax)
+        assert bare_bones_data.get_fit_domain() == domain
+
+    @pytest.mark.parametrize(
+        "xmin, xmax, domain, resets_fit",
+        [
+            (1.0, 2.0, (1.0, 2.0), False),
+            (1.0, 2.1, (1.0, 2.0), True),
+            (1.1, 2.0, (1.0, 2.0), True),
+            (1.5, 3.5, (1.0, 2.0), True),
+        ],
+    )
+    def test_set_fit_domain_resets_best_fit(
+        self,
+        simple_data_with_model: PlotModel,
+        xmin,
+        xmax,
+        domain,
+        resets_fit,
+    ):
+        simple_data_with_model._fit_domain = domain
+        simple_data_with_model.set_fit_domain(xmin, xmax)
+        if resets_fit:
+            assert simple_data_with_model.best_fit is None
+        else:
+            assert simple_data_with_model.best_fit is not None
+
+    def test_get_fit_domain_enabled(self, bare_bones_data: PlotModel):
+        bare_bones_data._use_fit_domain = sentinel.use_fit_domain
+        assert bare_bones_data.get_fit_domain_enabled() is sentinel.use_fit_domain
+
+    @pytest.mark.parametrize(
+        "was_enabled, is_enabled, resets_fit",
+        [
+            (True, True, False),
+            (True, False, True),
+            (False, True, True),
+            (False, False, False),
+        ],
+    )
+    def test_set_fit_domain_enabled(
+        self, simple_data_with_model: PlotModel, was_enabled, is_enabled, resets_fit
+    ):
+        simple_data_with_model._use_fit_domain = was_enabled
+
+        simple_data_with_model.set_fit_domain_enabled(is_enabled)
+
+        assert simple_data_with_model._use_fit_domain == is_enabled
+        if resets_fit:
+            assert simple_data_with_model.best_fit is None
+        else:
+            assert simple_data_with_model.best_fit is not None
