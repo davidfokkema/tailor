@@ -248,6 +248,43 @@ class PlotModel:
         """
         return list(self._parameters.keys())
 
+    def set_parameter_value(self, name: str, value: float) -> None:
+        """Set initial value of a parameter.
+
+        Setting a new initial value for the parameter will invalidate the best
+        fit.
+
+        Args:
+            name (str): name of the parameter
+            value (float): new initial value
+        """
+        self._parameters[name].value = value
+        self.best_fit = None
+
+    def set_parameter_min_value(self, name: str, value: float) -> None:
+        """Set lower bound of a parameter.
+
+        Setting a new lower bound will invalidate the best fit.
+
+        Args:
+            name (str): name of the parameter
+            value (float): new lower bound
+        """
+        self._parameters[name].min = value
+        self.best_fit = None
+
+    def set_parameter_max_value(self, name: str, value: float) -> None:
+        """Set upper bound of a parameter.
+
+        Setting a new upper bound will invalidate the best fit.
+
+        Args:
+            name (str): name of the parameter
+            value (float): new upper bound
+        """
+        self._parameters[name].max = value
+        self.best_fit = None
+
     def get_model_expression(self) -> str:
         """Get model expression.
 

@@ -81,6 +81,13 @@ def simple_data_with_errors(simple_data_model):
     )
 
 
+@pytest.fixture()
+def simple_data_with_model(simple_data_no_errors):
+    simple_data_no_errors.update_model_expression("a * x ** 2 + b")
+    simple_data_no_errors.perform_fit()
+    return simple_data_no_errors
+
+
 class TestImplementationDetails:
     def test_init_sets_attributes(self, model: PlotModel):
         assert model.x_col == sentinel.x_col
@@ -521,6 +528,25 @@ class TestPlotModel:
     def test_evaluate_best_fit_without_fit(self, bare_bones_data: PlotModel):
         assert bare_bones_data.evaluate_best_fit([1, 2, 3]) is None
 
-    def test_get_parameter_names(self, simple_data_no_errors: PlotModel):
-        simple_data_no_errors.update_model_expression("a * x ** 2 + b")
-        assert sorted(simple_data_no_errors.get_parameter_names()) == ["a", "b"]
+    def test_simple_data_with_model_has_best_fit(
+        self, simple_data_with_model: PlotModel
+    ):
+        assert simple_data_with_model.best_fit is not None
+
+    def test_get_parameter_names(self, simple_data_with_model: PlotModel):
+        assert sorted(simple_data_with_model.get_parameter_names()) == ["a", "b"]
+
+    def test_set_parameter_value(self, simple_data_with_model: PlotModel):
+        simple_data_with_model.set_parameter_value("b", 123.4)
+        assert simple_data_with_model._parameters["b"].value == 123.4
+        assert simple_data_with_model.best_fit is None
+
+    def test_set_parameter_min_value(self, simple_data_with_model: PlotModel):
+        simple_data_with_model.set_parameter_min_value("b", 123.4)
+        assert simple_data_with_model._parameters["b"].min == 123.4
+        assert simple_data_with_model.best_fit is None
+
+    def test_set_parameter_max_value(self, simple_data_with_model: PlotModel):
+        simple_data_with_model.set_parameter_max_value("b", 123.4)
+        assert simple_data_with_model._parameters["b"].max == 123.4
+        assert simple_data_with_model.best_fit is None
