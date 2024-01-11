@@ -29,8 +29,8 @@ class PlotModel:
     y_col: str
     x_err_col: str | None
     y_err_col: str | None
-    x_label: str
-    y_label: str
+    x_label: str = ""
+    y_label: str = ""
 
     x_min: float | None = None
     x_max: float | None = None
@@ -239,6 +239,14 @@ class PlotModel:
         # add new parameters
         for key in new:
             self._parameters[key] = Parameter(name=key)
+
+    def get_parameter_names(self) -> list[str]:
+        """Get the names of the model parameters.
+
+        Returns:
+            list[str]: a list of parameter names.
+        """
+        return list(self._parameters.keys())
 
     def get_model_expression(self) -> str:
         """Get model expression.

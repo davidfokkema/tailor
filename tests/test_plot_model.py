@@ -520,3 +520,7 @@ class TestPlotModel:
 
     def test_evaluate_best_fit_without_fit(self, bare_bones_data: PlotModel):
         assert bare_bones_data.evaluate_best_fit([1, 2, 3]) is None
+
+    def test_get_parameter_names(self, simple_data_no_errors: PlotModel):
+        simple_data_no_errors.update_model_expression("a * x ** 2 + b")
+        assert sorted(simple_data_no_errors.get_parameter_names()) == ["a", "b"]

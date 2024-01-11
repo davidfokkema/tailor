@@ -8,13 +8,14 @@ from pytest_mock import MockerFixture
 
 import tailor.plot_tab
 from tailor.data_sheet import DataSheet
+from tailor.plot_model import PlotModel
 from tailor.plot_tab import PlotTab
 
 
 @pytest.fixture()
 def plot_tab(mocker: MockerFixture):
     mocker.patch.object(tailor.plot_tab, "Ui_PlotTab")
-    mocker.patch.object(tailor.plot_tab, "PlotModel")
+    mocker.patch.object(tailor.plot_tab, "PlotModel", spec=PlotModel)
     mocker.patch.object(PlotTab, "finish_ui")
     data_sheet = mocker.Mock(spec=DataSheet)
     return PlotTab(
@@ -386,3 +387,14 @@ class TestPlotTab:
 
         assert plot_tab.model.best_fit == None
         plot_tab.plot_best_fit.assert_called()
+
+    def test_update_params_ui(self, plot_tab: PlotTab, mocker: MockerFixture):
+        plot_tab._params = {"a": mocker.Mock(), "b": mocker.Mock(), "e": mocker.Mock()}
+        plot_tab.model.get_parameter_names.return_value = ["b", "c", "d"]
+        mocker.patch.object(plot_tab, "add_params_to_ui")
+        mocker.patch.object(plot_tab, "remove_params_from_ui")
+
+        plot_tab.update_params_ui()
+
+        plot_tab.add_params_to_ui.assert_called_with({"c", "d"})
+        plot_tab.remove_params_from_ui.assert_called_with({"a", "e"})

@@ -301,7 +301,7 @@ class PlotTab(QtWidgets.QWidget):
     def update_params_ui(self):
         """Add and/or remove parameters if necessary."""
         old_params = set(self._params)
-        current_params = set(self.model.parameters)
+        current_params = set(self.model.get_parameter_names())
         self.add_params_to_ui(current_params - old_params)
         self.remove_params_from_ui(old_params - current_params)
 
