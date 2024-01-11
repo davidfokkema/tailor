@@ -43,7 +43,7 @@ class PlotModel:
     _fit_domain: tuple[float, float] | None = None
     use_fit_domain: bool = False
     best_fit: lmfit.model.ModelResult | None = None
-    fit_data_checksum: int | None = None
+    _fit_data_checksum: int | None = None
 
     def __init__(
         self,
@@ -287,7 +287,7 @@ class PlotModel:
             }
         )
         data = self.get_data_in_fit_domain()
-        self.fit_data_checksum = self.hash_data(data)
+        self._fit_data_checksum = self.hash_data(data)
 
         x, y, _, y_err = data
         self.best_fit = self._model.fit(
@@ -331,11 +331,11 @@ class PlotModel:
             bool: whether the given data is identical or not
         """
         data = self.get_data_in_fit_domain()
-        if self.hash_data(data) == self.fit_data_checksum:
+        if self.hash_data(data) == self._fit_data_checksum:
             return True
         else:
             self.best_fit = None
-            self.fit_data_checksum = None
+            self._fit_data_checksum = None
             return False
 
     def evaluate_best_fit(self, x: np.ndarray) -> np.ndarray | None:
