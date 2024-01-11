@@ -4,7 +4,7 @@ sys.path.append("src/")
 
 import numpy as np
 import pandas as pd
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from tailor import project_files
 from tailor.app import Application
@@ -39,6 +39,10 @@ def create_test_project(app: Application):
 
     plottab: PlotTab = app.ui.tabWidget.currentWidget()
     plottab.ui.model_func.setPlainText("a * (x + x0) **2 + b")
+    plottab.ui.fit_start_box.setValue(1.0)
+    plottab.ui.fit_end_box.setValue(3.0)
+    plottab.ui.use_fit_domain.setCheckState(QtCore.Qt.CheckState.Checked)
+    plottab.ui.draw_curve_option.setCurrentIndex(2)
     plottab._params["a"].findChild(QtWidgets.QWidget, "value").setValue(2.0)
     plottab.perform_fit()
 
