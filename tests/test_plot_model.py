@@ -288,7 +288,7 @@ class TestPlotModel:
 
         model.data_model.get_column_name.assert_called_with(x_col)
         assert model._model_expression == transformed
-        assert isinstance(model.model, lmfit.models.ExpressionModel)
+        assert isinstance(model._model, lmfit.models.ExpressionModel)
         model.update_model_parameters.assert_called()
 
     def test_update_model_expression_resets_fit_on_changes(
@@ -327,7 +327,7 @@ class TestPlotModel:
         bare_bones_data.update_model_expression(expression)
 
         assert bare_bones_data._model_expression == transformed
-        assert bare_bones_data.model is None
+        assert bare_bones_data._model is None
         assert bare_bones_data.best_fit is None
         bare_bones_data.update_model_parameters.assert_not_called()
 
@@ -356,7 +356,7 @@ class TestPlotModel:
 
     @pytest.mark.parametrize("extra", [{}, {"d": sentinel.d}])
     def test_update_model_parameters(self, bare_bones_data: PlotModel, extra):
-        bare_bones_data.model = lmfit.models.ExpressionModel(
+        bare_bones_data._model = lmfit.models.ExpressionModel(
             "a * x ** 2 + b * x + c", independent_vars=["x"]
         )
         bare_bones_data.parameters = {"a": sentinel.a, "b": sentinel.b} | extra
@@ -368,7 +368,7 @@ class TestPlotModel:
         assert bare_bones_data.parameters["b"] == sentinel.b
 
     def test_evaluate_model(self, bare_bones_data: PlotModel):
-        bare_bones_data.model = lmfit.models.ExpressionModel(
+        bare_bones_data._model = lmfit.models.ExpressionModel(
             "a * col1 ** 2 + b", independent_vars=["col1"]
         )
         bare_bones_data.parameters["a"] = Parameter("a", 2.0)
@@ -433,7 +433,7 @@ class TestPlotModel:
 
     def test_perform_fit_saves_checksum(self, model: PlotModel, mocker: MockerFixture):
         # mock everything needed to be able to perform the 'fit'
-        mocker.patch.object(model, "model")
+        mocker.patch.object(model, "_model")
         mocker.patch.object(model, "get_data_in_fit_domain")
         mocker.patch.object(model, "hash_data")
         model.x_col = "x"

@@ -38,7 +38,7 @@ class PlotModel:
     y_max: float | None = None
 
     _model_expression: str = ""
-    model: lmfit.models.ExpressionModel | None = None
+    _model: lmfit.models.ExpressionModel | None = None
     parameters: dict[str, Parameter]
     fit_domain: tuple[float, float] | None = None
     use_fit_domain: bool = False
@@ -202,18 +202,18 @@ class PlotModel:
         except SyntaxError:
             # expression could not be parsed
             self._model_expression = expression
-            self.model = None
+            self._model = None
             self.best_fit = None
         else:
             if self._model_expression != transformed:
                 self._model_expression = transformed
                 try:
-                    self.model = lmfit.models.ExpressionModel(
+                    self._model = lmfit.models.ExpressionModel(
                         transformed, independent_vars=[self.x_col]
                     )
                 except ValueError:
                     # independent (x) variable not present in expression
-                    self.model = None
+                    self._model = None
                 else:
                     self.update_model_parameters()
                 self.best_fit = None
@@ -226,7 +226,7 @@ class PlotModel:
         stored parameters are no longer used in the model and must be discarded.
         """
         stored = set(self.parameters.keys())
-        current = set(self.model.param_names)
+        current = set(self._model.param_names)
 
         new = current - stored
         discard = stored - current
@@ -265,10 +265,10 @@ class PlotModel:
         Returns:
             np.ndarray | None: the evaluated y-values or None
         """
-        if self.model:
+        if self._model:
             kwargs = {k: v.value for k, v in self.parameters.items()}
             kwargs[self.x_col] = x
-            return self.model.eval(**kwargs)
+            return self._model.eval(**kwargs)
         else:
             return None
 
@@ -277,10 +277,10 @@ class PlotModel:
 
         Fit the model to the data points starting with the initial values for the parameters. If the fit is successful, the `best_fit` object can be used to determine the best-fit values of the parameters.
         """
-        if self.model is None:
+        if self._model is None:
             return
 
-        params = self.model.make_params(
+        params = self._model.make_params(
             **{
                 k: {"min": v.min, "value": v.value, "max": v.max, "vary": v.vary}
                 for k, v in self.parameters.items()
@@ -290,7 +290,7 @@ class PlotModel:
         self.fit_data_checksum = self.hash_data(data)
 
         x, y, _, y_err = data
-        self.best_fit = self.model.fit(
+        self.best_fit = self._model.fit(
             data=y,
             params=params,
             weights=1 / (y_err + 1e-99),
