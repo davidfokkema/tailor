@@ -42,8 +42,9 @@ class PlotModel:
     _parameters: dict[str, Parameter]
     _fit_domain: tuple[float, float] | None = None
     _use_fit_domain: bool = False
-    best_fit: lmfit.model.ModelResult | None = None
     _fit_data_checksum: int | None = None
+
+    best_fit: lmfit.model.ModelResult | None = None
 
     def __init__(
         self,
