@@ -89,7 +89,7 @@ class TestImplementationDetails:
         assert model.y_err_col == sentinel.y_err_col
         assert isinstance(model.data_model, DataModel)
         assert isinstance(model._model_expression, str)
-        assert isinstance(model.parameters, dict)
+        assert isinstance(model._parameters, dict)
         assert model.fit_domain is None
         assert model.use_fit_domain is False
         assert model.best_fit is None
@@ -359,20 +359,20 @@ class TestPlotModel:
         bare_bones_data._model = lmfit.models.ExpressionModel(
             "a * x ** 2 + b * x + c", independent_vars=["x"]
         )
-        bare_bones_data.parameters = {"a": sentinel.a, "b": sentinel.b} | extra
+        bare_bones_data._parameters = {"a": sentinel.a, "b": sentinel.b} | extra
 
         bare_bones_data.update_model_parameters()
 
-        assert set(bare_bones_data.parameters.keys()) == {"a", "b", "c"}
-        assert bare_bones_data.parameters["a"] == sentinel.a
-        assert bare_bones_data.parameters["b"] == sentinel.b
+        assert set(bare_bones_data._parameters.keys()) == {"a", "b", "c"}
+        assert bare_bones_data._parameters["a"] == sentinel.a
+        assert bare_bones_data._parameters["b"] == sentinel.b
 
     def test_evaluate_model(self, bare_bones_data: PlotModel):
         bare_bones_data._model = lmfit.models.ExpressionModel(
             "a * col1 ** 2 + b", independent_vars=["col1"]
         )
-        bare_bones_data.parameters["a"] = Parameter("a", 2.0)
-        bare_bones_data.parameters["b"] = Parameter("b", 0.5)
+        bare_bones_data._parameters["a"] = Parameter("a", 2.0)
+        bare_bones_data._parameters["b"] = Parameter("b", 0.5)
         x = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         expected = np.array([0.5, 2.5, 8.5, 18.5, 32.5])
 

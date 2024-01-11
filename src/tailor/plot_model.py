@@ -39,7 +39,7 @@ class PlotModel:
 
     _model_expression: str = ""
     _model: lmfit.models.ExpressionModel | None = None
-    parameters: dict[str, Parameter]
+    _parameters: dict[str, Parameter]
     fit_domain: tuple[float, float] | None = None
     use_fit_domain: bool = False
     best_fit: lmfit.model.ModelResult | None = None
@@ -61,7 +61,7 @@ class PlotModel:
         self.x_label = self.get_x_col_name()
         self.y_label = self.get_y_col_name()
 
-        self.parameters = {}
+        self._parameters = {}
         self._math_symbols = set(asteval.Interpreter().symtable.keys())
 
     def get_x_col_name(self) -> str:
@@ -225,7 +225,7 @@ class PlotModel:
         parameters are newly-defined in the model and must be created and which
         stored parameters are no longer used in the model and must be discarded.
         """
-        stored = set(self.parameters.keys())
+        stored = set(self._parameters.keys())
         current = set(self._model.param_names)
 
         new = current - stored
@@ -233,11 +233,11 @@ class PlotModel:
 
         # discard unneeded parameters
         for key in discard:
-            self.parameters.pop(key)
+            self._parameters.pop(key)
 
         # add new parameters
         for key in new:
-            self.parameters[key] = Parameter(name=key)
+            self._parameters[key] = Parameter(name=key)
 
     def get_model_expression(self) -> str:
         """Get model expression.
@@ -266,7 +266,7 @@ class PlotModel:
             np.ndarray | None: the evaluated y-values or None
         """
         if self._model:
-            kwargs = {k: v.value for k, v in self.parameters.items()}
+            kwargs = {k: v.value for k, v in self._parameters.items()}
             kwargs[self.x_col] = x
             return self._model.eval(**kwargs)
         else:
@@ -283,7 +283,7 @@ class PlotModel:
         params = self._model.make_params(
             **{
                 k: {"min": v.min, "value": v.value, "max": v.max, "vary": v.vary}
-                for k, v in self.parameters.items()
+                for k, v in self._parameters.items()
             }
         )
         data = self.get_data_in_fit_domain()
