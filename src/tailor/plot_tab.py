@@ -384,26 +384,16 @@ class PlotTab(QtWidgets.QWidget):
             layout_widget.deleteLater()
 
     def update_parameter_value(self, widget, value):
-        model_param = self.model.parameters[widget._parameter]
-        if model_param.value != value:
-            model_param.value = value
-            self.model.best_fit = None
-            self.plot_initial_model()
-            self.plot_best_fit()
+        self.model.set_parameter_value(widget._parameter, value)
+        self.update_model_curves()
 
     def update_parameter_min_bound(self, widget, value):
-        model_param = self.model.parameters[widget._parameter]
-        if model_param.min != value:
-            model_param.min = value
-            self.model.best_fit = None
-            self.plot_best_fit()
+        self.model.set_parameter_min_value(widget._parameter, value)
+        self.update_model_curves()
 
     def update_parameter_max_bound(self, widget, value):
-        model_param = self.model.parameters[widget._parameter]
-        if model_param.max != value:
-            model_param.max = value
-            self.model.best_fit = None
-            self.plot_best_fit()
+        self.model.set_parameter_max_value(widget._parameter, value)
+        self.update_model_curves()
 
     def update_params_ui_values_from_model(self):
         """Update the parameters UI to sync with model.
