@@ -136,7 +136,7 @@ def load_data_sheet(app: Application, model: Sheet) -> DataSheet:
 def save_plot(plot: PlotTab):
     parameters = [
         Parameter(name=p.name, value=p.value, min=p.min, max=p.max, vary=p.vary)
-        for p in plot.model.parameters.values()
+        for p in plot.model._parameters.values()
     ]
     best_fit = plot.model.best_fit is not None
     return Plot(
@@ -153,10 +153,10 @@ def save_plot(plot: PlotTab):
         x_max=plot.model.x_max,
         y_min=plot.model.y_min,
         y_max=plot.model.y_max,
-        modelexpression=plot.model.model_expression,
+        modelexpression=plot.model._model_expression,
         parameters=parameters,
-        fit_domain=plot.model.fit_domain,
-        use_fit_domain=plot.model.use_fit_domain,
+        fit_domain=plot.model._fit_domain,
+        use_fit_domain=plot.model._use_fit_domain,
         best_fit=best_fit,
     )
 
@@ -179,12 +179,11 @@ def load_plot(app: Application, model: Plot, data_sheet: DataSheet) -> PlotTab:
     plot_tab.model.y_max = model.y_max
     plot_tab.model.update_model_expression(model.modelexpression)
     for parameter in model.parameters:
-        plot_tab.model.parameters[parameter.name] = plot_model.Parameter(
+        plot_tab.model._parameters[parameter.name] = plot_model.Parameter(
             **parameter.model_dump()
         )
-    # !!! Moeten ook fit domain UI updaten vanuit het model
-    plot_tab.model.fit_domain = model.fit_domain
-    plot_tab.model.use_fit_domain = model.use_fit_domain
+    plot_tab.model._fit_domain = model.fit_domain
+    plot_tab.model._use_fit_domain = model.use_fit_domain
     if model.best_fit:
         plot_tab.model.perform_fit()
     return plot_tab

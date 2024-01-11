@@ -52,7 +52,7 @@ def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
     plot_tab.model.x_label = "Time"
     plot_tab.model.y_label = "Distance"
     plot_tab.model.update_model_expression("a * x + b")
-    plot_tab.model.parameters["a"].value = 2.0
+    plot_tab.model._parameters["a"].value = 2.0
     plot_tab.model.perform_fit()
     return plot_tab
 
@@ -157,12 +157,12 @@ class TestProjectFiles:
         assert plot_tab.model.y_err_col == "col4"
         assert plot_tab.model.x_label == "Time"
         assert plot_tab.model.y_label == "Distance"
-        assert plot_tab.model.model_expression == "a * col1 + b"
-        param_names = plot_tab.model.parameters.keys()
+        assert plot_tab.model._model_expression == "a * col1 + b"
+        param_names = plot_tab.model._parameters.keys()
         assert "a" in param_names
         assert "b" in param_names
-        assert plot_tab.model.parameters["a"].value == 2.0
-        assert isinstance(plot_tab.model.parameters["a"], plot_model.Parameter)
+        assert plot_tab.model._parameters["a"].value == 2.0
+        assert isinstance(plot_tab.model._parameters["a"], plot_model.Parameter)
         assert isinstance(plot_tab.model.best_fit, lmfit.model.ModelResult)
 
     def test_save_project_to_model(self, simple_project: Application):
