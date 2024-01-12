@@ -201,8 +201,7 @@ class PlotModel:
 
         # Drop NaN and Inf values
         df = pd.DataFrame.from_dict({"x": x, "y": y, "x_err": x_err, "y_err": y_err})
-        df.dropna(inplace=True)
-        return df
+        return df.replace([np.inf, -np.inf], np.nan).dropna()
 
     def get_limits_from_data(self, padding=0.05) -> tuple[float]:
         """Get plot limits from the data points.

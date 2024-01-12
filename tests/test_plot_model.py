@@ -188,11 +188,12 @@ class TestPlotModel:
         assert y_err == pytest.approx(0.0)
 
     def test_get_data_drops_nans(self, model: PlotModel):
+        # return data for x, y, x_err, y_err
         model.data_model.get_column.side_effect = [
-            np.array([np.nan, 1, 2, 3, 4, 5]),
-            np.array([0, np.nan, 2, 3, 4, 5]),
-            np.array([0, 1, 2, np.nan, 4, 5]),
-            np.array([0, 1, 2, 3, np.nan, 5]),
+            np.array([np.nan, 1, 2, 3, 4, 5, 6]),
+            np.array([0, np.nan, 2, 3, 4, 5, np.inf]),
+            np.array([0, 1, 2, np.nan, 4, 5, 6]),
+            np.array([0, 1, 2, 3, np.nan, 5, 6]),
         ]
 
         x, y, x_err, y_err = model.get_data()

@@ -12,9 +12,6 @@ import pandas as pd
 
 from tailor.ast_names import get_variable_names, rename_variables
 
-# treat Inf and -Inf as missing values (e.g. when calling dropna())
-pd.options.mode.use_inf_as_na = True
-
 
 class DataModel:
     """Data model for the tailor app.
