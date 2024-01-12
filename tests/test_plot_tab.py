@@ -353,3 +353,17 @@ class TestPlotTab:
 
         plot_tab.add_params_to_ui.assert_called_with({"c", "d"})
         plot_tab.remove_params_from_ui.assert_called_with({"a", "e"})
+
+    def test_update_params_ui_values_from_model(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        plot_tab.model.get_parameter_names.return_value = ["foo"]
+        parameter = mocker.Mock()
+        parameter.name = "foo"
+        plot_tab.model.get_parameter_by_name.return_value = parameter
+        widget = mocker.Mock()
+        plot_tab._params["foo"] = widget
+
+        plot_tab.update_params_ui_values_from_model()
+
+        widget.findChild.assert_called()

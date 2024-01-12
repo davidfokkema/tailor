@@ -402,7 +402,8 @@ class PlotTab(QtWidgets.QWidget):
         This method expects that all model parameters already exist within the
         UI.
         """
-        for parameter in self.model.parameters.values():
+        for name in self.model.get_parameter_names():
+            parameter = self.model.get_parameter_by_name(name)
             widget = self._params[parameter.name]
             widget.findChild(QtWidgets.QWidget, "min").setValue(parameter.min)
             widget.findChild(QtWidgets.QWidget, "value").setValue(parameter.value)

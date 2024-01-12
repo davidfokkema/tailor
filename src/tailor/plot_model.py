@@ -298,6 +298,19 @@ class PlotModel:
         """
         return list(self._parameters.keys())
 
+    def get_parameter_by_name(self, name: str) -> Parameter:
+        """Get parameter by name.
+
+        Use the `get_parameter_names()` method to get a list of parameter names.
+
+        Args:
+            name (str): the name of the parameter.
+
+        Returns:
+            Parameter: the requested parameter object.
+        """
+        return self._parameters[name]
+
     def set_parameter_value(self, name: str, value: float) -> None:
         """Set initial value of a parameter.
 

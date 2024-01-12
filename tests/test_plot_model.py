@@ -533,6 +533,13 @@ class TestPlotModel:
     ):
         assert simple_data_with_model.best_fit is not None
 
+    @pytest.mark.parametrize("name", ["a", "b"])
+    def test_get_parameter_by_name(self, simple_data_with_model: PlotModel, name):
+        parameter = simple_data_with_model.get_parameter_by_name(name)
+
+        assert isinstance(parameter, Parameter)
+        assert parameter.name == name
+
     def test_get_parameter_names(self, simple_data_with_model: PlotModel):
         assert sorted(simple_data_with_model.get_parameter_names()) == ["a", "b"]
 
