@@ -460,6 +460,7 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_domain_area.blockSignals(True)
         self.fit_domain_area.setRegion((xmin, xmax))
         self.fit_domain_area.blockSignals(False)
+        self.update_model_curves()
 
     def update_fit_domain_xmax(self, widget, xmax: float) -> None:
         """Update fit domain upper bound.
@@ -480,6 +481,7 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_domain_area.blockSignals(True)
         self.fit_domain_area.setRegion((xmin, xmax))
         self.fit_domain_area.blockSignals(False)
+        self.update_model_curves()
 
     def update_fit_domain_from_model(self) -> None:
         """Update fit domain parameters from model.

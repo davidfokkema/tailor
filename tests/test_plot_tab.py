@@ -242,6 +242,7 @@ class TestPlotTab:
         self, plot_tab: PlotTab, mocker: MockerFixture, new_xmin, old_xmax, domain
     ):
         mocker.patch.object(plot_tab, "fit_domain_area")
+        mocker.patch.object(plot_tab, "update_model_curves")
         plot_tab.ui.fit_end_box.value.return_value = old_xmax
 
         plot_tab.update_fit_domain_xmin(mocker.Mock(), new_xmin)
@@ -253,6 +254,7 @@ class TestPlotTab:
             plot_tab.ui.fit_end_box.setValue.assert_called_with(xmax)
         else:
             plot_tab.ui.fit_end_box.setValue.assert_not_called()
+        plot_tab.update_model_curves.assert_called()
 
     @pytest.mark.parametrize(
         "old_xmin, new_xmax, domain",
@@ -262,6 +264,7 @@ class TestPlotTab:
         self, plot_tab: PlotTab, mocker: MockerFixture, old_xmin, new_xmax, domain
     ):
         mocker.patch.object(plot_tab, "fit_domain_area")
+        mocker.patch.object(plot_tab, "update_model_curves")
         plot_tab.ui.fit_start_box.value.return_value = old_xmin
 
         plot_tab.update_fit_domain_xmax(mocker.Mock(), new_xmax)
@@ -273,6 +276,7 @@ class TestPlotTab:
             plot_tab.ui.fit_start_box.setValue.assert_called_with(xmin)
         else:
             plot_tab.ui.fit_start_box.setValue.assert_not_called()
+        plot_tab.update_model_curves.assert_called()
 
     def test_get_fit_curve_x_limits_on_data(self, plot_tab: PlotTab):
         plot_tab.ui.draw_curve_option.currentIndex.return_value = (
