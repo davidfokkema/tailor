@@ -81,6 +81,7 @@ class TestPlotTab:
         mocker.patch.object(plot_tab, "update_params_ui_values_from_model")
         mocker.patch.object(plot_tab, "update_model_curves")
         mocker.patch.object(plot_tab, "update_info_box")
+        mocker.patch.object(plot_tab, "update_fit_domain_from_model")
 
         plot_tab.refresh_ui()
 
@@ -90,6 +91,7 @@ class TestPlotTab:
         plot_tab.update_params_ui_values_from_model()
         plot_tab.update_model_curves.assert_called()
         plot_tab.update_info_box.assert_called()
+        plot_tab.update_fit_domain_from_model.assert_called()
 
     def test_update_function_label(self, plot_tab: PlotTab, mocker: MockerFixture):
         mocker.patch.object(plot_tab.model, "get_y_col_name")
@@ -367,3 +369,21 @@ class TestPlotTab:
         plot_tab.update_params_ui_values_from_model()
 
         widget.findChild.assert_called()
+
+    def test_update_fit_domain_from_model(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "fit_domain_area")
+        plot_tab.model.get_fit_domain.return_value = sentinel.xmin, sentinel.xmax
+        plot_tab.model.get_fit_domain_enabled.return_value = True
+
+        plot_tab.update_fit_domain_from_model()
+
+        plot_tab.ui.fit_start_box.setValue.assert_called_with(sentinel.xmin)
+        plot_tab.ui.fit_end_box.setValue.assert_called_with(sentinel.xmax)
+        plot_tab.ui.use_fit_domain.setCheckState.assert_called_with(
+            QtCore.Qt.CheckState.Checked
+        )
+        plot_tab.fit_domain_area.setRegion.assert_called_with(
+            (sentinel.xmin, sentinel.xmax)
+        )

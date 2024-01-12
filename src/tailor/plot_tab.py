@@ -165,7 +165,8 @@ class PlotTab(QtWidgets.QWidget):
         self.update_model_widget()
         self.update_plot()
         self.model.verify_best_fit_data()
-        self.update_params_ui_values_from_model()
+        # self.update_params_ui_values_from_model()
+        self.update_fit_domain_from_model()
         self.update_model_curves()
         self.update_info_box()
 
@@ -475,6 +476,27 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_domain_area.blockSignals(True)
         self.fit_domain_area.setRegion((xmin, xmax))
         self.fit_domain_area.blockSignals(False)
+
+    def update_fit_domain_from_model(self) -> None:
+        """Update fit domain parameters from model.
+
+        Update the fit domain UI widgets with values taken from the plot model.
+        Makes sure signals are not unnecessarily triggered which would result in
+        invalidating the best fit. The best fit is preserved by this method.
+        """
+        self.ui.fit_start_box.blockSignals(True)
+        self.ui.fit_end_box.blockSignals(True)
+        xmin, xmax = self.model.get_fit_domain()
+        self.ui.fit_start_box.setValue(xmin)
+        self.ui.fit_end_box.setValue(xmax)
+        if self.model.get_fit_domain_enabled():
+            state = QtCore.Qt.CheckState.Checked
+        else:
+            state = QtCore.Qt.CheckState.Unchecked
+        self.ui.use_fit_domain.setCheckState(state)
+        self.fit_domain_area.setRegion((xmin, xmax))
+        self.ui.fit_start_box.blockSignals(False)
+        self.ui.fit_end_box.blockSignals(False)
 
     def update_model_curves(self):
         """Update initial and best fit curves."""
