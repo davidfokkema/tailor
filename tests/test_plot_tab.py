@@ -368,6 +368,7 @@ class TestPlotTab:
         parameter.name = "foo"
         plot_tab.model.get_parameter_by_name.return_value = parameter
         widget = mocker.Mock()
+        widget.findChildren.return_value = []
         plot_tab._params["foo"] = widget
 
         plot_tab.update_params_ui_values_from_model()
