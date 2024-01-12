@@ -165,7 +165,7 @@ class PlotTab(QtWidgets.QWidget):
         self.update_model_widget()
         self.update_plot()
         self.model.verify_best_fit_data()
-        # self.update_params_ui_values_from_model()
+        self.update_params_ui_values_from_model()
         self.update_fit_domain_from_model()
         self.update_model_curves()
         self.update_info_box()
@@ -406,12 +406,16 @@ class PlotTab(QtWidgets.QWidget):
         for name in self.model.get_parameter_names():
             parameter = self.model.get_parameter_by_name(name)
             widget = self._params[parameter.name]
+            for w in widget.findChildren(QtWidgets.QWidget):
+                w.blockSignals(True)
             widget.findChild(QtWidgets.QWidget, "min").setValue(parameter.min)
             widget.findChild(QtWidgets.QWidget, "value").setValue(parameter.value)
             widget.findChild(QtWidgets.QWidget, "max").setValue(parameter.max)
             widget.findChild(QtWidgets.QWidget, "is_fixed").setChecked(
                 not parameter.vary
             )
+            for w in widget.findChildren(QtWidgets.QWidget):
+                w.blockSignals(False)
 
     def set_use_fit_domain(self, state):
         """Enable or disable use of fit domain.
