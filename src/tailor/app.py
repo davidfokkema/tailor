@@ -299,39 +299,6 @@ class Application(QtWidgets.QMainWindow):
         for idx in range(self.ui.tabWidget.count()):
             self.update_plot_tab(idx)
 
-    def rename_plot_variables(self, data_sheet, old_name, new_name):
-        """Rename any plotted variables
-
-        Args:
-            data_sheet (DataSheet): the data sheet containing the column that
-                needs to be renamed.
-            old_name (str): the name that may be currently in use.
-            new_name (str): the new column name.
-        """
-        num_tabs = self.ui.tabWidget.count()
-        tabs = [self.ui.tabWidget.widget(i) for i in range(num_tabs)]
-        for tab in tabs:
-            if type(tab) == PlotTab and tab.data_sheet == data_sheet:
-                needs_info_update = False
-                for var in ["x_var", "y_var", "x_err_var", "y_err_var"]:
-                    if getattr(tab, var) == old_name:
-                        needs_info_update = True
-                        setattr(tab, var, new_name)
-                        # The following creates problems with partial matches
-                        # For now, the model function is *not* updated
-                        #
-                        # if var == "x_var":
-                        # update model expression and model object
-                        # expr = tab.model_func.text()
-                        # new_expr = expr.replace(old_name, new_name)
-                        # tab.model_func.setText(new_expr)
-                        # tab.get_params_and_update_model()
-                        if var == "y_var":
-                            # update y-label for model expression
-                            tab.update_function_label(new_name)
-                if needs_info_update:
-                    tab.update_info_box()
-
     def ask_and_create_plot_tab(self):
         """Opens a dialog and create a new tab with a plot.
 
