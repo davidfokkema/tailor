@@ -42,7 +42,7 @@ def create_test_project(app: Application):
     plottab.ui.fit_start_box.setValue(1.0)
     plottab.ui.fit_end_box.setValue(3.0)
     plottab.ui.use_fit_domain.setCheckState(QtCore.Qt.CheckState.Checked)
-    plottab.ui.draw_curve_option.setCurrentIndex(2)
+    plottab.ui.draw_curve_option.setCurrentIndex(1)
     plottab._params["a"].findChild(QtWidgets.QWidget, "value").setValue(2.0)
     plottab.perform_fit()
 

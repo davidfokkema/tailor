@@ -158,6 +158,7 @@ def save_plot(plot: PlotTab):
         fit_domain=plot.model._fit_domain,
         use_fit_domain=plot.model._use_fit_domain,
         best_fit=best_fit,
+        draw_curve_option=plot.ui.draw_curve_option.currentIndex(),
     )
 
 
@@ -186,4 +187,5 @@ def load_plot(app: Application, model: Plot, data_sheet: DataSheet) -> PlotTab:
     plot_tab.model._use_fit_domain = model.use_fit_domain
     if model.best_fit:
         plot_tab.model.perform_fit()
+    plot_tab.ui.draw_curve_option.setCurrentIndex(model.draw_curve_option)
     return plot_tab

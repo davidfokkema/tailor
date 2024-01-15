@@ -48,6 +48,8 @@ class Plot(BaseModel):
     use_fit_domain: bool
     best_fit: bool
 
+    draw_curve_option: int
+
 
 class Project(BaseModel):
     model_config = ConfigDict(extra="ignore")

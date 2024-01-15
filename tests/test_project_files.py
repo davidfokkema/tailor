@@ -54,6 +54,7 @@ def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
     plot_tab.model.update_model_expression("a * x + b")
     plot_tab.model._parameters["a"].value = 2.0
     plot_tab.model.perform_fit()
+    plot_tab.ui.draw_curve_option.setCurrentIndex(2)
     return plot_tab
 
 
@@ -138,6 +139,7 @@ class TestProjectFiles:
         assert "a" in param_names
         assert "b" in param_names
         assert next(p for p in plot.parameters if p.name == "a").value == 2.0
+        assert plot.draw_curve_option == 2
 
     def test_load_plot(
         self,
@@ -164,6 +166,7 @@ class TestProjectFiles:
         assert plot_tab.model._parameters["a"].value == 2.0
         assert isinstance(plot_tab.model._parameters["a"], plot_model.Parameter)
         assert isinstance(plot_tab.model.best_fit, lmfit.model.ModelResult)
+        assert plot_tab.ui.draw_curve_option.currentIndex() == 2
 
     def test_save_project_to_model(self, simple_project: Application):
         # simple_project.show()
