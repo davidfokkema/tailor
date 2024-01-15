@@ -9,7 +9,7 @@ from pytest_mock import MockerFixture
 import tailor.plot_tab
 from tailor.data_sheet import DataSheet
 from tailor.plot_model import PlotModel
-from tailor.plot_tab import PlotTab
+from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 
 
 @pytest.fixture()
@@ -279,9 +279,9 @@ class TestPlotTab:
         plot_tab.update_model_curves.assert_called()
 
     def test_get_fit_curve_x_limits_on_data(self, plot_tab: PlotTab):
-        plot_tab.ui.draw_curve_option.currentIndex.return_value = (
-            tailor.plot_tab.DrawCurve.ON_DATA
-        )
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = list(
+            DRAW_CURVE_OPTIONS.keys()
+        ).index(tailor.plot_tab.DrawCurve.ON_DATA)
         plot_tab.model.get_limits_from_data.return_value = (
             sentinel.x_min,
             sentinel.x_max,
@@ -292,29 +292,23 @@ class TestPlotTab:
         assert plot_tab.get_fit_curve_x_limits() == (sentinel.x_min, sentinel.x_max)
 
     def test_get_fit_curve_x_limits_on_domain(self, plot_tab: PlotTab):
-        plot_tab.ui.draw_curve_option.currentIndex.return_value = (
-            tailor.plot_tab.DrawCurve.ON_DOMAIN
-        )
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = list(
+            DRAW_CURVE_OPTIONS.keys()
+        ).index(tailor.plot_tab.DrawCurve.ON_DOMAIN)
         plot_tab.model.get_fit_domain.return_value = (sentinel.x_min, sentinel.x_max)
 
         assert plot_tab.get_fit_curve_x_limits() == (sentinel.x_min, sentinel.x_max)
 
     def test_get_fit_curve_x_limits_on_axis(self, plot_tab: PlotTab):
-        plot_tab.ui.draw_curve_option.currentIndex.return_value = (
-            tailor.plot_tab.DrawCurve.ON_AXIS
-        )
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = list(
+            DRAW_CURVE_OPTIONS.keys()
+        ).index(tailor.plot_tab.DrawCurve.ON_AXIS)
         plot_tab.ui.plot_widget.viewRange.return_value = [
             [sentinel.x_min, sentinel.x_max],
             [None, None],
         ]
 
         assert plot_tab.get_fit_curve_x_limits() == (sentinel.x_min, sentinel.x_max)
-
-    def test_get_fit_curve_x_limits_not_implemented(self, plot_tab: PlotTab):
-        plot_tab.ui.draw_curve_option.currentIndex.return_value = 10
-
-        with pytest.raises(NotImplementedError):
-            plot_tab.get_fit_curve_x_limits()
 
     def test_update_parameter_value_updates_parameter(
         self, plot_tab: PlotTab, mocker: MockerFixture
@@ -392,3 +386,22 @@ class TestPlotTab:
         plot_tab.fit_domain_area.setRegion.assert_called_with(
             (sentinel.xmin, sentinel.xmax)
         )
+
+    def test_updated_plot_range_calls_update_model_curves(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "update_model_curves")
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = list(
+            DRAW_CURVE_OPTIONS.keys()
+        ).index(DrawCurve.ON_AXIS)
+
+        plot_tab.updated_plot_range()
+
+        plot_tab.update_model_curves.assert_called()
+
+    def test_get_draw_curve_option(self, plot_tab: PlotModel):
+        plot_tab.ui.draw_curve_option.currentIndex.return_value = 0
+
+        option = plot_tab.get_draw_curve_option()
+
+        assert option == DrawCurve.ON_DATA

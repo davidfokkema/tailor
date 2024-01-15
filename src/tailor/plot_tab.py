@@ -19,10 +19,7 @@ NUM_POINTS = 1000
 MSG_TIMEOUT = 0
 
 
-class DrawCurve(enum.IntEnum):
-    ON_DATA, ON_DOMAIN, ON_AXIS = range(3)
-
-
+DrawCurve = enum.IntEnum("DrawCurve", ["ON_DATA", "ON_DOMAIN", "ON_AXIS"])
 DRAW_CURVE_OPTIONS = {
     DrawCurve.ON_DATA: "On data points",
     DrawCurve.ON_DOMAIN: "Only on fit domain",
@@ -177,6 +174,16 @@ class PlotTab(QtWidgets.QWidget):
         self.update_fit_domain_from_model()
         self.update_model_curves()
         self.update_info_box()
+
+    def get_draw_curve_option(self) -> DrawCurve:
+        """Get the currently selected draw curve option.
+
+        Returns:
+            DrawCurve: the currently selected option
+        """
+        option_idx = self.ui.draw_curve_option.currentIndex()
+        options = list(DRAW_CURVE_OPTIONS.keys())
+        return options[option_idx]
 
     def update_model_widget(self):
         """Update function label."""
@@ -523,7 +530,7 @@ class PlotTab(QtWidgets.QWidget):
         If the fitted curves are drawn on the full axis, they need to be updated
         when the plot range is changed.
         """
-        if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
+        if self.get_draw_curve_option() == DrawCurve.ON_AXIS:
             self.update_model_curves()
 
     def plot_initial_model(self):
@@ -571,14 +578,7 @@ class PlotTab(QtWidgets.QWidget):
         Returns:
             x_min, x_max: tuple of floats with the x-axis limits
         """
-        option_idx = self.ui.draw_curve_option.currentIndex()
-        try:
-            option = list(DRAW_CURVE_OPTIONS.keys())[option_idx]
-        except IndexError:
-            raise NotImplementedError(
-                f"Draw curve option {option_idx} not implemented."
-            )
-
+        option = self.get_draw_curve_option()
         if option == DrawCurve.ON_DATA:
             x_min, x_max, _, _ = self.model.get_limits_from_data()
         elif option == DrawCurve.ON_DOMAIN:
