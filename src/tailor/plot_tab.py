@@ -4,6 +4,8 @@ A widget containing a scatter plot of some data columns with user interface
 elements to specify a mathematical model to fit to the model.
 """
 
+import enum
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pyqtgraph as pg
@@ -16,10 +18,16 @@ from tailor.ui_plot_tab import Ui_PlotTab
 NUM_POINTS = 1000
 MSG_TIMEOUT = 0
 
-DRAW_CURVE_ON_DATA = 0
-DRAW_CURVE_ON_DOMAIN = 1
-DRAW_CURVE_ON_AXIS = 2
-DRAW_CURVE_OPTIONS = ["On data points", "Only on fit domain", "On full axis"]
+
+class DrawCurve(enum.IntEnum):
+    ON_DATA, ON_DOMAIN, ON_AXIS = range(3)
+
+
+DRAW_CURVE_OPTIONS = {
+    DrawCurve.ON_DATA: "On data points",
+    DrawCurve.ON_DOMAIN: "Only on fit domain",
+    DrawCurve.ON_AXIS: "On full axis",
+}
 
 
 class VariableError(RuntimeError):
@@ -111,7 +119,7 @@ class PlotTab(QtWidgets.QWidget):
         )
         self.ui.fit_start_box.setMaximumWidth(75)
         self.ui.fit_end_box.setMaximumWidth(75)
-        self.ui.draw_curve_option.addItems(DRAW_CURVE_OPTIONS)
+        self.ui.draw_curve_option.addItems(DRAW_CURVE_OPTIONS.values())
 
         self.ui.plot_widget.setMenuEnabled(False)
         self.ui.plot_widget.hideButtons()
@@ -564,16 +572,19 @@ class PlotTab(QtWidgets.QWidget):
             x_min, x_max: tuple of floats with the x-axis limits
         """
         option_idx = self.ui.draw_curve_option.currentIndex()
-        if option_idx == DRAW_CURVE_ON_DATA:
-            x_min, x_max, _, _ = self.model.get_limits_from_data()
-        elif option_idx == DRAW_CURVE_ON_DOMAIN:
-            x_min, x_max = self.model.get_fit_domain()
-        elif option_idx == DRAW_CURVE_ON_AXIS:
-            [[x_min, x_max], _] = self.ui.plot_widget.viewRange()
-        else:
+        try:
+            option = list(DRAW_CURVE_OPTIONS.keys())[option_idx]
+        except IndexError:
             raise NotImplementedError(
                 f"Draw curve option {option_idx} not implemented."
             )
+
+        if option == DrawCurve.ON_DATA:
+            x_min, x_max, _, _ = self.model.get_limits_from_data()
+        elif option == DrawCurve.ON_DOMAIN:
+            x_min, x_max = self.model.get_fit_domain()
+        elif option == DrawCurve.ON_AXIS:
+            [[x_min, x_max], _] = self.ui.plot_widget.viewRange()
         return x_min, x_max
 
     def format_plot_info(self):
