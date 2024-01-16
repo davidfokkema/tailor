@@ -1,7 +1,10 @@
 import sys
 
 from tailor.data_sheet import DataSheet
+from tailor.plot_tab import DrawCurve
 from tailor.project_models import Parameter, Plot, Project, Sheet
+
+DRAW_CURVE_OPTION_TABLE = [DrawCurve.ON_DATA, DrawCurve.ON_DOMAIN, DrawCurve.ON_AXIS]
 
 
 def load_legacy_project(jsondict: dict) -> Project:
@@ -70,6 +73,7 @@ def get_plots_from_project(jsondict: dict) -> list[Plot]:
                 fit_domain=tab["fit_domain"],
                 use_fit_domain=bool(tab["use_fit_domain"]),
                 best_fit=bool(tab["saved_fit"]),
+                draw_curve_option=DRAW_CURVE_OPTION_TABLE[tab["draw_curve_option"]],
             )
         )
         plot_id += 1

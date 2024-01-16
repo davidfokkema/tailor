@@ -1,7 +1,7 @@
 import lmfit
 import numpy as np
 import pytest
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 from pytest_mock import MockerFixture, mocker
 
 import tailor.data_sheet
@@ -212,3 +212,13 @@ class TestProjectFiles:
         assert app.ui.tabWidget.count() == 2
         assert isinstance(app.ui.tabWidget.widget(0), DataSheet)
         assert isinstance(app.ui.tabWidget.widget(1), PlotTab)
+
+    def test_open_legacy_project_from_disk(self):
+        app = Application()
+
+        project_files.load_project_from_path(app, "tests/legacy-v1-project.tlr")
+
+        plot: PlotTab = app.ui.tabWidget.widget(1)
+        assert plot.model.get_model_expression() == "N_0 * 0.5 ** (t / t_half) + N_bkg"
+        assert plot.get_draw_curve_option() == DrawCurve.ON_DOMAIN
+        assert plot.ui.show_initial_fit.checkState() == QtCore.Qt.CheckState.Unchecked
