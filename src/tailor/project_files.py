@@ -12,7 +12,7 @@ from packaging.version import Version
 from tailor import plot_model
 from tailor.data_sheet import DataSheet
 from tailor.legacy_project_files import load_legacy_project
-from tailor.plot_tab import PlotTab
+from tailor.plot_tab import DRAW_CURVE_OPTIONS, PlotTab
 from tailor.project_models import Parameter, Plot, Project, Sheet
 
 if TYPE_CHECKING:
@@ -158,7 +158,7 @@ def save_plot(plot: PlotTab):
         fit_domain=plot.model._fit_domain,
         use_fit_domain=plot.model._use_fit_domain,
         best_fit=best_fit,
-        draw_curve_option=plot.ui.draw_curve_option.currentIndex(),
+        draw_curve_option=plot.get_draw_curve_option(),
     )
 
 
@@ -187,5 +187,6 @@ def load_plot(app: Application, model: Plot, data_sheet: DataSheet) -> PlotTab:
     plot_tab.model._use_fit_domain = model.use_fit_domain
     if model.best_fit:
         plot_tab.model.perform_fit()
-    plot_tab.ui.draw_curve_option.setCurrentIndex(model.draw_curve_option)
+    option_idx = list(DRAW_CURVE_OPTIONS.keys()).index(model.draw_curve_option)
+    plot_tab.ui.draw_curve_option.setCurrentIndex(option_idx)
     return plot_tab
