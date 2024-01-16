@@ -48,6 +48,7 @@ class Plot(BaseModel):
     use_fit_domain: bool
     best_fit: bool
 
+    show_initial_fit: bool
     draw_curve_option: int
 
 

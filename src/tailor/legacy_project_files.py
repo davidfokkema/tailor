@@ -73,6 +73,7 @@ def get_plots_from_project(jsondict: dict) -> list[Plot]:
                 fit_domain=tab["fit_domain"],
                 use_fit_domain=bool(tab["use_fit_domain"]),
                 best_fit=bool(tab["saved_fit"]),
+                show_initial_fit=tab["show_initial_fit"],
                 draw_curve_option=DRAW_CURVE_OPTION_TABLE[tab["draw_curve_option"]],
             )
         )

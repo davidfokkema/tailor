@@ -221,4 +221,4 @@ class TestProjectFiles:
         plot: PlotTab = app.ui.tabWidget.widget(1)
         assert plot.model.get_model_expression() == "N_0 * 0.5 ** (t / t_half) + N_bkg"
         assert plot.get_draw_curve_option() == DrawCurve.ON_DOMAIN
-        assert plot.ui.show_initial_fit.checkState() == QtCore.Qt.CheckState.Unchecked
+        assert plot.ui.show_initial_fit.isChecked() is False
