@@ -371,20 +371,25 @@ class Application(QtWidgets.QMainWindow):
                 tab_widget.removeTab(close_idx)
         elif type(close_tab) == DataSheet:
             # data sheets need special attention
-            if self.confirm_close_dialog(
-                "Are you sure you want to close this data sheet and all associated plots?"
-            ):
-                if self._count_data_sheets() == 1:
-                    # there's just the one data sheet, close all and start new
-                    # project
+            if self._count_data_sheets() == 1:
+                # there's just the one data sheet, close all and start new
+                # project
+                if self.confirm_close_dialog(
+                    "Are you sure you want to close the only data sheet and start a new project?"
+                ):
                     self.clear_all(add_sheet=True)
-                else:
-                    # find associated plots and close plots and data sheet
-                    close_idxs = [close_idx]
-                    for idx in range(tab_widget.count()):
-                        tab = tab_widget.widget(idx)
-                        if type(tab) == PlotTab and tab.data_sheet == close_tab:
-                            close_idxs.append(idx)
+            else:
+                # find associated plots and close plots and data sheet
+                close_idxs = [close_idx]
+                plot_titles = []
+                for idx in range(tab_widget.count()):
+                    tab = tab_widget.widget(idx)
+                    if type(tab) == PlotTab and tab.data_sheet == close_tab:
+                        close_idxs.append(idx)
+                        plot_titles.append(tab.name)
+                if self.confirm_close_dialog(
+                    f"Are you sure you want to close this data sheet and all associated plots ({', '.join(plot_titles)})?"
+                ):
                     # close from right to left to avoid jumping indexes
                     for idx in sorted(close_idxs, reverse=True):
                         tab_widget.removeTab(idx)

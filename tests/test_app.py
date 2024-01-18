@@ -147,6 +147,20 @@ class TestSheets:
         assert simple_project.ui.tabWidget.count() == 1
         assert simple_project.ui.tabWidget.widget(0).name == "Sheet1"
 
+    def test_close_sheet_lists_associated_plots(
+        self, simple_project: Application, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(simple_project, "confirm_close_dialog")
+        simple_project.confirm_close_dialog.return_value = False
+
+        # no associated plots
+        simple_project.close_tab(0)
+        assert "Plot 1" not in simple_project.confirm_close_dialog.call_args.args[0]
+
+        # associated plots: Plot 1
+        simple_project.close_tab(1)
+        assert "Plot 1" in simple_project.confirm_close_dialog.call_args.args[0]
+
     def test_close_last_remaining_tabs_starts_new_project(
         self, simple_project: Application, mocker: MockerFixture
     ) -> None:
