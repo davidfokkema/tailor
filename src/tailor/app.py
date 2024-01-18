@@ -377,17 +377,15 @@ class Application(QtWidgets.QMainWindow):
                 if self._count_data_sheets() == 1:
                     # there's just the one data sheet, close all and start new
                     # project
-                    self.clear_all()
+                    self.clear_all(add_sheet=True)
                 else:
                     # find associated plots and close plots and data sheet
                     close_idxs = [close_idx]
                     for idx in range(tab_widget.count()):
                         tab = tab_widget.widget(idx)
-                        if (
-                            type(tab) == PlotTab
-                            and tab.data_model == close_tab.data_model
-                        ):
+                        if type(tab) == PlotTab and tab.data_sheet == close_tab:
                             close_idxs.append(idx)
+                    # close from right to left to avoid jumping indexes
                     for idx in sorted(close_idxs, reverse=True):
                         tab_widget.removeTab(idx)
 
@@ -402,7 +400,11 @@ class Application(QtWidgets.QMainWindow):
     def clear_all(self, add_sheet=False):
         """Clear all program state.
 
-        Closes all tabs and data.
+        Closes all tabs and data, optionally creating a new empty data sheet.
+
+        Args:
+            add_sheet (bool, optional): Should add a new data sheet be added.
+                Defaults to False.
         """
         self.ui.tabWidget.clear()
         self.ui.tabWidget.setTabsClosable(True)

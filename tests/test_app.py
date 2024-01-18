@@ -85,7 +85,78 @@ class TestSheets:
         # simple_project.show()
         # qapp.exec()
 
-    def test_close_sheet_without_plots(
-        self, simple_project_without_plot: Application
+    def test_close_sheet_without_any_plots(
+        self, simple_project_without_plot: Application, mocker: MockerFixture
     ) -> None:
-        ...
+        mocker.patch.object(simple_project_without_plot, "confirm_close_dialog")
+
+        simple_project_without_plot.confirm_close_dialog.return_value = False
+        assert simple_project_without_plot.ui.tabWidget.count() == 2
+        simple_project_without_plot.close_tab(1)
+        assert simple_project_without_plot.ui.tabWidget.count() == 2
+
+        simple_project_without_plot.confirm_close_dialog.return_value = True
+        simple_project_without_plot.close_tab(1)
+        assert simple_project_without_plot.ui.tabWidget.count() == 1
+        sheet: DataSheet = simple_project_without_plot.ui.tabWidget.widget(0)
+        assert sheet.name == "Sheet1"
+
+    def test_close_plot(
+        self, simple_project: Application, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(simple_project, "confirm_close_dialog")
+
+        # check that tab under test is indeed a plot
+        PLOT_IDX = 2
+        assert isinstance(simple_project.ui.tabWidget.widget(PLOT_IDX), PlotTab)
+
+        # cancel close request
+        simple_project.confirm_close_dialog.return_value = False
+        assert simple_project.ui.tabWidget.count() == 3
+        simple_project.close_tab(PLOT_IDX)
+        assert simple_project.ui.tabWidget.count() == 3
+
+        # confirm close request
+        simple_project.confirm_close_dialog.return_value = True
+        simple_project.close_tab(PLOT_IDX)
+        assert simple_project.ui.tabWidget.count() == 2
+        for idx in range(2):
+            widget = simple_project.ui.tabWidget.widget(idx)
+            assert isinstance(widget, DataSheet)
+
+    def test_close_sheet_with_no_plots(
+        self, simple_project: Application, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(simple_project, "confirm_close_dialog")
+        simple_project.confirm_close_dialog.return_value = True
+
+        simple_project.close_tab(0)
+
+        assert simple_project.ui.tabWidget.count() == 2
+        assert simple_project.ui.tabWidget.widget(0).name == "Sheet2"
+
+    def test_close_sheet_with_associated_plots(
+        self, simple_project: Application, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(simple_project, "confirm_close_dialog")
+        simple_project.confirm_close_dialog.return_value = True
+
+        # tab 1 (Sheet2) has one associated plot in tab 2
+        simple_project.close_tab(1)
+
+        assert simple_project.ui.tabWidget.count() == 1
+        assert simple_project.ui.tabWidget.widget(0).name == "Sheet1"
+
+    def test_close_last_remaining_tabs_starts_new_project(
+        self, simple_project: Application, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(simple_project, "confirm_close_dialog")
+        mocker.patch.object(simple_project, "clear_all")
+        simple_project.confirm_close_dialog.return_value = True
+
+        # close Sheet1
+        simple_project.close_tab(0)
+        # close Sheet2; should also close Plot1 and start new project
+        simple_project.close_tab(0)
+
+        simple_project.clear_all.assert_called_with(add_sheet=True)
