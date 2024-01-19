@@ -244,12 +244,12 @@ class Application(QtWidgets.QMainWindow):
     def remove_column(self):
         """Remove a column from the current data sheet."""
         if tab := self._on_data_sheet():
-            tab.remove_column()
+            tab.remove_selected_column()
 
     def remove_row(self):
         """Remove a row from the current data sheet."""
         if tab := self._on_data_sheet():
-            tab.remove_row()
+            tab.remove_selected_row()
 
     def clear_selected_cells(self):
         """Clear the contents of selected cells in the current data sheet."""

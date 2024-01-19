@@ -35,7 +35,7 @@ class DataSheet(QtWidgets.QWidget):
         self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
         # user interface events
         self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
-        self.ui.name_edit.textEdited.connect(self.rename_column)
+        self.ui.name_edit.textEdited.connect(self.rename_selected_column)
         self.ui.formula_edit.textEdited.connect(self.update_column_expression)
         self.ui.create_plot_button.clicked.connect(
             self.main_window.ask_and_create_plot_tab
@@ -92,7 +92,7 @@ class DataSheet(QtWidgets.QWidget):
         """Add row to data model."""
         self.data_model.insertRow(self.data_model.rowCount())
 
-    def remove_column(self):
+    def remove_selected_column(self):
         """Remove selected column(s) from data model."""
         selected_columns = [s.column() for s in self.selection.selectedColumns()]
         if selected_columns:
@@ -107,7 +107,7 @@ class DataSheet(QtWidgets.QWidget):
                 parent=self, msg="You must select one or more columns."
             )
 
-    def remove_row(self):
+    def remove_selected_row(self):
         """Remove selected row(s) from data model."""
         selected_rows = [s.row() for s in self.selection.selectedRows()]
         if selected_rows:
@@ -122,7 +122,7 @@ class DataSheet(QtWidgets.QWidget):
                 parent=self, msg="You must select one or more rows."
             )
 
-    def rename_column(self, name):
+    def rename_selected_column(self, name):
         """Rename a column.
 
         Renames the currently selected column.
