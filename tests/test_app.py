@@ -81,9 +81,11 @@ class TestSheets:
         assert isinstance(tabs[1], DataSheet)
         assert isinstance(tabs[2], PlotTab)
 
-        # qapp = QtWidgets.QApplication.instance()
-        # simple_project.show()
-        # qapp.exec()
+    @pytest.mark.skip("shows GUI")
+    def test_show_simple_project(self, simple_project: Application) -> None:
+        qapp = QtWidgets.QApplication.instance()
+        simple_project.show()
+        qapp.exec()
 
     def test_close_sheet_without_any_plots(
         self, simple_project_without_plot: Application, mocker: MockerFixture
