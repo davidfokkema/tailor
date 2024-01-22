@@ -116,7 +116,7 @@ class Application(QtWidgets.QMainWindow):
             self.add_calculated_column
         )
         self.ui.actionAdd_row.triggered.connect(self.add_row)
-        self.ui.actionRemove_column.triggered.connect(self.remove_column)
+        self.ui.actionRemove_column.triggered.connect(self.remove_selected_columns)
         self.ui.actionRemove_row.triggered.connect(self.remove_row)
         self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
         self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
@@ -241,10 +241,23 @@ class Application(QtWidgets.QMainWindow):
         if tab := self._on_data_sheet():
             tab.add_row()
 
-    def remove_column(self):
+    def remove_selected_columns(self):
         """Remove a column from the current data sheet."""
-        if tab := self._on_data_sheet():
-            tab.remove_selected_column()
+        if current_tab := self._on_data_sheet():
+            selected_labels = current_tab.get_selected_column_labels()
+            # find associated plots and remove column
+            plot_titles = []
+            for idx in range(self.ui.tabWidget.count()):
+                tab = self.ui.tabWidget.widget(idx)
+                if type(tab) == PlotTab and tab.model.uses(
+                    current_tab.data_model._data, selected_labels
+                ):
+                    plot_titles.append(tab.name)
+            if plot_titles:
+                msg = f"This column is in use and cannot be removed ({', '.join(plot_titles)})"
+                self.show_warning_dialog(msg)
+            else:
+                current_tab.remove_selected_columns()
 
     def remove_row(self):
         """Remove a row from the current data sheet."""
@@ -557,6 +570,20 @@ class Application(QtWidgets.QMainWindow):
                 return True
             else:
                 return False
+
+    def show_warning_dialog(self, msg):
+        """Present a warning dialog.
+
+        Present a dialog with a warning message. The user can dismiss the warning with the single button.
+
+        Args:
+            msg: the message to present to the user.
+        """
+        QtWidgets.QMessageBox.warning(
+            self,
+            "Warning",
+            msg,
+        )
 
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.

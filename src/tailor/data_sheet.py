@@ -92,7 +92,16 @@ class DataSheet(QtWidgets.QWidget):
         """Add row to data model."""
         self.data_model.insertRow(self.data_model.rowCount())
 
-    def remove_selected_column(self):
+    def get_selected_column_labels(self) -> list[str]:
+        """Get labels for currently selected columns.
+
+        Returns:
+            list[str]: the column labels.
+        """
+        selected_columns = [s.column() for s in self.selection.selectedColumns()]
+        return [self.data_model.columnLabel(idx) for idx in selected_columns]
+
+    def remove_selected_columns(self):
         """Remove selected column(s) from data model."""
         selected_columns = [s.column() for s in self.selection.selectedColumns()]
         if selected_columns:

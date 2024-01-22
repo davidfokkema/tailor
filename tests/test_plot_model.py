@@ -143,6 +143,25 @@ class TestPlotModel:
         model.data_model.get_column_name.side_effect = KeyError
         assert model.get_y_err_col_name() is None
 
+    def test_uses_with_unused_data_model(self, model: PlotModel, mocker: MockerFixture):
+        assert model.uses(mocker.Mock(), [sentinel.x_col]) is False
+
+    def test_uses_with_unused_columns(self, model: PlotModel):
+        assert model.uses(model.data_model, ["unused"]) is False
+
+    @pytest.mark.parametrize(
+        "cols",
+        [
+            ([sentinel.x_col]),
+            ([sentinel.y_col]),
+            ([sentinel.x_err_col]),
+            ([sentinel.y_err_col]),
+            ([sentinel.x_col, "x", "y"]),
+        ],
+    )
+    def test_uses_with_used_columns(self, model: PlotModel, cols):
+        assert model.uses(model.data_model, cols) is True
+
     def test_get_data_returns_tuple(self, model: PlotModel):
         model.data_model.get_column.side_effect = [[1, 2], [1, 2], [1, 2], [1, 2]]
         x, y, x_err, y_err = model.get_data()

@@ -95,6 +95,29 @@ class PlotModel:
         except KeyError:
             return None
 
+    def uses(self, model: DataModel, labels: list[str]) -> bool:
+        """Test whether columns are in use by this plot.
+
+        If the listed column labels are in use as an x, y axis or error flags,
+        returns True, but only if the columns are from the same data sheet as
+        this plot. For example, if you create a plot with columns 'time' and
+        'position' from 'Sheet 2', then the columns 'time' and 'position' from
+        'Sheet 1' are _not_ used.
+
+        Args:
+            model (DataModel): the data model containing the columns under test
+            labels (list[str]): the column labels to check
+
+        Returns:
+            bool: True if any of the columns are in use.
+        """
+        if model is not self.data_model:
+            return False
+        if set(labels) & {self.x_col, self.y_col, self.x_err_col, self.y_err_col}:
+            return True
+        else:
+            return False
+
     def get_fit_domain(self) -> tuple[float, float]:
         """Get fit domain.
 
@@ -403,7 +426,7 @@ class PlotModel:
             params=params,
             weights=1 / (y_err + 1e-99),
             **{self.x_col: x},
-            nan_policy="omit"
+            nan_policy="omit",
         )
 
     def hash_data(self, data: ArrayLike) -> int:
