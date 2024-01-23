@@ -11,25 +11,25 @@ from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 @pytest.fixture()
 def data_sheet(mocker: MockerFixture) -> DataSheet:
     sheet = DataSheet(name="Sheet2", id=1234, main_window=mocker.MagicMock())
-    sheet.data_model.setDataFromArray(
-        sheet.data_model.createIndex(0, 0),
+    sheet.model.setDataFromArray(
+        sheet.model.createIndex(0, 0),
         np.array(
             [[0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [float("nan"), 1.0, 4.0, 9.0, 16.0, 25.0]]
         ).T,
     )
-    sheet.data_model.insertCalculatedColumn(2)
-    sheet.data_model.insertCalculatedColumn(3)
-    sheet.data_model.insertCalculatedColumn(4)
-    sheet.data_model.insertCalculatedColumn(5)
-    sheet.data_model.renameColumn(0, "x")
-    sheet.data_model.renameColumn(1, "y")
-    sheet.data_model.renameColumn(2, "z")
-    sheet.data_model.renameColumn(3, "yerr")
-    sheet.data_model.renameColumn(4, "empty")
-    sheet.data_model.renameColumn(5, "position")
-    sheet.data_model.updateColumnExpression(2, "0.02 * x ** 2")
-    sheet.data_model.updateColumnExpression(3, "0.1")
-    sheet.data_model.updateColumnExpression(5, "0.5 * x ** 2 + y * z")
+    sheet.model.insertCalculatedColumn(2)
+    sheet.model.insertCalculatedColumn(3)
+    sheet.model.insertCalculatedColumn(4)
+    sheet.model.insertCalculatedColumn(5)
+    sheet.model.renameColumn(0, "x")
+    sheet.model.renameColumn(1, "y")
+    sheet.model.renameColumn(2, "z")
+    sheet.model.renameColumn(3, "yerr")
+    sheet.model.renameColumn(4, "empty")
+    sheet.model.renameColumn(5, "position")
+    sheet.model.updateColumnExpression(2, "0.02 * x ** 2")
+    sheet.model.updateColumnExpression(3, "0.1")
+    sheet.model.updateColumnExpression(5, "0.5 * x ** 2 + y * z")
     return sheet
 
 

@@ -44,16 +44,16 @@ class TestDataSheet:
         bare_bones_data_sheet.setup_keyboard_shortcuts.assert_called_once()
 
     def test_add_column(self, bare_bones_data_sheet: DataSheet):
-        bare_bones_data_sheet.data_model.columnCount.return_value = sentinel.num_columns
+        bare_bones_data_sheet.model.columnCount.return_value = sentinel.num_columns
         bare_bones_data_sheet.add_column()
-        bare_bones_data_sheet.data_model.insertColumn.assert_called_once_with(
+        bare_bones_data_sheet.model.insertColumn.assert_called_once_with(
             sentinel.num_columns
         )
 
     def test_add_calculated_column(self, bare_bones_data_sheet: DataSheet):
-        bare_bones_data_sheet.data_model.columnCount.return_value = sentinel.num_columns
+        bare_bones_data_sheet.model.columnCount.return_value = sentinel.num_columns
         bare_bones_data_sheet.add_calculated_column()
-        bare_bones_data_sheet.data_model.insertCalculatedColumn.assert_called_once_with(
+        bare_bones_data_sheet.model.insertCalculatedColumn.assert_called_once_with(
             sentinel.num_columns
         )
 
@@ -74,13 +74,13 @@ class TestDataSheet:
     ):
         mocker.patch.object(bare_bones_data_sheet, "array_to_text")
         bare_bones_data_sheet.selection.selection.return_value = sentinel.selection
-        bare_bones_data_sheet.data_model.dataFromSelection.return_value = sentinel.data
+        bare_bones_data_sheet.model.dataFromSelection.return_value = sentinel.data
         bare_bones_data_sheet.array_to_text.return_value = sentinel.text
 
         bare_bones_data_sheet.copy_selected_cells()
 
         bare_bones_data_sheet.selection.selection.assert_called()
-        bare_bones_data_sheet.data_model.dataFromSelection.assert_called_with(
+        bare_bones_data_sheet.model.dataFromSelection.assert_called_with(
             sentinel.selection
         )
         bare_bones_data_sheet.clipboard.setText.assert_called_with(sentinel.text)
@@ -97,7 +97,7 @@ class TestDataSheet:
         bare_bones_data_sheet.paste_cells()
 
         bare_bones_data_sheet.text_to_array.assert_called_with(sentinel.text)
-        bare_bones_data_sheet.data_model.setDataFromArray.assert_called_with(
+        bare_bones_data_sheet.model.setDataFromArray.assert_called_with(
             sentinel.index, data
         )
 
@@ -130,13 +130,13 @@ class TestDataSheet:
 class TestIntegratedDataSheet:
     def test_fixture_properties(self, data_sheet: DataSheet):
         assert isinstance(data_sheet, DataSheet)
-        assert data_sheet.data_model.columnCount() == 2
-        assert data_sheet.data_model.rowCount() == 5
+        assert data_sheet.model.columnCount() == 2
+        assert data_sheet.model.rowCount() == 5
 
     def test_add_column(self, data_sheet: DataSheet):
         data_sheet.add_column()
-        assert data_sheet.data_model.columnCount() == 3
+        assert data_sheet.model.columnCount() == 3
 
     def test_add_calculated_column(self, data_sheet: DataSheet):
         data_sheet.add_calculated_column()
-        assert data_sheet.data_model.columnCount() == 3
+        assert data_sheet.model.columnCount() == 3

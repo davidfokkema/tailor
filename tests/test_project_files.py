@@ -14,22 +14,22 @@ from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 @pytest.fixture()
 def data_sheet(mocker: MockerFixture) -> DataSheet:
     sheet = DataSheet(name="sheet1", id=1234, main_window=mocker.MagicMock())
-    sheet.data_model.setDataFromArray(
-        sheet.data_model.createIndex(0, 0),
+    sheet.model.setDataFromArray(
+        sheet.model.createIndex(0, 0),
         np.array(
             [[0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [float("nan"), 1.0, 4.0, 9.0, 16.0, 25.0]]
         ).T,
     )
-    sheet.data_model.insertCalculatedColumn(2)
-    sheet.data_model.insertCalculatedColumn(3)
-    sheet.data_model.insertCalculatedColumn(4)
-    sheet.data_model.renameColumn(0, "x")
-    sheet.data_model.renameColumn(1, "y")
-    sheet.data_model.renameColumn(2, "z")
-    sheet.data_model.renameColumn(3, "yerr")
-    sheet.data_model.renameColumn(4, "empty")
-    sheet.data_model.updateColumnExpression(2, "0.02 * x ** 2")
-    sheet.data_model.updateColumnExpression(3, "0.1")
+    sheet.model.insertCalculatedColumn(2)
+    sheet.model.insertCalculatedColumn(3)
+    sheet.model.insertCalculatedColumn(4)
+    sheet.model.renameColumn(0, "x")
+    sheet.model.renameColumn(1, "y")
+    sheet.model.renameColumn(2, "z")
+    sheet.model.renameColumn(3, "yerr")
+    sheet.model.renameColumn(4, "empty")
+    sheet.model.updateColumnExpression(2, "0.02 * x ** 2")
+    sheet.model.updateColumnExpression(3, "0.1")
     return sheet
 
 
@@ -111,19 +111,17 @@ class TestProjectFiles:
         mocker.patch.object(tailor.data_sheet.QDataModel, "endResetModel")
         data_sheet = project_files.load_data_sheet(app, data_sheet_model)
         assert isinstance(data_sheet, DataSheet)
-        assert data_sheet.data_model.rowCount() == 6
+        assert data_sheet.model.rowCount() == 6
         # test single value
-        assert (
-            data_sheet.data_model.data(data_sheet.data_model.createIndex(5, 1)) == "25"
-        )
-        assert data_sheet.data_model.columnExpression(2) == "0.02 * x ** 2"
-        assert data_sheet.data_model.columnNames() == ["x", "y", "z", "yerr", "empty"]
+        assert data_sheet.model.data(data_sheet.model.createIndex(5, 1)) == "25"
+        assert data_sheet.model.columnExpression(2) == "0.02 * x ** 2"
+        assert data_sheet.model.columnNames() == ["x", "y", "z", "yerr", "empty"]
         # must be called twice (once implicitly, once explicitly by our code)
         assert data_sheet.selection_changed.call_count == 2
         # begin/end reset model _must_ be called otherwise shape of data will be
         # the default shape of two columns, five rows.
-        data_sheet.data_model.beginResetModel.assert_called()
-        data_sheet.data_model.endResetModel.assert_called()
+        data_sheet.model.beginResetModel.assert_called()
+        data_sheet.model.endResetModel.assert_called()
 
     def test_save_plot(self, plot_tab: PlotTab):
         plot = project_files.save_plot(plot_tab)

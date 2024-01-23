@@ -286,7 +286,7 @@ class Application(QtWidgets.QMainWindow):
         Returns:
             list[str]: a list of plot titles that use one of the columns.
         """
-        data_model = sheet.data_model._data
+        data_model = sheet.model.data_model
         plot_titles = []
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
@@ -311,9 +311,9 @@ class Application(QtWidgets.QMainWindow):
             list[str]: a list of column names which use any of the columns.
         """
         column_names = []
-        for idx in range(sheet.data_model.columnCount()):
-            if sheet.data_model.columnUses(idx, columns):
-                column_names.append(sheet.data_model.columnName(idx))
+        for idx in range(sheet.model.columnCount()):
+            if sheet.model.columnUses(idx, columns):
+                column_names.append(sheet.model.columnName(idx))
         return column_names
 
     def remove_row(self):
@@ -379,7 +379,7 @@ class Application(QtWidgets.QMainWindow):
         if data_sheet := self._on_data_sheet():
             dialog = self.create_plot_dialog(data_sheet)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
-                labels = [None] + data_sheet.data_model.columnLabels()
+                labels = [None] + data_sheet.model.columnLabels()
                 x_var = labels[dialog.ui.x_axis_box.currentIndex()]
                 y_var = labels[dialog.ui.y_axis_box.currentIndex()]
                 x_err = labels[dialog.ui.x_err_box.currentIndex()]
@@ -417,7 +417,7 @@ class Application(QtWidgets.QMainWindow):
                 self.ui = Ui_CreatePlotDialog()
                 self.ui.setupUi(self)
 
-        choices = [None] + data_sheet.data_model.columnNames()
+        choices = [None] + data_sheet.model.columnNames()
         create_dialog = Dialog()
         create_dialog.ui.x_axis_box.addItems(choices)
         create_dialog.ui.y_axis_box.addItems(choices)
@@ -490,8 +490,8 @@ class Application(QtWidgets.QMainWindow):
         self.mark_project_dirty(False)
         if add_sheet:
             sheet = self.add_data_sheet()
-            sheet.data_model.renameColumn(0, "x")
-            sheet.data_model.renameColumn(1, "y")
+            sheet.model.renameColumn(0, "x")
+            sheet.model.renameColumn(1, "y")
             # force updating column information in UI
             sheet.selection_changed()
 
@@ -509,9 +509,9 @@ class Application(QtWidgets.QMainWindow):
         """Duplicate the current data sheet."""
         if current_sheet := self._on_data_sheet():
             new_sheet = self.add_data_sheet()
-            new_sheet.data_model.beginResetModel()
-            new_sheet.data_model._data = current_sheet.data_model._data.copy(deep=True)
-            new_sheet.data_model.endResetModel()
+            new_sheet.model.beginResetModel()
+            new_sheet.model.data_model = current_sheet.model.data_model.copy(deep=True)
+            new_sheet.model.endResetModel()
 
     def new_project(self):
         """Close the current project and open a new one."""

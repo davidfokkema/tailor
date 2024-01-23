@@ -21,7 +21,7 @@ class QDataModel(QtCore.QAbstractTableModel):
     def __init__(self):
         """Instantiate the class."""
         super().__init__()
-        self._data = DataModel()
+        self.data_model = DataModel()
 
     def rowCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
         """Return the number of rows in the data.
@@ -37,7 +37,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         if parent.isValid():
             return 0
         else:
-            return self._data.num_rows()
+            return self.data_model.num_rows()
 
     def columnCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
         """Return the number of columns in the data.
@@ -53,7 +53,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         if parent.isValid():
             return 0
         else:
-            return self._data.num_columns()
+            return self.data_model.num_columns()
 
     def data(
         self,
@@ -82,12 +82,12 @@ class QDataModel(QtCore.QAbstractTableModel):
         """
         row = index.row()
         col = index.column()
-        label = self._data.get_column_label(col)
+        label = self.data_model.get_column_label(col)
 
         if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
             # request for the data itself
-            value = self._data.get_value(row, col)
-            if np.isnan(value) and not self._data.is_calculated_column(label):
+            value = self.data_model.get_value(row, col)
+            if np.isnan(value) and not self.data_model.is_calculated_column(label):
                 # NaN in a data column, show as empty
                 return ""
             else:
@@ -95,8 +95,8 @@ class QDataModel(QtCore.QAbstractTableModel):
                 return f"{value:.10g}"
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell
-            if self._data.is_calculated_column(label):
-                if self._data.is_column_valid(label):
+            if self.data_model.is_calculated_column(label):
+                if self.data_model.is_column_valid(label):
                     # Yellow
                     return QtGui.QBrush(QtGui.QColor(255, 255, 200))
                 else:
@@ -130,8 +130,8 @@ class QDataModel(QtCore.QAbstractTableModel):
         """
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
-                label = self._data.get_column_label(section)
-                return self._data.get_column_name(label)
+                label = self.data_model.get_column_label(section)
+                return self.data_model.get_column_name(label)
             else:
                 # return row number (starting from 1)
                 return section + 1
@@ -167,7 +167,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             except ValueError:
                 value = np.nan
             finally:
-                self._data.set_value(row, col, value)
+                self.data_model.set_value(row, col, value)
             return True
         # Role not implemented
         return False
@@ -184,8 +184,8 @@ class QDataModel(QtCore.QAbstractTableModel):
             The requested flags.
         """
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-        label = self._data.get_column_label(index.column())
-        if not self._data.is_calculated_column(label):
+        label = self.data_model.get_column_label(index.column())
+        if not self.data_model.is_calculated_column(label):
             # You can only edit data if the column values are not calculated
             flags |= QtCore.Qt.ItemIsEditable
         return flags
@@ -213,12 +213,12 @@ class QDataModel(QtCore.QAbstractTableModel):
             # a table cell can _not_ insert rows
             return False
 
-        if self._data.num_columns() == 0:
+        if self.data_model.num_columns() == 0:
             # you can not insert rows when there are no columns
             return False
 
         self.beginInsertRows(parent, row, row + count - 1)
-        self._data.insert_rows(row, count)
+        self.data_model.insert_rows(row, count)
         self.endInsertRows()
         return True
 
@@ -244,7 +244,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             return False
 
         self.beginRemoveRows(parent, row, row + count - 1)
-        self._data.remove_rows(row, count)
+        self.data_model.remove_rows(row, count)
         self.endRemoveRows()
         return True
 
@@ -270,7 +270,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             return False
 
         self.beginInsertColumns(parent, column, column + count - 1)
-        self._data.insert_columns(column, count)
+        self.data_model.insert_columns(column, count)
         self.endInsertColumns()
         return True
 
@@ -296,7 +296,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             return False
 
         self.beginRemoveColumns(parent, column, column + count - 1)
-        self._data.remove_columns(column, count)
+        self.data_model.remove_columns(column, count)
         self.endRemoveColumns()
         return True
 
@@ -360,7 +360,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             if source_idx < dest_idx:
                 # Adjust for Qt conventions, undo +1, see docstring
                 dest_idx -= 1
-            self._data.move_column(source_idx, dest_idx)
+            self.data_model.move_column(source_idx, dest_idx)
             # endMoveColumns triggers a dataChanged for all columns, apparently
             self.endMoveColumns()
             return True
@@ -388,7 +388,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             return False
 
         self.beginInsertColumns(parent, column, column)
-        self._data.insert_calculated_column(column)
+        self.data_model.insert_calculated_column(column)
         self.endInsertColumns()
         return True
 
@@ -401,7 +401,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         Returns:
             str: the column label
         """
-        return self._data.get_column_label(column)
+        return self.data_model.get_column_label(column)
 
     def columnName(self, column: int) -> str:
         """Get column name.
@@ -412,8 +412,8 @@ class QDataModel(QtCore.QAbstractTableModel):
         Returns:
             str: the column name
         """
-        label = self._data.get_column_label(column)
-        return self._data.get_column_name(label)
+        label = self.data_model.get_column_label(column)
+        return self.data_model.get_column_name(label)
 
     def columnLabels(self) -> list[str]:
         """Get all column labels.
@@ -421,7 +421,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         Returns:
             list[str]: a list of all column labels.
         """
-        return self._data.get_column_labels()
+        return self.data_model.get_column_labels()
 
     def columnNames(self) -> list[str]:
         """Get all column names.
@@ -429,15 +429,15 @@ class QDataModel(QtCore.QAbstractTableModel):
         Returns:
             list[str]: a list of all column names.
         """
-        return self._data.get_column_names()
+        return self.data_model.get_column_names()
 
     def renameColumn(self, column: int, name: str) -> str:
-        label = self._data.get_column_label(column)
-        return self._data.rename_column(label, name)
+        label = self.data_model.get_column_label(column)
+        return self.data_model.rename_column(label, name)
 
     def isCalculatedColumn(self, column: int):
-        label = self._data.get_column_label(column)
-        return self._data.is_calculated_column(label)
+        label = self.data_model.get_column_label(column)
+        return self.data_model.is_calculated_column(label)
 
     def columnExpression(self, column: int):
         """Get column expression.
@@ -450,8 +450,8 @@ class QDataModel(QtCore.QAbstractTableModel):
         Returns:
             str | None: the mathematical expression
         """
-        label = self._data.get_column_label(column)
-        return self._data.get_column_expression(label)
+        label = self.data_model.get_column_label(column)
+        return self.data_model.get_column_expression(label)
 
     def columnUses(self, column: int, column_labels: list[str]) -> bool:
         """Test whether column uses any of the listed columns.
@@ -466,14 +466,14 @@ class QDataModel(QtCore.QAbstractTableModel):
         Returns:
             bool: True if the column uses any of the column_labels.
         """
-        label = self._data.get_column_label(column)
-        return self._data.column_uses(label, column_labels)
+        label = self.data_model.get_column_label(column)
+        return self.data_model.column_uses(label, column_labels)
 
     def updateColumnExpression(self, column: int, expression: str) -> bool:
         if not self.isCalculatedColumn(column):
             return False
-        label = self._data.get_column_label(column)
-        self._data.update_column_expression(label, expression)
+        label = self.data_model.get_column_label(column)
+        self.data_model.update_column_expression(label, expression)
         top_left = self.createIndex(0, column)
         bottom_right = self.createIndex(self.rowCount() - 1, self.columnCount() - 1)
         self.dataChanged.emit(top_left, bottom_right)
@@ -489,7 +489,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             bool: True if successful.
         """
         for selection_range in selection.toList():
-            self._data.set_values(
+            self.data_model.set_values(
                 selection_range.top(),
                 selection_range.left(),
                 selection_range.bottom(),
@@ -554,7 +554,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             left = selection_range.left()
             bottom = selection_range.bottom()
             right = selection_range.right()
-            values = self._data.get_values(top, left, bottom, right)
+            values = self.data_model.get_values(top, left, bottom, right)
             data[
                 top - row_offset : bottom - row_offset + 1,
                 left - column_offset : right - column_offset + 1,
@@ -579,7 +579,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             self.insertColumns(self.columnCount(), delta_columns)
         if (delta_rows := row + height - self.rowCount()) > 0:
             self.insertRows(self.rowCount(), delta_rows)
-        self._data.set_values_from_array(row, column, values)
+        self.data_model.set_values_from_array(row, column, values)
 
         # recalculating vales may have changed all columns to the far right
         num_columns = self.columnCount()

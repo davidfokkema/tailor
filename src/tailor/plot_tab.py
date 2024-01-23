@@ -67,7 +67,7 @@ class PlotTab(QtWidgets.QWidget):
         self.name = name
         self.id = id
         self.model = PlotModel(
-            data_sheet.data_model._data, x_col, y_col, x_err_col, y_err_col
+            data_sheet.model.data_model, x_col, y_col, x_err_col, y_err_col
         )
         self.data_sheet = data_sheet
         self._params = {}

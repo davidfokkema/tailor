@@ -107,7 +107,7 @@ def load_project_from_model(project: Application, model: Project):
 
 
 def save_data_sheet(data_sheet: DataSheet) -> Sheet:
-    data_model = data_sheet.data_model._data
+    data_model = data_sheet.model.data_model
     return Sheet(
         name=data_sheet.name,
         id=data_sheet.id,
@@ -120,14 +120,14 @@ def save_data_sheet(data_sheet: DataSheet) -> Sheet:
 
 def load_data_sheet(app: Application, model: Sheet) -> DataSheet:
     data_sheet = DataSheet(name=model.name, id=model.id, main_window=app)
-    data_sheet.data_model.beginResetModel()
-    data = data_sheet.data_model._data
+    data_sheet.model.beginResetModel()
+    data = data_sheet.model.data_model
     data._data = pd.DataFrame.from_dict(model.data)
     data._new_col_num = model.new_col_num
     data._col_names = model.col_names
     data._calculated_column_expression = model.calculated_column_expression
-    data_sheet.data_model._data.recalculate_all_columns()
-    data_sheet.data_model.endResetModel()
+    data_sheet.model.data_model.recalculate_all_columns()
+    data_sheet.model.endResetModel()
     # force updating column information in UI
     data_sheet.selection_changed()
     return data_sheet

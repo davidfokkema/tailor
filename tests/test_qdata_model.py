@@ -16,13 +16,13 @@ class TestImplementationDetails:
     def test_model_attributes(self):
         # test the actual implementation, not a mocked fixture
         qmodel = QDataModel()
-        assert isinstance(qmodel._data, DataModel)
+        assert isinstance(qmodel.data_model, DataModel)
 
 
 @pytest.fixture()
 def qmodel(mocker: MockerFixture):
     model = QDataModel()
-    mocker.patch.object(model, "_data")
+    mocker.patch.object(model, "data_model")
     return model
 
 
@@ -45,7 +45,7 @@ def data():
 
 class TestQtRequired:
     def test_rowCount(self, qmodel: QDataModel):
-        assert qmodel.rowCount() == qmodel._data.num_rows.return_value
+        assert qmodel.rowCount() == qmodel.data_model.num_rows.return_value
 
     def test_rowCount_valid_parent(self, qmodel: QDataModel):
         """Valid parent has no children in a table."""
@@ -53,7 +53,7 @@ class TestQtRequired:
         assert qmodel.rowCount(index) == 0
 
     def test_columnCount(self, qmodel: QDataModel):
-        assert qmodel.columnCount() == qmodel._data.num_columns.return_value
+        assert qmodel.columnCount() == qmodel.data_model.num_columns.return_value
 
     def test_columnCount_valid_parent(self, qmodel: QDataModel):
         """Valid parent has no children in a table."""
@@ -83,15 +83,15 @@ class TestQtRequired:
         role,
     ):
         index = qmodel.createIndex(row, column)
-        qmodel._data.get_value.return_value = value
-        qmodel._data.is_calculated_column.return_value = is_calculated
+        qmodel.data_model.get_value.return_value = value
+        qmodel.data_model.is_calculated_column.return_value = is_calculated
 
         if not role:
             actual = qmodel.data(index)
         else:
             actual = qmodel.data(index, role)
 
-        qmodel._data.get_value.assert_called_once_with(row, column)
+        qmodel.data_model.get_value.assert_called_once_with(row, column)
         assert actual == expected
 
     def test_data_returns_None_for_invalid_role(self, qmodel: QDataModel):
@@ -102,23 +102,23 @@ class TestQtRequired:
     @pytest.mark.parametrize("role", [QtCore.Qt.DisplayRole, QtCore.Qt.BackgroundRole])
     def test_data_uses_column_label(self, qmodel: QDataModel, role):
         index = qmodel.createIndex(2, 1)
-        qmodel._data.get_value.return_value = np.nan
-        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel.data_model.get_value.return_value = np.nan
+        qmodel.data_model.get_column_label.return_value = sentinel.label
 
         qmodel.data(index, role)
 
-        qmodel._data.is_calculated_column.assert_called_with(sentinel.label)
+        qmodel.data_model.is_calculated_column.assert_called_with(sentinel.label)
         if role == QtCore.Qt.BackgroundRole:
-            qmodel._data.is_column_valid.assert_called_with(sentinel.label)
+            qmodel.data_model.is_column_valid.assert_called_with(sentinel.label)
 
     def test_headerData_for_columns(self, qmodel: QDataModel):
-        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel.data_model.get_column_label.return_value = sentinel.label
 
         actual = qmodel.headerData(sentinel.colidx, QtCore.Qt.Horizontal)
 
-        qmodel._data.get_column_label.assert_called_once_with(sentinel.colidx)
-        qmodel._data.get_column_name.assert_called_once_with(sentinel.label)
-        assert actual == qmodel._data.get_column_name.return_value
+        qmodel.data_model.get_column_label.assert_called_once_with(sentinel.colidx)
+        qmodel.data_model.get_column_name.assert_called_once_with(sentinel.label)
+        assert actual == qmodel.data_model.get_column_name.return_value
 
     @pytest.mark.parametrize("rowidx, expected", [(0, 1), (1, 2), (7, 8), (20, 21)])
     def test_headerData_for_rows(self, qmodel: QDataModel, rowidx, expected):
@@ -140,7 +140,7 @@ class TestQtRequired:
         else:
             qmodel.setData(index, 3)
 
-        qmodel._data.set_value.assert_called_once_with(1, 2, 3.0)
+        qmodel.data_model.set_value.assert_called_once_with(1, 2, 3.0)
 
     def test_setData_with_unsupported_role(self, qmodel: QDataModel):
         index = qmodel.createIndex(2, 1)
@@ -149,8 +149,8 @@ class TestQtRequired:
 
     @pytest.mark.parametrize("is_calculated", [True, False])
     def test_flags(self, qmodel: QDataModel, is_calculated):
-        qmodel._data.get_column_label.return_value = sentinel.label
-        qmodel._data.is_calculated_column.return_value = is_calculated
+        qmodel.data_model.get_column_label.return_value = sentinel.label
+        qmodel.data_model.is_calculated_column.return_value = is_calculated
         expected = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
         if not is_calculated:
             expected |= QtCore.Qt.ItemIsEditable
@@ -158,8 +158,8 @@ class TestQtRequired:
         index = qmodel.createIndex(2, 123)
         flags = qmodel.flags(index)
 
-        qmodel._data.get_column_label.assert_called_with(123)
-        qmodel._data.is_calculated_column.assert_called_once_with(sentinel.label)
+        qmodel.data_model.get_column_label.assert_called_with(123)
+        qmodel.data_model.is_calculated_column.assert_called_once_with(sentinel.label)
         assert flags == expected
 
     def test_insertRows(self, qmodel: QDataModel, mocker: MockerFixture):
@@ -168,7 +168,7 @@ class TestQtRequired:
         parent = QtCore.QModelIndex()
         retvalue1 = qmodel.insertRows(3, 4, parent=parent)
 
-        qmodel._data.insert_rows.assert_called_once_with(3, 4)
+        qmodel.data_model.insert_rows.assert_called_once_with(3, 4)
         assert retvalue1 is True
         # four rows: 3 (first), 4, 5, 6 (last)
         qmodel.beginInsertRows.assert_called_with(parent, 3, 6)
@@ -182,7 +182,7 @@ class TestQtRequired:
         assert qmodel.insertRows(3, 4) is True
 
     def test_insertRows_no_columns(self, qmodel: QDataModel):
-        qmodel._data.num_columns.return_value = 0
+        qmodel.data_model.num_columns.return_value = 0
 
         assert qmodel.insertRows(0, 10) is False
 
@@ -193,7 +193,7 @@ class TestQtRequired:
         parent = QtCore.QModelIndex()
         retvalue = qmodel.removeRows(3, 4, parent=parent)
 
-        qmodel._data.remove_rows.assert_called_once_with(3, 4)
+        qmodel.data_model.remove_rows.assert_called_once_with(3, 4)
         assert retvalue is True
         # four rows: 3 (first), 4, 5, 6 (last)
         qmodel.beginRemoveRows.assert_called_with(parent, 3, 6)
@@ -212,7 +212,7 @@ class TestQtRequired:
         parent = QtCore.QModelIndex()
         retvalue = qmodel.insertColumns(3, 4, parent=parent)
 
-        qmodel._data.insert_columns.assert_called_once_with(3, 4)
+        qmodel.data_model.insert_columns.assert_called_once_with(3, 4)
         assert retvalue is True
         # four columns: 3 (first), 4, 5, 6 (last)
         qmodel.beginInsertColumns.assert_called_with(parent, 3, 6)
@@ -231,7 +231,7 @@ class TestQtRequired:
         parent = QtCore.QModelIndex()
         retvalue = qmodel.removeColumns(3, 4, parent=parent)
 
-        qmodel._data.remove_columns.assert_called_once_with(3, 4)
+        qmodel.data_model.remove_columns.assert_called_once_with(3, 4)
         assert retvalue is True
         # four columns: 3 (first), 4, 5, 6 (last)
         qmodel.beginRemoveColumns.assert_called_with(parent, 3, 6)
@@ -247,13 +247,13 @@ class TestQtRequired:
     def test_moveColumn_right(self, qmodel: QDataModel, mocker: MockerFixture):
         mocker.patch.object(qmodel, "beginMoveColumns")
         mocker.patch.object(qmodel, "endMoveColumns")
-        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel.data_model.get_column_label.return_value = sentinel.label
         parent = QtCore.QModelIndex()
 
         retvalue = qmodel.moveColumn(parent, 3, parent, 5)
 
         # pay attention to Qt conventions, see method docstring
-        qmodel._data.move_column.assert_called_once_with(3, 5 - 1)
+        qmodel.data_model.move_column.assert_called_once_with(3, 5 - 1)
         assert retvalue is True
         qmodel.beginMoveColumns.assert_called_with(parent, 3, 3, parent, 5)
         qmodel.endMoveColumns.assert_called()
@@ -261,13 +261,13 @@ class TestQtRequired:
     def test_moveColumn_left(self, qmodel: QDataModel, mocker: MockerFixture):
         mocker.patch.object(qmodel, "beginMoveColumns")
         mocker.patch.object(qmodel, "endMoveColumns")
-        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel.data_model.get_column_label.return_value = sentinel.label
         parent = QtCore.QModelIndex()
 
         retvalue = qmodel.moveColumn(parent, 5, parent, 3)
 
         # pay attention to Qt conventions, see method docstring
-        qmodel._data.move_column.assert_called_once_with(5, 3)
+        qmodel.data_model.move_column.assert_called_once_with(5, 3)
         assert retvalue is True
         qmodel.beginMoveColumns.assert_called_with(parent, 5, 5, parent, 3)
         qmodel.endMoveColumns.assert_called()
@@ -298,7 +298,7 @@ class TestAPI:
         parent = QtCore.QModelIndex()
         retvalue = qmodel.insertCalculatedColumn(3, parent=parent)
 
-        qmodel._data.insert_calculated_column.assert_called_once_with(3)
+        qmodel.data_model.insert_calculated_column.assert_called_once_with(3)
         assert retvalue is True
         qmodel.beginInsertColumns.assert_called_with(parent, 3, 3)
         qmodel.endInsertColumns.assert_called()
@@ -313,73 +313,75 @@ class TestAPI:
         )
 
     def test_columnLabel(self, qmodel: QDataModel):
-        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel.data_model.get_column_label.return_value = sentinel.label
 
         name = qmodel.columnLabel(sentinel.idx)
 
-        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
+        qmodel.data_model.get_column_label.assert_called_with(sentinel.idx)
         assert name == sentinel.label
 
     def test_columnLabels(self, qmodel: QDataModel):
-        qmodel._data.get_column_labels.return_value = sentinel.labels
+        qmodel.data_model.get_column_labels.return_value = sentinel.labels
 
         assert qmodel.columnLabels() == sentinel.labels
 
     def test_columnName(self, qmodel: QDataModel):
-        qmodel._data.get_column_label.return_value = sentinel.label
-        qmodel._data.get_column_name.return_value = sentinel.name
+        qmodel.data_model.get_column_label.return_value = sentinel.label
+        qmodel.data_model.get_column_name.return_value = sentinel.name
 
         name = qmodel.columnName(sentinel.idx)
 
-        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
-        qmodel._data.get_column_name.assert_called_with(sentinel.label)
+        qmodel.data_model.get_column_label.assert_called_with(sentinel.idx)
+        qmodel.data_model.get_column_name.assert_called_with(sentinel.label)
         assert name == sentinel.name
 
     def test_columnNames(self, qmodel: QDataModel):
-        qmodel._data.get_column_names.return_value = sentinel.names
+        qmodel.data_model.get_column_names.return_value = sentinel.names
 
         assert qmodel.columnNames() == sentinel.names
 
     def test_renameColumn(self, qmodel: QDataModel):
-        qmodel._data.get_column_label.return_value = sentinel.label
-        qmodel._data.rename_column.return_value = sentinel.new_name
+        qmodel.data_model.get_column_label.return_value = sentinel.label
+        qmodel.data_model.rename_column.return_value = sentinel.new_name
 
         new_name = qmodel.renameColumn(sentinel.idx, sentinel.name)
 
-        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
-        qmodel._data.rename_column.assert_called_with(sentinel.label, sentinel.name)
+        qmodel.data_model.get_column_label.assert_called_with(sentinel.idx)
+        qmodel.data_model.rename_column.assert_called_with(
+            sentinel.label, sentinel.name
+        )
         assert new_name == sentinel.new_name
 
     def test_isCalculatedColumn(self, qmodel: QDataModel):
-        qmodel._data.get_column_label.return_value = sentinel.label
-        qmodel._data.is_calculated_column.return_value = sentinel.is_calculated
+        qmodel.data_model.get_column_label.return_value = sentinel.label
+        qmodel.data_model.is_calculated_column.return_value = sentinel.is_calculated
 
         actual = qmodel.isCalculatedColumn(sentinel.idx)
 
-        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
-        qmodel._data.is_calculated_column.assert_called_with(sentinel.label)
+        qmodel.data_model.get_column_label.assert_called_with(sentinel.idx)
+        qmodel.data_model.is_calculated_column.assert_called_with(sentinel.label)
         assert actual == sentinel.is_calculated
 
     def test_columnExpression(self, qmodel: QDataModel):
-        qmodel._data.get_column_label.return_value = sentinel.label
-        qmodel._data.get_column_expression.return_value = sentinel.expression
+        qmodel.data_model.get_column_label.return_value = sentinel.label
+        qmodel.data_model.get_column_expression.return_value = sentinel.expression
 
         expression = qmodel.columnExpression(sentinel.idx)
 
-        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
-        qmodel._data.get_column_expression.assert_called_with(sentinel.label)
+        qmodel.data_model.get_column_label.assert_called_with(sentinel.idx)
+        qmodel.data_model.get_column_expression.assert_called_with(sentinel.label)
         assert expression == sentinel.expression
 
     def test_updateColumnExpression(self, qmodel: QDataModel, mocker: MockerFixture):
         mocker.patch.object(qmodel, "createIndex")
         mocker.patch.object(qmodel, "dataChanged")
-        qmodel._data.get_column_label.return_value = sentinel.label
+        qmodel.data_model.get_column_label.return_value = sentinel.label
 
         success = qmodel.updateColumnExpression(sentinel.idx, sentinel.expr)
 
         assert success is True
-        qmodel._data.get_column_label.assert_called_with(sentinel.idx)
-        qmodel._data.update_column_expression.assert_called_with(
+        qmodel.data_model.get_column_label.assert_called_with(sentinel.idx)
+        qmodel.data_model.update_column_expression.assert_called_with(
             sentinel.label, sentinel.expr
         )
 
@@ -408,7 +410,7 @@ class TestAPI:
 
         qmodel.clearData(selection)
 
-        qmodel._data.set_values.assert_called_with(0, 1, 1, 1, np.nan)
+        qmodel.data_model.set_values.assert_called_with(0, 1, 1, 1, np.nan)
 
     def test_clearData_with_multiple_selections(self, qmodel: QDataModel):
         selection = QtCore.QItemSelection(
@@ -421,7 +423,7 @@ class TestAPI:
         qmodel.clearData(selection)
 
         expected = [call(0, 1, 1, 1, np.nan), call(2, 2, 2, 2, np.nan)]
-        assert qmodel._data.set_values.call_args_list == expected
+        assert qmodel.data_model.set_values.call_args_list == expected
 
     def test_clearData_calls_dataChanged(
         self, qmodel: QDataModel, mocker: MockerFixture
@@ -467,7 +469,7 @@ class TestAPI:
 
             21 22 223
         """
-        qmodel._data.get_values.side_effect = (
+        qmodel.data_model.get_values.side_effect = (
             np.array([[9.0, 10.0], [15.0, 16.0], [21.0, 22.0]]),
             np.array([[23.0]]),
         )
@@ -480,7 +482,7 @@ class TestAPI:
 
         values = qmodel.dataFromSelection(selection)
 
-        assert qmodel._data.get_values.call_args_list == [
+        assert qmodel.data_model.get_values.call_args_list == [
             call(1, 2, 3, 3),
             call(3, 4, 3, 4),
         ]
@@ -505,7 +507,7 @@ class TestAPI:
         # (8 + 2) - 3 = 7 columns too short
         qmodel.insertRows.assert_called_with(5, 3)
         qmodel.insertColumns.assert_called_with(3, 7)
-        qmodel._data.set_values_from_array.assert_called_with(1, 2, values)
+        qmodel.data_model.set_values_from_array.assert_called_with(1, 2, values)
 
     def test_setDataFromArray_emits_dataChanged(
         self, data: QDataModel, mocker: MockerFixture

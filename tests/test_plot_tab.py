@@ -36,7 +36,7 @@ class TestImplementationDetails:
         mocker.patch.object(PlotTab, "finish_ui")
         mocker.patch.object(PlotTab, "connect_ui_events")
         mock_data_sheet = mocker.Mock(spec=DataSheet)
-        mock_data_sheet.data_model._data = sentinel.data_model
+        mock_data_sheet.model.data_model = sentinel.data_model
 
         plot_tab = PlotTab(
             name=sentinel.name,

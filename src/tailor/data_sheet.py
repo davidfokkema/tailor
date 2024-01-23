@@ -7,7 +7,7 @@ from tailor.ui_data_sheet import Ui_DataSheet
 
 
 class DataSheet(QtWidgets.QWidget):
-    data_model: QDataModel = None
+    model: QDataModel = None
     name: str = None
     id: int
 
@@ -27,7 +27,7 @@ class DataSheet(QtWidgets.QWidget):
         self.setup_keyboard_shortcuts()
 
         # Start at (0, 0)
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self.ui.data_view.setCurrentIndex(self.model.createIndex(0, 0))
 
     def connect_ui_events(self):
         # connect button signals
@@ -58,12 +58,12 @@ class DataSheet(QtWidgets.QWidget):
 
     def setup_data_model(self):
         """Set up the data model with some initial data."""
-        self.data_model = QDataModel()
-        self.data_model.insertColumns(0, 2)
-        self.data_model.insertRows(0, 5)
+        self.model = QDataModel()
+        self.model.insertColumns(0, 2)
+        self.model.insertRows(0, 5)
 
         # Set view and selection model
-        self.ui.data_view.setModel(self.data_model)
+        self.ui.data_view.setModel(self.model)
         self.ui.data_view.setDragDropMode(QtWidgets.QTableView.NoDragDrop)
 
         # Set up header
@@ -74,23 +74,23 @@ class DataSheet(QtWidgets.QWidget):
 
     def add_column(self):
         """Add column to data model and select it."""
-        col_index = self.data_model.columnCount()
-        self.data_model.insertColumn(col_index)
+        col_index = self.model.columnCount()
+        self.model.insertColumn(col_index)
         self.ui.data_view.selectColumn(col_index)
         self.ui.name_edit.selectAll()
         self.ui.name_edit.setFocus()
 
     def add_calculated_column(self):
         """Add a calculated column to data model and select it."""
-        col_index = self.data_model.columnCount()
-        self.data_model.insertCalculatedColumn(col_index)
+        col_index = self.model.columnCount()
+        self.model.insertCalculatedColumn(col_index)
         self.ui.data_view.selectColumn(col_index)
         self.ui.name_edit.selectAll()
         self.ui.name_edit.setFocus()
 
     def add_row(self):
         """Add row to data model."""
-        self.data_model.insertRow(self.data_model.rowCount())
+        self.model.insertRow(self.model.rowCount())
 
     def get_selected_column_labels(self) -> list[str]:
         """Get labels for currently selected columns.
@@ -99,7 +99,7 @@ class DataSheet(QtWidgets.QWidget):
             list[str]: the column labels.
         """
         selected_columns = [s.column() for s in self.selection.selectedColumns()]
-        return [self.data_model.columnLabel(idx) for idx in selected_columns]
+        return [self.model.columnLabel(idx) for idx in selected_columns]
 
     def remove_selected_columns(self):
         """Remove selected column(s) from data model."""
@@ -110,7 +110,7 @@ class DataSheet(QtWidgets.QWidget):
             # contiguous columns since they can be removed in one fell swoop.
             selected_columns.sort(reverse=True)
             for column in selected_columns:
-                self.data_model.removeColumn(column)
+                self.model.removeColumn(column)
         else:
             dialogs.show_warning_dialog(
                 parent=self, msg="You must select one or more columns."
@@ -125,7 +125,7 @@ class DataSheet(QtWidgets.QWidget):
             # contiguous rows since they can be removed in one fell swoop.
             selected_rows.sort(reverse=True)
             for row in selected_rows:
-                self.data_model.removeRow(row)
+                self.model.removeRow(row)
         else:
             dialogs.show_warning_dialog(
                 parent=self, msg="You must select one or more rows."
@@ -142,8 +142,8 @@ class DataSheet(QtWidgets.QWidget):
         col_idx = self._selected_col_idx
         if col_idx is not None:
             # Do not allow empty names or duplicate column names
-            if name and name not in self.data_model.columnNames():
-                new_name = self.data_model.renameColumn(col_idx, name)
+            if name and name not in self.model.columnNames():
+                new_name = self.model.renameColumn(col_idx, name)
                 # set the normalized name to the name edit field
                 self.ui.name_edit.setText(new_name)
                 header = self.ui.data_view.horizontalHeader()
@@ -159,7 +159,7 @@ class DataSheet(QtWidgets.QWidget):
             expression: a QString containing the mathematical expression.
         """
         if self._selected_col_idx is not None:
-            self.data_model.updateColumnExpression(self._selected_col_idx, expression)
+            self.model.updateColumnExpression(self._selected_col_idx, expression)
 
     def selection_changed(self, selected=None, deselected=None):
         """Handle selectionChanged events in the data view.
@@ -190,9 +190,9 @@ class DataSheet(QtWidgets.QWidget):
             first_selection = selected.first()
             col_idx = first_selection.left()
             self._selected_col_idx = col_idx
-            self.ui.name_edit.setText(self.data_model.columnName(col_idx))
-            self.ui.formula_edit.setText(self.data_model.columnExpression(col_idx))
-            if self.data_model.isCalculatedColumn(col_idx):
+            self.ui.name_edit.setText(self.model.columnName(col_idx))
+            self.ui.formula_edit.setText(self.model.columnExpression(col_idx))
+            if self.model.isCalculatedColumn(col_idx):
                 self.ui.formulaLabel.setEnabled(True)
                 self.ui.formula_edit.setEnabled(True)
             else:
@@ -265,7 +265,7 @@ class DataSheet(QtWidgets.QWidget):
             destidx = newidx + 1
         else:
             destidx = newidx
-        self.data_model.moveColumn(sourceColumn=oldidx, destinationChild=destidx)
+        self.model.moveColumn(sourceColumn=oldidx, destinationChild=destidx)
         # select the column that was just moved at the new location
         self.ui.data_view.selectColumn(newidx)
 
@@ -292,7 +292,7 @@ class DataSheet(QtWidgets.QWidget):
 
     def clear_selected_cells(self):
         """Clear contents of selected cells."""
-        self.data_model.clearData(self.selection.selection())
+        self.model.clearData(self.selection.selection())
 
     def get_index_below_selected_cell(self):
         """Get index directly below the selected cell."""
@@ -303,7 +303,7 @@ class DataSheet(QtWidgets.QWidget):
     def copy_selected_cells(self):
         """Copy selected cells to clipboard."""
 
-        data = self.data_model.dataFromSelection(self.selection.selection())
+        data = self.model.dataFromSelection(self.selection.selection())
         text = self.array_to_text(data)
         self.clipboard.setText(text)
 
@@ -314,7 +314,7 @@ class DataSheet(QtWidgets.QWidget):
         values = self.text_to_array(text)
         if isinstance(values, np.ndarray):
             current_index = self.ui.data_view.currentIndex()
-            self.data_model.setDataFromArray(current_index, values)
+            self.model.setDataFromArray(current_index, values)
 
         # FIXME
         # # reset current index and focus
