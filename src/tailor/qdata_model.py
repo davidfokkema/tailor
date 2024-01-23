@@ -453,6 +453,22 @@ class QDataModel(QtCore.QAbstractTableModel):
         label = self._data.get_column_label(column)
         return self._data.get_column_expression(label)
 
+    def columnUses(self, column: int, column_labels: list[str]) -> bool:
+        """Test whether column uses any of the listed columns.
+
+        If the column is a calculated column and uses any of the supplied
+        `column_labels` in its expression, return True.
+
+        Args:
+            column (int): the column under test.
+            column_labels (list[str]): a list of column labels.
+
+        Returns:
+            bool: True if the column uses any of the column_labels.
+        """
+        label = self._data.get_column_label(column)
+        return self._data.column_uses(label, column_labels)
+
     def updateColumnExpression(self, column: int, expression: str) -> bool:
         if not self.isCalculatedColumn(column):
             return False

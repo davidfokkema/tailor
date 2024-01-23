@@ -496,6 +496,28 @@ class DataModel:
         else:
             return self._is_calculated_column_valid[label]
 
+    def column_uses(self, label: str, labels: list[str]) -> bool:
+        """Test whether column uses any of the listed columns.
+
+        If the column `label` is a calculated column and uses any of the
+        supplied `labels` in its expression, return True.
+
+        Args:
+            label (str): the column under test.
+            labels (list[str]): the column labels to test.
+
+        Returns:
+            bool: True if any of the column labels are used.
+        """
+        if not self.is_calculated_column(label):
+            return False
+        expression = self._calculated_column_expression[label]
+        variables = get_variable_names(expression)
+        if variables & set(labels):
+            return True
+        else:
+            return False
+
     def _create_new_column_label(self):
         """Create a label for a new column.
 

@@ -20,13 +20,16 @@ def data_sheet(mocker: MockerFixture) -> DataSheet:
     sheet.data_model.insertCalculatedColumn(2)
     sheet.data_model.insertCalculatedColumn(3)
     sheet.data_model.insertCalculatedColumn(4)
+    sheet.data_model.insertCalculatedColumn(5)
     sheet.data_model.renameColumn(0, "x")
     sheet.data_model.renameColumn(1, "y")
     sheet.data_model.renameColumn(2, "z")
     sheet.data_model.renameColumn(3, "yerr")
     sheet.data_model.renameColumn(4, "empty")
+    sheet.data_model.renameColumn(5, "position")
     sheet.data_model.updateColumnExpression(2, "0.02 * x ** 2")
     sheet.data_model.updateColumnExpression(3, "0.1")
+    sheet.data_model.updateColumnExpression(5, "0.5 * x ** 2 + y * z")
     return sheet
 
 
@@ -207,6 +210,18 @@ class TestSheets:
         sheet.remove_selected_columns.assert_not_called()
 
     def test_remove_used_column_lists_associated_calculated_columns(
-        self, simple_project: Application
+        self, simple_project: Application, mocker: MockerFixture
     ) -> None:
-        ...
+        mocker.patch.object(simple_project, "show_warning_dialog")
+        simple_project.ui.tabWidget.setCurrentIndex(1)
+        sheet: DataSheet = simple_project.ui.tabWidget.currentWidget()
+        mocker.patch.object(sheet, "remove_selected_columns")
+
+        # associated plots: Plot 1
+        sheet.ui.data_view.selectColumn(0)
+        simple_project.remove_selected_columns()
+        simple_project.show_warning_dialog.assert_called()
+        assert "z, position" in simple_project.show_warning_dialog.call_args.args[0]
+        assert "empty" not in simple_project.show_warning_dialog.call_args.args[0]
+        assert "yerr" not in simple_project.show_warning_dialog.call_args.args[0]
+        sheet.remove_selected_columns.assert_not_called()

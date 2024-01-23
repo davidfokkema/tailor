@@ -243,21 +243,78 @@ class Application(QtWidgets.QMainWindow):
 
     def remove_selected_columns(self):
         """Remove a column from the current data sheet."""
+        msgs = []
         if current_tab := self._on_data_sheet():
             selected_labels = current_tab.get_selected_column_labels()
-            # find associated plots and remove column
-            plot_titles = []
-            for idx in range(self.ui.tabWidget.count()):
-                tab = self.ui.tabWidget.widget(idx)
-                if type(tab) == PlotTab and tab.model.uses(
-                    current_tab.data_model._data, selected_labels
-                ):
-                    plot_titles.append(tab.name)
+
+            # find associated plots
+            plot_titles = self.get_plots_which_use_columns(current_tab, selected_labels)
             if plot_titles:
-                msg = f"This column is in use and cannot be removed ({', '.join(plot_titles)})"
-                self.show_warning_dialog(msg)
+                msgs.append(f"This column is used by plots {', '.join(plot_titles)}.")
+
+            # find associated calculated columns
+            column_titles = self.get_columns_which_use_columns(
+                current_tab, selected_labels
+            )
+            if column_titles:
+                msgs.append(
+                    f"This column is used by calculated columns {', '.join(column_titles)}."
+                )
+
+            if msgs:
+                msgs.insert(
+                    0,
+                    "This column can only be removed when it is unused. Please remove the following items first.",
+                )
+                self.show_warning_dialog(" ".join(msgs))
             else:
                 current_tab.remove_selected_columns()
+
+    def get_plots_which_use_columns(
+        self, sheet: DataSheet, columns: list[str]
+    ) -> list[str]:
+        """Get plot titles which use one of the supplied columns.
+
+        Check which plots use one of the supplied columns and return their
+        titles. This method should be called with the column _labels_, not their
+        _names_.
+
+        Args:
+            sheet (DataSheet): the DataSheet containing the columns.
+            columns (list[str]): a list of column labels.
+
+        Returns:
+            list[str]: a list of plot titles that use one of the columns.
+        """
+        data_model = sheet.data_model._data
+        plot_titles = []
+        for idx in range(self.ui.tabWidget.count()):
+            tab = self.ui.tabWidget.widget(idx)
+            if type(tab) == PlotTab and tab.model.uses(data_model, columns):
+                plot_titles.append(tab.name)
+        return plot_titles
+
+    def get_columns_which_use_columns(
+        self, sheet: DataSheet, columns: list[str]
+    ) -> list[str]:
+        """Get column names which use any of the supplied columns.
+
+        Check which columns use any of the supplied other columns and return
+        their names. This method should be called with the column _labels_, not
+        their _names_.
+
+        Args:
+            sheet (DataSheet): the DataSheet containing the columns.
+            columns (list[str]): a list of column labels.
+
+        Returns:
+            list[str]: a list of column names which use any of the columns.
+        """
+        column_names = []
+        for idx in range(sheet.data_model.columnCount()):
+            if sheet.data_model.columnUses(idx, columns):
+                column_names.append(sheet.data_model.columnName(idx))
+        return column_names
 
     def remove_row(self):
         """Remove a row from the current data sheet."""
