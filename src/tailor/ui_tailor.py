@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'tailor.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.2
+## Created by: Qt User Interface Compiler version 6.5.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -84,6 +84,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.tabWidget = QTabWidget(self.centralwidget)
         self.tabWidget.setObjectName(u"tabWidget")
+        self.tabWidget.setElideMode(Qt.ElideNone)
+        self.tabWidget.setUsesScrollButtons(True)
         self.tabWidget.setMovable(True)
 
         self.verticalLayout_2.addWidget(self.tabWidget)
