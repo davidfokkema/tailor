@@ -61,8 +61,8 @@ class Application(QtWidgets.QMainWindow):
     _project_filename = None
     _recent_files_actions = None
     _selected_col_idx = None
-    _plot_num = 1
-    _sheet_num = 1
+    _plot_num: int
+    _sheet_num: int
 
     _is_dirty = False
 
@@ -109,7 +109,8 @@ class Application(QtWidgets.QMainWindow):
             lambda: self.export_graph(".png")
         )
         self.ui.actionClose.triggered.connect(self.new_project)
-        self.ui.actionAdd_Data_Sheet.triggered.connect(self.add_data_sheet)
+        # use lambda to gobble 'checked' parameter
+        self.ui.actionAdd_Data_Sheet.triggered.connect(lambda: self.add_data_sheet())
         self.ui.actionDuplicate_Data_Sheet.triggered.connect(self.duplicate_data_sheet)
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
@@ -397,10 +398,10 @@ class Application(QtWidgets.QMainWindow):
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
+        self._plot_num += 1
         name = f"Plot {self._plot_num}"
         plot_tab = PlotTab(name, self._plot_num, data_sheet, x_var, y_var, x_err, y_err)
         idx = self.ui.tabWidget.addTab(plot_tab, name)
-        self._plot_num += 1
         self.ui.tabWidget.setCurrentIndex(idx)
         return plot_tab
 
@@ -480,8 +481,8 @@ class Application(QtWidgets.QMainWindow):
         self.ui.tabWidget.clear()
         self.ui.tabWidget.setTabsClosable(True)
 
-        self._plot_num = 1
-        self._sheet_num = 1
+        self._plot_num = 0
+        self._sheet_num = 0
         self._set_project_path(None)
         self.mark_project_dirty(False)
         if add_sheet:
@@ -491,23 +492,40 @@ class Application(QtWidgets.QMainWindow):
             # force updating column information in UI
             sheet.selection_changed()
 
-    def add_data_sheet(self) -> DataSheet:
-        """Add a new data sheet to the project."""
-        name = f"Sheet{self._sheet_num}"
-        datasheet = DataSheet(name=name, id=self._sheet_num, main_window=self)
-        idx = self.ui.tabWidget.addTab(datasheet, name)
-        self.ui.tabWidget.setCurrentIndex(idx)
-        datasheet.ui.data_view.setFocus()
-        self._sheet_num += 1
-        return datasheet
+    def add_data_sheet(self, new_sheet: DataSheet | None = None) -> DataSheet:
+        """Add a new data sheet to the project.
 
-    def duplicate_data_sheet(self) -> DataSheet:
-        """Duplicate the current data sheet."""
+        If a data sheet is supplied, that one is added as a new sheet.
+
+        Args:
+            new_sheet (DataSheet | None, optional): a prebuilt data sheet.
+                Defaults to None.
+
+        Returns:
+            DataSheet: the newly added data sheet.
+        """
+        self._sheet_num += 1
+        name = f"Sheet {self._sheet_num}"
+        if new_sheet is None:
+            new_sheet = DataSheet(name=name, id=self._sheet_num, main_window=self)
+        else:
+            new_sheet.name = name
+            new_sheet.id = self._sheet_num
+        idx = self.ui.tabWidget.addTab(new_sheet, name)
+        self.ui.tabWidget.setCurrentIndex(idx)
+        new_sheet.ui.data_view.setFocus()
+        return new_sheet
+
+    def duplicate_data_sheet(self) -> None:
+        """Duplicate the current data sheet.
+
+        The data sheet is duplicated by leveraging code used to managing project
+        files.
+        """
         if current_sheet := self._on_data_sheet():
-            new_sheet = self.add_data_sheet()
-            new_sheet.model.beginResetModel()
-            new_sheet.model.data_model = current_sheet.model.data_model.copy(deep=True)
-            new_sheet.model.endResetModel()
+            model = project_files.save_data_sheet(current_sheet)
+            new_sheet = project_files.load_data_sheet(app=self, model=model)
+            self.add_data_sheet(new_sheet)
 
     def new_project(self):
         """Close the current project and open a new one."""

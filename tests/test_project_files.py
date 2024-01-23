@@ -68,10 +68,11 @@ def plot_tab_model(plot_tab) -> project_files.Plot:
 @pytest.fixture()
 def simple_project(data_sheet: DataSheet, plot_tab: PlotTab) -> Application:
     app = Application()
-    app.ui.tabWidget.removeTab(0)
     app.ui.tabWidget.addTab(data_sheet, data_sheet.name)
     app.ui.tabWidget.addTab(plot_tab, plot_tab.name)
     app.ui.tabWidget.setCurrentIndex(1)
+    app._sheet_num = 1
+    app._plot_num = 1
     return app
 
 
@@ -172,6 +173,7 @@ class TestProjectFiles:
         # simple_project.show()
         # QtWidgets.QApplication.instance().exec()
         project_files.save_project_to_model(simple_project)
+        assert simple_project._sheet_num == 1
 
     def test_load_project_from_model(self, simple_project_model: project_files.Project):
         app = Application()
@@ -179,6 +181,8 @@ class TestProjectFiles:
         # app.show()
         # QtWidgets.QApplication.instance().exec()
 
+        assert app._sheet_num == 1
+        assert app._plot_num == 1
         sheet = app.ui.tabWidget.widget(0)
         plot = app.ui.tabWidget.widget(1)
         assert isinstance(sheet, DataSheet)

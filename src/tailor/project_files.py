@@ -81,6 +81,10 @@ def save_project_to_model(project: Application):
 
 
 def load_project_from_model(project: Application, model: Project):
+    # load some application state
+    project._sheet_num = model.sheet_num
+    project._plot_num = model.plot_num
+
     # load all data sheets for reference
     data_sheet_by_id: dict[int, DataSheet] = {}
     for sheet_model in model.sheets:
