@@ -365,15 +365,6 @@ class Application(QtWidgets.QMainWindow):
         if type(tab) == PlotTab:
             tab.refresh_ui()
 
-    def update_all_plots(self):
-        """Update all plot tabs.
-
-        Update all plots to reflect any changes to the data that might have
-        occured.
-        """
-        for idx in range(self.ui.tabWidget.count()):
-            self.update_plot_tab(idx)
-
     def ask_and_create_plot_tab(self):
         """Opens a dialog and create a new tab with a plot.
 
