@@ -21,15 +21,18 @@ def data_sheet(mocker: MockerFixture) -> DataSheet:
     sheet.model.insertCalculatedColumn(3)
     sheet.model.insertCalculatedColumn(4)
     sheet.model.insertCalculatedColumn(5)
+    sheet.model.insertCalculatedColumn(6)
     sheet.model.renameColumn(0, "x")
     sheet.model.renameColumn(1, "y")
     sheet.model.renameColumn(2, "z")
     sheet.model.renameColumn(3, "yerr")
     sheet.model.renameColumn(4, "empty")
     sheet.model.renameColumn(5, "position")
+    sheet.model.renameColumn(6, "use_pos")
     sheet.model.updateColumnExpression(2, "0.02 * x ** 2")
     sheet.model.updateColumnExpression(3, "0.1")
     sheet.model.updateColumnExpression(5, "0.5 * x ** 2 + y * z")
+    sheet.model.updateColumnExpression(6, "position")
     return sheet
 
 
@@ -225,3 +228,22 @@ class TestSheets:
         assert "empty" not in simple_project.show_warning_dialog.call_args.args[0]
         assert "yerr" not in simple_project.show_warning_dialog.call_args.args[0]
         sheet.remove_selected_columns.assert_not_called()
+
+    def test_remove_column_and_used_column(
+        self, simple_project: Application, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(simple_project, "show_warning_dialog")
+        simple_project.ui.tabWidget.setCurrentIndex(1)
+        sheet: DataSheet = simple_project.ui.tabWidget.currentWidget()
+        mocker.patch.object(sheet, "remove_selected_columns")
+
+        # column 'position' is only used by 'use_pos', delete both
+        sheet.ui.data_view.selectColumn(5)
+        sheet.selection.select(
+            sheet.model.index(0, 6),
+            QtCore.QItemSelectionModel.Select | QtCore.QItemSelectionModel.Columns,
+        )
+        simple_project.remove_selected_columns()
+
+        simple_project.show_warning_dialog.assert_not_called()
+        sheet.remove_selected_columns.assert_called()

@@ -8,6 +8,7 @@ from tailor.ui_data_sheet import Ui_DataSheet
 
 class DataSheet(QtWidgets.QWidget):
     model: QDataModel = None
+    selection: QtCore.QItemSelectionModel
     name: str = None
     id: int
 

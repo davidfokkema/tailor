@@ -303,7 +303,8 @@ class Application(QtWidgets.QMainWindow):
 
         Check which columns use any of the supplied other columns and return
         their names. This method should be called with the column _labels_, not
-        their _names_.
+        their _names_. Only checks other columns, so if 'b' uses 'a', and we ask
+        'who uses a or b', do _not_ return 'b'.
 
         Args:
             sheet (DataSheet): the DataSheet containing the columns.
@@ -314,8 +315,10 @@ class Application(QtWidgets.QMainWindow):
         """
         column_names = []
         for idx in range(sheet.model.columnCount()):
-            if sheet.model.columnUses(idx, columns):
-                column_names.append(sheet.model.columnName(idx))
+            # only check other columns
+            if sheet.model.columnLabel(idx) not in columns:
+                if sheet.model.columnUses(idx, columns):
+                    column_names.append(sheet.model.columnName(idx))
         return column_names
 
     def remove_row(self):
