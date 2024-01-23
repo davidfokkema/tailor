@@ -250,15 +250,17 @@ class Application(QtWidgets.QMainWindow):
             # find associated plots
             plot_titles = self.get_plots_which_use_columns(current_tab, selected_labels)
             if plot_titles:
-                msgs.append(f"This column is used by plots {', '.join(plot_titles)}.")
+                titles = [f"'{plot}'" for plot in plot_titles]
+                msgs.append(f"This column is used by plots {', '.join(titles)}.")
 
             # find associated calculated columns
-            column_titles = self.get_columns_which_use_columns(
+            column_names = self.get_columns_which_use_columns(
                 current_tab, selected_labels
             )
-            if column_titles:
+            if column_names:
+                names = [f"'{col}'" for col in column_names]
                 msgs.append(
-                    f"This column is used by calculated columns {', '.join(column_titles)}."
+                    f"This column is used by calculated columns {', '.join(names)}."
                 )
 
             if msgs:

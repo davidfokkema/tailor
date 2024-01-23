@@ -221,7 +221,7 @@ class TestSheets:
         sheet.ui.data_view.selectColumn(0)
         simple_project.remove_selected_columns()
         simple_project.show_warning_dialog.assert_called()
-        assert "z, position" in simple_project.show_warning_dialog.call_args.args[0]
+        assert "'z', 'position'" in simple_project.show_warning_dialog.call_args.args[0]
         assert "empty" not in simple_project.show_warning_dialog.call_args.args[0]
         assert "yerr" not in simple_project.show_warning_dialog.call_args.args[0]
         sheet.remove_selected_columns.assert_not_called()
