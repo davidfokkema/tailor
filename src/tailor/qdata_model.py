@@ -4,6 +4,8 @@ Implements a QAbstractDataModel to contain the data values as a backend for the
 table view used in the app. This class in this module mostly implements the GUI side of things, but subclasses the Tailor DataModel.
 """
 
+import pathlib
+
 import numpy as np
 from PySide6 import QtCore, QtGui
 
@@ -588,6 +590,14 @@ class QDataModel(QtCore.QAbstractTableModel):
             index, self.createIndex(row + height - 1, num_columns - 1)
         )
         return True
+
+    def export_csv(self, path: pathlib.Path) -> None:
+        """Export all data to CSV file.
+
+        Args:
+            filename (pathlib.Path): the destination path.
+        """
+        self.data_model.export_csv(path)
 
     # def show_status(self, msg):
     #     """Show message in statusbar.

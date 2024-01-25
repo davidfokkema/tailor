@@ -532,13 +532,12 @@ class DataModel:
         self._new_col_num += 1
         return f"col{self._new_col_num}"
 
-    def write_csv(self, filename: pathlib.Path) -> None:
+    def export_csv(self, filename: pathlib.Path) -> None:
         """Write all data to CSV file.
 
         Args:
-            filename: a string containing the full filename.
+            filename (pathlib.Path): the destination path.
         """
-
         self._data.to_csv(filename, index=False, header=self.get_column_names())
 
     def read_csv(

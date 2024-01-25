@@ -724,7 +724,7 @@ class Application(QtWidgets.QMainWindow):
             )
             if filename:
                 self.set_recent_directory(pathlib.Path(filename).parent)
-                data_sheet.model.data_model.write_csv(filename)
+                data_sheet.model.export_csv(filename)
 
     def import_csv(self):
         """Import data from a CSV file.

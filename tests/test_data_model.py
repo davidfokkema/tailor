@@ -520,7 +520,7 @@ class TestDataModel:
         self, simple_test_data: DataModel, tmp_path: pathlib.Path
     ) -> None:
         data_path = tmp_path / "testdata.csv"
-        simple_test_data.write_csv(data_path)
+        simple_test_data.export_csv(data_path)
 
         contents = data_path.read_text()
 
