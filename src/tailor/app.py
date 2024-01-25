@@ -723,17 +723,8 @@ class Application(QtWidgets.QMainWindow):
                 filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
             )
             if filename:
-                self._do_export_csv(data_sheet, filename)
-
-    def _do_export_csv(self, data_sheet, filename):
-        """Export sheet data as CSV.
-
-        Args:
-            data_sheet (DataSheet): the data sheet containing the data.
-            filename (str or pathlib.Path): the filename to save the data to.
-        """
-        self.set_recent_directory(pathlib.Path(filename).parent)
-        data_sheet.data_model.write_csv(filename)
+                self.set_recent_directory(pathlib.Path(filename).parent)
+                data_sheet.model.data_model.write_csv(filename)
 
     def import_csv(self):
         """Import data from a CSV file.

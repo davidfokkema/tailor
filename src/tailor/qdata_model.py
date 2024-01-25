@@ -3,6 +3,7 @@
 Implements a QAbstractDataModel to contain the data values as a backend for the
 table view used in the app. This class in this module mostly implements the GUI side of things, but subclasses the Tailor DataModel.
 """
+
 import numpy as np
 from PySide6 import QtCore, QtGui
 

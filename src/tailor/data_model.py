@@ -4,6 +4,7 @@ Implements a model to contain the data values as a backend for the
 table view used in the app. This class provides an API specific to Tailor.
 """
 
+import pathlib
 import re
 
 import asteval
@@ -76,7 +77,7 @@ class DataModel:
         end_column: int,
         value: float,
     ):
-        """Set a block of table cells to some value.
+        """Set a block of table cells to some (single) value.
 
         The block of cells is specified using start and end indexes for rows and
         columns. Interpreted as a rectangular selection, the starting indexes
@@ -226,7 +227,7 @@ class DataModel:
         # check for *all* nans in a row or column
         return self._data.dropna(how="all").empty
 
-    def insert_calculated_column(self, column: int):
+    def insert_calculated_column(self, column: int) -> str:
         """Insert a calculated column.
 
         Insert a column *before* the specified column number. Returns True if
@@ -235,10 +236,14 @@ class DataModel:
         Args:
             column (int): an integer column number to indicate the place of
                 insertion.
+
+        Returns:
+            str: the label of the inserted column.
         """
         (label,) = self.insert_columns(column, count=1)
         self._calculated_column_expression[label] = ""
         self._is_calculated_column_valid[label] = False
+        return label
 
     def rename_column(self, label: str, name: str):
         """Rename a column.
@@ -418,14 +423,13 @@ class DataModel:
     def get_column_labels(self) -> list[str]:
         """Get all column labels.
 
-        Note: the column labels may _not_ be in the order they appear in the
-        data, but the order is guaranteed to be the same as the order of the
-        names retrieved from get_column_names().
+        Note: the column labels are guaranteed to be in the order they appear in
+        the data.
 
         Returns:
             list[str]: a list of all column labels.
         """
-        return list(self._col_names.keys())
+        return list(self._data.columns)
 
     def get_column_name(self, label: str) -> str:
         """Get column name.
@@ -443,14 +447,13 @@ class DataModel:
     def get_column_names(self) -> list[str]:
         """Get all column names.
 
-        Note: the column names may _not_ be in the order they appear in the
-        data, but the order is guaranteed to be the same as the order of the
-        labels retrieved from get_column_labels().
+        Note: the column names are guaranteed to be in the order they appear in
+        the data.
 
         Returns:
             list[str]: a list of all column names.
         """
-        return list(self._col_names.values())
+        return [self.get_column_name(label) for label in self.get_column_labels()]
 
     def get_column(self, label: str):
         """Return column values.
@@ -529,13 +532,14 @@ class DataModel:
         self._new_col_num += 1
         return f"col{self._new_col_num}"
 
-    def write_csv(self, filename):
+    def write_csv(self, filename: pathlib.Path) -> None:
         """Write all data to CSV file.
 
         Args:
             filename: a string containing the full filename.
         """
-        self._data.to_csv(filename, index=False)
+
+        self._data.to_csv(filename, index=False, header=self.get_column_names())
 
     def read_csv(
         self,

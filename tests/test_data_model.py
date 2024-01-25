@@ -1,3 +1,4 @@
+import pathlib
 from unittest.mock import call, sentinel
 
 import numpy as np
@@ -55,6 +56,24 @@ def calc_model(model: DataModel) -> DataModel:
         "col4": "sqrt(col2)",
     }
     model._is_calculated_column_valid = {k: True for k in ["col1", "col2", "col4"]}
+    return model
+
+
+@pytest.fixture()
+def simple_test_data(model: DataModel) -> DataModel:
+    """Create simple test data.
+
+    This fixture does not depend on implementation details, but does make use of
+    the DataModel machinery.
+    """
+    (col1,) = model.insert_columns(0, 1)
+    col2 = model.insert_calculated_column(1)
+    model.rename_column(col1, "x")
+    model.rename_column(col2, "y")
+    model.insert_rows(0, 5)
+
+    model.set_values_from_array(0, 0, np.array([[0.0, 1.0, 2.0, 3.0, 4.0]]).T)
+    model.update_column_expression(col2, "x ** 2")
     return model
 
 
@@ -302,16 +321,18 @@ class TestDataModel:
         assert bare_bones_data._calculated_column_expression[sentinel.label] == ""
         assert bare_bones_data._is_calculated_column_valid[sentinel.label] is False
 
+    def test_insert_calculated_column_returns_label(self, bare_bones_data: DataModel):
+        label = bare_bones_data.insert_calculated_column(column=0)
+        assert label.startswith("col")
+
     def test_get_column_label(self, bare_bones_data: DataModel):
         expected = ["col1", "col2", "col3"]
         actual = [bare_bones_data.get_column_label(idx) for idx in range(3)]
         assert actual == expected
 
     def test_get_column_labels(self, bare_bones_data: DataModel):
-        # column names may not be in the order they appear in the data
-        # the 'expected' order in this case is copied from the _col_names
-        # attribute
-        expected = ["col2", "col3", "col1"]
+        # column labels must be in the order they appear in the data
+        expected = ["col1", "col2", "col3"]
         actual = bare_bones_data.get_column_labels()
         assert actual == expected
 
@@ -322,10 +343,8 @@ class TestDataModel:
         assert actual == expected
 
     def test_get_column_names(self, bare_bones_data: DataModel):
-        # column names may not be in the order they appear in the data
-        # the 'expected' order in this case is copied from the _col_names
-        # attribute
-        expected = ["y", "z", "x"]
+        # column names must be in the order they appear in the data
+        expected = ["x", "y", "z"]
         assert bare_bones_data.get_column_names() == expected
 
     def test_get_column(self, bare_bones_data: DataModel):
@@ -496,3 +515,23 @@ class TestDataModel:
 
         assert is_valid is False
         assert calc_model.is_column_valid("col2") is False
+
+    def test_export_csv(
+        self, simple_test_data: DataModel, tmp_path: pathlib.Path
+    ) -> None:
+        data_path = tmp_path / "testdata.csv"
+        simple_test_data.write_csv(data_path)
+
+        contents = data_path.read_text()
+
+        assert (
+            contents
+            == """\
+x,y
+0.0,0.0
+1.0,1.0
+2.0,4.0
+3.0,9.0
+4.0,16.0
+"""
+        )
