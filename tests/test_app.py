@@ -10,7 +10,7 @@ from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 
 @pytest.fixture()
 def data_sheet(mocker: MockerFixture) -> DataSheet:
-    sheet = DataSheet(name="Sheet2", id=1234, main_window=mocker.MagicMock())
+    sheet = DataSheet(name="Sheet 2", id=1234, main_window=mocker.MagicMock())
     sheet.model.setDataFromArray(
         sheet.model.createIndex(0, 0),
         np.array(
@@ -107,7 +107,7 @@ class TestSheets:
         simple_project_without_plot.close_tab(1)
         assert simple_project_without_plot.ui.tabWidget.count() == 1
         sheet: DataSheet = simple_project_without_plot.ui.tabWidget.widget(0)
-        assert sheet.name == "Sheet1"
+        assert sheet.name == "Sheet 1"
 
     def test_close_plot(
         self, simple_project: Application, mocker: MockerFixture
@@ -141,7 +141,7 @@ class TestSheets:
         simple_project.close_tab(0)
 
         assert simple_project.ui.tabWidget.count() == 2
-        assert simple_project.ui.tabWidget.widget(0).name == "Sheet2"
+        assert simple_project.ui.tabWidget.widget(0).name == "Sheet 2"
 
     def test_close_sheet_with_associated_plots(
         self, simple_project: Application, mocker: MockerFixture
@@ -153,7 +153,7 @@ class TestSheets:
         simple_project.close_tab(1)
 
         assert simple_project.ui.tabWidget.count() == 1
-        assert simple_project.ui.tabWidget.widget(0).name == "Sheet1"
+        assert simple_project.ui.tabWidget.widget(0).name == "Sheet 1"
 
     def test_close_sheet_lists_associated_plots(
         self, simple_project: Application, mocker: MockerFixture
