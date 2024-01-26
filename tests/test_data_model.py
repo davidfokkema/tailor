@@ -20,9 +20,9 @@ def bare_bones_data(model: DataModel) -> DataModel:
     """Create a bare bones data model.
 
     This is an instance of QDataModel with a very basic data structure (five
-    rows, two columns) and an updated column number variable, but nothing else.
-    You can use this to test basic data manipulation required by Qt for
-    subclasses of QAbstractDataModel.
+    rows, two data columns, one calculated column) and an updated column number
+    variable, but nothing else. You can use this to test basic data manipulation
+    required by Qt for subclasses of QAbstractDataModel.
 
     This fixture depends on certain implementation details.
     """
@@ -44,6 +44,9 @@ def bare_bones_data(model: DataModel) -> DataModel:
 @pytest.fixture()
 def calc_model(model: DataModel) -> DataModel:
     """Create a data model with multiple calculated columns.
+
+    Note: the inital data values do not correspond with the column expressions.
+    If you need the correct values, recalculate the column(s) first.
 
     This fixture depends on certain implementation details.
     """
@@ -69,12 +72,15 @@ def simple_test_data(model: DataModel) -> DataModel:
     """
     (col1,) = model.insert_columns(0, 1)
     col2 = model.insert_calculated_column(1)
+    col3 = model.insert_calculated_column(2)
     model.rename_column(col1, "x")
     model.rename_column(col2, "y")
+    model.rename_column(col3, "z")
     model.insert_rows(0, 5)
 
     model.set_values_from_array(0, 0, np.array([[0.0, 1.0, 2.0, 3.0, 4.0]]).T)
     model.update_column_expression(col2, "x ** 2")
+    model.update_column_expression(col3, "x + 1")
     return model
 
 
@@ -331,6 +337,12 @@ class TestDataModel:
         actual = [bare_bones_data.get_column_label(idx) for idx in range(3)]
         assert actual == expected
 
+    def test_get_column_label_by_name(self, bare_bones_data: DataModel) -> None:
+        names = ["x", "y", "z"]
+        expected = ["col1", "col2", "col3"]
+        actual = [bare_bones_data.get_column_label_by_name(name) for name in names]
+        assert actual == expected
+
     def test_get_column_labels(self, bare_bones_data: DataModel):
         # column labels must be in the order they appear in the data
         expected = ["col1", "col2", "col3"]
@@ -528,12 +540,12 @@ class TestDataModel:
         assert (
             contents
             == """\
-x,y
-0.0,0.0
-1.0,1.0
-2.0,4.0
-3.0,9.0
-4.0,16.0
+x,y,z
+0.0,0.0,1.0
+1.0,1.0,2.0
+2.0,4.0,3.0
+3.0,9.0,4.0
+4.0,16.0,5.0
 """
         )
 
@@ -564,7 +576,7 @@ x,y
 x,y
 0.0,0.0
 1.0,2.0
-3.0,4.0                                                     
+3.0,4.0
 """
         )
 
@@ -573,3 +585,28 @@ x,y
         assert model.get_column_labels() == ["col1", "col2"]
         assert model.get_column_names() == ["x", "y"]
         assert list(model.get_values(0, 1, 2, 1)) == pytest.approx([0.0, 2.0, 4.0])
+
+    def test_merge_csv(self, simple_test_data: DataModel, tmp_path) -> None:
+        data_path = tmp_path / "testdata.csv"
+        data_path.write_text(
+            """\
+x,t,z
+1.0,1.0,0.0
+3.0,2.0,1.0
+5.0,3.0,2.0
+7.0,4.0,3.0
+"""
+        )
+        assert simple_test_data.is_calculated_column("col3") is True
+
+        simple_test_data.merge_csv(data_path, FormatParameters())
+
+        assert simple_test_data.num_columns() == 4
+        # columns from csv file are placed at beginning of the sheet
+        assert simple_test_data.get_column_names() == ["x", "t", "z", "y"]
+        assert simple_test_data.get_column_labels() == ["col1", "col4", "col3", "col2"]
+        assert simple_test_data.get_column("col2") == pytest.approx(
+            [1.0, 9.0, 25.0, 49.0]
+        )
+        # col3 (z) is no longer calculated, but data from imported CSV
+        assert simple_test_data.is_calculated_column("col3") is False

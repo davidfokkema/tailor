@@ -762,7 +762,7 @@ class Application(QtWidgets.QMainWindow):
             # when the data only contains empty cells, overwrite all columns
             data_sheet.model.import_csv(filename, format)
         else:
-            data_sheet.model.read_and_concat_csv(filename, format)
+            data_sheet.model.merge_csv(filename, format)
         data_sheet.ui.data_view.setCurrentIndex(data_sheet.model.createIndex(0, 0))
 
     def export_graph(self, suffix):

@@ -621,6 +621,24 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.data_model.import_csv(filename, format)
         self.endResetModel()
 
+    def merge_csv(
+        self,
+        filename: pathlib.Path | str,
+        format: FormatParameters,
+    ):
+        """Merge data from CSV file into existing data sheet.
+
+        Merges imported CSV data with pre-existing data already present in the
+        data sheet.
+
+        Args:
+            filename (pathlib.Path | str): a string containing the path to the CSV file
+            format (FormatParameters): CSV format parameters
+        """
+        self.beginResetModel()
+        self.data_model.merge_csv(filename, format)
+        self.endResetModel()
+
     # def show_status(self, msg):
     #     """Show message in statusbar.
 

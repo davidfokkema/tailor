@@ -421,6 +421,22 @@ class DataModel:
         """
         return self._data.columns[column]
 
+    def get_column_label_by_name(self, name: str) -> str:
+        """Get column label by name.
+
+        Get column label using the name of the column.
+
+        Args:
+            name: the name of the column.
+
+        Returns:
+            The column label as a string.
+        """
+        (label,) = [
+            label for label, col_name in self._col_names.items() if col_name == name
+        ]
+        return label
+
     def get_column_labels(self) -> list[str]:
         """Get all column labels.
 
@@ -567,44 +583,49 @@ class DataModel:
         self._calculated_column_expression = {}
         self._is_calculated_column_valid = {}
 
-    def read_and_concat_csv(
+    def merge_csv(
         self,
-        filename,
-        delimiter=None,
-        decimal=".",
-        thousands=",",
-        header=None,
-        skiprows=0,
+        filename: pathlib.Path | str,
+        format: FormatParameters,
     ):
-        """Read data from CSV file and concatenate with current data.
+        """Merge data from CSV file into existing data sheet.
 
         Overwrites all existing columns by importing a CSV file, but keeps other
         columns.
 
         Args:
-            filename: a string containing the path to the CSV file
-            delimiter: a string containing the column delimiter
-            decimal: a string containing the decimal separator
-            thousands: a string containing the thousands separator
-            header: an integer with the row number containing the column names,
-                or None.
-            skiprows: an integer with the number of rows to skip at start of file
+            filename (pathlib.Path | str): a string containing the path to the CSV file
+            format (FormatParameters): CSV format parameters
         """
-        self.beginResetModel()
+        df = self.create_df_from_csv(filename, format)
 
-        import_data = self.create_df_from_csv(
-            filename, delimiter, decimal, thousands, header, skiprows
+        # prepare data for merge operation
+        existing_col_names = self.get_column_names()
+        for col_name in df.columns:
+            # create labels for columns not yet in data
+            if col_name not in existing_col_names:
+                # insert column, does not really matter where
+                (label,) = self.insert_columns(0, 1)
+                self.rename_column(label, col_name)
+            # if the column was previously calculated, remove expression
+            label = self.get_column_label_by_name(col_name)
+            if self.is_calculated_column(label):
+                self._calculated_column_expression.pop(label)
+                self._is_calculated_column_valid.pop(label)
+        # rename columns to use labels instead of names
+        import_data = df.rename(
+            columns={name: label for label, name in self._col_names.items()}
         )
+
         # drop imported columns from existing data, ignore missing columns
         old_data = self._data.drop(import_data.columns, axis="columns", errors="ignore")
         # concatenate imported and old data
         new_data = pd.concat([import_data, old_data], axis="columns")
         # drop excess rows, if imported data is shorter than old data
-        final_data = new_data.iloc[: len(import_data)]
+        final_data = new_data.truncate(0, len(import_data) - 1)
 
         # save final data and recalculate values in calculated columns
         self._data = final_data
-        self.endResetModel()
         self.recalculate_all_columns()
 
     def create_df_from_csv(
