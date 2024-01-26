@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from tailor.ast_names import get_variable_names, rename_variables
+from tailor.csv_format_dialog import FormatParameters
 
 
 class DataModel:
@@ -540,35 +541,31 @@ class DataModel:
         """
         self._data.to_csv(filename, index=False, header=self.get_column_names())
 
-    def read_csv(
+    def import_csv(
         self,
-        filename,
-        delimiter=None,
-        decimal=".",
-        thousands=",",
-        header=None,
-        skiprows=0,
+        filename: pathlib.Path | str,
+        format: FormatParameters,
     ):
         """Read data from CSV file.
 
         Overwrites all existing data by importing a CSV file.
 
         Args:
-            filename: a string containing the path to the CSV file
-            delimiter: a string containing the column delimiter
-            decimal: a string containing the decimal separator
-            thousands: a string containing the thousands separator
-            header: an integer with the row number containing the column names,
-                or None.
-            skiprows: an integer with the number of rows to skip at start of file
+            filename (pathlib.Path | str): a string containing the path to the CSV file
+            format (FormatParameters): CSV format parameters
         """
-        self.beginResetModel()
+        df = self.create_df_from_csv(filename, format)
 
-        self._data = self._read_csv_into_dataframe(
-            filename, delimiter, decimal, thousands, header, skiprows
+        self._new_col_num = 0
+        col_names = list(df.columns)
+        col_labels = [self._create_new_column_label() for _ in range(len(df.columns))]
+
+        self._data = df.rename(
+            columns={name: label for name, label in zip(col_names, col_labels)}
         )
+        self._col_names = {label: name for label, name in zip(col_labels, col_names)}
         self._calculated_column_expression = {}
-        self.endResetModel()
+        self._is_calculated_column_valid = {}
 
     def read_and_concat_csv(
         self,
@@ -595,7 +592,7 @@ class DataModel:
         """
         self.beginResetModel()
 
-        import_data = self._read_csv_into_dataframe(
+        import_data = self.create_df_from_csv(
             filename, delimiter, decimal, thousands, header, skiprows
         )
         # drop imported columns from existing data, ignore missing columns
@@ -610,17 +607,25 @@ class DataModel:
         self.endResetModel()
         self.recalculate_all_columns()
 
-    def _read_csv_into_dataframe(
-        self, filename, delimiter, decimal, thousands, header, skiprows
-    ):
-        """Read CSV data into pandas DataFrame and normalize columns."""
+    def create_df_from_csv(
+        self, path: pathlib.Path | str, format: FormatParameters
+    ) -> pd.DataFrame:
+        """Read CSV data into pandas DataFrame and normalize columns.
+
+        Args:
+            path (pathlib.path | str): path to the CSV file.
+            format (FormatParameters): CSV format parameters.
+
+        Returns:
+            pd.DataFrame: the new data frame.
+        """
         df = pd.read_csv(
-            filename,
-            delimiter=delimiter,
-            decimal=decimal,
-            thousands=thousands,
-            header=header,
-            skiprows=skiprows,
+            path,
+            delimiter=format.delimiter,
+            decimal=format.decimal,
+            thousands=format.thousands,
+            header=format.header,
+            skiprows=format.skiprows,
         )
         # make sure column names are strings, even for numbered columns
         df.columns = df.columns.astype(str)

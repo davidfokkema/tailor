@@ -9,6 +9,7 @@ import pathlib
 import numpy as np
 from PySide6 import QtCore, QtGui
 
+from tailor.csv_format_dialog import FormatParameters
 from tailor.data_model import DataModel
 
 MSG_TIMEOUT = 0
@@ -591,6 +592,10 @@ class QDataModel(QtCore.QAbstractTableModel):
         )
         return True
 
+    def is_empty(self):
+        """Check whether all cells are empty."""
+        return self.data_model.is_empty()
+
     def export_csv(self, path: pathlib.Path) -> None:
         """Export all data to CSV file.
 
@@ -598,6 +603,23 @@ class QDataModel(QtCore.QAbstractTableModel):
             filename (pathlib.Path): the destination path.
         """
         self.data_model.export_csv(path)
+
+    def import_csv(
+        self,
+        filename: pathlib.Path | str,
+        format: FormatParameters,
+    ):
+        """Read data from CSV file.
+
+        Overwrites all existing data by importing a CSV file.
+
+        Args:
+            filename (pathlib.Path | str): a string containing the path to the CSV file
+            format (FormatParameters): CSV format parameters
+        """
+        self.beginResetModel()
+        self.data_model.import_csv(filename, format)
+        self.endResetModel()
 
     # def show_status(self, msg):
     #     """Show message in statusbar.

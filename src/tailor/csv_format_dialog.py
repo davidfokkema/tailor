@@ -1,3 +1,4 @@
+import collections
 import textwrap
 from pathlib import Path
 
@@ -14,6 +15,12 @@ DELIMITER_CHOICES = {
     "space": " ",
 }
 NUM_FORMAT_CHOICES = {"1,000.0": (".", ","), "1.000,0": (",", ".")}
+
+FormatParameters = collections.namedtuple(
+    "FormatParameters",
+    "delimiter decimal thousands header skiprows",
+    defaults=[",", ".", None, 0, 0],
+)
 
 
 class CSVFormatDialog(QtWidgets.QDialog):
@@ -40,21 +47,15 @@ class CSVFormatDialog(QtWidgets.QDialog):
     def show_preview(self):
         """Show a preview of the CSV data."""
         if self.ui.preview_choice.checkedButton() == self.ui.preview_csv_button:
-            (
-                delimiter,
-                decimal,
-                thousands,
-                header,
-                skiprows,
-            ) = self.get_format_parameters()
+            format = self.get_format_parameters()
             try:
                 df = pd.read_csv(
                     self.filename,
-                    delimiter=delimiter,
-                    decimal=decimal,
-                    thousands=thousands,
-                    header=header,
-                    skiprows=skiprows,
+                    delimiter=format.delimiter,
+                    decimal=format.decimal,
+                    thousands=format.thousands,
+                    header=format.header,
+                    skiprows=format.skiprows,
                 )
             except pd.errors.ParserError as exc:
                 text = textwrap.dedent(
@@ -108,4 +109,10 @@ class CSVFormatDialog(QtWidgets.QDialog):
         else:
             header = None
             skiprows = self.ui.header_row_box.value()
-        return delimiter, decimal, thousands, header, skiprows
+        return FormatParameters(
+            delimiter=delimiter,
+            decimal=decimal,
+            thousands=thousands,
+            header=header,
+            skiprows=skiprows,
+        )

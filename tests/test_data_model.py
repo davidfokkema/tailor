@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
 
+from tailor.csv_format_dialog import FormatParameters
 from tailor.data_model import DataModel
 
 
@@ -188,7 +189,7 @@ class TestDataModel:
         # check that all values in inserted rows are NaN
         # use loc to check that the row labels are reindexed
         assert bool(bare_bones_data._data.loc[3:6].isna().all(axis=None)) is True
-        # check insertion using values from col0
+        # check insertion using values from col1
         assert list(bare_bones_data._data["col1"]) == pytest.approx(
             [
                 1.0,
@@ -535,3 +536,40 @@ x,y
 4.0,16.0
 """
         )
+
+    def test_create_df_from_csv(self, model: DataModel, tmp_path: pathlib.Path) -> None:
+        data_path = tmp_path / "testdata.csv"
+        data_path.write_text(
+            """\
+1,2
+0.0,0.0
+1.0,2.0
+3.0,4.0                                                     
+"""
+        )
+
+        df = model.create_df_from_csv(data_path, FormatParameters())
+
+        assert list(df.columns) == ["_1", "_2"]
+        data = df.to_dict("list")
+        assert data["_1"] == pytest.approx([0.0, 1.0, 3.0])
+        assert data["_2"] == pytest.approx([0.0, 2.0, 4.0])
+
+    def test_import_csv(self, model: DataModel, tmp_path: pathlib.Path) -> None:
+        # data can be imported into sheet with some empty columns
+        model.insert_columns(0, 2)
+        data_path = tmp_path / "testdata.csv"
+        data_path.write_text(
+            """\
+x,y
+0.0,0.0
+1.0,2.0
+3.0,4.0                                                     
+"""
+        )
+
+        model.import_csv(data_path, FormatParameters())
+
+        assert model.get_column_labels() == ["col1", "col2"]
+        assert model.get_column_names() == ["x", "y"]
+        assert list(model.get_values(0, 1, 2, 1)) == pytest.approx([0.0, 2.0, 4.0])

@@ -27,6 +27,7 @@ from tailor.csv_format_dialog import (
     DELIMITER_CHOICES,
     NUM_FORMAT_CHOICES,
     CSVFormatDialog,
+    FormatParameters,
 )
 from tailor.data_sheet import DataSheet
 from tailor.plot_tab import PlotTab
@@ -743,55 +744,26 @@ class Application(QtWidgets.QMainWindow):
                     self.set_recent_directory(pathlib.Path(filename).parent)
                     dialog = CSVFormatDialog(filename, parent=self)
                     if dialog.exec() == QtWidgets.QDialog.Accepted:
-                        (
-                            delimiter,
-                            decimal,
-                            thousands,
-                            header,
-                            skiprows,
-                        ) = dialog.get_format_parameters()
-                        self._do_import_csv(
-                            data_sheet,
-                            filename,
-                            delimiter,
-                            decimal,
-                            thousands,
-                            header,
-                            skiprows,
-                        )
+                        format_parameters = dialog.get_format_parameters()
+                        self._do_import_csv(data_sheet, filename, format_parameters)
 
     def _do_import_csv(
-        self, data_sheet, filename, delimiter, decimal, thousands, header, skiprows
-    ):
+        self, data_sheet: DataSheet, filename: str, format: FormatParameters
+    ) -> None:
         """Import CSV data from file.
 
         Args:
             data_sheet (DataSheet): the data sheet into which the data will be
                 written.
             filename: a string containing the path to the CSV file
-            delimiter: a string containing the column delimiter
-            decimal: a string containing the decimal separator
-            thousands: a string containing the thousands separator
-            header: an integer with the row number containing the column names,
-                or None.
-            skiprows: an integer with the number of rows to skip at start of file
+            format (FormatParameters): CSV format parameters
         """
-        if data_sheet.data_model.is_empty():
+        if data_sheet.model.is_empty():
             # when the data only contains empty cells, overwrite all columns
-            import_func = data_sheet.data_model.read_csv
+            data_sheet.model.import_csv(filename, format)
         else:
-            import_func = data_sheet.data_model.read_and_concat_csv
-
-        import_func(
-            filename,
-            delimiter=delimiter,
-            decimal=decimal,
-            thousands=thousands,
-            header=header,
-            skiprows=skiprows,
-        )
-        data_sheet.ui.data_view.setCurrentIndex(data_sheet.data_model.createIndex(0, 0))
-        self.update_all_plots()
+            data_sheet.model.read_and_concat_csv(filename, format)
+        data_sheet.ui.data_view.setCurrentIndex(data_sheet.model.createIndex(0, 0))
 
     def export_graph(self, suffix):
         """Export a graph to a file.
