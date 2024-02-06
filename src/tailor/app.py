@@ -4,7 +4,6 @@ Import datasets or enter data by hand and create plots to explore correlations.
 You can fit custom models to your data to estimate best-fit parameters.
 """
 
-import gzip
 import importlib.metadata
 import json
 import pathlib
@@ -16,7 +15,7 @@ import webbrowser
 from functools import partial
 from importlib import resources
 from textwrap import dedent
-from typing import Optional
+from typing import NamedTuple, Optional
 
 import packaging
 import pyqtgraph as pg
@@ -37,6 +36,12 @@ from tailor.ui_tailor import Ui_MainWindow
 metadata = importlib.metadata.metadata("tailor")
 __name__ = metadata["name"]
 __version__ = metadata["version"]
+
+
+class PlotWidget(NamedTuple):
+    widget: PlotTab
+    index: int
+
 
 MAX_RECENT_FILES = 5
 
@@ -113,6 +118,9 @@ class Application(QtWidgets.QMainWindow):
         # use lambda to gobble 'checked' parameter
         self.ui.actionAdd_Data_Sheet.triggered.connect(lambda: self.add_data_sheet())
         self.ui.actionDuplicate_Data_Sheet.triggered.connect(self.duplicate_data_sheet)
+        self.ui.actionDuplicate_Data_Sheet_With_Plots.triggered.connect(
+            self.duplicate_data_sheet_with_plots
+        )
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
             self.add_calculated_column
@@ -406,6 +414,16 @@ class Application(QtWidgets.QMainWindow):
         self.ui.tabWidget.setCurrentIndex(idx)
         return plot_tab
 
+    def add_plot_tab(self, plot_tab: PlotTab) -> None:
+        """Create a new tab for the supplied plot.
+
+        Args:
+            plot_tab (PlotTab): the plot for which to create a new tab.
+        """
+        self._plot_num += 1
+        idx = self.ui.tabWidget.addTab(plot_tab, plot_tab.name)
+        self.ui.tabWidget.setCurrentIndex(idx)
+
     def create_plot_dialog(self, data_sheet: DataSheet) -> QtWidgets.QDialog:
         """Create a dialog to request variables for creating a plot."""
 
@@ -449,18 +467,24 @@ class Application(QtWidgets.QMainWindow):
             else:
                 # find associated plots and close plots and data sheet
                 close_idxs = [close_idx]
-                plot_titles = []
-                for idx in range(tab_widget.count()):
-                    tab = tab_widget.widget(idx)
-                    if type(tab) == PlotTab and tab.data_sheet == close_tab:
-                        close_idxs.append(idx)
-                        plot_titles.append(tab.name)
+                plots = self.get_associated_plots(close_tab)
+                close_idxs += [p.index for p in plots]
+                plot_titles = [p.widget.name for p in plots]
                 if self.confirm_close_dialog(
                     f"Are you sure you want to close this data sheet and all associated plots ({', '.join(plot_titles)})?"
                 ):
                     # close from right to left to avoid jumping indexes
                     for idx in sorted(close_idxs, reverse=True):
                         tab_widget.removeTab(idx)
+
+    def get_associated_plots(self, data_sheet: DataSheet) -> list[PlotWidget]:
+        """Get plots associated with a data sheet."""
+        plots = []
+        for idx in range(self.ui.tabWidget.count()):
+            tab = self.ui.tabWidget.widget(idx)
+            if type(tab) == PlotTab and tab.data_sheet == data_sheet:
+                plots.append(PlotWidget(index=idx, widget=tab))
+        return plots
 
     def _count_data_sheets(self):
         """Count the number of data sheets."""
@@ -527,6 +551,24 @@ class Application(QtWidgets.QMainWindow):
             model = project_files.save_data_sheet(current_sheet)
             new_sheet = project_files.load_data_sheet(app=self, model=model)
             self.add_data_sheet(new_sheet)
+
+    def duplicate_data_sheet_with_plots(self) -> None:
+        """Duplicate the current data sheet and associated plots.
+
+        The data sheet and plots are duplicated by leveraging code used to managing project
+        files. The plots use the new data sheet as the data source.
+        """
+        if current_sheet := self._on_data_sheet():
+            model = project_files.save_data_sheet(current_sheet)
+            new_sheet = project_files.load_data_sheet(app=self, model=model)
+            self.add_data_sheet(new_sheet)
+            for plot in self.get_associated_plots(current_sheet):
+                model = project_files.save_plot(plot.widget)
+                model.name += f" ({new_sheet.name})"
+                new_plot = project_files.load_plot(
+                    app=self, model=model, data_sheet=new_sheet
+                )
+                self.add_plot_tab(new_plot)
 
     def new_project(self):
         """Close the current project and open a new one."""

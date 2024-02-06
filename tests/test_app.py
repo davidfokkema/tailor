@@ -247,3 +247,39 @@ class TestSheets:
 
         simple_project.show_warning_dialog.assert_not_called()
         sheet.remove_selected_columns.assert_called()
+
+    def test_duplicate_sheet(self, simple_project: Application) -> None:
+        simple_project.ui.tabWidget.setCurrentIndex(1)
+        sheet1: DataSheet = simple_project.ui.tabWidget.currentWidget()
+
+        simple_project.duplicate_data_sheet()
+
+        assert simple_project.ui.tabWidget.count() == 4
+        sheet2: DataSheet = simple_project.ui.tabWidget.widget(3)
+        assert (
+            sheet1.model.data_model.get_column("col1").tolist()
+            == sheet2.model.data_model.get_column("col1").tolist()
+        )
+
+    def test_duplicate_sheet_with_plots(self, simple_project: Application) -> None:
+        simple_project.ui.tabWidget.setCurrentIndex(1)
+        sheet1: DataSheet = simple_project.ui.tabWidget.widget(1)
+        plot1: PlotTab = simple_project.ui.tabWidget.widget(2)
+
+        simple_project.duplicate_data_sheet_with_plots()
+
+        assert simple_project.ui.tabWidget.count() == 5
+        sheet2: DataSheet = simple_project.ui.tabWidget.widget(3)
+        plot2: PlotTab = simple_project.ui.tabWidget.widget(4)
+        assert (
+            sheet1.model.data_model.get_column("col1").tolist()
+            == sheet2.model.data_model.get_column("col1").tolist()
+        )
+        # check that plot2 points to the new data sheet
+        assert plot1.data_sheet == sheet1
+        assert plot2.data_sheet == sheet2
+        # check that the underlying plot models are not identical
+        assert plot1.model != plot2.model
+        # check a few model attributes, they should have identical values
+        assert plot1.model._parameters["a"].value == plot2.model._parameters["a"].value
+        assert plot1.model.get_model_expression() == plot2.model.get_model_expression()

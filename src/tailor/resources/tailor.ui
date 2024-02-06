@@ -44,10 +44,11 @@
    </property>
    <widget class="QMenu" name="menuTable">
     <property name="title">
-     <string>Table</string>
+     <string>Sheet</string>
     </property>
     <addaction name="actionAdd_Data_Sheet"/>
     <addaction name="actionDuplicate_Data_Sheet"/>
+    <addaction name="actionDuplicate_Data_Sheet_With_Plots"/>
     <addaction name="separator"/>
     <addaction name="actionAdd_column"/>
     <addaction name="actionAdd_calculated_column"/>
@@ -99,9 +100,17 @@
     <addaction name="actionCopy"/>
     <addaction name="actionPaste"/>
    </widget>
+   <widget class="QMenu" name="menuPlot">
+    <property name="title">
+     <string>Plot</string>
+    </property>
+    <addaction name="actionDuplicate_Plot"/>
+    <addaction name="actionChange_Plot_Source"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuTable"/>
+   <addaction name="menuPlot"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -236,6 +245,21 @@
   <action name="actionDuplicate_Data_Sheet">
    <property name="text">
     <string>Duplicate Data Sheet</string>
+   </property>
+  </action>
+  <action name="actionDuplicate_Plot">
+   <property name="text">
+    <string>Duplicate Plot</string>
+   </property>
+  </action>
+  <action name="actionDuplicate_Data_Sheet_With_Plots">
+   <property name="text">
+    <string>Duplicate Data Sheet With Plots</string>
+   </property>
+  </action>
+  <action name="actionChange_Plot_Source">
+   <property name="text">
+    <string>Change Plot Source</string>
    </property>
   </action>
  </widget>
