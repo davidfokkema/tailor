@@ -3,7 +3,7 @@ import pytest
 from PySide6 import QtCore, QtWidgets
 from pytest_mock import MockerFixture
 
-from tailor.app import Application
+from tailor.app import Application, dialogs
 from tailor.data_sheet import DataSheet
 from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 
@@ -188,7 +188,7 @@ class TestSheets:
     def test_remove_unused_column(
         self, simple_project: Application, mocker: MockerFixture
     ) -> None:
-        mocker.patch.object(simple_project, "show_warning_dialog")
+        mocker.patch.object(dialogs, "show_warning_dialog")
         simple_project.ui.tabWidget.setCurrentIndex(1)
         sheet: DataSheet = simple_project.ui.tabWidget.currentWidget()
         mocker.patch.object(sheet, "remove_selected_columns")
@@ -196,13 +196,13 @@ class TestSheets:
         # no associated plots or columns, confirmation not needed
         sheet.ui.data_view.selectColumn(4)
         simple_project.remove_selected_columns()
-        simple_project.show_warning_dialog.assert_not_called()
+        dialogs.show_warning_dialog.assert_not_called()
         sheet.remove_selected_columns.assert_called()
 
     def test_remove_used_column_lists_associated_plots(
         self, simple_project: Application, mocker: MockerFixture
     ) -> None:
-        mocker.patch.object(simple_project, "show_warning_dialog")
+        mocker.patch.object(dialogs, "show_warning_dialog")
         simple_project.ui.tabWidget.setCurrentIndex(1)
         sheet: DataSheet = simple_project.ui.tabWidget.currentWidget()
         mocker.patch.object(sheet, "remove_selected_columns")
@@ -210,14 +210,14 @@ class TestSheets:
         # associated plots: Plot 1
         sheet.ui.data_view.selectColumn(0)
         simple_project.remove_selected_columns()
-        simple_project.show_warning_dialog.assert_called()
-        assert "Plot 1" in simple_project.show_warning_dialog.call_args.args[0]
+        dialogs.show_warning_dialog.assert_called()
+        assert "Plot 1" in dialogs.show_warning_dialog.call_args.kwargs["msg"]
         sheet.remove_selected_columns.assert_not_called()
 
     def test_remove_used_column_lists_associated_calculated_columns(
         self, simple_project: Application, mocker: MockerFixture
     ) -> None:
-        mocker.patch.object(simple_project, "show_warning_dialog")
+        mocker.patch.object(dialogs, "show_warning_dialog")
         simple_project.ui.tabWidget.setCurrentIndex(1)
         sheet: DataSheet = simple_project.ui.tabWidget.currentWidget()
         mocker.patch.object(sheet, "remove_selected_columns")
@@ -225,16 +225,16 @@ class TestSheets:
         # associated plots: Plot 1
         sheet.ui.data_view.selectColumn(0)
         simple_project.remove_selected_columns()
-        simple_project.show_warning_dialog.assert_called()
-        assert "'z', 'position'" in simple_project.show_warning_dialog.call_args.args[0]
-        assert "empty" not in simple_project.show_warning_dialog.call_args.args[0]
-        assert "yerr" not in simple_project.show_warning_dialog.call_args.args[0]
+        dialogs.show_warning_dialog.assert_called()
+        assert "'z', 'position'" in dialogs.show_warning_dialog.call_args.kwargs["msg"]
+        assert "empty" not in dialogs.show_warning_dialog.call_args.kwargs["msg"]
+        assert "yerr" not in dialogs.show_warning_dialog.call_args.kwargs["msg"]
         sheet.remove_selected_columns.assert_not_called()
 
     def test_remove_column_and_used_column(
         self, simple_project: Application, mocker: MockerFixture
     ) -> None:
-        mocker.patch.object(simple_project, "show_warning_dialog")
+        mocker.patch.object(dialogs, "show_warning_dialog")
         simple_project.ui.tabWidget.setCurrentIndex(1)
         sheet: DataSheet = simple_project.ui.tabWidget.currentWidget()
         mocker.patch.object(sheet, "remove_selected_columns")
@@ -247,7 +247,7 @@ class TestSheets:
         )
         simple_project.remove_selected_columns()
 
-        simple_project.show_warning_dialog.assert_not_called()
+        dialogs.show_warning_dialog.assert_not_called()
         sheet.remove_selected_columns.assert_called()
 
     def test_duplicate_sheet(self, simple_project: Application) -> None:

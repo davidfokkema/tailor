@@ -282,7 +282,7 @@ class Application(QtWidgets.QMainWindow):
                     0,
                     "This column can only be removed when it is unused. Please remove the following items first.",
                 )
-                self.show_warning_dialog(" ".join(msgs))
+                dialogs.show_warning_dialog(parent=self, msg=" ".join(msgs))
             else:
                 current_tab.remove_selected_columns()
 
@@ -731,20 +731,6 @@ class Application(QtWidgets.QMainWindow):
                 return True
             else:
                 return False
-
-    def show_warning_dialog(self, msg):
-        """Present a warning dialog.
-
-        Present a dialog with a warning message. The user can dismiss the warning with the single button.
-
-        Args:
-            msg: the message to present to the user.
-        """
-        QtWidgets.QMessageBox.warning(
-            self,
-            "Warning",
-            msg,
-        )
 
     def confirm_close_dialog(self, msg=None):
         """Present a confirmation dialog before closing.
