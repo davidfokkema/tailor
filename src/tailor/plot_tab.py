@@ -175,6 +175,55 @@ class PlotTab(QtWidgets.QWidget):
         self.update_model_curves()
         self.update_info_box()
 
+    def change_data_source(
+        self,
+        data_sheet: DataSheet,
+        x_col_name: str,
+        y_col_name: str,
+        x_err_col_name: str | None = None,
+        y_err_col_name: str | None = None,
+    ) -> None:
+        """Change data source of the plot.
+
+        This method will let you change the sheet containing the underlying data, but also change the axes or error bars to other data columns. The model expression is left unchanged. That is, if you had something like `a * x + b` and your x-axis is now called `t`, you'll have to manually update the model expression.
+
+        Args:
+            data_sheet (DataSheet): the new data sheet containing the data.
+            x_col_name (str): the new x column name.
+            y_col_name (str): the new y column name.
+            x_err_col_name (str | None, optional): the new x error column name.
+                Defaults to None.
+            y_err_col_name (str | None, optional): the new y error column name.
+                Defaults to None.
+        """
+        # Save model expression using variable names. This is necessary because
+        # the model is stored using column labels like col1, col2, etc. If you
+        # change plot sources, you want the 'x' in your model to point to the
+        # 'x' column in the data, not 'col1' to 'col1', which might be something
+        # different on another data sheet.
+        current_model = self.model.get_model_expression()
+
+        # change data source
+        self.data_sheet = data_sheet
+        self.model.data_model = data_sheet.model.data_model
+        self.model.x_col = self.model.data_model.get_column_label_by_name(x_col_name)
+        self.model.y_col = self.model.data_model.get_column_label_by_name(y_col_name)
+        self.model.x_err_col = (
+            self.model.data_model.get_column_label_by_name(x_err_col_name)
+            if x_err_col_name
+            else None
+        )
+        self.model.y_err_col = (
+            self.model.data_model.get_column_label_by_name(y_err_col_name)
+            if y_err_col_name
+            else None
+        )
+
+        # restore model expression using variable names
+        self.model.update_model_expression(current_model)
+        # refresh the plot UI
+        self.refresh_ui()
+
     def get_draw_curve_option(self) -> DrawCurve:
         """Get the currently selected draw curve option.
 

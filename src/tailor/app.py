@@ -609,21 +609,13 @@ class Application(QtWidgets.QMainWindow):
             data_sheets = self.get_data_sheets()
             dialog = DataSourceDialog(plot, data_sheets)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
-                current_model = plot.model.get_model_expression()
-                data_sheet = data_sheets[dialog.ui.data_source_box.currentIndex()]
-                plot.data_sheet = data_sheet
-                plot.model.data_model = data_sheet.model.data_model
-                for var in ["x", "y", "x_err", "y_err"]:
-                    box: QtWidgets.QComboBox = getattr(dialog.ui, f"{var}_box")
-                    if new_col := box.currentText():
-                        col_label = (
-                            data_sheet.model.data_model.get_column_label_by_name(
-                                new_col
-                            )
-                        )
-                        var = setattr(plot.model, f"{var}_col", col_label)
-                plot.model.update_model_expression(current_model)
-                plot.refresh_ui()
+                plot.change_data_source(
+                    data_sheet=data_sheets[dialog.ui.data_source_box.currentIndex()],
+                    x_col_name=dialog.ui.x_box.currentText(),
+                    x_err_col_name=dialog.ui.x_err_box.currentText(),
+                    y_col_name=dialog.ui.y_box.currentText(),
+                    y_err_col_name=dialog.ui.y_err_box.currentText(),
+                )
 
     def new_project(self):
         """Close the current project and open a new one."""
