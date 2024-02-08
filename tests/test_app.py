@@ -302,3 +302,13 @@ class TestSheets:
         assert plot1.model != plot2.model
         assert plot1.model._parameters["a"].value == plot2.model._parameters["a"].value
         assert plot1.model.get_model_expression() == plot2.model.get_model_expression()
+
+    def test_get_data_sheets(self, simple_project: Application) -> None:
+        tabwidget = simple_project.ui.tabWidget
+        sheet1 = tabwidget.widget(0)
+        sheet2 = tabwidget.widget(1)
+        assert type(sheet1) is type(sheet2) is DataSheet
+
+        sheets = simple_project.get_data_sheets()
+
+        assert sheets == [sheet1, sheet2]

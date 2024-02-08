@@ -29,6 +29,7 @@ from tailor.csv_format_dialog import (
     FormatParameters,
 )
 from tailor.data_sheet import DataSheet
+from tailor.data_source_dialog import DataSourceDialog
 from tailor.plot_tab import PlotTab
 from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
 from tailor.ui_tailor import Ui_MainWindow
@@ -122,6 +123,8 @@ class Application(QtWidgets.QMainWindow):
             self.duplicate_data_sheet_with_plots
         )
         self.ui.actionDuplicate_Plot.triggered.connect(self.duplicate_plot)
+        self.ui.actionChange_Plot_Source.triggered.connect(self.change_plot_data_source)
+
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
             self.add_calculated_column
@@ -487,6 +490,17 @@ class Application(QtWidgets.QMainWindow):
                 plots.append(PlotWidget(index=idx, widget=tab))
         return plots
 
+    def get_data_sheets(self) -> list[DataSheet]:
+        """Get a list of the data sheets.
+
+        Returns:
+            list[DataSheet]: a list of all data sheets
+        """
+        widgets = [
+            self.ui.tabWidget.widget(idx) for idx in range(self.ui.tabWidget.count())
+        ]
+        return [widget for widget in widgets if type(widget) == DataSheet]
+
     def _count_data_sheets(self):
         """Count the number of data sheets."""
         is_data_sheet = [
@@ -563,11 +577,13 @@ class Application(QtWidgets.QMainWindow):
             model = project_files.save_data_sheet(current_sheet)
             new_sheet = project_files.load_data_sheet(app=self, model=model)
             self.add_data_sheet(new_sheet)
+            idx = self.ui.tabWidget.currentIndex()
             for plot in self.get_associated_plots(current_sheet):
                 model = project_files.save_plot(plot.widget)
                 model.name += f" ({new_sheet.name})"
                 new_plot = project_files.load_plot(model=model, data_sheet=new_sheet)
                 self.add_plot_tab(new_plot)
+            self.ui.tabWidget.setCurrentIndex(idx)
 
     def duplicate_plot(self) -> None:
         """Duplicate the current plot.
@@ -581,6 +597,33 @@ class Application(QtWidgets.QMainWindow):
                 model=model, data_sheet=current_plot.data_sheet
             )
             self.add_plot_tab(new_plot)
+
+    def change_plot_data_source(self) -> None:
+        """Change the data source of a plot.
+
+        When you've added a plot to Sheet 1 and you want to have the same plot
+        for Sheet 2, first duplicate the plot and then change the data source to
+        Sheet 2.
+        """
+        if plot := self._on_plot():
+            data_sheets = self.get_data_sheets()
+            dialog = DataSourceDialog(plot, data_sheets)
+            if dialog.exec() == QtWidgets.QDialog.Accepted:
+                current_model = plot.model.get_model_expression()
+                data_sheet = data_sheets[dialog.ui.data_source_box.currentIndex()]
+                plot.data_sheet = data_sheet
+                plot.model.data_model = data_sheet.model.data_model
+                for var in ["x", "y", "x_err", "y_err"]:
+                    box: QtWidgets.QComboBox = getattr(dialog.ui, f"{var}_box")
+                    if new_col := box.currentText():
+                        col_label = (
+                            data_sheet.model.data_model.get_column_label_by_name(
+                                new_col
+                            )
+                        )
+                        var = setattr(plot.model, f"{var}_col", col_label)
+                plot.model.update_model_expression(current_model)
+                plot.refresh_ui()
 
     def new_project(self):
         """Close the current project and open a new one."""
