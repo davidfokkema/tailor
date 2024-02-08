@@ -19,7 +19,7 @@
      <item row="0" column="0">
       <widget class="QLabel" name="xAxisLabel">
        <property name="text">
-        <string>X-axis</string>
+        <string>X-axis:</string>
        </property>
       </widget>
      </item>
@@ -29,7 +29,7 @@
      <item row="1" column="0">
       <widget class="QLabel" name="uncertaintyXLabel">
        <property name="text">
-        <string>Uncertainty X</string>
+        <string>Uncertainty X:</string>
        </property>
       </widget>
      </item>
@@ -39,7 +39,7 @@
      <item row="2" column="0">
       <widget class="QLabel" name="yAxisLabel">
        <property name="text">
-        <string>Y-axis</string>
+        <string>Y-axis:</string>
        </property>
       </widget>
      </item>
@@ -49,7 +49,7 @@
      <item row="3" column="0">
       <widget class="QLabel" name="uncertaintyYLabel">
        <property name="text">
-        <string>Uncertainty Y</string>
+        <string>Uncertainty Y:</string>
        </property>
       </widget>
      </item>

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'data_sheet.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.2
+## Created by: Qt User Interface Compiler version 6.5.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -107,7 +107,7 @@ class Ui_DataSheet(object):
         DataSheet.setWindowTitle(QCoreApplication.translate("DataSheet", u"Form", None))
         self.groupBox.setTitle(QCoreApplication.translate("DataSheet", u"Column information", None))
         self.nameLabel.setText(QCoreApplication.translate("DataSheet", u"Name:", None))
-        self.formulaLabel.setText(QCoreApplication.translate("DataSheet", u"Formula", None))
+        self.formulaLabel.setText(QCoreApplication.translate("DataSheet", u"Formula:", None))
         self.add_column_button.setText(QCoreApplication.translate("DataSheet", u"Add column", None))
         self.add_calculated_column_button.setText(QCoreApplication.translate("DataSheet", u"Add calculated column", None))
         self.create_plot_button.setText(QCoreApplication.translate("DataSheet", u"Create plot", None))

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'create_plot_dialog.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.2
+## Created by: Qt User Interface Compiler version 6.5.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -91,9 +91,9 @@ class Ui_CreatePlotDialog(object):
 
     def retranslateUi(self, CreatePlotDialog):
         CreatePlotDialog.setWindowTitle(QCoreApplication.translate("CreatePlotDialog", u"Dialog", None))
-        self.xAxisLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"X-axis", None))
-        self.uncertaintyXLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Uncertainty X", None))
-        self.yAxisLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Y-axis", None))
-        self.uncertaintyYLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Uncertainty Y", None))
+        self.xAxisLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"X-axis:", None))
+        self.uncertaintyXLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Uncertainty X:", None))
+        self.yAxisLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Y-axis:", None))
+        self.uncertaintyYLabel.setText(QCoreApplication.translate("CreatePlotDialog", u"Uncertainty Y:", None))
     # retranslateUi
 
