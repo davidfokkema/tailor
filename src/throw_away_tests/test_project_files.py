@@ -72,6 +72,5 @@ if __name__ == "__main__":
     project_files.load_project_from_json(app, model)
 
     app.show()
-    app.change_plot_data_source()
     qapp.exec()
     qapp.quit()
