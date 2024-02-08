@@ -616,14 +616,16 @@ class Application(QtWidgets.QMainWindow):
                         parent=self, msg="You must select both x and y axes."
                     )
                 else:
+                    x_err_col_name = dialog.ui.x_err_box.currentText()
+                    y_err_col_name = dialog.ui.y_err_box.currentText()
                     plot.change_data_source(
                         data_sheet=data_sheets[
                             dialog.ui.data_source_box.currentIndex()
                         ],
                         x_col_name=x_col_name,
-                        x_err_col_name=dialog.ui.x_err_box.currentText(),
+                        x_err_col_name=x_err_col_name,
                         y_col_name=y_col_name,
-                        y_err_col_name=dialog.ui.y_err_box.currentText(),
+                        y_err_col_name=y_err_col_name,
                     )
 
     def new_project(self):

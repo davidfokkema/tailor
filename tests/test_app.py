@@ -37,6 +37,22 @@ def data_sheet(mocker: MockerFixture) -> DataSheet:
 
 
 @pytest.fixture()
+def simple_data_sheet(mocker: MockerFixture) -> DataSheet:
+    sheet = DataSheet(name="Sheet 3", id=2345, main_window=mocker.MagicMock())
+    sheet.model.setDataFromArray(
+        sheet.model.createIndex(0, 0),
+        np.array(
+            [[1.0, 3.0, 5.0, 7.0, 9.0], [0.0, 1.0, 2.0, 3.0, 4.0], 5 * [0.1], 5 * [0.2]]
+        ).T,
+    )
+    sheet.model.renameColumn(0, "pos")
+    sheet.model.renameColumn(1, "t")
+    sheet.model.renameColumn(2, "err_pos")
+    sheet.model.renameColumn(3, "err_t")
+    return sheet
+
+
+@pytest.fixture()
 def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
     plot_tab = PlotTab(
         name="Plot 1",
@@ -60,9 +76,10 @@ def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
 
 @pytest.fixture()
 def simple_project_without_plot(data_sheet: DataSheet) -> Application:
-    app = Application(add_sheet=True)
-    app.ui.tabWidget.addTab(data_sheet, data_sheet.name)
-    return app
+    project = Application(add_sheet=True)
+    project.ui.tabWidget.addTab(data_sheet, data_sheet.name)
+    project._sheet_num += 1
+    return project
 
 
 @pytest.fixture()
@@ -72,6 +89,16 @@ def simple_project(
     project = simple_project_without_plot
     project.ui.tabWidget.addTab(plot_tab, plot_tab.name)
     project._plot_num += 1
+    return project
+
+
+@pytest.fixture()
+def project_with_two_sheets(
+    simple_project: Application, simple_data_sheet: DataSheet
+) -> Application:
+    project = simple_project
+    project.ui.tabWidget.addTab(simple_data_sheet, simple_data_sheet.name)
+    project._sheet_num += 1
     return project
 
 
@@ -312,3 +339,25 @@ class TestSheets:
         sheets = simple_project.get_data_sheets()
 
         assert sheets == [sheet1, sheet2]
+
+    def test_change_plot_source(self, project_with_two_sheets: Application) -> None:
+        plot: PlotTab = project_with_two_sheets.ui.tabWidget.widget(2)
+        sheet3: DataSheet = project_with_two_sheets.ui.tabWidget.widget(3)
+
+        plot.change_data_source(
+            sheet3,
+            x_col_name="t",
+            y_col_name="pos",
+            x_err_col_name="err_t",
+            y_err_col_name="err_pos",
+        )
+
+        assert plot.data_sheet == sheet3
+        assert plot.model.data_model == sheet3.model.data_model
+        assert sheet3.model.data_model.get_column_name(plot.model.x_col) == "t"
+        assert sheet3.model.data_model.get_column_name(plot.model.x_err_col) == "err_t"
+        assert sheet3.model.data_model.get_column_name(plot.model.y_col) == "pos"
+        assert (
+            sheet3.model.data_model.get_column_name(plot.model.y_err_col) == "err_pos"
+        )
+        assert plot.model.get_model_expression() == "a * x + b"
