@@ -149,7 +149,7 @@ class TestProjectFiles:
         mocker: MockerFixture,
     ):
         app = mocker.Mock()
-        plot_tab = project_files.load_plot(app, plot_tab_model, data_sheet)
+        plot_tab = project_files.load_plot(plot_tab_model, data_sheet)
         assert isinstance(plot_tab, PlotTab)
 
         assert plot_tab.name == "Plot 1"

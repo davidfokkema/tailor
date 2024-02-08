@@ -566,9 +566,7 @@ class Application(QtWidgets.QMainWindow):
             for plot in self.get_associated_plots(current_sheet):
                 model = project_files.save_plot(plot.widget)
                 model.name += f" ({new_sheet.name})"
-                new_plot = project_files.load_plot(
-                    app=self, model=model, data_sheet=new_sheet
-                )
+                new_plot = project_files.load_plot(model=model, data_sheet=new_sheet)
                 self.add_plot_tab(new_plot)
 
     def duplicate_plot(self) -> None:
@@ -580,7 +578,7 @@ class Application(QtWidgets.QMainWindow):
             model = project_files.save_plot(current_plot)
             model.name = f"Plot {self._plot_num + 1}"
             new_plot = project_files.load_plot(
-                app=self, model=model, data_sheet=current_plot.data_sheet
+                model=model, data_sheet=current_plot.data_sheet
             )
             self.add_plot_tab(new_plot)
 

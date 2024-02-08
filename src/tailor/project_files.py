@@ -95,7 +95,7 @@ def load_project_from_model(project: Application, model: Project):
     plot_tab_by_id: dict[int, PlotTab] = {}
     for plot_model in model.plots:
         sheet = data_sheet_by_id[plot_model.data_sheet_id]
-        plot_tab = load_plot(app=project, model=plot_model, data_sheet=sheet)
+        plot_tab = load_plot(model=plot_model, data_sheet=sheet)
         plot_tab_by_id[plot_tab.id] = plot_tab
 
     # restore tabs in order
@@ -167,7 +167,7 @@ def save_plot(plot: PlotTab):
     )
 
 
-def load_plot(app: Application, model: Plot, data_sheet: DataSheet) -> PlotTab:
+def load_plot(model: Plot, data_sheet: DataSheet) -> PlotTab:
     plot_tab = PlotTab(
         name=model.name,
         id=model.id,
