@@ -121,6 +121,7 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionDuplicate_Data_Sheet_With_Plots.triggered.connect(
             self.duplicate_data_sheet_with_plots
         )
+        self.ui.actionDuplicate_Plot.triggered.connect(self.duplicate_plot)
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
             self.add_calculated_column
@@ -226,7 +227,7 @@ class Application(QtWidgets.QMainWindow):
             )
             return None
 
-    def _on_plot(self) -> Optional[DataSheet]:
+    def _on_plot(self) -> Optional[PlotTab]:
         """Return the current tab if it is a plot else display warning."""
         if type(tab := self.ui.tabWidget.currentWidget()) == PlotTab:
             return tab
@@ -569,6 +570,19 @@ class Application(QtWidgets.QMainWindow):
                     app=self, model=model, data_sheet=new_sheet
                 )
                 self.add_plot_tab(new_plot)
+
+    def duplicate_plot(self) -> None:
+        """Duplicate the current plot.
+
+        The plot is duplicated by leveraging code used to managing project files.
+        """
+        if current_plot := self._on_plot():
+            model = project_files.save_plot(current_plot)
+            model.name = f"Plot {self._plot_num + 1}"
+            new_plot = project_files.load_plot(
+                app=self, model=model, data_sheet=current_plot.data_sheet
+            )
+            self.add_plot_tab(new_plot)
 
     def new_project(self):
         """Close the current project and open a new one."""

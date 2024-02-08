@@ -69,8 +69,10 @@ def simple_project_without_plot(data_sheet: DataSheet) -> Application:
 def simple_project(
     simple_project_without_plot: Application, plot_tab: PlotTab
 ) -> Application:
-    simple_project_without_plot.ui.tabWidget.addTab(plot_tab, plot_tab.name)
-    return simple_project_without_plot
+    project = simple_project_without_plot
+    project.ui.tabWidget.addTab(plot_tab, plot_tab.name)
+    project._plot_num += 1
+    return project
 
 
 class TestSheets:
@@ -281,5 +283,22 @@ class TestSheets:
         # check that the underlying plot models are not identical
         assert plot1.model != plot2.model
         # check a few model attributes, they should have identical values
+        assert plot1.model._parameters["a"].value == plot2.model._parameters["a"].value
+        assert plot1.model.get_model_expression() == plot2.model.get_model_expression()
+
+    def test_duplicate_plot(self, simple_project: Application) -> None:
+        simple_project.ui.tabWidget.setCurrentIndex(2)
+
+        simple_project.duplicate_plot()
+
+        assert simple_project.ui.tabWidget.count() == 4
+        assert simple_project._plot_num == 2
+        plot1: PlotTab = simple_project.ui.tabWidget.widget(2)
+        plot2: PlotTab = simple_project.ui.tabWidget.widget(3)
+        assert plot1.name == "Plot 1"
+        assert plot2.name == "Plot 2"
+        assert plot1.data_sheet is plot2.data_sheet
+        # check that the underlying plot models are not identical
+        assert plot1.model != plot2.model
         assert plot1.model._parameters["a"].value == plot2.model._parameters["a"].value
         assert plot1.model.get_model_expression() == plot2.model.get_model_expression()
