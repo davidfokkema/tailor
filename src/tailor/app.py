@@ -609,13 +609,22 @@ class Application(QtWidgets.QMainWindow):
             data_sheets = self.get_data_sheets()
             dialog = DataSourceDialog(plot, data_sheets)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
-                plot.change_data_source(
-                    data_sheet=data_sheets[dialog.ui.data_source_box.currentIndex()],
-                    x_col_name=dialog.ui.x_box.currentText(),
-                    x_err_col_name=dialog.ui.x_err_box.currentText(),
-                    y_col_name=dialog.ui.y_box.currentText(),
-                    y_err_col_name=dialog.ui.y_err_box.currentText(),
-                )
+                x_col_name = dialog.ui.x_box.currentText()
+                y_col_name = dialog.ui.y_box.currentText()
+                if x_col_name == "" or y_col_name == "":
+                    dialogs.show_warning_dialog(
+                        parent=self, msg="You must select both x and y axes."
+                    )
+                else:
+                    plot.change_data_source(
+                        data_sheet=data_sheets[
+                            dialog.ui.data_source_box.currentIndex()
+                        ],
+                        x_col_name=x_col_name,
+                        x_err_col_name=dialog.ui.x_err_box.currentText(),
+                        y_col_name=y_col_name,
+                        y_err_col_name=dialog.ui.y_err_box.currentText(),
+                    )
 
     def new_project(self):
         """Close the current project and open a new one."""
