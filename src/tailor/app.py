@@ -697,8 +697,9 @@ class Application(QtWidgets.QMainWindow):
         try:
             project_files.save_project_to_path(self, filename)
         except Exception as exc:
-            self._show_exception(
-                exc,
+            dialogs.show_exception(
+                parent=self,
+                exc=exc,
                 title="Unable to save project.",
                 text="This is a bug in the application.",
             )
@@ -813,8 +814,9 @@ class Application(QtWidgets.QMainWindow):
             self.clear_all()
             project_files.load_project_from_path(self, filename)
         except Exception as exc:
-            self._show_exception(
-                exc,
+            dialogs.show_exception(
+                parent=self,
+                exc=exc,
                 title="Unable to open project.",
                 text="This can happen if the file is corrupt or if there is a bug in the application.",
             )
@@ -890,13 +892,21 @@ class Application(QtWidgets.QMainWindow):
                     self.ui.setupUi(self)
 
             with tempfile.NamedTemporaryFile() as file:
-                plot.export_graph(file, dpi=100)
-                dialog = Dialog()
-                pixmap = QtGui.QPixmap()
-                pixmap.load(file.name)
-                dialog.ui.label.setPixmap(pixmap)
-                print(f"{file.name=}")
-                dialog.exec()
+                try:
+                    plot.export_graph(file, dpi=100)
+                except Exception as exc:
+                    dialogs.show_exception(
+                        parent=self,
+                        exc=exc,
+                        title="Unable to preview graph.",
+                        text="It might help to check your axis labels for invalid LaTeX code.",
+                    )
+                else:
+                    dialog = Dialog()
+                    pixmap = QtGui.QPixmap()
+                    pixmap.load(file.name)
+                    dialog.ui.label.setPixmap(pixmap)
+                    dialog.exec()
 
     def export_graph(self, suffix):
         """Export a graph to a file.
@@ -920,8 +930,9 @@ class Application(QtWidgets.QMainWindow):
                     try:
                         plot.export_graph(path)
                     except Exception as exc:
-                        self._show_exception(
-                            exc,
+                        dialogs.show_exception(
+                            parent=self,
+                            exc=exc,
                             title="Unable to export graph.",
                             text="This can happen if there is a bug in the application.",
                         )
@@ -947,21 +958,6 @@ class Application(QtWidgets.QMainWindow):
         if self._is_dirty:
             title += "*"
         self.setWindowTitle(title)
-
-    def _show_exception(self, exc, title, text):
-        """Show a messagebox with detailed exception information.
-
-        Args:
-            exc: the exception.
-            title: short header text.
-            text: longer informative text describing the problem.
-        """
-        msg = QtWidgets.QMessageBox(parent=self)
-        msg.setText(title)
-        msg.setInformativeText(text)
-        msg.setDetailedText(traceback.format_exc())
-        msg.setStyleSheet("QLabel{min-width: 400px;}")
-        msg.exec()
 
     def update_recent_files(self, file=None):
         """Update open recent files list.
