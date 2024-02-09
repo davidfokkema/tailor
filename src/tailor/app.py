@@ -9,6 +9,7 @@ import json
 import pathlib
 import platform
 import sys
+import tempfile
 import traceback
 import urllib.request
 import webbrowser
@@ -32,6 +33,7 @@ from tailor.data_sheet import DataSheet
 from tailor.data_source_dialog import DataSourceDialog
 from tailor.plot_tab import PlotTab
 from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
+from tailor.ui_preview_dialog import Ui_PreviewDialog
 from tailor.ui_rename_dialog import Ui_RenameDialog
 from tailor.ui_tailor import Ui_MainWindow
 
@@ -110,6 +112,7 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionCheck_for_updates.triggered.connect(self.check_for_updates)
         self.ui.actionImport_CSV.triggered.connect(self.import_csv)
         self.ui.actionExport_CSV.triggered.connect(self.export_csv)
+        self.ui.actionPreview_Graph.triggered.connect(self.preview_graph)
         self.ui.actionExport_Graph_to_PDF.triggered.connect(
             lambda: self.export_graph(".pdf")
         )
@@ -152,6 +155,7 @@ class Application(QtWidgets.QMainWindow):
         self.ui.actionSave_As.setShortcut(QtGui.QKeySequence.SaveAs)
         self.ui.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
         self.ui.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
+        self.ui.actionPreview_Graph.setShortcut(QtGui.QKeySequence.Print)
 
         # Set other shortcuts for menu items
         self.ui.actionImport_CSV.setShortcut(QtGui.QKeySequence("Ctrl+I"))
@@ -875,6 +879,24 @@ class Application(QtWidgets.QMainWindow):
         else:
             data_sheet.model.merge_csv(filename, format)
         data_sheet.ui.data_view.setCurrentIndex(data_sheet.model.createIndex(0, 0))
+
+    def preview_graph(self):
+        if plot := self._on_plot():
+
+            class Dialog(QtWidgets.QDialog):
+                def __init__(self):
+                    super().__init__()
+                    self.ui = Ui_PreviewDialog()
+                    self.ui.setupUi(self)
+
+            with tempfile.NamedTemporaryFile() as file:
+                plot.export_graph(file, dpi=100)
+                dialog = Dialog()
+                pixmap = QtGui.QPixmap()
+                pixmap.load(file.name)
+                dialog.ui.label.setPixmap(pixmap)
+                print(f"{file.name=}")
+                dialog.exec()
 
     def export_graph(self, suffix):
         """Export a graph to a file.

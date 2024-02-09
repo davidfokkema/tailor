@@ -686,7 +686,7 @@ class PlotTab(QtWidgets.QWidget):
 
         return msg
 
-    def export_graph(self, filename):
+    def export_graph(self, filename, dpi=300):
         """Export graph to a file.
 
         Args:
@@ -725,7 +725,7 @@ class PlotTab(QtWidgets.QWidget):
         plt.ylabel(self.model.y_label)
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
-        plt.savefig(filename, dpi=300)
+        plt.savefig(filename, dpi=dpi)
 
 
 def make_header(text):

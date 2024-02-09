@@ -83,6 +83,7 @@
     <addaction name="actionImport_CSV"/>
     <addaction name="actionExport_CSV"/>
     <addaction name="separator"/>
+    <addaction name="actionPreview_Graph"/>
     <addaction name="actionExport_Graph_to_PDF"/>
     <addaction name="actionExport_Graph_to_PNG"/>
     <addaction name="separator"/>
@@ -273,6 +274,11 @@
   <action name="actionRename_Plot">
    <property name="text">
     <string>Rename Plot</string>
+   </property>
+  </action>
+  <action name="actionPreview_Graph">
+   <property name="text">
+    <string>Preview Graph</string>
    </property>
   </action>
  </widget>
