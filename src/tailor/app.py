@@ -32,6 +32,7 @@ from tailor.data_sheet import DataSheet
 from tailor.data_source_dialog import DataSourceDialog
 from tailor.plot_tab import PlotTab
 from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
+from tailor.ui_rename_dialog import Ui_RenameDialog
 from tailor.ui_tailor import Ui_MainWindow
 
 metadata = importlib.metadata.metadata("tailor")
@@ -124,6 +125,8 @@ class Application(QtWidgets.QMainWindow):
         )
         self.ui.actionDuplicate_Plot.triggered.connect(self.duplicate_plot)
         self.ui.actionChange_Plot_Source.triggered.connect(self.change_plot_data_source)
+        self.ui.actionRename_Data_Sheet.triggered.connect(self.rename_data_sheet)
+        self.ui.actionRename_Plot.triggered.connect(self.rename_plot)
 
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
@@ -627,6 +630,28 @@ class Application(QtWidgets.QMainWindow):
                         y_col_name=y_col_name,
                         y_err_col_name=y_err_col_name,
                     )
+
+    def rename_data_sheet(self) -> None:
+        if sheet := self._on_data_sheet():
+            self._do_rename_widget(sheet)
+
+    def rename_plot(self) -> None:
+        if plot := self._on_plot():
+            self._do_rename_widget(plot)
+
+    def _do_rename_widget(self, widget) -> None:
+        class Dialog(QtWidgets.QDialog):
+            def __init__(self):
+                super().__init__()
+                self.ui = Ui_RenameDialog()
+                self.ui.setupUi(self)
+
+        dialog = Dialog()
+        dialog.ui.name_box.setText(widget.name)
+        if dialog.exec() == QtWidgets.QDialog.Accepted:
+            widget.name = dialog.ui.name_box.text()
+            tab_idx = self.ui.tabWidget.indexOf(widget)
+            self.ui.tabWidget.setTabText(tab_idx, widget.name)
 
     def new_project(self):
         """Close the current project and open a new one."""

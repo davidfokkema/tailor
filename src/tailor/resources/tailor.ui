@@ -56,8 +56,9 @@
     <addaction name="separator"/>
     <addaction name="actionRemove_column"/>
     <addaction name="actionRemove_row"/>
-    <addaction name="separator"/>
     <addaction name="actionClear_Cell_Contents"/>
+    <addaction name="separator"/>
+    <addaction name="actionRename_Data_Sheet"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -106,6 +107,8 @@
     </property>
     <addaction name="actionDuplicate_Plot"/>
     <addaction name="actionChange_Plot_Source"/>
+    <addaction name="separator"/>
+    <addaction name="actionRename_Plot"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -260,6 +263,16 @@
   <action name="actionChange_Plot_Source">
    <property name="text">
     <string>Change Plot Source</string>
+   </property>
+  </action>
+  <action name="actionRename_Data_Sheet">
+   <property name="text">
+    <string>Rename Data Sheet</string>
+   </property>
+  </action>
+  <action name="actionRename_Plot">
+   <property name="text">
+    <string>Rename Plot</string>
    </property>
   </action>
  </widget>

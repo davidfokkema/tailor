@@ -1,7 +1,7 @@
 uisrcdir=src/tailor/resources
 uidir=src/tailor
 
-uifiles = ui_tailor.py ui_data_sheet.py ui_create_plot_dialog.py ui_csv_format_dialog.py ui_plot_tab.py ui_data_source_dialog.py
+uifiles = ui_tailor.py ui_data_sheet.py ui_create_plot_dialog.py ui_csv_format_dialog.py ui_plot_tab.py ui_data_source_dialog.py ui_rename_dialog.py
 
 .PHONY: help
 help:
