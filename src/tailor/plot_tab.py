@@ -692,27 +692,37 @@ class PlotTab(QtWidgets.QWidget):
         Args:
             filename: path to the file.
         """
+        # x_err, y_err will be 0.0 if no errors are specified
+        x, y, x_err, y_err = self.model.get_data()
         xmin, xmax, ymin, ymax = self.get_adjusted_limits()
 
         plt.figure()
         plt.errorbar(
-            self.x,
-            self.y,
-            xerr=self.x_err,
-            yerr=self.y_err,
+            x,
+            y,
+            xerr=x_err,
+            yerr=y_err,
             fmt="ko",
             ms=3,
             elinewidth=0.5,
         )
-        if self.fit:
-            fit_xmin, fit_xmax = self.get_fit_curve_x_limits()
-            x = np.linspace(fit_xmin, fit_xmax, NUM_POINTS)
-            y = self.fit.eval(**{self.x_var: x})
-            plt.plot(x, y, "r-")
-        if self.ui.use_fit_domain.isChecked():
-            plt.axvspan(*self.fit_domain, facecolor="k", alpha=0.1)
-        plt.xlabel(self.ui.xlabel.text())
-        plt.ylabel(self.ui.ylabel.text())
+
+        x_min, x_max = self.get_fit_curve_x_limits()
+        x = np.linspace(x_min, x_max, NUM_POINTS)
+        y = self.model.evaluate_best_fit(x)
+        if y is not None:
+            plt.plot(x, y, "b-")
+
+        if self.ui.show_initial_fit.isChecked():
+            y = self.model.evaluate_model(x)
+            if y is not None:
+                plt.plot(x, y, "b-", alpha=0.2)
+
+        if self.model.get_fit_domain_enabled():
+            plt.axvspan(*self.model.get_fit_domain(), facecolor="k", alpha=0.1)
+
+        plt.xlabel(self.model.x_label)
+        plt.ylabel(self.model.y_label)
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
         plt.savefig(filename, dpi=300)

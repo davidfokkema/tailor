@@ -885,7 +885,7 @@ class Application(QtWidgets.QMainWindow):
         Args:
             suffix: the required suffix of the file.
         """
-        if tab := self._on_plot():
+        if plot := self._on_plot():
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self,
                 dir=self.get_recent_directory(),
@@ -896,7 +896,7 @@ class Application(QtWidgets.QMainWindow):
                 self.set_recent_directory(path.parent)
                 if path.suffix == suffix:
                     try:
-                        tab.export_graph(path)
+                        plot.export_graph(path)
                     except Exception as exc:
                         self._show_exception(
                             exc,
