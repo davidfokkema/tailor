@@ -1,9 +1,10 @@
 import itertools
+from functools import partial
 from typing import TYPE_CHECKING
 
 import pyqtgraph as pg
 from pyqtgraph import ColorButton
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from tailor.multiplot_model import MultiPlotModel
 from tailor.plot_tab import PlotTab
@@ -87,6 +88,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             plot_name = QtWidgets.QLabel(plot.name)
             is_enabled = QtWidgets.QCheckBox()
             is_enabled.setObjectName("is_enabled")
+            is_enabled._plot = plot
             color_button = ColorButton(color=color)
             color_button.setObjectName("plot_color")
             hbox = QtWidgets.QHBoxLayout()
@@ -98,7 +100,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             layout_widget.setContentsMargins(0, 0, 0, 0)
             layout_widget.setLayout(hbox)
             self._plots[plot] = layout_widget
-            self.model.add_plot(plot, color)
+            is_enabled.stateChanged.connect(partial(self.update_checkbox, is_enabled))
 
     def remove_plots_from_ui(self, plots: list[PlotTab]) -> None:
         """Remove plots from the list of plots.
@@ -121,6 +123,17 @@ class MultiPlotTab(QtWidgets.QWidget):
         for idx, plot in enumerate(self.parent.get_plots()):
             self.ui.plot_selection_layout.insertWidget(idx, self._plots[plot])
 
+    def update_checkbox(
+        self, widget: QtWidgets.QCheckBox, state: QtCore.Qt.CheckState
+    ) -> None:
+        plot = widget._plot
+        if widget.isChecked():
+            color = widget.parent().findChild(pg.ColorButton, "plot_color").color()
+            self.model.add_plot(plot, color)
+        else:
+            self.model.remove_plot(plot)
+        self.draw_plot()
+
     def draw_plot(self) -> None:
         """Create a plot in the widget.
 
@@ -129,21 +142,25 @@ class MultiPlotTab(QtWidgets.QWidget):
         """
         self.ui.plot_widget.clear()
         for plot_tab in self._plots.keys():
-            plot_info = self.model.get_plot_info(plot_tab)
-            x, y, xerr, yerr = plot_tab.model.get_data()
-            plot = self.ui.plot_widget.plot(
-                x=x,
-                y=y,
-                symbol="o",
-                pen=None,
-                symbolSize=5,
-                symbolPen=plot_info.color,
-                symbolBrush=plot_info.color,
-            )
-            error_bars = pg.ErrorBarItem(x=x, y=y, xerr=xerr, yerr=yerr)
-            self.ui.plot_widget.addItem(error_bars)
-            # fit_plot = self.ui.plot_widget.plot(
-            #     symbol=None, pen=pg.mkPen(color="#00F", width=4)
-            # )
+            try:
+                plot_info = self.model.get_plot_info(plot_tab)
+            except KeyError:
+                pass
+            else:
+                x, y, xerr, yerr = plot_tab.model.get_data()
+                self.ui.plot_widget.plot(
+                    x=x,
+                    y=y,
+                    symbol="o",
+                    pen=None,
+                    symbolSize=5,
+                    symbolPen=plot_info.color,
+                    symbolBrush=plot_info.color,
+                )
+                error_bars = pg.ErrorBarItem(x=x, y=y, xerr=xerr, yerr=yerr)
+                self.ui.plot_widget.addItem(error_bars)
+                # fit_plot = self.ui.plot_widget.plot(
+                #     symbol=None, pen=pg.mkPen(color="#00F", width=4)
+                # )
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
         self.ui.plot_widget.setLabel("left", self.model.y_label)
