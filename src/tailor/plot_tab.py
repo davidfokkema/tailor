@@ -124,15 +124,6 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setMenuEnabled(False)
         self.ui.plot_widget.hideButtons()
 
-        # set fit domain
-        x_min, x_max, _, _ = self.model.get_limits_from_data()
-        self.ui.fit_start_box.setValue(x_min)
-        self.ui.fit_end_box.setValue(x_max)
-
-        # set initial x and y labels
-        self.ui.xlabel.setText(self.model.get_x_col_name())
-        self.ui.ylabel.setText(self.model.get_y_col_name())
-
     def create_plot(self):
         """Create a plot in the widget.
 
@@ -171,6 +162,7 @@ class PlotTab(QtWidgets.QWidget):
         optimize that away to keep the code simple.
         """
         self.update_model_widget()
+        self.update_axis_labels_from_model()
         self.update_plot()
         self.model.verify_best_fit_data()
         self.update_params_ui_values_from_model()
@@ -248,6 +240,11 @@ class PlotTab(QtWidgets.QWidget):
         cursor = self.ui.model_func.textCursor()
         cursor.setPosition(cursor_pos)
         self.ui.model_func.setTextCursor(cursor)
+
+    def update_axis_labels_from_model(self) -> None:
+        """Update axis labels from model."""
+        self.ui.xlabel.setText(self.model.x_label)
+        self.ui.ylabel.setText(self.model.y_label)
 
     def update_plot(self):
         """Update plot to reflect any data changes."""

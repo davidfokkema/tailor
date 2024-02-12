@@ -45,6 +45,7 @@ def create_test_project(app: Application):
     plot1.ui.draw_curve_option.setCurrentIndex(1)
     plot1._params["a"].findChild(QtWidgets.QWidget, "value").setValue(2.0)
     plot1.perform_fit()
+    plot1.ui.xlabel.setText("Time (s)")
 
     # create new sheet
     sheet2 = app.add_data_sheet()
@@ -72,8 +73,8 @@ if __name__ == "__main__":
     create_test_project(app)
     model = project_files.save_project_to_json(app)
 
-    # app = Application()
-    # project_files.load_project_from_json(app, model)
+    app = Application()
+    project_files.load_project_from_json(app, model)
 
     app.show()
     qapp.exec()

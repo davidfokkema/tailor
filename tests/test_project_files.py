@@ -169,6 +169,10 @@ class TestProjectFiles:
         assert isinstance(plot_tab.model.best_fit, lmfit.model.ModelResult)
         assert plot_tab.get_draw_curve_option() == DrawCurve.ON_DOMAIN
 
+        # UI refresh will update UI elements
+        plot_tab.refresh_ui()
+        assert plot_tab.ui.xlabel.text() == "Time"
+
     def test_save_project_to_model(self, simple_project: Application):
         # simple_project.show()
         # QtWidgets.QApplication.instance().exec()
