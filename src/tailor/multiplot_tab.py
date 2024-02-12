@@ -88,7 +88,6 @@ class MultiPlotTab(QtWidgets.QWidget):
             plot_name = QtWidgets.QLabel(plot.name)
             is_enabled = QtWidgets.QCheckBox()
             is_enabled.setObjectName("is_enabled")
-            is_enabled._plot = plot
             color_button = ColorButton(color=color)
             color_button.setObjectName("plot_color")
             hbox = QtWidgets.QHBoxLayout()
@@ -100,7 +99,10 @@ class MultiPlotTab(QtWidgets.QWidget):
             layout_widget.setContentsMargins(0, 0, 0, 0)
             layout_widget.setLayout(hbox)
             self._plots[plot] = layout_widget
-            is_enabled.stateChanged.connect(partial(self.update_checkbox, is_enabled))
+            is_enabled.stateChanged.connect(
+                partial(self.update_checkbox, plot, is_enabled)
+            )
+            color_button.sigColorChanging.connect(partial(self.update_color, plot))
 
     def remove_plots_from_ui(self, plots: list[PlotTab]) -> None:
         """Remove plots from the list of plots.
@@ -124,14 +126,18 @@ class MultiPlotTab(QtWidgets.QWidget):
             self.ui.plot_selection_layout.insertWidget(idx, self._plots[plot])
 
     def update_checkbox(
-        self, widget: QtWidgets.QCheckBox, state: QtCore.Qt.CheckState
+        self, plot: PlotTab, widget: QtWidgets.QCheckBox, state: QtCore.Qt.CheckState
     ) -> None:
-        plot = widget._plot
         if widget.isChecked():
             color = widget.parent().findChild(pg.ColorButton, "plot_color").color()
             self.model.add_plot(plot, color)
         else:
             self.model.remove_plot(plot)
+        self.draw_plot()
+
+    def update_color(self, plot: PlotTab, color_button: pg.ColorButton) -> None:
+        plot_info = self.model.get_plot_info(plot)
+        plot_info.color = color_button.color()
         self.draw_plot()
 
     def draw_plot(self) -> None:
