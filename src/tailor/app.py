@@ -10,7 +10,6 @@ import pathlib
 import platform
 import sys
 import tempfile
-import traceback
 import urllib.request
 import webbrowser
 from functools import partial
@@ -31,6 +30,7 @@ from tailor.csv_format_dialog import (
 )
 from tailor.data_sheet import DataSheet
 from tailor.data_source_dialog import DataSourceDialog
+from tailor.multiplot_tab import MultiPlotTab
 from tailor.plot_tab import PlotTab
 from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
 from tailor.ui_preview_dialog import Ui_PreviewDialog
@@ -383,7 +383,7 @@ class Application(QtWidgets.QMainWindow):
             idx: an integer index of the tab.
         """
         tab = self.ui.tabWidget.widget(idx)
-        if type(tab) == PlotTab:
+        if type(tab) == PlotTab or type(tab) == MultiPlotTab:
             tab.refresh_ui()
 
     def ask_and_create_plot_tab(self):
@@ -508,6 +508,17 @@ class Application(QtWidgets.QMainWindow):
         ]
         return [widget for widget in widgets if type(widget) == DataSheet]
 
+    def get_plots(self) -> list[PlotTab]:
+        """Get a list of all plots.
+
+        Returns:
+            list[PlotTab]: a list of all plots.
+        """
+        widgets = [
+            self.ui.tabWidget.widget(idx) for idx in range(self.ui.tabWidget.count())
+        ]
+        return [widget for widget in widgets if type(widget) == PlotTab]
+
     def _count_data_sheets(self):
         """Count the number of data sheets."""
         is_data_sheet = [
@@ -604,6 +615,12 @@ class Application(QtWidgets.QMainWindow):
                 model=model, data_sheet=current_plot.data_sheet
             )
             self.add_plot_tab(new_plot)
+
+    def create_multiplot(self) -> None:
+        if plot := self._on_plot():
+            name = f"Plot {self._plot_num + 1}"
+            multiplot = MultiPlotTab(parent=self, name=name)
+            self.add_plot_tab(multiplot)
 
     def change_plot_data_source(self) -> None:
         """Change the data source of a plot.

@@ -107,6 +107,7 @@
      <string>Plot</string>
     </property>
     <addaction name="actionDuplicate_Plot"/>
+    <addaction name="actionCreate_MultiPlot"/>
     <addaction name="actionChange_Plot_Source"/>
     <addaction name="separator"/>
     <addaction name="actionRename_Plot"/>
@@ -279,6 +280,11 @@
   <action name="actionPreview_Graph">
    <property name="text">
     <string>Preview Graph</string>
+   </property>
+  </action>
+  <action name="actionCreate_MultiPlot">
+   <property name="text">
+    <string>Create MultiPlot</string>
    </property>
   </action>
  </widget>

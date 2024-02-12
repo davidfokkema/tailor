@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'tailor.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.3
+## Created by: Qt User Interface Compiler version 6.6.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -90,6 +90,8 @@ class Ui_MainWindow(object):
         self.actionRename_Plot.setObjectName(u"actionRename_Plot")
         self.actionPreview_Graph = QAction(MainWindow)
         self.actionPreview_Graph.setObjectName(u"actionPreview_Graph")
+        self.actionCreate_MultiPlot = QAction(MainWindow)
+        self.actionCreate_MultiPlot.setObjectName(u"actionCreate_MultiPlot")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
@@ -164,6 +166,7 @@ class Ui_MainWindow(object):
         self.menuEdit.addAction(self.actionCopy)
         self.menuEdit.addAction(self.actionPaste)
         self.menuPlot.addAction(self.actionDuplicate_Plot)
+        self.menuPlot.addAction(self.actionCreate_MultiPlot)
         self.menuPlot.addAction(self.actionChange_Plot_Source)
         self.menuPlot.addSeparator()
         self.menuPlot.addAction(self.actionRename_Plot)
@@ -210,6 +213,7 @@ class Ui_MainWindow(object):
         self.actionRename_Data_Sheet.setText(QCoreApplication.translate("MainWindow", u"Rename Data Sheet", None))
         self.actionRename_Plot.setText(QCoreApplication.translate("MainWindow", u"Rename Plot", None))
         self.actionPreview_Graph.setText(QCoreApplication.translate("MainWindow", u"Preview Graph", None))
+        self.actionCreate_MultiPlot.setText(QCoreApplication.translate("MainWindow", u"Create MultiPlot", None))
         self.menuTable.setTitle(QCoreApplication.translate("MainWindow", u"Sheet", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
         self.menuOpen_Recent.setTitle(QCoreApplication.translate("MainWindow", u"Open Recent", None))
