@@ -163,7 +163,7 @@ class MultiPlotTab(QtWidgets.QWidget):
                     symbolPen=plot_info.color,
                     symbolBrush=plot_info.color,
                 )
-                error_bars = pg.ErrorBarItem(x=x, y=y, xerr=xerr, yerr=yerr)
+                error_bars = pg.ErrorBarItem(x=x, y=y, width=2 * xerr, height=2 * yerr)
                 self.ui.plot_widget.addItem(error_bars)
                 # fit_plot = self.ui.plot_widget.plot(
                 #     symbol=None, pen=pg.mkPen(color="#00F", width=4)
