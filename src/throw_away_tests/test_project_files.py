@@ -37,14 +37,14 @@ def create_test_project(app: Application):
     y_col = sheet.model.columnLabel(1)
     app.create_plot_tab(sheet, x_col, y_col, None, y_col)
 
-    plottab: PlotTab = app.ui.tabWidget.currentWidget()
-    plottab.ui.model_func.setPlainText("a * (x + x0) **2 + b")
-    plottab.ui.fit_start_box.setValue(1.0)
-    plottab.ui.fit_end_box.setValue(3.0)
-    plottab.ui.use_fit_domain.setCheckState(QtCore.Qt.CheckState.Checked)
-    plottab.ui.draw_curve_option.setCurrentIndex(1)
-    plottab._params["a"].findChild(QtWidgets.QWidget, "value").setValue(2.0)
-    plottab.perform_fit()
+    plot1: PlotTab = app.ui.tabWidget.currentWidget()
+    plot1.ui.model_func.setPlainText("a * (x + x0) **2 + b")
+    plot1.ui.fit_start_box.setValue(1.0)
+    plot1.ui.fit_end_box.setValue(3.0)
+    plot1.ui.use_fit_domain.setCheckState(QtCore.Qt.CheckState.Checked)
+    plot1.ui.draw_curve_option.setCurrentIndex(1)
+    plot1._params["a"].findChild(QtWidgets.QWidget, "value").setValue(2.0)
+    plot1.perform_fit()
 
     # create new sheet
     sheet2 = app.add_data_sheet()
@@ -56,9 +56,13 @@ def create_test_project(app: Application):
     )
     x_col = sheet2.model.columnLabel(0)
     y_col = sheet2.model.columnLabel(1)
-    app.create_plot_tab(sheet2, x_col, y_col, None, None)
+    plot2 = app.create_plot_tab(sheet2, x_col, y_col, None, None)
 
-    app.ui.tabWidget.setCurrentWidget(plottab)
+    multiplot = app.create_multiplot()
+    multiplot.model.add_plot(plot1, "black")
+    multiplot.model.add_plot(plot2, "red")
+
+    app.ui.tabWidget.setCurrentWidget(plot1)
 
 
 if __name__ == "__main__":
@@ -68,15 +72,9 @@ if __name__ == "__main__":
     create_test_project(app)
     model = project_files.save_project_to_json(app)
 
-    app = Application()
-    project_files.load_project_from_json(app, model)
+    # app = Application()
+    # project_files.load_project_from_json(app, model)
 
     app.show()
-    app.create_multiplot()
-    plot = app.ui.tabWidget.widget(1)
-    app.ui.tabWidget.setTabText(1, "newname")
-    plot.name = "newname"
-    multiplot = app.ui.tabWidget.currentWidget()
-    multiplot.refresh_ui()
     qapp.exec()
     qapp.quit()

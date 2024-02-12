@@ -128,8 +128,26 @@ class MultiPlotTab(QtWidgets.QWidget):
         """
         for idx, plot in enumerate(self.parent.get_plots()):
             widget = self._plots[plot]
+            # force an update on the plot name
             name = widget.findChild(QtWidgets.QWidget, "plot_name")
             name.setText(plot.name)
+            # force an update on the checkbox state
+            checkbox: QtWidgets.QCheckBox = widget.findChild(
+                QtWidgets.QWidget, "is_enabled"
+            )
+            checkbox.blockSignals(True)
+            if plot_info := self.model.get_plot_info(plot):
+                checkbox.setChecked(True)
+                # force an update on the plot color
+                color_button: pg.ColorButton = widget.findChild(
+                    QtWidgets.QWidget, "plot_color"
+                )
+                color_button.blockSignals(True)
+                color_button.setColor(plot_info.color)
+                color_button.blockSignals(False)
+            else:
+                checkbox.setChecked(False)
+            checkbox.blockSignals(False)
             self.ui.plot_selection_layout.insertWidget(idx, self._plots[plot])
 
     def update_checkbox(
@@ -155,11 +173,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         """
         self.ui.plot_widget.clear()
         for plot_tab in self._plots.keys():
-            try:
-                plot_info = self.model.get_plot_info(plot_tab)
-            except KeyError:
-                pass
-            else:
+            if plot_info := self.model.get_plot_info(plot_tab):
                 x, y, xerr, yerr = plot_tab.model.get_data()
                 self.ui.plot_widget.plot(
                     x=x,

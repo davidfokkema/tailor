@@ -616,7 +616,7 @@ class Application(QtWidgets.QMainWindow):
             )
             self.add_plot_tab(new_plot)
 
-    def create_multiplot(self) -> None:
+    def create_multiplot(self) -> MultiPlotTab | None:
         if plot := self._on_plot():
             name = f"Plot {self._plot_num + 1}"
             multiplot = MultiPlotTab(
@@ -626,6 +626,7 @@ class Application(QtWidgets.QMainWindow):
                 y_label=plot.model.y_label,
             )
             self.add_plot_tab(multiplot)
+            return multiplot
 
     def change_plot_data_source(self) -> None:
         """Change the data source of a plot.

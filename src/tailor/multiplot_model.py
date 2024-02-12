@@ -24,5 +24,5 @@ class MultiPlotModel:
     def remove_plot(self, plot: PlotTab) -> None:
         self._plots.pop(plot)
 
-    def get_plot_info(self, plot: PlotTab) -> PlotInfo:
-        return self._plots[plot]
+    def get_plot_info(self, plot: PlotTab) -> PlotInfo | None:
+        return self._plots.get(plot, None)
