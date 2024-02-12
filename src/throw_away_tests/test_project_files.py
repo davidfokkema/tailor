@@ -35,7 +35,7 @@ def create_test_project(app: Application):
     # create plot
     x_col = sheet.model.columnLabel(0)
     y_col = sheet.model.columnLabel(1)
-    app.create_plot_tab(sheet, x_col, y_col, None, None)
+    app.create_plot_tab(sheet, x_col, y_col, None, y_col)
 
     plottab: PlotTab = app.ui.tabWidget.currentWidget()
     plottab.ui.model_func.setPlainText("a * (x + x0) **2 + b")
@@ -73,5 +73,10 @@ if __name__ == "__main__":
 
     app.show()
     app.create_multiplot()
+    plot = app.ui.tabWidget.widget(1)
+    app.ui.tabWidget.setTabText(1, "newname")
+    plot.name = "newname"
+    multiplot = app.ui.tabWidget.currentWidget()
+    multiplot.refresh_ui()
     qapp.exec()
     qapp.quit()

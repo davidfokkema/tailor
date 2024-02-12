@@ -2,6 +2,7 @@ import itertools
 from functools import partial
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import ColorButton
 from PySide6 import QtCore, QtWidgets
@@ -12,6 +13,8 @@ from tailor.ui_multiplot_tab import Ui_MultiPlotTab
 
 if TYPE_CHECKING:
     from tailor.app import Application
+
+NUM_POINTS = 1000
 
 
 class MultiPlotTab(QtWidgets.QWidget):
@@ -86,6 +89,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         """
         for plot, color in zip(plots, self._color):
             plot_name = QtWidgets.QLabel(plot.name)
+            plot_name.setObjectName("plot_name")
             is_enabled = QtWidgets.QCheckBox()
             is_enabled.setObjectName("is_enabled")
             color_button = ColorButton(color=color)
@@ -123,6 +127,9 @@ class MultiPlotTab(QtWidgets.QWidget):
         This will (re)insert all plot names in the plots list in the UI.
         """
         for idx, plot in enumerate(self.parent.get_plots()):
+            widget = self._plots[plot]
+            name = widget.findChild(QtWidgets.QWidget, "plot_name")
+            name.setText(plot.name)
             self.ui.plot_selection_layout.insertWidget(idx, self._plots[plot])
 
     def update_checkbox(
@@ -163,10 +170,23 @@ class MultiPlotTab(QtWidgets.QWidget):
                     symbolPen=plot_info.color,
                     symbolBrush=plot_info.color,
                 )
-                error_bars = pg.ErrorBarItem(x=x, y=y, width=2 * xerr, height=2 * yerr)
+                error_bars = pg.ErrorBarItem(
+                    x=x,
+                    y=y,
+                    width=2 * xerr,
+                    height=2 * yerr,
+                    pen=pg.mkPen(color=plot_info.color),
+                )
                 self.ui.plot_widget.addItem(error_bars)
-                # fit_plot = self.ui.plot_widget.plot(
-                #     symbol=None, pen=pg.mkPen(color="#00F", width=4)
-                # )
+                if plot_tab.model.best_fit:
+                    x_min, x_max = plot_tab.get_fit_curve_x_limits()
+                    x = np.linspace(x_min, x_max, NUM_POINTS)
+                    y = plot_tab.model.evaluate_best_fit(x)
+                    self.ui.plot_widget.plot(
+                        x=x,
+                        y=y,
+                        symbol=None,
+                        pen=pg.mkPen(color=plot_info.color, width=4),
+                    )
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
         self.ui.plot_widget.setLabel("left", self.model.y_label)
