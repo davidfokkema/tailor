@@ -76,6 +76,9 @@ class PlotTab(QtWidgets.QWidget):
         self.connect_ui_events()
         self.finish_ui()
 
+    def __repr__(self) -> None:
+        return f"PlotTab(id={self.id}, name={self.name})"
+
     def connect_ui_events(self):
         # Connect signals
         self.ui.model_func.textChanged.connect(self.update_model_expression)

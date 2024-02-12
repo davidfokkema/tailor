@@ -619,7 +619,12 @@ class Application(QtWidgets.QMainWindow):
     def create_multiplot(self) -> None:
         if plot := self._on_plot():
             name = f"Plot {self._plot_num + 1}"
-            multiplot = MultiPlotTab(parent=self, name=name)
+            multiplot = MultiPlotTab(
+                parent=self,
+                name=name,
+                x_label=plot.model.x_label,
+                y_label=plot.model.y_label,
+            )
             self.add_plot_tab(multiplot)
 
     def change_plot_data_source(self) -> None:

@@ -1,8 +1,9 @@
 import itertools
 from typing import TYPE_CHECKING
 
+import pyqtgraph as pg
 from pyqtgraph import ColorButton
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtWidgets
 
 from tailor.multiplot_model import MultiPlotModel
 from tailor.plot_tab import PlotTab
@@ -18,14 +19,16 @@ class MultiPlotTab(QtWidgets.QWidget):
     model: MultiPlotModel
     _plots: dict[PlotTab, QtWidgets.QHBoxLayout]
 
-    def __init__(self, parent: "Application", name: str) -> None:
+    def __init__(
+        self, parent: "Application", name: str, x_label: str, y_label: str
+    ) -> None:
         super().__init__()
         self.ui = Ui_MultiPlotTab()
         self.ui.setupUi(self)
 
         self.name = name
         self.parent = parent
-        self.model = MultiPlotModel()
+        self.model = MultiPlotModel(x_label, y_label)
         self._plots = {}
         self._color = itertools.cycle(
             [
@@ -44,6 +47,10 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.finish_ui()
 
     def finish_ui(self) -> None:
+        """Finish some final UI stuff from code."""
+        self.ui.xlabel.setText(self.model.x_label)
+        self.ui.ylabel.setText(self.model.y_label)
+
         self.ui.groupBox.setFixedWidth(400)
         self.ui.plot_selection_layout = QtWidgets.QVBoxLayout()
         self.ui.plot_selection_layout.setContentsMargins(4, 0, 0, 0)
@@ -54,8 +61,14 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.ui.plot_selection.setLayout(self.ui.plot_selection_layout)
 
     def refresh_ui(self):
+        """Refresh UI.
+
+        This method is called when this tab is made visible, or when another tab
+        is added or removed.
+        """
         self.update_plots_ui()
         self.rebuild_plot_selection_ui()
+        self.draw_plot()
 
     def update_plots_ui(self) -> None:
         """Add and/or remove parameters if necessary."""
@@ -65,6 +78,11 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.remove_plots_from_ui(old_plots - current_plots)
 
     def add_plots_to_ui(self, plots: list[PlotTab]) -> None:
+        """Add plots to the list of plots.
+
+        Args:
+            plots (list[PlotTab]): the plots to be added to the UI.
+        """
         for plot, color in zip(plots, self._color):
             plot_name = QtWidgets.QLabel(plot.name)
             is_enabled = QtWidgets.QCheckBox()
@@ -80,13 +98,52 @@ class MultiPlotTab(QtWidgets.QWidget):
             layout_widget.setContentsMargins(0, 0, 0, 0)
             layout_widget.setLayout(hbox)
             self._plots[plot] = layout_widget
+            self.model.add_plot(plot, color)
 
     def remove_plots_from_ui(self, plots: list[PlotTab]) -> None:
+        """Remove plots from the list of plots.
+
+        Args:
+            plots (list[PlotTab]): the plots to be removed from the UI.
+        """
         for plot in plots:
+            self.model.remove_plot(plot)
             widget = self._plots.pop(plot)
-            self.ui.plot_selection_layout.removeWidget(widget)
+            # FIXME: removeWidget does nothing?!
+            # self.ui.plot_selection_layout.removeWidget(widget)
             widget.deleteLater()
 
     def rebuild_plot_selection_ui(self) -> None:
+        """Build up list of plots.
+
+        This will (re)insert all plot names in the plots list in the UI.
+        """
         for idx, plot in enumerate(self.parent.get_plots()):
             self.ui.plot_selection_layout.insertWidget(idx, self._plots[plot])
+
+    def draw_plot(self) -> None:
+        """Create a plot in the widget.
+
+        Create a plot from data in the columns specified by the given column
+        names.
+        """
+        self.ui.plot_widget.clear()
+        for plot_tab in self._plots.keys():
+            plot_info = self.model.get_plot_info(plot_tab)
+            x, y, xerr, yerr = plot_tab.model.get_data()
+            plot = self.ui.plot_widget.plot(
+                x=x,
+                y=y,
+                symbol="o",
+                pen=None,
+                symbolSize=5,
+                symbolPen=plot_info.color,
+                symbolBrush=plot_info.color,
+            )
+            error_bars = pg.ErrorBarItem(x=x, y=y, xerr=xerr, yerr=yerr)
+            self.ui.plot_widget.addItem(error_bars)
+            # fit_plot = self.ui.plot_widget.plot(
+            #     symbol=None, pen=pg.mkPen(color="#00F", width=4)
+            # )
+        self.ui.plot_widget.setLabel("bottom", self.model.x_label)
+        self.ui.plot_widget.setLabel("left", self.model.y_label)
