@@ -51,6 +51,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             ]
         )
         self.finish_ui()
+        self.refresh_ui()
         self.connect_ui_events()
 
     def finish_ui(self) -> None:
@@ -170,11 +171,14 @@ class MultiPlotTab(QtWidgets.QWidget):
         self, plot: PlotTab, widget: QtWidgets.QCheckBox, state: QtCore.Qt.CheckState
     ) -> None:
         if widget.isChecked():
-            color = widget.parent().findChild(pg.ColorButton, "plot_color").color()
-            self.model.add_plot(plot, color)
+            self.add_plot(plot)
         else:
             self.model.remove_plot(plot)
         self.draw_plot()
+
+    def add_plot(self, plot: PlotTab) -> None:
+        color = self._plots[plot].findChild(pg.ColorButton, "plot_color").color()
+        self.model.add_plot(plot, color)
 
     def update_color(self, plot: PlotTab, color_button: pg.ColorButton) -> None:
         plot_info = self.model.get_plot_info(plot)

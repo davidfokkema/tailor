@@ -127,6 +127,7 @@ class Application(QtWidgets.QMainWindow):
             self.duplicate_data_sheet_with_plots
         )
         self.ui.actionDuplicate_Plot.triggered.connect(self.duplicate_plot)
+        self.ui.actionCreate_MultiPlot.triggered.connect(self.create_multiplot)
         self.ui.actionChange_Plot_Source.triggered.connect(self.change_plot_data_source)
         self.ui.actionRename_Data_Sheet.triggered.connect(self.rename_data_sheet)
         self.ui.actionRename_Plot.triggered.connect(self.rename_plot)
@@ -628,6 +629,7 @@ class Application(QtWidgets.QMainWindow):
                 x_label=plot.model.x_label,
                 y_label=plot.model.y_label,
             )
+            multiplot.add_plot(plot)
             self.add_plot_tab(multiplot)
             return multiplot
 
