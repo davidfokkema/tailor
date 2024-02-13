@@ -231,6 +231,10 @@ def save_multiplot(plot: MultiPlotTab) -> MultiPlot:
         id=plot.id,
         x_label=plot.model.x_label,
         y_label=plot.model.y_label,
+        x_min=plot.model.x_min,
+        x_max=plot.model.x_max,
+        y_min=plot.model.y_min,
+        y_max=plot.model.y_max,
         plots=plot_info,
     )
 
@@ -245,6 +249,10 @@ def load_multiplot(
         x_label=model.x_label,
         y_label=model.y_label,
     )
+    multiplot_tab.model.x_min = model.x_min
+    multiplot_tab.model.x_max = model.x_max
+    multiplot_tab.model.y_min = model.y_min
+    multiplot_tab.model.y_max = model.y_max
     for plot_info in model.plots:
         plot = plots[plot_info.plot_id]
         multiplot_tab.model.add_plot(plot=plot, color=plot_info.color)

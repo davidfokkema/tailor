@@ -51,6 +51,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             ]
         )
         self.finish_ui()
+        self.connect_ui_events()
 
     def finish_ui(self) -> None:
         """Finish some final UI stuff from code."""
@@ -66,12 +67,22 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.ui.plot_selection_layout.addStretch()
         self.ui.plot_selection.setLayout(self.ui.plot_selection_layout)
 
+    def connect_ui_events(self) -> None:
+        self.ui.xlabel.textChanged.connect(self.update_xlabel)
+        self.ui.ylabel.textChanged.connect(self.update_ylabel)
+        self.ui.x_min.textChanged.connect(self.update_x_min)
+        self.ui.x_max.textChanged.connect(self.update_x_max)
+        self.ui.y_min.textChanged.connect(self.update_y_min)
+        self.ui.y_max.textChanged.connect(self.update_y_max)
+        self.ui.set_limits_button.clicked.connect(self.update_limits)
+
     def refresh_ui(self):
         """Refresh UI.
 
         This method is called when this tab is made visible, or when another tab
         is added or removed.
         """
+        self.update_axis_settings_from_model()
         self.update_plots_ui()
         self.rebuild_plot_selection_ui()
         self.draw_plot()
@@ -209,3 +220,93 @@ class MultiPlotTab(QtWidgets.QWidget):
                     )
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
         self.ui.plot_widget.setLabel("left", self.model.y_label)
+        self.update_limits()
+
+    def update_axis_settings_from_model(self) -> None:
+        """Update axis labels from model."""
+        self.ui.xlabel.setText(self.model.x_label)
+        self.ui.ylabel.setText(self.model.y_label)
+        self.ui.x_min.setText("" if self.model.x_min is None else str(self.model.x_min))
+        self.ui.x_max.setText("" if self.model.x_max is None else str(self.model.x_max))
+        self.ui.y_min.setText("" if self.model.y_min is None else str(self.model.y_min))
+        self.ui.y_max.setText("" if self.model.y_max is None else str(self.model.y_max))
+
+    def update_xlabel(self):
+        """Update the x-axis label of the plot."""
+        self.model.x_label = self.ui.xlabel.text()
+        self.ui.plot_widget.setLabel("bottom", self.model.x_label)
+        # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+
+    def update_ylabel(self):
+        """Update the y-axis label of the plot."""
+        self.model.y_label = self.ui.ylabel.text()
+        self.ui.plot_widget.setLabel("left", self.model.y_label)
+        # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+
+    def update_x_min(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.x_min.text())
+        except ValueError:
+            value = None
+        self.model.x_min = value
+        self.update_limits()
+
+    def update_x_max(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.x_max.text())
+        except ValueError:
+            value = None
+        self.model.x_max = value
+        self.update_limits()
+
+    def update_y_min(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.y_min.text())
+        except ValueError:
+            value = None
+        self.model.y_min = value
+        self.update_limits()
+
+    def update_y_max(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.y_max.text())
+        except ValueError:
+            value = None
+        self.model.y_max = value
+        self.update_limits()
+
+    def update_limits(self):
+        """Update the axis limits of the plot."""
+        xmin, xmax, ymin, ymax = self.get_adjusted_limits()
+        # BUGFIX:
+        # disableAutoRange=False is necessary to prevent triggering a ranging
+        # bug for large y-values (> 1e6)
+        # However, that will break setting the axis limits manually. Setting to
+        # True for now.
+        self.ui.plot_widget.setRange(
+            xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
+        )
+        # FIXME
+        # self.main_window.ui.statusbar.showMessage(
+        #     "Updated limits.", timeout=MSG_TIMEOUT
+        # )
+
+    def get_adjusted_limits(self):
+        """Get adjusted plot limits from the data points and text fields.
+
+        Return the minimum and maximum values of the data points, taking the
+        error bars into account but override with any limits specified.
+
+        Returns:
+            Tuple of four float values (xmin, xmax, ymin, ymax).
+        """
+        x_min, x_max, y_min, y_max = self.model.get_limits_from_data()
+        x_min = x_min if self.model.x_min is None else self.model.x_min
+        x_max = x_max if self.model.x_max is None else self.model.x_max
+        y_min = y_min if self.model.y_min is None else self.model.y_min
+        y_max = y_max if self.model.y_max is None else self.model.y_max
+        return x_min, x_max, y_min, y_max

@@ -46,6 +46,7 @@ def create_test_project(app: Application):
     plot1._params["a"].findChild(QtWidgets.QWidget, "value").setValue(2.0)
     plot1.perform_fit()
     plot1.ui.xlabel.setText("Time (s)")
+    plot1.ui.x_min.setText("-10")
 
     # create new sheet
     sheet2 = app.add_data_sheet()
@@ -60,10 +61,14 @@ def create_test_project(app: Application):
     plot2 = app.create_plot_tab(sheet2, x_col, y_col, None, None)
 
     multiplot = app.create_multiplot()
+    multiplot.model.x_label = "Time (s)"
     multiplot.model.add_plot(plot1, "black")
     multiplot.model.add_plot(plot2, "red")
+    multiplot.model.x_min = -10
+    multiplot.model.y_max = 10
 
-    app.ui.tabWidget.setCurrentWidget(plot1)
+    app.ui.tabWidget.setCurrentWidget(sheet)
+    app.ui.tabWidget.setCurrentWidget(multiplot)
 
 
 if __name__ == "__main__":

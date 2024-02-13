@@ -62,6 +62,12 @@ class MultiPlot(BaseModel):
     id: int
     x_label: str
     y_label: str
+
+    x_min: float | None
+    x_max: float | None
+    y_min: float | None
+    y_max: float | None
+
     plots: list[MultiPlotInfo]
 
 
