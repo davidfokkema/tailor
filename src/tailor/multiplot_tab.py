@@ -2,6 +2,7 @@ import itertools
 from functools import partial
 from typing import TYPE_CHECKING
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph import ColorButton
@@ -177,12 +178,12 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.draw_plot()
 
     def add_plot(self, plot: PlotTab) -> None:
-        color = self._plots[plot].findChild(pg.ColorButton, "plot_color").color()
+        color = self._plots[plot].findChild(pg.ColorButton, "plot_color").color().name()
         self.model.add_plot(plot, color)
 
     def update_color(self, plot: PlotTab, color_button: pg.ColorButton) -> None:
         plot_info = self.model.get_plot_info(plot)
-        plot_info.color = color_button.color()
+        plot_info.color = color_button.color().name()
         self.draw_plot()
 
     def draw_plot(self) -> None:
@@ -225,6 +226,42 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
         self.ui.plot_widget.setLabel("left", self.model.y_label)
         self.update_limits()
+
+    def export_graph(self, filename, dpi=300):
+        """Export graph to a file.
+
+        Args:
+            filename: path to the file.
+        """
+
+        plt.figure()
+        for plot_tab in self._plots.keys():
+            if plot_info := self.model.get_plot_info(plot_tab):
+                x, y, xerr, yerr = plot_tab.model.get_data()
+                plt.errorbar(
+                    x,
+                    y,
+                    xerr=xerr,
+                    yerr=yerr,
+                    fmt="o",
+                    ms=3,
+                    elinewidth=0.5,
+                    color=plot_info.color,
+                )
+
+                if plot_tab.model.best_fit:
+                    x_min, x_max = plot_tab.get_fit_curve_x_limits()
+                    x = np.linspace(x_min, x_max, NUM_POINTS)
+                    y = plot_tab.model.evaluate_best_fit(x)
+                    if y is not None:
+                        plt.plot(x, y, "-", color=plot_info.color)
+
+        plt.xlabel(self.model.x_label)
+        plt.ylabel(self.model.y_label)
+        xmin, xmax, ymin, ymax = self.get_adjusted_limits()
+        plt.xlim(xmin, xmax)
+        plt.ylim(ymin, ymax)
+        plt.savefig(filename, dpi=dpi)
 
     def update_axis_settings_from_model(self) -> None:
         """Update axis labels from model."""

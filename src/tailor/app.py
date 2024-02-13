@@ -248,6 +248,17 @@ class Application(QtWidgets.QMainWindow):
             )
             return None
 
+    def _on_plot_or_multiplot(self) -> Optional[PlotTab | MultiPlotTab]:
+        """Return the current tab if it is a plot else display warning."""
+        if type(tab := self.ui.tabWidget.currentWidget()) in (PlotTab, MultiPlotTab):
+            return tab
+        else:
+            dialogs.show_warning_dialog(
+                parent=self,
+                msg="You must select a plot or multiplot to perform this action.",
+            )
+            return None
+
     def add_column(self):
         """Add a column to the current data sheet."""
         if tab := self._on_data_sheet():
@@ -911,7 +922,7 @@ class Application(QtWidgets.QMainWindow):
         data_sheet.ui.data_view.setCurrentIndex(data_sheet.model.createIndex(0, 0))
 
     def preview_graph(self):
-        if plot := self._on_plot():
+        if plot := self._on_plot_or_multiplot():
 
             class Dialog(QtWidgets.QDialog):
                 def __init__(self):
@@ -945,7 +956,7 @@ class Application(QtWidgets.QMainWindow):
         Args:
             suffix: the required suffix of the file.
         """
-        if plot := self._on_plot():
+        if plot := self._on_plot_or_multiplot():
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 parent=self,
                 dir=self.get_recent_directory(),
