@@ -679,7 +679,7 @@ class Application(QtWidgets.QMainWindow):
             self._do_rename_widget(sheet)
 
     def rename_plot(self) -> None:
-        if plot := self._on_plot():
+        if plot := self._on_plot_or_multiplot():
             self._do_rename_widget(plot)
 
     def _do_rename_widget(self, widget) -> None:
