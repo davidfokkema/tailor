@@ -370,6 +370,18 @@ class PlotModel:
         self._parameters[name].max = value
         self.best_fit = None
 
+    def set_parameter_vary_state(self, name: str, state: bool) -> None:
+        """Set whether to vary a parameter value during fit.
+
+        Setting the vary state to False will fix the parameter value.
+
+        Args:
+            name (str): name of the parameter
+            state (bool): new vary state
+        """
+        self._parameters[name].vary = state
+        self.best_fit = None
+
     def get_model_expression(self) -> str:
         """Get model expression.
 

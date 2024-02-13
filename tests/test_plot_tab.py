@@ -343,6 +343,17 @@ class TestPlotTab:
         plot_tab.model.set_parameter_max_value.assert_called_with("param", 14.7)
         plot_tab.update_model_curves.assert_called()
 
+    def test_update_parameter_fixed_state_updates_parameter(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ):
+        mocker.patch.object(plot_tab, "update_model_curves")
+        widget = mocker.Mock(_parameter="param")
+
+        plot_tab.update_parameter_fixed_state(widget, True)
+
+        plot_tab.model.set_parameter_vary_state.assert_called_with("param", False)
+        plot_tab.update_model_curves.assert_called()
+
     def test_update_params_ui(self, plot_tab: PlotTab, mocker: MockerFixture):
         plot_tab._params = {"a": mocker.Mock(), "b": mocker.Mock(), "e": mocker.Mock()}
         plot_tab.model.get_parameter_names.return_value = ["b", "c", "d"]

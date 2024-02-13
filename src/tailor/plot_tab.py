@@ -5,6 +5,7 @@ elements to specify a mathematical model to fit to the model.
 """
 
 import enum
+import functools
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -400,6 +401,7 @@ class PlotTab(QtWidgets.QWidget):
             max_box.setObjectName("max")
             max_box._parameter = param
             is_fixed_checkbox = QtWidgets.QCheckBox("Fixed", objectName="is_fixed")
+            is_fixed_checkbox._parameter = param
             create_leq_sign = lambda: QtWidgets.QLabel(
                 "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
             )
@@ -408,6 +410,9 @@ class PlotTab(QtWidgets.QWidget):
             value_box.sigValueChanging.connect(self.update_parameter_value)
             min_box.sigValueChanging.connect(self.update_parameter_min_bound)
             max_box.sigValueChanging.connect(self.update_parameter_max_bound)
+            is_fixed_checkbox.stateChanged.connect(
+                functools.partial(self.update_parameter_fixed_state, is_fixed_checkbox)
+            )
 
             # build parameter layout
             layout = QtWidgets.QHBoxLayout()
@@ -459,6 +464,12 @@ class PlotTab(QtWidgets.QWidget):
 
     def update_parameter_max_bound(self, widget, value):
         self.model.set_parameter_max_value(widget._parameter, value)
+        self.update_model_curves()
+
+    def update_parameter_fixed_state(self, widget, fixed_state):
+        print("CALLED")
+        vary_state = not fixed_state
+        self.model.set_parameter_vary_state(widget._parameter, vary_state)
         self.update_model_curves()
 
     def update_params_ui_values_from_model(self):

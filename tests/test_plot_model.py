@@ -438,6 +438,16 @@ class TestPlotModel:
             -0.142706, abs=1e-6
         )
 
+    def test_perform_fit_with_fixed_value(self, simple_data_with_errors: PlotModel):
+        simple_data_with_errors.update_model_expression("a * x ** 2 + b")
+        a = simple_data_with_errors.get_parameter_by_name("a")
+        a.value = 10.0
+        a.vary = False
+
+        simple_data_with_errors.perform_fit()
+
+        assert simple_data_with_errors.best_fit.params["a"].value == 10.0
+
     def test_perform_fit_with_domain(self, simple_data_no_errors: PlotModel):
         simple_data_no_errors.update_model_expression("a * x ** 2 + b")
         simple_data_no_errors._fit_domain = (1.5, 3.5)
@@ -576,6 +586,11 @@ class TestPlotModel:
     def test_set_parameter_max_value(self, simple_data_with_model: PlotModel):
         simple_data_with_model.set_parameter_max_value("b", 123.4)
         assert simple_data_with_model._parameters["b"].max == 123.4
+        assert simple_data_with_model.best_fit is None
+
+    def test_set_parameter_vary_state(self, simple_data_with_model: PlotModel):
+        simple_data_with_model.set_parameter_vary_state("b", False)
+        assert simple_data_with_model._parameters["b"].vary is False
         assert simple_data_with_model.best_fit is None
 
     def test_get_fit_domain(self, bare_bones_data: PlotModel):
