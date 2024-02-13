@@ -18,6 +18,7 @@ def load_legacy_project(jsondict: dict) -> Project:
             plot_num=len(plots) + 1,
             sheets=[sheet],
             plots=plots,
+            multiplots=[],
             tab_order=["sheet_1"] + [f"plot_{plot.id}" for plot in plots],
             current_tab=jsondict["current_tab"],
         )
