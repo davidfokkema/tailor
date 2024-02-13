@@ -432,6 +432,8 @@ class Application(QtWidgets.QMainWindow):
             plot_tab (PlotTab): the plot for which to create a new tab.
         """
         self._plot_num += 1
+        # create fresh plot id
+        plot_tab.id = self._plot_num
         idx = self.ui.tabWidget.addTab(plot_tab, plot_tab.name)
         self.ui.tabWidget.setCurrentIndex(idx)
 
@@ -622,6 +624,7 @@ class Application(QtWidgets.QMainWindow):
             multiplot = MultiPlotTab(
                 parent=self,
                 name=name,
+                id=-1,
                 x_label=plot.model.x_label,
                 y_label=plot.model.y_label,
             )

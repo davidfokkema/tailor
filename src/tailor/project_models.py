@@ -52,6 +52,19 @@ class Plot(BaseModel):
     draw_curve_option: int
 
 
+class MultiPlotInfo(BaseModel):
+    plot_id: int
+    color: str
+
+
+class MultiPlot(BaseModel):
+    name: str
+    id: int
+    x_label: str
+    y_label: str
+    plots: list[MultiPlotInfo]
+
+
 class Project(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -61,5 +74,6 @@ class Project(BaseModel):
     plot_num: int
     sheets: list[Sheet]
     plots: list[Plot]
+    multiplots: list[MultiPlot]
     tab_order: list[str]
     current_tab: int

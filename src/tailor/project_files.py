@@ -12,8 +12,16 @@ from packaging.version import Version
 from tailor import plot_model
 from tailor.data_sheet import DataSheet
 from tailor.legacy_project_files import load_legacy_project
+from tailor.multiplot_tab import MultiPlotTab
 from tailor.plot_tab import DRAW_CURVE_OPTIONS, PlotTab
-from tailor.project_models import Parameter, Plot, Project, Sheet
+from tailor.project_models import (
+    MultiPlot,
+    MultiPlotInfo,
+    Parameter,
+    Plot,
+    Project,
+    Sheet,
+)
 
 if TYPE_CHECKING:
     from tailor.app import Application
@@ -55,6 +63,7 @@ def save_project_to_model(project: Application):
     ]
     sheet_models = []
     plot_models = []
+    multiplot_models = []
     tab_order = []
     for tab in tabs:
         if isinstance(tab, DataSheet):
@@ -65,6 +74,10 @@ def save_project_to_model(project: Application):
             plot = save_plot(tab)
             plot_models.append(plot)
             tab_order.append(f"plot_{plot.id}")
+        elif isinstance(tab, MultiPlotTab):
+            multiplot = save_multiplot(tab)
+            multiplot_models.append(multiplot)
+            tab_order.append(f"multiplot_{multiplot.id}")
 
     model = Project(
         application=NAME,
@@ -73,6 +86,7 @@ def save_project_to_model(project: Application):
         plot_num=project._plot_num,
         sheets=sheet_models,
         plots=plot_models,
+        multiplots=multiplot_models,
         tab_order=tab_order,
         current_tab=project.ui.tabWidget.currentIndex(),
     )
@@ -98,6 +112,14 @@ def load_project_from_model(project: Application, model: Project):
         plot_tab = load_plot(model=plot_model, data_sheet=sheet)
         plot_tab_by_id[plot_tab.id] = plot_tab
 
+    # load multiplots and add tabs to app
+    multiplot_tab_by_id: dict[int, MultiPlotTab] = {}
+    for multiplot_model in model.multiplots:
+        multiplot_tab = load_multiplot(
+            project=project, model=multiplot_model, plots=plot_tab_by_id
+        )
+        multiplot_tab_by_id[multiplot_tab.id] = multiplot_tab
+
     # restore tabs in order
     for id_string in model.tab_order:
         type_, id = id_string.split("_")
@@ -106,6 +128,8 @@ def load_project_from_model(project: Application, model: Project):
             tab = data_sheet_by_id[id]
         elif type_ == "plot":
             tab = plot_tab_by_id[id]
+        elif type_ == "multiplot":
+            tab = multiplot_tab_by_id[id]
         project.ui.tabWidget.addTab(tab, tab.name)
     project.ui.tabWidget.setCurrentIndex(model.current_tab)
 
@@ -196,3 +220,32 @@ def load_plot(model: Plot, data_sheet: DataSheet) -> PlotTab:
     option_idx = list(DRAW_CURVE_OPTIONS.keys()).index(model.draw_curve_option)
     plot_tab.ui.draw_curve_option.setCurrentIndex(option_idx)
     return plot_tab
+
+
+def save_multiplot(plot: MultiPlotTab) -> MultiPlot:
+    plot_info = [
+        MultiPlotInfo(plot_id=p.id, color=i.color) for p, i in plot.model._plots.items()
+    ]
+    return MultiPlot(
+        name=plot.name,
+        id=plot.id,
+        x_label=plot.model.x_label,
+        y_label=plot.model.y_label,
+        plots=plot_info,
+    )
+
+
+def load_multiplot(
+    project: Application, model: MultiPlot, plots: dict[int, PlotTab]
+) -> MultiPlotTab:
+    multiplot_tab = MultiPlotTab(
+        parent=project,
+        name=model.name,
+        id=model.id,
+        x_label=model.x_label,
+        y_label=model.y_label,
+    )
+    for plot_info in model.plots:
+        plot = plots[plot_info.plot_id]
+        multiplot_tab.model.add_plot(plot=plot, color=plot_info.color)
+    return multiplot_tab

@@ -19,18 +19,20 @@ NUM_POINTS = 1000
 
 class MultiPlotTab(QtWidgets.QWidget):
     name: str
+    id: int
     parent: "Application"
     model: MultiPlotModel
     _plots: dict[PlotTab, QtWidgets.QHBoxLayout]
 
     def __init__(
-        self, parent: "Application", name: str, x_label: str, y_label: str
+        self, parent: "Application", name: str, id: int, x_label: str, y_label: str
     ) -> None:
         super().__init__()
         self.ui = Ui_MultiPlotTab()
         self.ui.setupUi(self)
 
         self.name = name
+        self.id = id
         self.parent = parent
         self.model = MultiPlotModel(x_label, y_label)
         self._plots = {}
@@ -124,7 +126,10 @@ class MultiPlotTab(QtWidgets.QWidget):
     def rebuild_plot_selection_ui(self) -> None:
         """Build up list of plots.
 
-        This will (re)insert all plot names in the plots list in the UI.
+        This will (re)insert all plot names in the plots list in the UI in the
+        correct order and will update the checkbox and color from the underlying
+        model. Note that the widgets are not being created, that must be handled
+        by the `update_plots_ui()` method.
         """
         for idx, plot in enumerate(self.parent.get_plots()):
             widget = self._plots[plot]
