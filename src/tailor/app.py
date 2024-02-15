@@ -493,6 +493,10 @@ class Application(QtWidgets.QMainWindow):
                 # find associated plots and close plots and data sheet
                 close_idxs = [close_idx]
                 plots = self.get_associated_plots(close_tab)
+                # loop over a copy to prevent an infinite loop
+                for plot in plots.copy():
+                    plots.extend(self.get_associated_multiplots(plot))
+                print(f"{plots=}")
                 close_idxs += [p.index for p in plots]
                 plot_titles = [p.widget.name for p in plots]
                 if self.confirm_close_dialog(
@@ -508,6 +512,15 @@ class Application(QtWidgets.QMainWindow):
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
             if type(tab) == PlotTab and tab.data_sheet == data_sheet:
+                plots.append(PlotWidget(index=idx, widget=tab))
+        return plots
+
+    def get_associated_multiplots(self, plot: PlotWidget) -> list[PlotWidget]:
+        """Get multiplots associated with a plot."""
+        plots = []
+        for idx in range(self.ui.tabWidget.count()):
+            tab = self.ui.tabWidget.widget(idx)
+            if type(tab) == MultiPlotTab and tab.model.uses_plot(plot.widget):
                 plots.append(PlotWidget(index=idx, widget=tab))
         return plots
 

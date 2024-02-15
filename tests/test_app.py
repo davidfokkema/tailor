@@ -5,6 +5,7 @@ from pytest_mock import MockerFixture
 
 from tailor.app import Application, dialogs
 from tailor.data_sheet import DataSheet
+from tailor.multiplot_tab import MultiPlotTab
 from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 
 
@@ -53,7 +54,7 @@ def simple_data_sheet(mocker: MockerFixture) -> DataSheet:
 
 
 @pytest.fixture()
-def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
+def plot_tab(data_sheet: DataSheet) -> PlotTab:
     plot_tab = PlotTab(
         name="Plot 1",
         id=12345,
@@ -102,6 +103,29 @@ def project_with_two_sheets(
     return project
 
 
+@pytest.fixture()
+def project_with_multiplot(simple_project: Application) -> Application:
+    project = simple_project
+    multiplot_tab = create_multiplot_tab(
+        parent=project, plot_tab=simple_project.ui.tabWidget.widget(2)
+    )
+    project.ui.tabWidget.addTab(multiplot_tab, multiplot_tab.name)
+    project._plot_num += 1
+    return project
+
+
+def create_multiplot_tab(parent: Application, plot_tab: PlotTab) -> MultiPlotTab:
+    multiplot_tab = MultiPlotTab(
+        parent=parent,
+        name="Multiplot 1",
+        id=45678,
+        x_label="Time",
+        y_label="Distance",
+    )
+    multiplot_tab.model.add_plot(plot_tab, color="#ff0000")
+    return multiplot_tab
+
+
 class TestSheets:
     def test_simple_project_without_plot_with_plot(
         self, simple_project: Application
@@ -116,10 +140,10 @@ class TestSheets:
         assert isinstance(tabs[1], DataSheet)
         assert isinstance(tabs[2], PlotTab)
 
-    @pytest.mark.skip("shows GUI")
-    def test_show_simple_project(self, simple_project: Application) -> None:
+    # @pytest.mark.skip("shows GUI")
+    def test_show_simple_project(self, project_with_multiplot: Application) -> None:
         qapp = QtWidgets.QApplication.instance()
-        simple_project.show()
+        project_with_multiplot.show()
         qapp.exec()
 
     def test_close_sheet_without_any_plots(
@@ -173,30 +197,41 @@ class TestSheets:
         assert simple_project.ui.tabWidget.widget(0).name == "Sheet 2"
 
     def test_close_sheet_with_associated_plots(
-        self, simple_project: Application, mocker: MockerFixture
+        self, project_with_multiplot: Application, mocker: MockerFixture
     ) -> None:
-        mocker.patch.object(simple_project, "confirm_close_dialog")
-        simple_project.confirm_close_dialog.return_value = True
+        mocker.patch.object(project_with_multiplot, "confirm_close_dialog")
+        project_with_multiplot.confirm_close_dialog.return_value = True
 
-        # tab 1 (Sheet2) has one associated plot in tab 2
-        simple_project.close_tab(1)
+        # tab 1 (Sheet2) has one associated plot in tab 2 and a multiplot
+        project_with_multiplot.close_tab(1)
 
-        assert simple_project.ui.tabWidget.count() == 1
-        assert simple_project.ui.tabWidget.widget(0).name == "Sheet 1"
+        assert project_with_multiplot.ui.tabWidget.count() == 1
+        assert project_with_multiplot.ui.tabWidget.widget(0).name == "Sheet 1"
 
     def test_close_sheet_lists_associated_plots(
-        self, simple_project: Application, mocker: MockerFixture
+        self, project_with_multiplot: Application, mocker: MockerFixture
     ) -> None:
-        mocker.patch.object(simple_project, "confirm_close_dialog")
-        simple_project.confirm_close_dialog.return_value = False
+        mocker.patch.object(project_with_multiplot, "confirm_close_dialog")
+        project_with_multiplot.confirm_close_dialog.return_value = False
 
         # no associated plots
-        simple_project.close_tab(0)
-        assert "Plot 1" not in simple_project.confirm_close_dialog.call_args.args[0]
+        project_with_multiplot.close_tab(0)
+        assert (
+            "Plot 1"
+            not in project_with_multiplot.confirm_close_dialog.call_args.args[0]
+        )
+        assert (
+            "Multiplot 1"
+            not in project_with_multiplot.confirm_close_dialog.call_args.args[0]
+        )
 
-        # associated plots: Plot 1
-        simple_project.close_tab(1)
-        assert "Plot 1" in simple_project.confirm_close_dialog.call_args.args[0]
+        # associated plots: Plot 1, Multiplot 1
+        project_with_multiplot.close_tab(1)
+        assert "Plot 1" in project_with_multiplot.confirm_close_dialog.call_args.args[0]
+        assert (
+            "Multiplot 1"
+            in project_with_multiplot.confirm_close_dialog.call_args.args[0]
+        )
 
     def test_close_last_remaining_tabs_starts_new_project(
         self, simple_project: Application, mocker: MockerFixture
