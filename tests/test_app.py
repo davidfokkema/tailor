@@ -140,7 +140,7 @@ class TestSheets:
         assert isinstance(tabs[1], DataSheet)
         assert isinstance(tabs[2], PlotTab)
 
-    # @pytest.mark.skip("shows GUI")
+    @pytest.mark.skip("shows GUI")
     def test_show_simple_project(self, project_with_multiplot: Application) -> None:
         qapp = QtWidgets.QApplication.instance()
         project_with_multiplot.show()
