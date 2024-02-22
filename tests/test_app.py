@@ -185,6 +185,21 @@ class TestSheets:
             widget = simple_project.ui.tabWidget.widget(idx)
             assert isinstance(widget, DataSheet)
 
+    def test_close_multiplot(
+        self, project_with_multiplot: Application, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(project_with_multiplot, "confirm_close_dialog")
+        project_with_multiplot.confirm_close_dialog.return_value = True
+
+        # A multiplot in tab 3
+        project_with_multiplot.close_tab_with_children(3)
+
+        # Only the two sheets and the plot remain, the multiplot is gone
+        assert project_with_multiplot.ui.tabWidget.count() == 3
+        assert project_with_multiplot.ui.tabWidget.widget(0).name == "Sheet 1"
+        assert project_with_multiplot.ui.tabWidget.widget(1).name == "Sheet 2"
+        assert project_with_multiplot.ui.tabWidget.widget(2).name == "Plot 1"
+
     def test_close_plot_with_associated_multiplots(
         self, project_with_multiplot: Application, mocker: MockerFixture
     ) -> None:
