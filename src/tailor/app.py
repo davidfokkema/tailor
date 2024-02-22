@@ -476,11 +476,7 @@ class Application(QtWidgets.QMainWindow):
         """
         tab_widget = self.ui.tabWidget
         close_tab = tab_widget.widget(close_idx)
-        if type(close_tab) == PlotTab:
-            # plots can be easily closed
-            if self.confirm_close_dialog("Are you sure you want to close this plot?"):
-                tab_widget.removeTab(close_idx)
-        elif type(close_tab) == DataSheet:
+        if type(close_tab) == DataSheet:
             # data sheets need special attention
             if self._count_data_sheets() == 1:
                 # there's just the one data sheet, close all and start new
@@ -495,8 +491,7 @@ class Application(QtWidgets.QMainWindow):
                 plots = self.get_associated_plots(close_tab)
                 # loop over a copy to prevent an infinite loop
                 for plot in plots.copy():
-                    plots.extend(self.get_associated_multiplots(plot))
-                print(f"{plots=}")
+                    plots.extend(self.get_associated_multiplots(plot.widget))
                 close_idxs += [p.index for p in plots]
                 plot_titles = [p.widget.name for p in plots]
                 if self.confirm_close_dialog(
@@ -505,6 +500,22 @@ class Application(QtWidgets.QMainWindow):
                     # close from right to left to avoid jumping indexes
                     for idx in sorted(close_idxs, reverse=True):
                         tab_widget.removeTab(idx)
+        elif type(close_tab) == PlotTab:
+            # find associated plots and close plots and data sheet
+            close_idxs = [close_idx]
+            multiplots = self.get_associated_multiplots(close_tab)
+            close_idxs += [p.index for p in multiplots]
+            multiplot_titles = [p.widget.name for p in multiplots]
+            if self.confirm_close_dialog(
+                f"Are you sure you want to close this plot and associated multiplots ({', '.join(multiplot_titles)})?"
+            ):
+                # close from right to left to avoid jumping indexes
+                for idx in sorted(close_idxs, reverse=True):
+                    tab_widget.removeTab(idx)
+        elif type(close_tab) == MultiPlotTab:
+            # multiplots can be easily closed
+            if self.confirm_close_dialog("Are you sure you want to close this plot?"):
+                tab_widget.removeTab(close_idx)
 
     def get_associated_plots(self, data_sheet: DataSheet) -> list[PlotWidget]:
         """Get plots associated with a data sheet."""
@@ -515,12 +526,12 @@ class Application(QtWidgets.QMainWindow):
                 plots.append(PlotWidget(index=idx, widget=tab))
         return plots
 
-    def get_associated_multiplots(self, plot: PlotWidget) -> list[PlotWidget]:
+    def get_associated_multiplots(self, plot: PlotTab) -> list[PlotWidget]:
         """Get multiplots associated with a plot."""
         plots = []
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
-            if type(tab) == MultiPlotTab and tab.model.uses_plot(plot.widget):
+            if type(tab) == MultiPlotTab and tab.model.uses_plot(plot):
                 plots.append(PlotWidget(index=idx, widget=tab))
         return plots
 
