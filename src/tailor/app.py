@@ -554,12 +554,12 @@ class Application(QtWidgets.QMainWindow):
 
     def get_associated_multiplots(self, plot: PlotTab) -> list[TabbedWidget]:
         """Get multiplots associated with a plot."""
-        plots = []
+        multiplots = []
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
             if type(tab) == MultiPlotTab and tab.model.uses_plot(plot):
-                plots.append(TabbedWidget(index=idx, widget=tab))
-        return plots
+                multiplots.append(TabbedWidget(index=idx, widget=tab))
+        return multiplots
 
     def get_data_sheets(self) -> list[DataSheet]:
         """Get a list of the data sheets.
