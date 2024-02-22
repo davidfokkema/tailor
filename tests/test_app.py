@@ -153,11 +153,11 @@ class TestSheets:
 
         simple_project_without_plot.confirm_close_dialog.return_value = False
         assert simple_project_without_plot.ui.tabWidget.count() == 2
-        simple_project_without_plot.close_tab(1)
+        simple_project_without_plot.close_tab_with_children(1)
         assert simple_project_without_plot.ui.tabWidget.count() == 2
 
         simple_project_without_plot.confirm_close_dialog.return_value = True
-        simple_project_without_plot.close_tab(1)
+        simple_project_without_plot.close_tab_with_children(1)
         assert simple_project_without_plot.ui.tabWidget.count() == 1
         sheet: DataSheet = simple_project_without_plot.ui.tabWidget.widget(0)
         assert sheet.name == "Sheet 1"
@@ -174,12 +174,12 @@ class TestSheets:
         # cancel close request
         simple_project.confirm_close_dialog.return_value = False
         assert simple_project.ui.tabWidget.count() == 3
-        simple_project.close_tab(PLOT_IDX)
+        simple_project.close_tab_with_children(PLOT_IDX)
         assert simple_project.ui.tabWidget.count() == 3
 
         # confirm close request
         simple_project.confirm_close_dialog.return_value = True
-        simple_project.close_tab(PLOT_IDX)
+        simple_project.close_tab_with_children(PLOT_IDX)
         assert simple_project.ui.tabWidget.count() == 2
         for idx in range(2):
             widget = simple_project.ui.tabWidget.widget(idx)
@@ -197,12 +197,12 @@ class TestSheets:
         # cancel close request
         simple_project.confirm_close_dialog.return_value = False
         assert simple_project.ui.tabWidget.count() == 3
-        simple_project.close_tab(PLOT_IDX)
+        simple_project.close_tab_with_children(PLOT_IDX)
         assert simple_project.ui.tabWidget.count() == 3
 
         # confirm close request
         simple_project.confirm_close_dialog.return_value = True
-        simple_project.close_tab(PLOT_IDX)
+        simple_project.close_tab_with_children(PLOT_IDX)
         assert simple_project.ui.tabWidget.count() == 2
         for idx in range(2):
             widget = simple_project.ui.tabWidget.widget(idx)
@@ -215,8 +215,9 @@ class TestSheets:
         project_with_multiplot.confirm_close_dialog.return_value = True
 
         # A plot in tab 2 with an associated multiplot in tab 3
-        project_with_multiplot.close_tab(2)
+        project_with_multiplot.close_tab_with_children(2)
 
+        # Only the two sheets remain, the plot and multiplot are gone
         assert project_with_multiplot.ui.tabWidget.count() == 2
         assert project_with_multiplot.ui.tabWidget.widget(0).name == "Sheet 1"
         assert project_with_multiplot.ui.tabWidget.widget(1).name == "Sheet 2"
@@ -228,7 +229,7 @@ class TestSheets:
         project_with_multiplot.confirm_close_dialog.return_value = False
 
         # A plot in tab 2 with an associated multiplot in tab 3
-        project_with_multiplot.close_tab(2)
+        project_with_multiplot.close_tab_with_children(2)
 
         assert (
             "Multiplot 1"
@@ -241,7 +242,7 @@ class TestSheets:
         mocker.patch.object(simple_project, "confirm_close_dialog")
         simple_project.confirm_close_dialog.return_value = True
 
-        simple_project.close_tab(0)
+        simple_project.close_tab_with_children(0)
 
         assert simple_project.ui.tabWidget.count() == 2
         assert simple_project.ui.tabWidget.widget(0).name == "Sheet 2"
@@ -253,7 +254,7 @@ class TestSheets:
         project_with_multiplot.confirm_close_dialog.return_value = True
 
         # tab 1 (Sheet2) has one associated plot in tab 2 and a multiplot
-        project_with_multiplot.close_tab(1)
+        project_with_multiplot.close_tab_with_children(1)
 
         assert project_with_multiplot.ui.tabWidget.count() == 1
         assert project_with_multiplot.ui.tabWidget.widget(0).name == "Sheet 1"
@@ -265,7 +266,7 @@ class TestSheets:
         project_with_multiplot.confirm_close_dialog.return_value = False
 
         # no associated plots
-        project_with_multiplot.close_tab(0)
+        project_with_multiplot.close_tab_with_children(0)
         assert (
             "Plot 1"
             not in project_with_multiplot.confirm_close_dialog.call_args.args[0]
@@ -276,7 +277,7 @@ class TestSheets:
         )
 
         # associated plots: Plot 1, Multiplot 1
-        project_with_multiplot.close_tab(1)
+        project_with_multiplot.close_tab_with_children(1)
         assert "Plot 1" in project_with_multiplot.confirm_close_dialog.call_args.args[0]
         assert (
             "Multiplot 1"
@@ -291,9 +292,9 @@ class TestSheets:
         simple_project.confirm_close_dialog.return_value = True
 
         # close Sheet1
-        simple_project.close_tab(0)
+        simple_project.close_tab_with_children(0)
         # close Sheet2; should also close Plot1 and start new project
-        simple_project.close_tab(0)
+        simple_project.close_tab_with_children(0)
 
         simple_project.clear_all.assert_called_with(add_sheet=True)
 

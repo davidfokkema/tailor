@@ -42,8 +42,8 @@ __name__ = metadata["name"]
 __version__ = metadata["version"]
 
 
-class PlotWidget(NamedTuple):
-    widget: PlotTab
+class TabbedWidget(NamedTuple):
+    widget: DataSheet | PlotTab | MultiPlotTab
     index: int
 
 
@@ -145,7 +145,7 @@ class Application(QtWidgets.QMainWindow):
 
     def connect_ui_events(self):
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
-        self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
+        self.ui.tabWidget.tabCloseRequested.connect(self.close_tab_with_children)
 
     def setup_keyboard_shortcuts(self):
         # Set standard shortcuts for menu items
@@ -466,17 +466,19 @@ class Application(QtWidgets.QMainWindow):
         create_dialog.ui.y_err_box.addItems(choices)
         return create_dialog
 
-    def close_tab(self, close_idx):
+    def close_tab_with_children(self, close_idx):
         """Close a tab.
 
-        Closes the requested tab. If it is a data sheet, close all related plots.
+        Closes the requested tab with all children (related plots and
+        multiplots).
 
         Args:
             close_idx: an integer tab index
         """
-        tab_widget = self.ui.tabWidget
-        close_tab = tab_widget.widget(close_idx)
-        if type(close_tab) == DataSheet:
+        close_tab = TabbedWidget(
+            widget=self.ui.tabWidget.widget(close_idx), index=close_idx
+        )
+        if type(close_tab.widget) == DataSheet:
             # data sheets need special attention
             if self._count_data_sheets() == 1:
                 # there's just the one data sheet, close all and start new
@@ -486,53 +488,77 @@ class Application(QtWidgets.QMainWindow):
                 ):
                     self.clear_all(add_sheet=True)
             else:
-                # find associated plots and close plots and data sheet
-                close_idxs = [close_idx]
-                plots = self.get_associated_plots(close_tab)
-                # loop over a copy to prevent an infinite loop
-                for plot in plots.copy():
-                    plots.extend(self.get_associated_multiplots(plot.widget))
-                close_idxs += [p.index for p in plots]
-                plot_titles = [p.widget.name for p in plots]
+                tabs = self.get_associated_tabs(close_tab)
+                plot_titles = [p.widget.name for p in tabs]
                 if self.confirm_close_dialog(
                     f"Are you sure you want to close this data sheet and all associated plots ({', '.join(plot_titles)})?"
                 ):
-                    # close from right to left to avoid jumping indexes
-                    for idx in sorted(close_idxs, reverse=True):
-                        tab_widget.removeTab(idx)
-        elif type(close_tab) == PlotTab:
-            # find associated plots and close plots and data sheet
-            close_idxs = [close_idx]
-            multiplots = self.get_associated_multiplots(close_tab)
-            close_idxs += [p.index for p in multiplots]
-            multiplot_titles = [p.widget.name for p in multiplots]
+                    self.close_tabs([close_tab] + tabs)
+        elif type(close_tab.widget) == PlotTab:
+            tabs = self.get_associated_tabs(close_tab)
+            multiplot_titles = [p.widget.name for p in tabs]
             if self.confirm_close_dialog(
                 f"Are you sure you want to close this plot and associated multiplots ({', '.join(multiplot_titles)})?"
             ):
-                # close from right to left to avoid jumping indexes
-                for idx in sorted(close_idxs, reverse=True):
-                    tab_widget.removeTab(idx)
-        elif type(close_tab) == MultiPlotTab:
-            # multiplots can be easily closed
+                self.close_tabs([close_tab] + tabs)
+        elif type(close_tab.widget) == MultiPlotTab:
             if self.confirm_close_dialog("Are you sure you want to close this plot?"):
-                tab_widget.removeTab(close_idx)
+                self.close_tabs([close_tab])
 
-    def get_associated_plots(self, data_sheet: DataSheet) -> list[PlotWidget]:
+    def get_associated_tabs(self, tab: TabbedWidget) -> list[TabbedWidget]:
+        """Get all tabs associated with a data sheet or plot.
+
+        Args:
+            tab (TabbedWidget): the tab for which to get associated tabs.
+
+        Raises:
+            NotImplementedError: only implemented for DataSheet and PlotTab.
+
+        Returns:
+            list[TabbedWidget]: a list of associated tabs.
+        """
+        if type(tab.widget) == DataSheet:
+            # find associated plots
+            plots = self.get_associated_plots(tab.widget)
+        elif type(tab.widget) == PlotTab:
+            plots = [tab]
+        else:
+            raise NotImplementedError(
+                f"Associated tabs for type {type(tab)} not implemented."
+            )
+        multiplots = []
+        for plot in plots:
+            multiplots.extend(self.get_associated_multiplots(plot.widget))
+        return plots + multiplots
+
+    def close_tabs(self, tabs: list[TabbedWidget]) -> None:
+        """Close tabs using a list of tabbed widgets.
+
+        Args:
+            close_idxs (list[TabbedWidget]): a list of tabbed widgets (sheets,
+                plots or multiplots).
+        """
+        close_idxs = [t.index for t in tabs]
+        # close from right to left to avoid jumping indexes
+        for idx in sorted(close_idxs, reverse=True):
+            self.ui.tabWidget.removeTab(idx)
+
+    def get_associated_plots(self, data_sheet: DataSheet) -> list[TabbedWidget]:
         """Get plots associated with a data sheet."""
         plots = []
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
             if type(tab) == PlotTab and tab.data_sheet == data_sheet:
-                plots.append(PlotWidget(index=idx, widget=tab))
+                plots.append(TabbedWidget(index=idx, widget=tab))
         return plots
 
-    def get_associated_multiplots(self, plot: PlotTab) -> list[PlotWidget]:
+    def get_associated_multiplots(self, plot: PlotTab) -> list[TabbedWidget]:
         """Get multiplots associated with a plot."""
         plots = []
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
             if type(tab) == MultiPlotTab and tab.model.uses_plot(plot):
-                plots.append(PlotWidget(index=idx, widget=tab))
+                plots.append(TabbedWidget(index=idx, widget=tab))
         return plots
 
     def get_data_sheets(self) -> list[DataSheet]:
