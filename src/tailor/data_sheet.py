@@ -168,6 +168,7 @@ class DataSheet(QtWidgets.QWidget):
         """
         if self._selected_col_idx is not None:
             self.model.updateColumnExpression(self._selected_col_idx, expression)
+            self.update_expression_border(self._selected_col_idx)
 
     def selection_changed(self, selected=None, deselected=None):
         """Handle selectionChanged events in the data view.
@@ -206,6 +207,7 @@ class DataSheet(QtWidgets.QWidget):
             else:
                 self.ui.formulaLabel.setEnabled(False)
                 self.ui.formula_edit.setEnabled(False)
+            self.update_expression_border(col_idx)
         else:
             self.ui.nameLabel.setEnabled(False)
             self.ui.name_edit.clear()
@@ -213,6 +215,19 @@ class DataSheet(QtWidgets.QWidget):
             self.ui.formulaLabel.setEnabled(False)
             self.ui.formula_edit.clear()
             self.ui.formula_edit.setEnabled(False)
+
+    def update_expression_border(self, col_idx: int) -> None:
+        """Update border of the calculated column expression widget.
+
+        If the expression is not valid, draw a red border around the widget.
+
+        Args:
+            col_idx (int): the column index.
+        """
+        if self.model.data_model.is_column_valid(self.model.columnLabel(col_idx)):
+            self.ui.formula_edit.setStyleSheet("border: 0px")
+        else:
+            self.ui.formula_edit.setStyleSheet("border: 1px solid red")
 
     def column_moved(self, logidx, oldidx, newidx):
         """Move column in reaction to UI signal.
