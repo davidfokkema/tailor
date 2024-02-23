@@ -3,7 +3,7 @@ import pytest
 from PySide6 import QtCore, QtWidgets
 from pytest_mock import MockerFixture
 
-from tailor.app import Application, dialogs
+from tailor.app import MainWindow, dialogs
 from tailor.data_sheet import DataSheet
 from tailor.multiplot_tab import MultiPlotTab
 from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
@@ -76,8 +76,8 @@ def plot_tab(data_sheet: DataSheet) -> PlotTab:
 
 
 @pytest.fixture()
-def simple_project_without_plot(data_sheet: DataSheet) -> Application:
-    project = Application(add_sheet=True)
+def simple_project_without_plot(data_sheet: DataSheet) -> MainWindow:
+    project = MainWindow(add_sheet=True)
     project.ui.tabWidget.addTab(data_sheet, data_sheet.name)
     project._sheet_num += 1
     return project
@@ -85,8 +85,8 @@ def simple_project_without_plot(data_sheet: DataSheet) -> Application:
 
 @pytest.fixture()
 def simple_project(
-    simple_project_without_plot: Application, plot_tab: PlotTab
-) -> Application:
+    simple_project_without_plot: MainWindow, plot_tab: PlotTab
+) -> MainWindow:
     project = simple_project_without_plot
     project.ui.tabWidget.addTab(plot_tab, plot_tab.name)
     project._plot_num += 1
@@ -95,8 +95,8 @@ def simple_project(
 
 @pytest.fixture()
 def project_with_two_sheets(
-    simple_project: Application, simple_data_sheet: DataSheet
-) -> Application:
+    simple_project: MainWindow, simple_data_sheet: DataSheet
+) -> MainWindow:
     project = simple_project
     project.ui.tabWidget.addTab(simple_data_sheet, simple_data_sheet.name)
     project._sheet_num += 1
@@ -104,7 +104,7 @@ def project_with_two_sheets(
 
 
 @pytest.fixture()
-def project_with_multiplot(simple_project: Application) -> Application:
+def project_with_multiplot(simple_project: MainWindow) -> MainWindow:
     project = simple_project
     multiplot_tab = create_multiplot_tab(
         parent=project, plot_tab=simple_project.ui.tabWidget.widget(2)
@@ -114,7 +114,7 @@ def project_with_multiplot(simple_project: Application) -> Application:
     return project
 
 
-def create_multiplot_tab(parent: Application, plot_tab: PlotTab) -> MultiPlotTab:
+def create_multiplot_tab(parent: MainWindow, plot_tab: PlotTab) -> MultiPlotTab:
     multiplot_tab = MultiPlotTab(
         parent=parent,
         name="Multiplot 1",
@@ -128,7 +128,7 @@ def create_multiplot_tab(parent: Application, plot_tab: PlotTab) -> MultiPlotTab
 
 class TestSheets:
     def test_simple_project_without_plot_with_plot(
-        self, simple_project: Application
+        self, simple_project: MainWindow
     ) -> None:
         tabs = [
             simple_project.ui.tabWidget.widget(idx)
@@ -141,13 +141,13 @@ class TestSheets:
         assert isinstance(tabs[2], PlotTab)
 
     @pytest.mark.skip("shows GUI")
-    def test_show_simple_project(self, project_with_multiplot: Application) -> None:
+    def test_show_simple_project(self, project_with_multiplot: MainWindow) -> None:
         qapp = QtWidgets.QApplication.instance()
         project_with_multiplot.show()
         qapp.exec()
 
     def test_close_sheet_without_any_plots(
-        self, simple_project_without_plot: Application, mocker: MockerFixture
+        self, simple_project_without_plot: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(simple_project_without_plot, "confirm_close_dialog")
 
@@ -163,7 +163,7 @@ class TestSheets:
         assert sheet.name == "Sheet 1"
 
     def test_close_unused_plot(
-        self, simple_project: Application, mocker: MockerFixture
+        self, simple_project: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(simple_project, "confirm_close_dialog")
 
@@ -186,7 +186,7 @@ class TestSheets:
             assert isinstance(widget, DataSheet)
 
     def test_close_multiplot(
-        self, project_with_multiplot: Application, mocker: MockerFixture
+        self, project_with_multiplot: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(project_with_multiplot, "confirm_close_dialog")
         project_with_multiplot.confirm_close_dialog.return_value = True
@@ -201,7 +201,7 @@ class TestSheets:
         assert project_with_multiplot.ui.tabWidget.widget(2).name == "Plot 1"
 
     def test_close_plot_with_associated_multiplots(
-        self, project_with_multiplot: Application, mocker: MockerFixture
+        self, project_with_multiplot: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(project_with_multiplot, "confirm_close_dialog")
         project_with_multiplot.confirm_close_dialog.return_value = True
@@ -215,7 +215,7 @@ class TestSheets:
         assert project_with_multiplot.ui.tabWidget.widget(1).name == "Sheet 2"
 
     def test_close_plot_lists_associated_multiplots(
-        self, project_with_multiplot: Application, mocker: MockerFixture
+        self, project_with_multiplot: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(project_with_multiplot, "confirm_close_dialog")
         project_with_multiplot.confirm_close_dialog.return_value = False
@@ -229,7 +229,7 @@ class TestSheets:
         )
 
     def test_close_sheet_with_no_plots(
-        self, simple_project: Application, mocker: MockerFixture
+        self, simple_project: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(simple_project, "confirm_close_dialog")
         simple_project.confirm_close_dialog.return_value = True
@@ -240,7 +240,7 @@ class TestSheets:
         assert simple_project.ui.tabWidget.widget(0).name == "Sheet 2"
 
     def test_close_sheet_with_associated_plots(
-        self, project_with_multiplot: Application, mocker: MockerFixture
+        self, project_with_multiplot: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(project_with_multiplot, "confirm_close_dialog")
         project_with_multiplot.confirm_close_dialog.return_value = True
@@ -252,7 +252,7 @@ class TestSheets:
         assert project_with_multiplot.ui.tabWidget.widget(0).name == "Sheet 1"
 
     def test_close_sheet_lists_associated_plots(
-        self, project_with_multiplot: Application, mocker: MockerFixture
+        self, project_with_multiplot: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(project_with_multiplot, "confirm_close_dialog")
         project_with_multiplot.confirm_close_dialog.return_value = False
@@ -277,7 +277,7 @@ class TestSheets:
         )
 
     def test_close_last_remaining_tabs_starts_new_project(
-        self, simple_project: Application, mocker: MockerFixture
+        self, simple_project: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(simple_project, "confirm_close_dialog")
         mocker.patch.object(simple_project, "clear_all")
@@ -291,7 +291,7 @@ class TestSheets:
         simple_project.clear_all.assert_called_with(add_sheet=True)
 
     def test_remove_unused_column(
-        self, simple_project: Application, mocker: MockerFixture
+        self, simple_project: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(dialogs, "show_warning_dialog")
         simple_project.ui.tabWidget.setCurrentIndex(1)
@@ -305,7 +305,7 @@ class TestSheets:
         sheet.remove_selected_columns.assert_called()
 
     def test_remove_used_column_lists_associated_plots(
-        self, simple_project: Application, mocker: MockerFixture
+        self, simple_project: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(dialogs, "show_warning_dialog")
         simple_project.ui.tabWidget.setCurrentIndex(1)
@@ -320,7 +320,7 @@ class TestSheets:
         sheet.remove_selected_columns.assert_not_called()
 
     def test_remove_used_column_lists_associated_calculated_columns(
-        self, simple_project: Application, mocker: MockerFixture
+        self, simple_project: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(dialogs, "show_warning_dialog")
         simple_project.ui.tabWidget.setCurrentIndex(1)
@@ -337,7 +337,7 @@ class TestSheets:
         sheet.remove_selected_columns.assert_not_called()
 
     def test_remove_column_and_used_column(
-        self, simple_project: Application, mocker: MockerFixture
+        self, simple_project: MainWindow, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(dialogs, "show_warning_dialog")
         simple_project.ui.tabWidget.setCurrentIndex(1)
@@ -355,7 +355,7 @@ class TestSheets:
         dialogs.show_warning_dialog.assert_not_called()
         sheet.remove_selected_columns.assert_called()
 
-    def test_duplicate_sheet(self, simple_project: Application) -> None:
+    def test_duplicate_sheet(self, simple_project: MainWindow) -> None:
         simple_project.ui.tabWidget.setCurrentIndex(1)
         sheet1: DataSheet = simple_project.ui.tabWidget.currentWidget()
 
@@ -368,7 +368,7 @@ class TestSheets:
             == sheet2.model.data_model.get_column("col1").tolist()
         )
 
-    def test_duplicate_sheet_with_plots(self, simple_project: Application) -> None:
+    def test_duplicate_sheet_with_plots(self, simple_project: MainWindow) -> None:
         simple_project.ui.tabWidget.setCurrentIndex(1)
         sheet1: DataSheet = simple_project.ui.tabWidget.widget(1)
         plot1: PlotTab = simple_project.ui.tabWidget.widget(2)
@@ -391,7 +391,7 @@ class TestSheets:
         assert plot1.model._parameters["a"].value == plot2.model._parameters["a"].value
         assert plot1.model.get_model_expression() == plot2.model.get_model_expression()
 
-    def test_duplicate_plot(self, simple_project: Application) -> None:
+    def test_duplicate_plot(self, simple_project: MainWindow) -> None:
         simple_project.ui.tabWidget.setCurrentIndex(2)
 
         simple_project.duplicate_plot()
@@ -411,7 +411,7 @@ class TestSheets:
         assert plot1.model._parameters["a"].value == plot2.model._parameters["a"].value
         assert plot1.model.get_model_expression() == plot2.model.get_model_expression()
 
-    def test_get_data_sheets(self, simple_project: Application) -> None:
+    def test_get_data_sheets(self, simple_project: MainWindow) -> None:
         tabwidget = simple_project.ui.tabWidget
         sheet1 = tabwidget.widget(0)
         sheet2 = tabwidget.widget(1)
@@ -421,7 +421,7 @@ class TestSheets:
 
         assert sheets == [sheet1, sheet2]
 
-    def test_change_plot_source(self, project_with_two_sheets: Application) -> None:
+    def test_change_plot_source(self, project_with_two_sheets: MainWindow) -> None:
         plot: PlotTab = project_with_two_sheets.ui.tabWidget.widget(2)
         sheet3: DataSheet = project_with_two_sheets.ui.tabWidget.widget(3)
 

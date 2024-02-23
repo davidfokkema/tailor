@@ -13,7 +13,7 @@ from tailor.plot_tab import PlotTab
 from tailor.ui_multiplot_tab import Ui_MultiPlotTab
 
 if TYPE_CHECKING:
-    from tailor.app import Application
+    from tailor.app import MainWindow
 
 NUM_POINTS = 1000
 
@@ -21,12 +21,12 @@ NUM_POINTS = 1000
 class MultiPlotTab(QtWidgets.QWidget):
     name: str
     id: int
-    parent: "Application"
+    parent: "MainWindow"
     model: MultiPlotModel
     _plots: dict[PlotTab, QtWidgets.QHBoxLayout]
 
     def __init__(
-        self, parent: "Application", name: str, id: int, x_label: str, y_label: str
+        self, parent: "MainWindow", name: str, id: int, x_label: str, y_label: str
     ) -> None:
         super().__init__()
         self.ui = Ui_MultiPlotTab()

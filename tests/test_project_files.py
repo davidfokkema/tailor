@@ -6,7 +6,7 @@ from pytest_mock import MockerFixture, mocker
 
 import tailor.data_sheet
 from tailor import plot_model, project_files
-from tailor.app import Application
+from tailor.app import MainWindow
 from tailor.data_sheet import DataSheet
 from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 
@@ -66,8 +66,8 @@ def plot_tab_model(plot_tab) -> project_files.Plot:
 
 
 @pytest.fixture()
-def simple_project(data_sheet: DataSheet, plot_tab: PlotTab) -> Application:
-    app = Application()
+def simple_project(data_sheet: DataSheet, plot_tab: PlotTab) -> MainWindow:
+    app = MainWindow()
     app.ui.tabWidget.addTab(data_sheet, data_sheet.name)
     app.ui.tabWidget.addTab(plot_tab, plot_tab.name)
     app.ui.tabWidget.setCurrentIndex(1)
@@ -77,7 +77,7 @@ def simple_project(data_sheet: DataSheet, plot_tab: PlotTab) -> Application:
 
 
 @pytest.fixture()
-def simple_project_model(simple_project: Application) -> project_files.Project:
+def simple_project_model(simple_project: MainWindow) -> project_files.Project:
     return project_files.save_project_to_model(simple_project)
 
 
@@ -173,14 +173,14 @@ class TestProjectFiles:
         plot_tab.refresh_ui()
         assert plot_tab.ui.xlabel.text() == "Time"
 
-    def test_save_project_to_model(self, simple_project: Application):
+    def test_save_project_to_model(self, simple_project: MainWindow):
         # simple_project.show()
         # QtWidgets.QApplication.instance().exec()
         project_files.save_project_to_model(simple_project)
         assert simple_project._sheet_num == 1
 
     def test_load_project_from_model(self, simple_project_model: project_files.Project):
-        app = Application()
+        app = MainWindow()
         project_files.load_project_from_model(app, simple_project_model)
         # app.show()
         # QtWidgets.QApplication.instance().exec()
@@ -197,21 +197,21 @@ class TestProjectFiles:
         assert plot.model.best_fit is not None
         assert plot._params["a"].findChild(QtWidgets.QWidget, "value").value() == 2.0
 
-    def test_save_project_to_json_completes(self, simple_project: Application):
+    def test_save_project_to_json_completes(self, simple_project: MainWindow):
         project_files.save_project_to_json(simple_project)
 
-    def test_load_project_from_json(self, simple_project: Application):
+    def test_load_project_from_json(self, simple_project: MainWindow):
         json = project_files.save_project_to_json(simple_project)
-        project = Application()
+        project = MainWindow()
         project_files.load_project_from_json(project, json)
         assert project.ui.tabWidget.count() == 2
 
-    def test_save_project_to_path(self, simple_project: Application, tmp_path):
+    def test_save_project_to_path(self, simple_project: MainWindow, tmp_path):
         project_files.save_project_to_path(simple_project, tmp_path / "project.tlr")
 
-    def test_open_project_from_path(self, simple_project: Application, tmp_path):
+    def test_open_project_from_path(self, simple_project: MainWindow, tmp_path):
         project_files.save_project_to_path(simple_project, tmp_path / "project.tlr")
-        app = Application()
+        app = MainWindow()
 
         project_files.load_project_from_path(app, tmp_path / "project.tlr")
 
@@ -220,7 +220,7 @@ class TestProjectFiles:
         assert isinstance(app.ui.tabWidget.widget(1), PlotTab)
 
     def test_open_legacy_project_from_disk(self):
-        app = Application()
+        app = MainWindow()
 
         project_files.load_project_from_path(app, "tests/legacy-v1-project.tlr")
 

@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-from tailor.app import Application
+from tailor.app import MainWindow
 from tailor.plot_tab import PlotTab
 
 from .test_app import data_sheet, plot_tab, simple_project, simple_project_without_plot
@@ -10,7 +10,7 @@ from .test_app import data_sheet, plot_tab, simple_project, simple_project_witho
 
 class TestPlotExport:
     def test_export_graph(
-        self, simple_project: Application, tmp_path: pathlib.Path
+        self, simple_project: MainWindow, tmp_path: pathlib.Path
     ) -> None:
         filepath = tmp_path / "plot.png"
         plot: PlotTab = simple_project.ui.tabWidget.widget(2)

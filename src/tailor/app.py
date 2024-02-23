@@ -60,7 +60,7 @@ pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
 
-class Application(QtWidgets.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     """Main user interface for the tailor app.
 
     The user interface centers on the table containing the data values. A single
@@ -799,14 +799,15 @@ class Application(QtWidgets.QMainWindow):
             self.update_recent_files(filename)
             self.mark_project_dirty(False)
 
-    def open_project_dialog(self):
+    def open_project_dialog(self, event=None, filename=None):
         """Present open project dialog and load project."""
         if self.confirm_project_close_dialog():
-            filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self,
-                dir=self.get_recent_directory(),
-                filter="Tailor project files (*.tlr);;All files (*)",
-            )
+            if filename is None:
+                filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                    parent=self,
+                    dir=self.get_recent_directory(),
+                    filter="Tailor project files (*.tlr);;All files (*)",
+                )
             if filename:
                 self.set_recent_directory(pathlib.Path(filename).parent)
                 self.load_project(filename)
@@ -1214,17 +1215,28 @@ class Application(QtWidgets.QMainWindow):
             return latest_version, download_url, release_info["html_url"]
 
 
+class Application(QtWidgets.QApplication):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.app = MainWindow(add_sheet=True)
+        self.app.show()
+        # Preflight
+        if not "--no-update-check" in sys.argv:
+            # will check for updates
+            if self.app.check_for_updates(silent=True):
+                # user wants to install available updates, so quit
+                return
+
+    def event(self, event):
+        if event.type() == QtCore.QEvent.FileOpen:
+            self.app.open_project_dialog(filename=event.file())
+        super().event(event)
+
+
 def main():
     """Main entry point."""
-    qapp = QtWidgets.QApplication()
-    app = Application(add_sheet=True)
-    app.show()
-    # Preflight
-    if not "--no-update-check" in sys.argv:
-        # will check for updates
-        if app.check_for_updates(silent=True):
-            # user wants to install available updates, so quit
-            return
+    qapp = Application()
     sys.exit(qapp.exec())
 
 

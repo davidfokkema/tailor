@@ -7,12 +7,12 @@ import pandas as pd
 from PySide6 import QtCore, QtWidgets
 
 from tailor import project_files
-from tailor.app import Application
+from tailor.app import MainWindow
 from tailor.data_sheet import DataSheet
 from tailor.plot_tab import PlotTab
 
 
-def create_test_project(app: Application):
+def create_test_project(app: MainWindow):
     # set up data
     sheet: DataSheet = app.ui.tabWidget.widget(0)
     sheet.model.removeColumn(1)
@@ -73,12 +73,12 @@ def create_test_project(app: Application):
 
 if __name__ == "__main__":
     qapp = QtWidgets.QApplication()
-    app = Application(add_sheet=True)
+    app = MainWindow(add_sheet=True)
 
     create_test_project(app)
     model = project_files.save_project_to_json(app)
 
-    app = Application()
+    app = MainWindow()
     project_files.load_project_from_json(app, model)
 
     app.show()
