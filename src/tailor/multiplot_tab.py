@@ -103,17 +103,14 @@ class MultiPlotTab(QtWidgets.QWidget):
             plots (list[PlotTab]): the plots to be added to the UI.
         """
         for plot, color in zip(plots, self._color):
-            is_enabled = QtWidgets.QCheckBox()
-            is_enabled.setObjectName("is_enabled")
-            plot_name = QtWidgets.QLabel(plot.name)
-            plot_name.setObjectName("plot_name")
+            is_enabled = QtWidgets.QCheckBox(plot.name)
+            is_enabled.setObjectName("is_enabled_checkbox")
             plot_label = QtWidgets.QLineEdit(plot.name)
             plot_label.setObjectName("plot_label")
             color_button = ColorButton(color=color)
             color_button.setObjectName("plot_color")
             hbox = QtWidgets.QHBoxLayout()
             hbox.addWidget(is_enabled)
-            hbox.addWidget(plot_name)
             hbox.addStretch()
             hbox.addWidget(plot_label)
             hbox.addWidget(color_button)
@@ -151,12 +148,9 @@ class MultiPlotTab(QtWidgets.QWidget):
         for idx, plot in enumerate(self.parent.get_plots()):
             widget = self._plots[plot]
             # force an update on the plot name
-            name = widget.findChild(QtWidgets.QWidget, "plot_name")
-            name.setText(plot.name)
+            checkbox = widget.findChild(QtWidgets.QCheckBox, "is_enabled_checkbox")
+            checkbox.setText(plot.name)
             # force an update on the checkbox state
-            checkbox: QtWidgets.QCheckBox = widget.findChild(
-                QtWidgets.QWidget, "is_enabled"
-            )
             checkbox.blockSignals(True)
             if plot_info := self.model.get_plot_info(plot):
                 checkbox.setChecked(True)
