@@ -404,6 +404,11 @@ class TestDataModel:
     def test_get_column_expression_returns_None(self, bare_bones_data: DataModel):
         assert bare_bones_data.get_column_expression("col1") is None
 
+    def test_get_column_expression_with_syntax_error(self, bare_bones_data: DataModel):
+        bare_bones_data._calculated_column_expression["col3"] = "y *"
+        # should not raise a syntax error but return expression as is
+        assert bare_bones_data.get_column_expression("col3") == "y *"
+
     def test_get_column_expression_locks_in_variable(
         self, bare_bones_data: DataModel, mocker: MockerFixture
     ):
@@ -446,6 +451,13 @@ class TestDataModel:
         # col1 is not a calculated column
         bare_bones_data.update_column_expression("col1", "x ** 2")
         assert "col1" not in bare_bones_data._calculated_column_expression
+
+    def test_update_column_expression_with_syntax_error(
+        self, bare_bones_data: DataModel, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(bare_bones_data, "recalculate_columns_from")
+        bare_bones_data.update_column_expression("col3", "y*")
+        assert bare_bones_data._calculated_column_expression["col3"] == "y*"
 
     def test_recalculate_columns_from(
         self, calc_model: DataModel, mocker: MockerFixture

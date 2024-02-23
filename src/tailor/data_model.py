@@ -288,7 +288,12 @@ class DataModel:
         expression = self._calculated_column_expression.get(label, None)
 
         if expression is not None:
-            if (get_variable_names(expression) - set(self._col_names.keys())) & set(
+            try:
+                var_names = get_variable_names(expression)
+            except SyntaxError:
+                return expression
+
+            if (var_names - set(self._col_names.keys())) & set(
                 self._col_names.values()
             ):
                 # There seems to be a raw variable name (not label!) stored in
@@ -318,7 +323,10 @@ class DataModel:
         if self.is_calculated_column(label):
             # mapping: names -> labels, so must reverse _col_names mapping
             mapping = {v: k for k, v in self._col_names.items()}
-            transformed = rename_variables(expression, mapping)
+            try:
+                transformed = rename_variables(expression, mapping)
+            except SyntaxError:
+                transformed = expression
             self._calculated_column_expression[label] = transformed
             self.recalculate_columns_from(label)
 
