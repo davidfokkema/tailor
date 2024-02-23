@@ -402,9 +402,12 @@ class TestSheets:
         plot2: PlotTab = simple_project.ui.tabWidget.widget(3)
         assert plot1.name == "Plot 1"
         assert plot2.name == "Plot 2"
+        # check that underlying data sheets are identical
         assert plot1.data_sheet is plot2.data_sheet
         # check that the underlying plot models are not identical
         assert plot1.model != plot2.model
+        # check that plot ids are not identical
+        assert plot1.id != plot2.id
         assert plot1.model._parameters["a"].value == plot2.model._parameters["a"].value
         assert plot1.model.get_model_expression() == plot2.model.get_model_expression()
 
