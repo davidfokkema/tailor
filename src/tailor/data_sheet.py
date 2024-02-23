@@ -145,8 +145,15 @@ class DataSheet(QtWidgets.QWidget):
             # Do not allow empty names or duplicate column names
             if name and name not in self.model.columnNames():
                 new_name = self.model.renameColumn(col_idx, name)
-                # set the normalized name to the name edit field
+                # Set the normalized name to the name edit field. This can
+                # change the cursor position because characters may be replaced
+                # (like spaces or digits at the start of the string). Move the
+                # cursor to the 'expected' position: static with respect to the
+                # end of the string.
+                pos_from_end = len(name) - self.ui.name_edit.cursorPosition()
+                new_pos = len(new_name) - pos_from_end
                 self.ui.name_edit.setText(new_name)
+                self.ui.name_edit.setCursorPosition(new_pos)
                 header = self.ui.data_view.horizontalHeader()
                 header.headerDataChanged(QtCore.Qt.Horizontal, col_idx, col_idx)
 
