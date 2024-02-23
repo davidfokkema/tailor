@@ -224,7 +224,8 @@ def load_plot(model: Plot, data_sheet: DataSheet) -> PlotTab:
 
 def save_multiplot(plot: MultiPlotTab) -> MultiPlot:
     plot_info = [
-        MultiPlotInfo(plot_id=p.id, color=i.color) for p, i in plot.model._plots.items()
+        MultiPlotInfo(plot_id=p.id, label=i.label, color=i.color)
+        for p, i in plot.model._plots.items()
     ]
     return MultiPlot(
         name=plot.name,
@@ -255,5 +256,7 @@ def load_multiplot(
     multiplot_tab.model.y_max = model.y_max
     for plot_info in model.plots:
         plot = plots[plot_info.plot_id]
-        multiplot_tab.model.add_plot(plot=plot, color=plot_info.color)
+        multiplot_tab.model.add_plot(
+            plot=plot, label=plot_info.label, color=plot_info.color
+        )
     return multiplot_tab

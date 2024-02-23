@@ -5,6 +5,7 @@ from tailor.plot_tab import PlotTab
 
 @dataclass
 class PlotInfo:
+    label: str
     color: str
 
 
@@ -22,8 +23,8 @@ class MultiPlotModel:
         self.y_label = y_label
         self._plots = {}
 
-    def add_plot(self, plot: PlotTab, color: str) -> None:
-        self._plots[plot] = PlotInfo(color=color)
+    def add_plot(self, plot: PlotTab, label: str, color: str) -> None:
+        self._plots[plot] = PlotInfo(label=label, color=color)
 
     def remove_plot(self, plot: PlotTab) -> None:
         self._plots.pop(plot)

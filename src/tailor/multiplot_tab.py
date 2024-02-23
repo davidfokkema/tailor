@@ -103,16 +103,19 @@ class MultiPlotTab(QtWidgets.QWidget):
             plots (list[PlotTab]): the plots to be added to the UI.
         """
         for plot, color in zip(plots, self._color):
-            plot_name = QtWidgets.QLabel(plot.name)
-            plot_name.setObjectName("plot_name")
             is_enabled = QtWidgets.QCheckBox()
             is_enabled.setObjectName("is_enabled")
+            plot_name = QtWidgets.QLabel(plot.name)
+            plot_name.setObjectName("plot_name")
+            plot_label = QtWidgets.QLineEdit(plot.name)
+            plot_label.setObjectName("plot_label")
             color_button = ColorButton(color=color)
             color_button.setObjectName("plot_color")
             hbox = QtWidgets.QHBoxLayout()
             hbox.addWidget(is_enabled)
             hbox.addWidget(plot_name)
             hbox.addStretch()
+            hbox.addWidget(plot_label)
             hbox.addWidget(color_button)
             layout_widget = QtWidgets.QWidget()
             layout_widget.setContentsMargins(0, 0, 0, 0)
@@ -121,6 +124,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             is_enabled.stateChanged.connect(
                 partial(self.update_checkbox, plot, is_enabled)
             )
+            plot_label.textEdited.connect(partial(self.update_plot_label, plot))
             color_button.sigColorChanging.connect(partial(self.update_color, plot))
 
     def remove_plots_from_ui(self, plots: list[PlotTab]) -> None:
@@ -163,6 +167,11 @@ class MultiPlotTab(QtWidgets.QWidget):
                 color_button.blockSignals(True)
                 color_button.setColor(plot_info.color)
                 color_button.blockSignals(False)
+                # force an update on the plot label
+                label: QtWidgets.QLineEdit = widget.findChild(
+                    QtWidgets.QLineEdit, "plot_label"
+                )
+                label.setText(plot_info.label)
             else:
                 checkbox.setChecked(False)
             checkbox.blockSignals(False)
@@ -178,8 +187,13 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.draw_plot()
 
     def add_plot(self, plot: PlotTab) -> None:
+        label = self._plots[plot].findChild(QtWidgets.QLineEdit, "plot_label").text()
         color = self._plots[plot].findChild(pg.ColorButton, "plot_color").color().name()
-        self.model.add_plot(plot, color)
+        self.model.add_plot(plot, label, color)
+
+    def update_plot_label(self, plot: PlotTab, text: str) -> None:
+        plot_info = self.model.get_plot_info(plot)
+        plot_info.label = text
 
     def update_color(self, plot: PlotTab, color_button: pg.ColorButton) -> None:
         plot_info = self.model.get_plot_info(plot)
@@ -233,10 +247,10 @@ class MultiPlotTab(QtWidgets.QWidget):
         Args:
             filename: path to the file.
         """
-
         plt.figure()
-        for plot_tab in self._plots.keys():
-            if plot_info := self.model.get_plot_info(plot_tab):
+        for plot_tab in self.parent.get_plots():
+            if self.model.uses_plot(plot_tab):
+                plot_info = self.model.get_plot_info(plot_tab)
                 x, y, xerr, yerr = plot_tab.model.get_data()
                 plt.errorbar(
                     x,
@@ -247,6 +261,7 @@ class MultiPlotTab(QtWidgets.QWidget):
                     ms=3,
                     elinewidth=0.5,
                     color=plot_info.color,
+                    label=plot_info.label,
                 )
 
                 if plot_tab.model.best_fit:
@@ -261,6 +276,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         xmin, xmax, ymin, ymax = self.get_adjusted_limits()
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
+        plt.legend()
         plt.savefig(filename, dpi=dpi)
 
     def update_axis_settings_from_model(self) -> None:

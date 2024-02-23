@@ -54,6 +54,7 @@ class Plot(BaseModel):
 
 class MultiPlotInfo(BaseModel):
     plot_id: int
+    label: str
     color: str
 
 

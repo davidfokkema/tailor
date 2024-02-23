@@ -122,7 +122,7 @@ def create_multiplot_tab(parent: Application, plot_tab: PlotTab) -> MultiPlotTab
         x_label="Time",
         y_label="Distance",
     )
-    multiplot_tab.model.add_plot(plot_tab, color="#ff0000")
+    multiplot_tab.model.add_plot(plot_tab, "Label 1", color="#ff0000")
     return multiplot_tab
 
 

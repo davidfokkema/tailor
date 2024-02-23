@@ -62,8 +62,8 @@ def create_test_project(app: Application):
 
     multiplot = app.create_multiplot()
     multiplot.model.x_label = "Time (s)"
-    multiplot.model.add_plot(plot1, "black")
-    multiplot.model.add_plot(plot2, "red")
+    multiplot.model.add_plot(plot1, "Meting 1", "black")
+    multiplot.model.add_plot(plot2, "Meting 2", "red")
     multiplot.model.x_min = -10
     multiplot.model.y_max = 10
 
