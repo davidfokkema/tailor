@@ -291,6 +291,17 @@ class PlotModel:
                     self.update_model_parameters()
                 self.best_fit = None
 
+    def is_model_valid(self) -> bool:
+        """Return if the model expression is a valid model.
+
+        Returns:
+            bool: True if the model is valid, False otherwise.
+        """
+        if self._model is None:
+            return False
+        else:
+            return True
+
     def update_model_parameters(self):
         """Update model parameters.
 

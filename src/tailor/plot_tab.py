@@ -241,6 +241,7 @@ class PlotTab(QtWidgets.QWidget):
         cursor = self.ui.model_func.textCursor()
         cursor.setPosition(cursor_pos)
         self.ui.model_func.setTextCursor(cursor)
+        self.update_expression_border()
 
     def update_axis_settings_from_model(self) -> None:
         """Update axis labels from model."""
@@ -357,9 +358,21 @@ class PlotTab(QtWidgets.QWidget):
         """Update the model expression and related UI."""
         expression = self.ui.model_func.toPlainText()
         self.model.update_model_expression(expression)
+        self.update_expression_border()
         self.update_params_ui()
         self.plot_initial_model()
         self.plot_best_fit()
+
+    def update_expression_border(self) -> None:
+        """Update border of the model expression widget.
+
+        If the model expression is not valid, draw a red border around the
+        widget.
+        """
+        if self.model.is_model_valid():
+            self.ui.model_func.setStyleSheet("border: 0px")
+        else:
+            self.ui.model_func.setStyleSheet("border: 1px solid red")
 
     def store_cursor_position(self):
         """Store the cursor position inside the model expression."""
