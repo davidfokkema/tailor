@@ -1141,21 +1141,23 @@ class MainWindow(QtWidgets.QMainWindow):
             dialog.setText("Updates")
             dialog.setInformativeText(msg)
             dialog.setStyleSheet("QLabel{min-width: 300px;}")
-            dialog.setStandardButtons(dialog.Ok)
+            dialog.setStandardButtons(QtWidgets.QMessageBox.Ok)
             dialog.exec()
         else:
             dialog = QtWidgets.QMessageBox(parent=self)
             dialog.setText("Updates")
             dialog.setInformativeText(msg)
             dialog.setStyleSheet("QLabel{min-width: 300px;}")
-            dialog.setStandardButtons(dialog.Ok | dialog.Cancel)
+            dialog.setStandardButtons(
+                QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
+            )
 
-            dialog.button(dialog.Ok).setText("Download Update")
-            dialog.button(dialog.Cancel).setText("Skip Update")
+            dialog.button(QtWidgets.QMessageBox.Ok).setText("Download Update")
+            dialog.button(QtWidgets.QMessageBox.Cancel).setText("Skip Update")
 
             value = dialog.exec()
             match value:
-                case dialog.Ok:
+                case QtWidgets.QMessageBox.Ok:
                     # if app is in the main event loop, ask to quit so user can
                     # install update
                     QtWidgets.QApplication.instance().quit()
@@ -1163,7 +1165,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     webbrowser.open(update_link)
                     # if not, return with True to signal that the user wants the update
                     return True
-                case dialog.Cancel:
+                case QtWidgets.QMessageBox.Cancel:
                     return False
                 case default:
                     return None
@@ -1226,7 +1228,6 @@ class Application(QtWidgets.QApplication):
         self.app.show()
         # Preflight
         if update_check:
-            print("Checking for update")
             # will check for updates
             if self.app.check_for_updates(silent=True):
                 # user wants to install available updates, so quit
