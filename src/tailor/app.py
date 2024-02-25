@@ -1238,7 +1238,8 @@ class Application(QtWidgets.QApplication):
     def event(self, event):
         if event.type() == QtCore.QEvent.FileOpen:
             self.app.open_project_dialog(filename=event.file())
-        super().event(event)
+            return True
+        return super().event(event)
 
 
 @click.command()
