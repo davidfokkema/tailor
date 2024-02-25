@@ -28,11 +28,11 @@ requires = [
     'matplotlib>=3.5.1,<4.0.0',
     'xxhash>=3.2.0,<4.0.0',
     'pydantic>=2.1.1,<3.0.0',
+    'click>=8.1.7,<8.2.0',
 ]
 test_requires = ["pytest", "pytest-mock"]
 
 [tool.briefcase.app.tailor.document_type.tlr]
-extension = "tlr"
 description = "Tailor project"
 icon = "src/tailor/resources/document_icon"
 url = "https://github.com/davidfokkema/tailor"

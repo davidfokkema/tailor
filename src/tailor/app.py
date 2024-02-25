@@ -17,6 +17,7 @@ from importlib import resources
 from textwrap import dedent
 from typing import NamedTuple, Optional
 
+import click
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -1216,17 +1217,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class Application(QtWidgets.QApplication):
-    def __init__(self) -> None:
+    def __init__(
+        self, project_path: str | None = None, update_check: bool = True
+    ) -> None:
         super().__init__()
 
         self.app = MainWindow(add_sheet=True)
         self.app.show()
         # Preflight
-        if not "--no-update-check" in sys.argv:
+        if update_check:
+            print("Checking for update")
             # will check for updates
             if self.app.check_for_updates(silent=True):
                 # user wants to install available updates, so quit
                 return
+        if project_path and pathlib.Path(project_path).is_file():
+            self.app.open_project_dialog(filename=project_path)
 
     def event(self, event):
         if event.type() == QtCore.QEvent.FileOpen:
@@ -1234,9 +1240,17 @@ class Application(QtWidgets.QApplication):
         super().event(event)
 
 
-def main():
-    """Main entry point."""
-    qapp = Application()
+@click.command()
+@click.argument("project_path", required=False)
+@click.option(
+    "--update-check/--no-update-check", default=True, help="Check for new versions."
+)
+def main(project_path, update_check):
+    """Application for fitting non-linear models to experimental data.
+
+    The path to a project file to open on launch can be supplied as an argument.
+    """
+    qapp = Application(project_path, update_check)
     sys.exit(qapp.exec())
 
 
