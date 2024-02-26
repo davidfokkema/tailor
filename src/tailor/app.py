@@ -1104,8 +1104,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.actionClear_Menu.setEnabled(False)
 
     def open_recent_project_action(self, filename):
-        if self.confirm_project_close_dialog():
-            self.load_project(filename)
+        if not pathlib.Path(filename).is_file():
+            dialogs.show_error_dialog(parent=self, msg="File does not exist.")
+        else:
+            if self.confirm_project_close_dialog():
+                self.load_project(filename)
 
     def check_for_updates(self, silent=False):
         """Check for new releases of Tailor.
