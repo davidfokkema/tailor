@@ -23,6 +23,10 @@ class Parameter:
     vary: bool = True
 
 
+class FitError(Exception):
+    """Error while performing fit procedure."""
+
+
 class PlotModel:
     data_model: DataModel
     x_col: str
@@ -444,13 +448,16 @@ class PlotModel:
         self._fit_data_checksum = self.hash_data(data)
 
         x, y, _, y_err = data
-        self.best_fit = self._model.fit(
-            data=y,
-            params=params,
-            weights=1 / (y_err + 1e-99),
-            **{self.x_col: x},
-            nan_policy="omit",
-        )
+        try:
+            self.best_fit = self._model.fit(
+                data=y,
+                params=params,
+                weights=1 / (y_err + 1e-99),
+                **{self.x_col: x},
+                nan_policy="omit",
+            )
+        except Exception as exc:
+            raise FitError("foo") from exc
 
     def hash_data(self, data: ArrayLike) -> int:
         """Calculate a hash (checksum) of the data.

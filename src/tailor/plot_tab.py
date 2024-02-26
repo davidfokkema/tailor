@@ -12,8 +12,9 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6 import QtCore, QtWidgets
 
+from tailor import dialogs
 from tailor.data_sheet import DataSheet
-from tailor.plot_model import PlotModel
+from tailor.plot_model import FitError, PlotModel
 from tailor.ui_plot_tab import Ui_PlotTab
 
 NUM_POINTS = 1000
@@ -26,6 +27,14 @@ DRAW_CURVE_OPTIONS = {
     DrawCurve.ON_DOMAIN: "Only on fit domain",
     DrawCurve.ON_AXIS: "On full axis",
 }
+
+FITERROR_MSG = """
+There was an error while performing the fit. This is often the result of NaN (Not a Number) values caused by division by zero or the square root of a negative number in your model function. You can try one of the following:
+    1. Choose initial parameter values which are much closer to the data
+    2. Set bounds on the parameters (change -inf and inf to finite numbers)
+    3. Use a model with less parameters.
+N.B. the number of parameters in your model must never exceed the number of data points in your plot.
+"""
 
 
 class VariableError(RuntimeError):
@@ -627,7 +636,12 @@ class PlotTab(QtWidgets.QWidget):
         self.initial_param_plot.setData([], [])
 
     def perform_fit(self):
-        self.model.perform_fit()
+        try:
+            self.model.perform_fit()
+        except FitError as exc:
+            dialogs.show_exception(
+                self, exc.__cause__, title="Foobar", text=FITERROR_MSG
+            )
         self.plot_best_fit()
         self.update_info_box()
 

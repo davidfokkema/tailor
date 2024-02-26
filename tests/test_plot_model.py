@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal
 from pytest_mock import MockerFixture
 
 from tailor.data_model import DataModel
-from tailor.plot_model import Parameter, PlotModel
+from tailor.plot_model import FitError, Parameter, PlotModel
 
 
 @pytest.fixture()
@@ -467,6 +467,26 @@ class TestPlotModel:
         simple_data_with_errors.update_model_expression("a / x")
         # make sure fit does not crash due to NaNs for x = 0
         simple_data_with_errors.perform_fit()
+
+    def test_perform_fit_raises_fit_error(self) -> None:
+        data_model = DataModel()
+        data_model.insert_columns(0, 2)
+        data_model.insert_rows(0, 2)
+        data_model.set_values_from_array(
+            0,
+            0,
+            np.array(
+                [
+                    [1.0, 1.0],
+                    [2.0, 3.9],
+                ]
+            ),
+        )
+        model = PlotModel(data_model=data_model, x_col="col1", y_col="col2")
+        model.update_model_expression("a * col1**2 + b * col1 + c")
+
+        with pytest.raises(FitError):
+            model.perform_fit()
 
     def test_perform_fit_saves_checksum(self, model: PlotModel, mocker: MockerFixture):
         # mock everything needed to be able to perform the 'fit'
