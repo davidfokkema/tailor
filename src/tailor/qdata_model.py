@@ -653,23 +653,3 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.data_model.merge_csv(filename, format)
         self.endResetModel()
         self.main_window.mark_project_dirty()
-
-    # def show_status(self, msg):
-    #     """Show message in statusbar.
-
-    #     Args:
-    #         msg (str): the error message.
-    #     """
-    #     self.main_window.ui.statusbar.showMessage(msg, timeout=MSG_TIMEOUT)
-
-    # def emit_column_changed(self, col_name):
-    #     """Emit dataChanged signal for a given column.
-
-    #     Args:
-    #         col_name (str): name of the column that contains updated values.
-    #     """
-    #     col = self._data.columns.get_loc(col_name)
-    #     n_rows = len(self._data)
-    #     begin = self.createIndex(0, col)
-    #     end = self.createIndex(n_rows - 1, col)
-    #     self.dataChanged.emit(begin, end)
