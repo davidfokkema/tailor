@@ -16,10 +16,11 @@ MSG_TIMEOUT = 0
 
 
 class QDataModel(QtCore.QAbstractTableModel):
-    """Data model for the tailor app.
+    """Qt Data model for the data sheets.
 
-    Implements a QAbstractDataModel to contain the data values as a backend for the
-    table view used in the app. This class mostly implements the GUI side of things, but subclasses the Tailor DataModel.
+    Implements a QAbstractDataModel to contain the data values as a backend for
+    the table view used in the app. This class mostly implements the GUI side of
+    things. The underlying data is handled by DataModel.
     """
 
     def __init__(self):
