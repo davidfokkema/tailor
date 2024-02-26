@@ -55,8 +55,6 @@ RELEASE_API_URL = "https://api.github.com/repos/davidfokkema/tailor/releases/lat
 HTTP_TIMEOUT = 3
 
 
-# FIXME: antialiasing is EXTREMELY slow. Why?
-# pg.setConfigOptions(antialias=True)
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
