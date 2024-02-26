@@ -101,7 +101,9 @@ class PlotTab(QtWidgets.QWidget):
         # Connect signals
         self.ui.model_func.textChanged.connect(self.update_model_expression)
         self.ui.model_func.cursorPositionChanged.connect(self.store_cursor_position)
-        self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
+        self.ui.show_initial_fit.stateChanged.connect(
+            self.show_initial_fit_option_changed
+        )
         self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain_xmin)
         self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain_xmax)
         self.ui.use_fit_domain.stateChanged.connect(self.set_use_fit_domain)
@@ -115,9 +117,9 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.set_limits_button.clicked.connect(self.update_limits)
         self.ui.fit_button.clicked.connect(self.perform_fit)
         self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
-        # # lambda is necessary to gobble the 'index' parameter of the
-        # # currentIndexChanged signal
-        self.ui.draw_curve_option.currentIndexChanged.connect(self.update_model_curves)
+        self.ui.draw_curve_option.currentIndexChanged.connect(
+            self.draw_curve_option_changed
+        )
 
     def finish_ui(self):
         self.ui.param_layout = QtWidgets.QVBoxLayout()
@@ -236,6 +238,12 @@ class PlotTab(QtWidgets.QWidget):
         self.model.update_model_expression(current_model)
         # refresh the plot UI
         self.refresh_ui()
+        self.main_window.mark_project_dirty()
+
+    def draw_curve_option_changed(self) -> None:
+        """Updates UI when draw curve option is changed."""
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def get_draw_curve_option(self) -> DrawCurve:
         """Get the currently selected draw curve option.
@@ -295,13 +303,13 @@ class PlotTab(QtWidgets.QWidget):
         """Update the x-axis label of the plot."""
         self.model.x_label = self.ui.xlabel.text()
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
-        # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+        self.main_window.mark_project_dirty()
 
     def update_ylabel(self):
         """Update the y-axis label of the plot."""
         self.model.y_label = self.ui.ylabel.text()
         self.ui.plot_widget.setLabel("left", self.model.y_label)
-        # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+        self.main_window.mark_project_dirty()
 
     def update_x_min(self):
         """Update the minimum x axis limit."""
@@ -311,6 +319,7 @@ class PlotTab(QtWidgets.QWidget):
             value = None
         self.model.x_min = value
         self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_x_max(self):
         """Update the minimum x axis limit."""
@@ -320,6 +329,7 @@ class PlotTab(QtWidgets.QWidget):
             value = None
         self.model.x_max = value
         self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_y_min(self):
         """Update the minimum x axis limit."""
@@ -329,6 +339,7 @@ class PlotTab(QtWidgets.QWidget):
             value = None
         self.model.y_min = value
         self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_y_max(self):
         """Update the minimum x axis limit."""
@@ -338,6 +349,7 @@ class PlotTab(QtWidgets.QWidget):
             value = None
         self.model.y_max = value
         self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -350,10 +362,6 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setRange(
             xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
-        # FIXME
-        # self.main_window.ui.statusbar.showMessage(
-        #     "Updated limits.", timeout=MSG_TIMEOUT
-        # )
 
     def get_adjusted_limits(self):
         """Get adjusted plot limits from the data points and text fields.
@@ -379,6 +387,7 @@ class PlotTab(QtWidgets.QWidget):
         self.update_params_ui()
         self.plot_initial_model()
         self.plot_best_fit()
+        self.main_window.mark_project_dirty()
 
     def update_expression_border(self) -> None:
         """Update border of the model expression widget.
@@ -487,20 +496,23 @@ class PlotTab(QtWidgets.QWidget):
     def update_parameter_value(self, widget, value):
         self.model.set_parameter_value(widget._parameter, value)
         self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def update_parameter_min_bound(self, widget, value):
         self.model.set_parameter_min_value(widget._parameter, value)
         self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def update_parameter_max_bound(self, widget, value):
         self.model.set_parameter_max_value(widget._parameter, value)
         self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def update_parameter_fixed_state(self, widget, fixed_state):
-        print("CALLED")
         vary_state = not fixed_state
         self.model.set_parameter_vary_state(widget._parameter, vary_state)
         self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def update_params_ui_values_from_model(self):
         """Update the parameters UI to sync with model.
@@ -539,6 +551,7 @@ class PlotTab(QtWidgets.QWidget):
             self.model.set_fit_domain_enabled(False)
             self.ui.plot_widget.removeItem(self.fit_domain_area)
         self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def fit_domain_region_changed(self):
         """Update the fit domain values.
@@ -549,6 +562,7 @@ class PlotTab(QtWidgets.QWidget):
         xmin, xmax = self.fit_domain_area.getRegion()
         self.ui.fit_start_box.setValue(xmin)
         self.ui.fit_end_box.setValue(xmax)
+        self.main_window.mark_project_dirty()
 
     def update_fit_domain_xmin(self, widget, xmin: float) -> None:
         """Update fit domain lower bound.
@@ -570,6 +584,7 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_domain_area.setRegion((xmin, xmax))
         self.fit_domain_area.blockSignals(False)
         self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def update_fit_domain_xmax(self, widget, xmax: float) -> None:
         """Update fit domain upper bound.
@@ -591,6 +606,7 @@ class PlotTab(QtWidgets.QWidget):
         self.fit_domain_area.setRegion((xmin, xmax))
         self.fit_domain_area.blockSignals(False)
         self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def update_fit_domain_from_model(self) -> None:
         """Update fit domain parameters from model.
@@ -627,6 +643,11 @@ class PlotTab(QtWidgets.QWidget):
         if self.get_draw_curve_option() == DrawCurve.ON_AXIS:
             self.update_model_curves()
 
+    def show_initial_fit_option_changed(self) -> None:
+        """Updates UI when show initial fit option is changed."""
+        self.plot_initial_model()
+        self.main_window.mark_project_dirty()
+
     def plot_initial_model(self):
         """Plot model with initial parameters.
 
@@ -652,6 +673,7 @@ class PlotTab(QtWidgets.QWidget):
             )
         self.plot_best_fit()
         self.update_info_box()
+        self.main_window.mark_project_dirty()
 
     def plot_best_fit(self):
         """Update the plot of the best-fit model curve.
