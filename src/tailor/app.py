@@ -5,7 +5,6 @@ You can fit custom models to your data to estimate best-fit parameters.
 """
 
 import importlib.metadata
-import inspect
 import json
 import pathlib
 import platform
@@ -177,9 +176,6 @@ class MainWindow(QtWidgets.QMainWindow):
         """Mark project as dirty or as clean."""
         self._is_dirty = is_dirty
         self.update_window_title()
-        current = inspect.currentframe()
-        _, caller, *_ = inspect.getouterframes(current)
-        print(f"{is_dirty=}, {caller.function=}")
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
@@ -927,9 +923,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self._set_project_path(filename)
             self.update_recent_files(filename)
             self.mark_project_dirty(False)
-            # FIXME self.ui.statusbar.showMessage(
-            #     "Finished loading project.", timeout=MSG_TIMEOUT
-            # )
 
     def export_csv(self):
         """Export all data as CSV.

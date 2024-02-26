@@ -257,8 +257,6 @@ class DataModel:
         self._col_names[label] = new_name
         return new_name
 
-        # FIXME self.show_status("Renamed column.")
-
     def normalize_column_name(self, name):
         """Normalize column name.
 
@@ -383,13 +381,11 @@ class DataModel:
         except Exception as exc:
             # error in evaluation or output cannot be cast to a float (series)
             self._is_calculated_column_valid[label] = False
-            # FIXME self.show_status(f"Error evaluating expression: {exc}")
             return False
         else:
             # evaluation was successful
             self._data[label] = output
             self._is_calculated_column_valid[label] = True
-            # FIXME self.show_status(f"Recalculated column values.")
             return True
 
     def _get_accessible_columns(self, label: str) -> dict[str, pd.Series]:
