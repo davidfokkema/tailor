@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import gzip
 import importlib.metadata
 import json
@@ -31,22 +29,22 @@ NAME = metadata["name"]
 VERSION = metadata["version"]
 
 
-def save_project_to_path(project: MainWindow, path: Path) -> None:
+def save_project_to_path(project: "MainWindow", path: Path) -> None:
     with gzip.open(path, mode="wt", encoding="utf-8") as f:
         f.write(save_project_to_json(project))
 
 
-def load_project_from_path(project: MainWindow, path: Path) -> None:
+def load_project_from_path(project: "MainWindow", path: Path) -> None:
     with gzip.open(path, mode="rt", encoding="utf-8") as f:
         load_project_from_json(project, f.read())
 
 
-def save_project_to_json(project: MainWindow) -> str:
+def save_project_to_json(project: "MainWindow") -> str:
     model = save_project_to_model(project)
     return json.dumps(model.model_dump(), indent=4)
 
 
-def load_project_from_json(project: MainWindow, jsondata: str) -> None:
+def load_project_from_json(project: "MainWindow", jsondata: str) -> None:
     jsondict = json.loads(jsondata)
     if jsondict["application"] == "tailor":
         file_version = Version(jsondict["version"])
@@ -57,7 +55,7 @@ def load_project_from_json(project: MainWindow, jsondata: str) -> None:
         load_project_from_model(project, model)
 
 
-def save_project_to_model(project: MainWindow):
+def save_project_to_model(project: "MainWindow"):
     tabs = [
         project.ui.tabWidget.widget(idx) for idx in range(project.ui.tabWidget.count())
     ]
@@ -94,7 +92,7 @@ def save_project_to_model(project: MainWindow):
     return model
 
 
-def load_project_from_model(project: MainWindow, model: Project):
+def load_project_from_model(project: "MainWindow", model: Project):
     # load some application state
     project._sheet_num = model.sheet_num
     project._plot_num = model.plot_num
@@ -146,7 +144,7 @@ def save_data_sheet(data_sheet: DataSheet) -> Sheet:
     )
 
 
-def load_data_sheet(app: MainWindow, model: Sheet) -> DataSheet:
+def load_data_sheet(app: "MainWindow", model: Sheet) -> DataSheet:
     data_sheet = DataSheet(name=model.name, id=model.id, main_window=app)
     data_sheet.model.beginResetModel()
     data = data_sheet.model.data_model
@@ -191,7 +189,7 @@ def save_plot(plot: PlotTab):
     )
 
 
-def load_plot(project: MainWindow, model: Plot, data_sheet: DataSheet) -> PlotTab:
+def load_plot(project: "MainWindow", model: Plot, data_sheet: DataSheet) -> PlotTab:
     plot_tab = PlotTab(
         main_window=project,
         name=model.name,
@@ -242,7 +240,7 @@ def save_multiplot(plot: MultiPlotTab) -> MultiPlot:
 
 
 def load_multiplot(
-    project: MainWindow, model: MultiPlot, plots: dict[int, PlotTab]
+    project: "MainWindow", model: MultiPlot, plots: dict[int, PlotTab]
 ) -> MultiPlotTab:
     multiplot_tab = MultiPlotTab(
         main_window=project,

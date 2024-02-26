@@ -1,7 +1,5 @@
 import pathlib
 
-import pytest
-
 from tailor.app import MainWindow
 from tailor.plot_tab import PlotTab
 

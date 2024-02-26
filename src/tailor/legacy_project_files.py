@@ -1,6 +1,3 @@
-import sys
-
-from tailor.data_sheet import DataSheet
 from tailor.plot_tab import DrawCurve
 from tailor.project_models import Parameter, Plot, Project, Sheet
 
