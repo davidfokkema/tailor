@@ -68,7 +68,7 @@ def create_test_project(app: MainWindow):
     multiplot.model.y_max = 10
 
     app.ui.tabWidget.setCurrentWidget(sheet)
-    app.ui.tabWidget.setCurrentWidget(plot1)
+    app.ui.tabWidget.setCurrentWidget(multiplot)
 
 
 if __name__ == "__main__":

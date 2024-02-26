@@ -179,6 +179,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         else:
             self.model.remove_plot(plot)
         self.draw_plot()
+        self.main_window.mark_project_dirty()
 
     def add_plot(self, plot: PlotTab) -> None:
         label = self._plots[plot].findChild(QtWidgets.QLineEdit, "plot_label").text()
@@ -188,11 +189,13 @@ class MultiPlotTab(QtWidgets.QWidget):
     def update_plot_label(self, plot: PlotTab, text: str) -> None:
         plot_info = self.model.get_plot_info(plot)
         plot_info.label = text
+        self.main_window.mark_project_dirty()
 
     def update_color(self, plot: PlotTab, color_button: pg.ColorButton) -> None:
         plot_info = self.model.get_plot_info(plot)
         plot_info.color = color_button.color().name()
         self.draw_plot()
+        self.main_window.mark_project_dirty()
 
     def draw_plot(self) -> None:
         """Create a plot in the widget.
@@ -286,13 +289,13 @@ class MultiPlotTab(QtWidgets.QWidget):
         """Update the x-axis label of the plot."""
         self.model.x_label = self.ui.xlabel.text()
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
-        # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+        self.main_window.mark_project_dirty()
 
     def update_ylabel(self):
         """Update the y-axis label of the plot."""
         self.model.y_label = self.ui.ylabel.text()
         self.ui.plot_widget.setLabel("left", self.model.y_label)
-        # FIXME self.main_window.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
+        self.main_window.mark_project_dirty()
 
     def update_x_min(self):
         """Update the minimum x axis limit."""
@@ -302,6 +305,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             value = None
         self.model.x_min = value
         self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_x_max(self):
         """Update the minimum x axis limit."""
@@ -311,6 +315,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             value = None
         self.model.x_max = value
         self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_y_min(self):
         """Update the minimum x axis limit."""
@@ -320,6 +325,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             value = None
         self.model.y_min = value
         self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_y_max(self):
         """Update the minimum x axis limit."""
@@ -329,6 +335,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             value = None
         self.model.y_max = value
         self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -341,10 +348,6 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.ui.plot_widget.setRange(
             xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
-        # FIXME
-        # self.main_window.ui.statusbar.showMessage(
-        #     "Updated limits.", timeout=MSG_TIMEOUT
-        # )
 
     def get_adjusted_limits(self):
         """Get adjusted plot limits from the data points and text fields.
