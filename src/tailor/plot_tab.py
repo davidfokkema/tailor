@@ -458,7 +458,7 @@ class PlotTab(QtWidgets.QWidget):
             # store parameter layout
             self._params[param] = layout_widget
             # determine position to insert the parameter in alphabetical order
-            sorted_params = sorted(list(self._params.keys()))
+            sorted_params = sorted(list(self._params.keys()), key=lambda x: x.lower())
             idx = sorted_params.index(param)
             self.ui.param_layout.insertWidget(idx, layout_widget)
 
@@ -814,7 +814,7 @@ def make_param_table(params):
         width = max([len(p) for p in params])
         text = ""
         fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g} ({:s} %)\n"
-        for p in params:
+        for p in sorted(params, key=lambda x: x.lower()):
             value = params[p].value
             stderr = params[p].stderr
             if stderr is None:
