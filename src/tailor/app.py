@@ -127,6 +127,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.actionDuplicate_Data_Sheet_With_Plots.triggered.connect(
             self.duplicate_data_sheet_with_plots
         )
+        self.ui.actionCreate_Plot.triggered.connect(self.ask_and_create_plot_tab)
         self.ui.actionDuplicate_Plot.triggered.connect(self.duplicate_plot)
         self.ui.actionCreate_MultiPlot.triggered.connect(self.create_multiplot)
         self.ui.actionChange_Plot_Source.triggered.connect(self.change_plot_data_source)

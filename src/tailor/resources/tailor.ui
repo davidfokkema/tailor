@@ -106,6 +106,7 @@
     <property name="title">
      <string>Plot</string>
     </property>
+    <addaction name="actionCreate_Plot"/>
     <addaction name="actionDuplicate_Plot"/>
     <addaction name="actionCreate_MultiPlot"/>
     <addaction name="actionChange_Plot_Source"/>
@@ -285,6 +286,11 @@
   <action name="actionCreate_MultiPlot">
    <property name="text">
     <string>Create MultiPlot</string>
+   </property>
+  </action>
+  <action name="actionCreate_Plot">
+   <property name="text">
+    <string>Create Plot</string>
    </property>
   </action>
  </widget>
