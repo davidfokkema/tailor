@@ -5,6 +5,7 @@ You can fit custom models to your data to estimate best-fit parameters.
 """
 
 import importlib.metadata
+import inspect
 import json
 import pathlib
 import platform
@@ -94,10 +95,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # necessary to capture closeEvent inside QMainWindow widget
         self.installEventFilter(self)
 
-        # set up dirty timer
-        self._dirty_timer = QtCore.QTimer()
-        self._dirty_timer.timeout.connect(self.mark_project_dirty)
-
         # clear all program state and set up as new project
         self.clear_all(add_sheet)
 
@@ -177,12 +174,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
     def mark_project_dirty(self, is_dirty=True):
-        """Mark project as dirty"""
+        """Mark project as dirty or as clean."""
         self._is_dirty = is_dirty
         self.update_window_title()
-        if not is_dirty:
-            # FIXME: this can be implemented much better by actually detecting changes.
-            self._dirty_timer.start(DIRTY_TIMEOUT)
+        current = inspect.currentframe()
+        _, caller, *_ = inspect.getouterframes(current)
+        print(f"{is_dirty=}, {caller.function=}")
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
@@ -432,9 +429,19 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         self._plot_num += 1
         name = f"Plot {self._plot_num}"
-        plot_tab = PlotTab(name, self._plot_num, data_sheet, x_var, y_var, x_err, y_err)
+        plot_tab = PlotTab(
+            main_window=self,
+            name=name,
+            id=self._plot_num,
+            data_sheet=data_sheet,
+            x_col=x_var,
+            y_col=y_var,
+            x_err_col=x_err,
+            y_err_col=y_err,
+        )
         idx = self.ui.tabWidget.addTab(plot_tab, name)
         self.ui.tabWidget.setCurrentIndex(idx)
+        self.mark_project_dirty()
         return plot_tab
 
     def add_plot_tab(self, plot_tab: PlotTab) -> None:
@@ -448,6 +455,7 @@ class MainWindow(QtWidgets.QMainWindow):
         plot_tab.id = self._plot_num
         idx = self.ui.tabWidget.addTab(plot_tab, plot_tab.name)
         self.ui.tabWidget.setCurrentIndex(idx)
+        self.mark_project_dirty()
 
     def create_plot_dialog(self, data_sheet: DataSheet) -> QtWidgets.QDialog:
         """Create a dialog to request variables for creating a plot."""
@@ -542,6 +550,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # close from right to left to avoid jumping indexes
         for idx in sorted(close_idxs, reverse=True):
             self.ui.tabWidget.removeTab(idx)
+        self.mark_project_dirty()
 
     def get_associated_plots(self, data_sheet: DataSheet) -> list[TabbedWidget]:
         """Get plots associated with a data sheet."""
@@ -606,13 +615,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self._plot_num = 0
         self._sheet_num = 0
         self._set_project_path(None)
-        self.mark_project_dirty(False)
         if add_sheet:
             sheet = self.add_data_sheet()
             sheet.model.renameColumn(0, "x")
             sheet.model.renameColumn(1, "y")
             # force updating column information in UI
             sheet.selection_changed()
+        self.mark_project_dirty(False)
 
     def add_data_sheet(self, new_sheet: DataSheet | None = None) -> DataSheet:
         """Add a new data sheet to the project.
@@ -636,6 +645,7 @@ class MainWindow(QtWidgets.QMainWindow):
         idx = self.ui.tabWidget.addTab(new_sheet, name)
         self.ui.tabWidget.setCurrentIndex(idx)
         new_sheet.ui.data_view.setFocus()
+        self.mark_project_dirty()
         return new_sheet
 
     def duplicate_data_sheet(self) -> None:
@@ -663,7 +673,9 @@ class MainWindow(QtWidgets.QMainWindow):
             for plot in self.get_associated_plots(current_sheet):
                 model = project_files.save_plot(plot.widget)
                 model.name += f" ({new_sheet.name})"
-                new_plot = project_files.load_plot(model=model, data_sheet=new_sheet)
+                new_plot = project_files.load_plot(
+                    project=self, model=model, data_sheet=new_sheet
+                )
                 self.add_plot_tab(new_plot)
             self.ui.tabWidget.setCurrentIndex(idx)
 
@@ -676,7 +688,7 @@ class MainWindow(QtWidgets.QMainWindow):
             model = project_files.save_plot(current_plot)
             model.name = f"Plot {self._plot_num + 1}"
             new_plot = project_files.load_plot(
-                model=model, data_sheet=current_plot.data_sheet
+                project=self, model=model, data_sheet=current_plot.data_sheet
             )
             self.add_plot_tab(new_plot)
 
@@ -684,7 +696,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if plot := self._on_plot():
             name = f"Plot {self._plot_num + 1}"
             multiplot = MultiPlotTab(
-                parent=self,
+                main_window=self,
                 name=name,
                 id=-1,
                 x_label=plot.model.x_label,

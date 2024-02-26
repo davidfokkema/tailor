@@ -19,6 +19,7 @@ def plot_tab(mocker: MockerFixture):
     mocker.patch.object(PlotTab, "finish_ui")
     data_sheet = mocker.Mock(spec=DataSheet)
     return PlotTab(
+        main_window=mocker.Mock(),
         name="Plot 1",
         id=12345,
         data_sheet=data_sheet,
@@ -39,6 +40,7 @@ class TestImplementationDetails:
         mock_data_sheet.model.data_model = sentinel.data_model
 
         plot_tab = PlotTab(
+            main_window=mocker.Mock(),
             name=sentinel.name,
             id=sentinel.id,
             data_sheet=mock_data_sheet,

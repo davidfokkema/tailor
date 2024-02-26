@@ -13,22 +13,22 @@ class TestImplementationDetails:
     def test_instance(self):
         assert issubclass(QDataModel, QtCore.QAbstractTableModel)
 
-    def test_model_attributes(self):
+    def test_model_attributes(self, mocker: MockerFixture):
         # test the actual implementation, not a mocked fixture
-        qmodel = QDataModel()
+        qmodel = QDataModel(main_window=mocker.Mock())
         assert isinstance(qmodel.data_model, DataModel)
 
 
 @pytest.fixture()
 def qmodel(mocker: MockerFixture):
-    model = QDataModel()
+    model = QDataModel(main_window=mocker.Mock())
     mocker.patch.object(model, "data_model")
     return model
 
 
 @pytest.fixture()
-def calc_data():
-    model = QDataModel()
+def calc_data(mocker: MockerFixture):
+    model = QDataModel(main_window=mocker.Mock())
     for _ in range(5):
         model.insertCalculatedColumn(0)
     model.insertRows(0, 10)
@@ -36,8 +36,8 @@ def calc_data():
 
 
 @pytest.fixture()
-def data():
-    model = QDataModel()
+def data(mocker: MockerFixture):
+    model = QDataModel(main_window=mocker.Mock())
     model.insertColumns(0, 5)
     model.insertRows(0, 10)
     return model

@@ -6,6 +6,7 @@ elements to specify a mathematical model to fit to the model.
 
 import enum
 import functools
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,6 +17,10 @@ from tailor import dialogs
 from tailor.data_sheet import DataSheet
 from tailor.plot_model import FitError, PlotModel
 from tailor.ui_plot_tab import Ui_PlotTab
+
+if TYPE_CHECKING:
+    from tailor.app import MainWindow
+
 
 NUM_POINTS = 1000
 MSG_TIMEOUT = 0
@@ -50,6 +55,7 @@ class PlotTab(QtWidgets.QWidget):
 
     name: str
     id: int
+    main_window: "MainWindow"
     data_sheet: DataSheet
     model: PlotModel
     _params: dict[str, QtWidgets.QWidget]
@@ -57,6 +63,7 @@ class PlotTab(QtWidgets.QWidget):
 
     def __init__(
         self,
+        main_window: "MainWindow",
         name: str,
         id: int,
         data_sheet: DataSheet,
@@ -76,6 +83,7 @@ class PlotTab(QtWidgets.QWidget):
 
         self.name = name
         self.id = id
+        self.main_window = main_window
         self.model = PlotModel(
             data_sheet.model.data_model, x_col, y_col, x_err_col, y_err_col
         )

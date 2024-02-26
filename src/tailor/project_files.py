@@ -109,7 +109,7 @@ def load_project_from_model(project: MainWindow, model: Project):
     plot_tab_by_id: dict[int, PlotTab] = {}
     for plot_model in model.plots:
         sheet = data_sheet_by_id[plot_model.data_sheet_id]
-        plot_tab = load_plot(model=plot_model, data_sheet=sheet)
+        plot_tab = load_plot(project=project, model=plot_model, data_sheet=sheet)
         plot_tab_by_id[plot_tab.id] = plot_tab
 
     # load multiplots and add tabs to app
@@ -191,8 +191,9 @@ def save_plot(plot: PlotTab):
     )
 
 
-def load_plot(model: Plot, data_sheet: DataSheet) -> PlotTab:
+def load_plot(project: MainWindow, model: Plot, data_sheet: DataSheet) -> PlotTab:
     plot_tab = PlotTab(
+        main_window=project,
         name=model.name,
         id=model.id,
         data_sheet=data_sheet,
@@ -244,7 +245,7 @@ def load_multiplot(
     project: MainWindow, model: MultiPlot, plots: dict[int, PlotTab]
 ) -> MultiPlotTab:
     multiplot_tab = MultiPlotTab(
-        parent=project,
+        main_window=project,
         name=model.name,
         id=model.id,
         x_label=model.x_label,

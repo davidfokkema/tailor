@@ -68,7 +68,7 @@ def create_test_project(app: MainWindow):
     multiplot.model.y_max = 10
 
     app.ui.tabWidget.setCurrentWidget(sheet)
-    app.ui.tabWidget.setCurrentWidget(multiplot)
+    app.ui.tabWidget.setCurrentWidget(plot1)
 
 
 if __name__ == "__main__":
@@ -80,6 +80,7 @@ if __name__ == "__main__":
 
     app = MainWindow()
     project_files.load_project_from_json(app, model)
+    app.mark_project_dirty(False)
 
     app.show()
     qapp.exec()

@@ -21,12 +21,12 @@ NUM_POINTS = 1000
 class MultiPlotTab(QtWidgets.QWidget):
     name: str
     id: int
-    parent: "MainWindow"
+    main_window: "MainWindow"
     model: MultiPlotModel
     _plots: dict[PlotTab, QtWidgets.QHBoxLayout]
 
     def __init__(
-        self, parent: "MainWindow", name: str, id: int, x_label: str, y_label: str
+        self, main_window: "MainWindow", name: str, id: int, x_label: str, y_label: str
     ) -> None:
         super().__init__()
         self.ui = Ui_MultiPlotTab()
@@ -34,7 +34,7 @@ class MultiPlotTab(QtWidgets.QWidget):
 
         self.name = name
         self.id = id
-        self.parent = parent
+        self.main_window = main_window
         self.model = MultiPlotModel(x_label, y_label)
         self._plots = {}
         self._color = itertools.cycle(
@@ -92,7 +92,7 @@ class MultiPlotTab(QtWidgets.QWidget):
     def update_plots_ui(self) -> None:
         """Add and/or remove parameters if necessary."""
         old_plots = set(self._plots.keys())
-        current_plots = set(self.parent.get_plots())
+        current_plots = set(self.main_window.get_plots())
         self.add_plots_to_ui(current_plots - old_plots)
         self.remove_plots_from_ui(old_plots - current_plots)
 
@@ -145,7 +145,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         model. Note that the widgets are not being created, that must be handled
         by the `update_plots_ui()` method.
         """
-        for idx, plot in enumerate(self.parent.get_plots()):
+        for idx, plot in enumerate(self.main_window.get_plots()):
             widget = self._plots[plot]
             # force an update on the plot name
             checkbox = widget.findChild(QtWidgets.QCheckBox, "is_enabled_checkbox")
@@ -242,7 +242,7 @@ class MultiPlotTab(QtWidgets.QWidget):
             filename: path to the file.
         """
         plt.figure()
-        for plot_tab in self.parent.get_plots():
+        for plot_tab in self.main_window.get_plots():
             if self.model.uses_plot(plot_tab):
                 plot_info = self.model.get_plot_info(plot_tab)
                 x, y, xerr, yerr = plot_tab.model.get_data()

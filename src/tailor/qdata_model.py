@@ -23,10 +23,11 @@ class QDataModel(QtCore.QAbstractTableModel):
     things. The underlying data is handled by DataModel.
     """
 
-    def __init__(self):
+    def __init__(self, main_window):
         """Instantiate the class."""
         super().__init__()
         self.data_model = DataModel()
+        self.main_window = main_window
 
     def rowCount(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> int:
         """Return the number of rows in the data.
@@ -173,6 +174,7 @@ class QDataModel(QtCore.QAbstractTableModel):
                 value = np.nan
             finally:
                 self.data_model.set_value(row, col, value)
+            self.main_window.mark_project_dirty()
             return True
         # Role not implemented
         return False
@@ -225,6 +227,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.beginInsertRows(parent, row, row + count - 1)
         self.data_model.insert_rows(row, count)
         self.endInsertRows()
+        self.main_window.mark_project_dirty()
         return True
 
     def removeRows(
@@ -251,6 +254,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.beginRemoveRows(parent, row, row + count - 1)
         self.data_model.remove_rows(row, count)
         self.endRemoveRows()
+        self.main_window.mark_project_dirty()
         return True
 
     def insertColumns(
@@ -277,6 +281,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.beginInsertColumns(parent, column, column + count - 1)
         self.data_model.insert_columns(column, count)
         self.endInsertColumns()
+        self.main_window.mark_project_dirty()
         return True
 
     def removeColumns(
@@ -303,6 +308,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.beginRemoveColumns(parent, column, column + count - 1)
         self.data_model.remove_columns(column, count)
         self.endRemoveColumns()
+        self.main_window.mark_project_dirty()
         return True
 
     def moveColumn(
@@ -368,6 +374,7 @@ class QDataModel(QtCore.QAbstractTableModel):
             self.data_model.move_column(source_idx, dest_idx)
             # endMoveColumns triggers a dataChanged for all columns, apparently
             self.endMoveColumns()
+            self.main_window.mark_project_dirty()
             return True
         else:
             return False
@@ -395,6 +402,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.beginInsertColumns(parent, column, column)
         self.data_model.insert_calculated_column(column)
         self.endInsertColumns()
+        self.main_window.mark_project_dirty()
         return True
 
     def columnLabel(self, column: int) -> str:
@@ -438,6 +446,7 @@ class QDataModel(QtCore.QAbstractTableModel):
 
     def renameColumn(self, column: int, name: str) -> str:
         label = self.data_model.get_column_label(column)
+        self.main_window.mark_project_dirty()
         return self.data_model.rename_column(label, name)
 
     def isCalculatedColumn(self, column: int):
@@ -482,6 +491,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         top_left = self.createIndex(0, column)
         bottom_right = self.createIndex(self.rowCount() - 1, self.columnCount() - 1)
         self.dataChanged.emit(top_left, bottom_right)
+        self.main_window.mark_project_dirty()
         return True
 
     def clearData(self, selection: QtCore.QItemSelection) -> bool:
@@ -507,6 +517,7 @@ class QDataModel(QtCore.QAbstractTableModel):
                 selection_range.topLeft(),
                 self.createIndex(selection_range.bottom(), num_columns - 1),
             )
+        self.main_window.mark_project_dirty()
         return True
 
     def dataFromSelection(self, selection: QtCore.QItemSelection) -> np.ndarray:
@@ -591,6 +602,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.dataChanged.emit(
             index, self.createIndex(row + height - 1, num_columns - 1)
         )
+        self.main_window.mark_project_dirty()
         return True
 
     def is_empty(self):
@@ -621,6 +633,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.beginResetModel()
         self.data_model.import_csv(filename, format)
         self.endResetModel()
+        self.main_window.mark_project_dirty()
 
     def merge_csv(
         self,
@@ -639,6 +652,7 @@ class QDataModel(QtCore.QAbstractTableModel):
         self.beginResetModel()
         self.data_model.merge_csv(filename, format)
         self.endResetModel()
+        self.main_window.mark_project_dirty()
 
     # def show_status(self, msg):
     #     """Show message in statusbar.

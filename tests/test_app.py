@@ -11,7 +11,7 @@ from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 
 @pytest.fixture()
 def data_sheet(mocker: MockerFixture) -> DataSheet:
-    sheet = DataSheet(name="Sheet 2", id=1234, main_window=mocker.MagicMock())
+    sheet = DataSheet(name="Sheet 2", id=1234, main_window=mocker.Mock())
     sheet.model.setDataFromArray(
         sheet.model.createIndex(0, 0),
         np.array(
@@ -54,8 +54,9 @@ def simple_data_sheet(mocker: MockerFixture) -> DataSheet:
 
 
 @pytest.fixture()
-def plot_tab(data_sheet: DataSheet) -> PlotTab:
+def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
     plot_tab = PlotTab(
+        main_window=mocker.Mock(),
         name="Plot 1",
         id=12345,
         data_sheet=data_sheet,
@@ -116,7 +117,7 @@ def project_with_multiplot(simple_project: MainWindow) -> MainWindow:
 
 def create_multiplot_tab(parent: MainWindow, plot_tab: PlotTab) -> MultiPlotTab:
     multiplot_tab = MultiPlotTab(
-        parent=parent,
+        main_window=parent,
         name="Multiplot 1",
         id=45678,
         x_label="Time",

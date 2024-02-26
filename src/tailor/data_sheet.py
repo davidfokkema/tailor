@@ -59,7 +59,7 @@ class DataSheet(QtWidgets.QWidget):
 
     def setup_data_model(self):
         """Set up the data model with some initial data."""
-        self.model = QDataModel()
+        self.model = QDataModel(main_window=self.main_window)
         self.model.insertColumns(0, 2)
         self.model.insertRows(0, 5)
 
