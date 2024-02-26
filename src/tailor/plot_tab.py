@@ -278,9 +278,9 @@ class PlotTab(QtWidgets.QWidget):
     def update_info_box(self):
         """Update the information box."""
         msgs = []
+        msgs.append(self.format_plot_info())
         if self.model.best_fit is not None:
             msgs.append(self.format_fit_results())
-        msgs.append(self.format_plot_info())
         self.ui.result_box.setPlainText("\n".join(msgs))
 
     def update_xlabel(self):
@@ -713,7 +713,10 @@ class PlotTab(QtWidgets.QWidget):
             A string containing the formatted fit results.
         """
         fit = self.model.best_fit
-        msg = make_header("Fit statistics")
+        msg = make_header("Fit parameters")
+        msg += make_param_table(fit.params)
+        msg += "\n"
+        msg += make_header("Fit statistics")
         msg += make_table(
             [
                 ("function evaluations", " = ", f"{fit.nfev:<9.4g}"),
@@ -721,11 +724,6 @@ class PlotTab(QtWidgets.QWidget):
                 ("degrees of freedom", " = ", f"{fit.nfree:<9.4g}"),
             ]
         )
-
-        msg += "\n\n"
-        msg += make_header("Fit parameters")
-        msg += make_param_table(fit.params)
-
         return msg
 
     def export_graph(self, filename, dpi=300):
