@@ -1,8 +1,8 @@
 import importlib.metadata
 import pathlib
+import tomllib
 
 import appdirs
-import tomli
 import tomli_w
 
 metadata = importlib.metadata.metadata("tailor")
@@ -16,8 +16,8 @@ def read_config():
     if config_path.is_file():
         try:
             with open(config_path, "rb") as f:
-                return tomli.load(f)
-        except (tomli.TOMLDecodeError, UnicodeDecodeError):
+                return tomllib.load(f)
+        except (tomllib.TOMLDecodeError, UnicodeDecodeError):
             # error parsing TOML
             return {}
     else:

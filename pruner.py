@@ -1,10 +1,9 @@
 import os
 import shutil
 import sys
+import tomllib
 from glob import glob
 from pathlib import Path
-
-import tomli
 
 
 def prune(base_dir, exclude, include):
@@ -34,7 +33,7 @@ def prune(base_dir, exclude, include):
 
 def main():
     with open("pyproject.toml", "rb") as f:
-        config = tomli.load(f)
+        config = tomllib.load(f)
     pruner_config = config["tool"]["pruner"][sys.platform]
     prune(pruner_config["base_dir"], pruner_config["exclude"], pruner_config["include"])
 
