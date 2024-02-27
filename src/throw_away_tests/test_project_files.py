@@ -68,7 +68,21 @@ def create_test_project(app: MainWindow):
     multiplot.model.y_max = 10
 
     app.ui.tabWidget.setCurrentWidget(sheet)
-    app.ui.tabWidget.setCurrentWidget(multiplot)
+    sheet.ui.data_view.setFocus()
+
+    # set cursor position and create selection
+    sheet.ui.data_view.setCurrentIndex(sheet.model.createIndex(3, 1))
+    top_left = sheet.model.createIndex(1, 0)
+    bottom_right = sheet.model.createIndex(3, 1)
+    sheet.selection.select(
+        QtCore.QItemSelection(top_left, bottom_right),
+        sheet.selection.SelectionFlag.Select,
+    )
+
+    # paste cells
+    data = np.array([[10.0, 20.0], [30.0, 40.0]]).T
+    sheet.clipboard.setText(sheet.array_to_text(data))
+    sheet.paste_cells()
 
 
 if __name__ == "__main__":
@@ -76,10 +90,10 @@ if __name__ == "__main__":
     app = MainWindow(add_sheet=True)
 
     create_test_project(app)
-    model = project_files.save_project_to_json(app)
+    # model = project_files.save_project_to_json(app)
 
-    app = MainWindow()
-    project_files.load_project_from_json(app, model)
+    # app = MainWindow()
+    # project_files.load_project_from_json(app, model)
     app.mark_project_dirty(False)
 
     app.show()

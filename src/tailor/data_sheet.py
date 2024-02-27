@@ -193,6 +193,7 @@ class DataSheet(QtWidgets.QWidget):
             deselected, items.
         """
         selected = self.selection.selection()
+        print(f"{self.ui.data_view.currentIndex()=}")
         if not selected.isEmpty():
             self.ui.nameLabel.setEnabled(True)
             self.ui.name_edit.setEnabled(True)
@@ -333,18 +334,28 @@ class DataSheet(QtWidgets.QWidget):
     def paste_cells(self):
         """Paste cells from clipboard."""
 
+        # if there are cells selected, find the top-left corner
+        selection = self.selection.selection()
+        left, top = [], []
+        for srange in selection.toList():
+            left.append(srange.left())
+            top.append(srange.top())
+        new_index = self.model.createIndex(min(top), min(left))
+        # set cursor to the top-left corner of any selection
+        self.ui.data_view.setCurrentIndex(new_index)
+
         text = self.clipboard.text()
         values = self.text_to_array(text)
         if isinstance(values, np.ndarray):
-            current_index = self.ui.data_view.currentIndex()
-            self.model.setDataFromArray(current_index, values)
+            self.model.setDataFromArray(new_index, values)
 
-        # FIXME
-        # # reset current index and focus
-        # self.ui.data_view.setFocus()
-        # # set selection to pasted cells
-        # selection = QtCore.QItemSelection(top_left, bottom_right)
-        # self.selection.select(selection, self.selection.ClearAndSelect)
+        # set selection to pasted cells
+        rows, columns = values.shape
+        bottom_right = self.model.createIndex(
+            min(top) + rows - 1, min(left) + columns - 1
+        )
+        selection = QtCore.QItemSelection(new_index, bottom_right)
+        self.selection.select(selection, self.selection.SelectionFlag.ClearAndSelect)
 
     def array_to_text(self, data: np.ndarray) -> str:
         # create tab separated values from data, NaN -> empty string, e.g.
