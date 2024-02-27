@@ -1,19 +1,50 @@
 # Changelog
 
-## Draft
+## 2.0b1
+
+About eight months have passed since the previous release of Tailor and many (long-requested) features have been added. Work on the 2.0 branch already started in May, 2023 with the refactoring of large parts of the code to make it more modular. This enabled us to separate data sheets, plots and underlying data models which led to simpler, more robust and better testable code. It then became easier to add functionality for creating multiple data sheets, multiplots, etc. and fixing some long-standing bugs. Our guiding principle always was to build the most simple and intuitive interface possible, even while adding features. Enjoy!
+
 
 ### :rocket: Features
 
-* Added lots of tests.
-* Upgraded to Qt/PySide 6.5
-* Fixed selection bug where first selecting a column and then selecting a single
-  cell within that column did not update all column information correctly
+* Added 300+ unit and integration tests.
+* You can now create more data sheets to analyse multiple experiments.
+* You can now duplicate a sheet, either with or without all associated plots, as a basis for analysing new measurements.
+* Plot multiple datasets and model fits in a single graph.
+* Double-clicking on Tailor files now opens them in the application on MacOS and Windows. (#73)
+* Totally re-engineered file format, but legacy projects can still be opened.
+* You can now preview an exported graph to quickly see how it will turn out and make changes.
+* For MacOS, universal binaries are now available. It is no longer necessary to choose between Intel and Apple silicon.
+* Renaming columns effectively updates all references used in calculated columns, plots, fit models, etc.
+* Initial fit and best fit now both have a blue color.
+* When data, fit models, fit ranges, initial fit parameters or bounds, etc. change the best fit is invalidated indicated by a red color.
+* Plot information is reordered to show the most important information at the top.
+* Loading and saving project files use Pydantic for validation.
+* When removing a column, refuse if it is used in calculated columns or plots, and list where it is used.
+* When removing a data sheet, list all plots where it is used and ask for confirmation before deleting the sheet and all associated plots.
+* You can now duplicate a plot to try fitting other models.
+* You can change the source of a plot to use another data sheet or other data columns for x and y axes and uncertainties.
+* When a fit fails you now get some suggestions along with a detailed error message.
+* Show a red border to indicate problems with calculated model or fit model expressions.
+* Upgraded to Qt/PySide 6.6 and Pandas 2.0, amongst other updates.
+
+
+### :beetle: Fixes
+
+* Only indicate there are unsaved changes when the project was actually changed. (#22)
+* Cursor no longer jumps to end of line when editing column names. (#79)
+* Initial fit curves now respect 'draw curve range' setting. (#75)
+* Developer name is removed from install location on Windows. (#71)
+* Fixed selection bug where first selecting a column and then selecting a single cell within that column did not update all column information correctly.
+* Use scrollbars in the tab widget when there are many tabs.
+
 
 ### :hammer: Refactoring
 
-* Completely overhauled separation of concerns between GUI and data model
-  layers. There are now more layers and many methods are now more focused and
-  well tested. Should also make it easier to switch GUI toolkits in the future.
+* Completely overhauled separation of concerns between GUI and data model layers. There are now more layers and many methods are now more focused and well tested. Should also make it easier to switch GUI toolkits in the future.
+* Sheets and plots now keep references to columns using static labels. When a tab is focused, the UI updates itself using these references. It is therefore no longer necessary to track renaming of columns, etc.
+* Added 300+ unit and integration tests.
+
 
 
 ## 1.8.0
