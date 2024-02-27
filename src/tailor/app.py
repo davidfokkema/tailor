@@ -992,7 +992,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.ui = Ui_PreviewDialog()
                     self.ui.setupUi(self)
 
-            with tempfile.NamedTemporaryFile() as file:
+            with tempfile.NamedTemporaryFile(delete=False) as file:
                 try:
                     plot.export_graph(file, dpi=100)
                 except Exception as exc:
