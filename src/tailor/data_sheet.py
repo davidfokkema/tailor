@@ -193,7 +193,6 @@ class DataSheet(QtWidgets.QWidget):
             deselected, items.
         """
         selected = self.selection.selection()
-        print(f"{self.ui.data_view.currentIndex()=}")
         if not selected.isEmpty():
             self.ui.nameLabel.setEnabled(True)
             self.ui.name_edit.setEnabled(True)
