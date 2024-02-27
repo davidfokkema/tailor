@@ -260,7 +260,7 @@ class PlotModel:
 
         return xmin, xmax, ymin, ymax
 
-    def update_model_expression(self, expression: str) -> None:
+    def update_model_expression(self, expression: str) -> bool:
         """Update the model expression.
 
         Update the stored (transformed) model expression independent of column
@@ -269,6 +269,9 @@ class PlotModel:
 
         Args:
             expression (str): the model expression.
+
+        Returns:
+            True if the expression is successfully updated, False otherwise.
         """
         # remove whitespace after newlines to prevent indentation errors
         expression = re.sub(r"\n\s*", "\n", expression)
@@ -281,6 +284,7 @@ class PlotModel:
             self._model_expression = expression
             self._model = None
             self.best_fit = None
+            return True
         else:
             if self._model_expression != transformed:
                 self._model_expression = transformed
@@ -294,6 +298,8 @@ class PlotModel:
                 else:
                     self.update_model_parameters()
                 self.best_fit = None
+                return True
+        return False
 
     def is_model_valid(self) -> bool:
         """Return if the model expression is a valid model.

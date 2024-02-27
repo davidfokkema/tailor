@@ -311,8 +311,9 @@ class TestPlotModel:
         model.data_model.get_column_name.return_value = col_names[x_col]
         model.x_col = x_col
 
-        model.update_model_expression(expression)
+        is_updated = model.update_model_expression(expression)
 
+        assert is_updated is True
         model.data_model.get_column_name.assert_called_with(x_col)
         assert model._model_expression == transformed
         assert isinstance(model._model, lmfit.models.ExpressionModel)
@@ -334,8 +335,15 @@ class TestPlotModel:
         bare_bones_data.data_model.get_column_name.return_value = "x"
         bare_bones_data.best_fit = sentinel.fit
 
-        bare_bones_data.update_model_expression("a*x+b")
+        is_updated = bare_bones_data.update_model_expression("a*x+b")
+        assert is_updated is False
         assert bare_bones_data.best_fit is sentinel.fit
+
+    def test_update_model_expression_returns_True_if_expr_is_broken(
+        self, bare_bones_data: PlotModel
+    ):
+        is_updated = bare_bones_data.update_model_expression("a*x+")
+        assert is_updated is True
 
     @pytest.mark.parametrize(
         "expression, transformed",

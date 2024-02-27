@@ -382,12 +382,13 @@ class PlotTab(QtWidgets.QWidget):
     def update_model_expression(self):
         """Update the model expression and related UI."""
         expression = self.ui.model_func.toPlainText()
-        self.model.update_model_expression(expression)
+        is_updated = self.model.update_model_expression(expression)
         self.update_expression_border()
         self.update_params_ui()
         self.plot_initial_model()
         self.plot_best_fit()
-        self.main_window.mark_project_dirty()
+        if is_updated:
+            self.main_window.mark_project_dirty()
 
     def update_expression_border(self) -> None:
         """Update border of the model expression widget.

@@ -922,6 +922,12 @@ class MainWindow(QtWidgets.QMainWindow):
             # remember filename for subsequent call to "Save"
             self._set_project_path(filename)
             self.update_recent_files(filename)
+            # rebuild UI on all tabs
+            current_idx = self.ui.tabWidget.currentIndex()
+            for idx in range(self.ui.tabWidget.count()):
+                self.ui.tabWidget.setCurrentIndex(idx)
+            self.ui.tabWidget.setCurrentIndex(current_idx)
+            # mark project as not dirty (clean)
             self.mark_project_dirty(False)
 
     def export_csv(self):
