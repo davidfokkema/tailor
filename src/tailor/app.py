@@ -1008,6 +1008,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     pixmap.load(file.name)
                     dialog.ui.label.setPixmap(pixmap)
                     dialog.exec()
+                    # delete must be False on Windows, so remove manually
+                    file.close()
+                    pathlib.Path(file.name).unlink()
 
     def export_graph(self, suffix):
         """Export a graph to a file.
