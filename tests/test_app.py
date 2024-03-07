@@ -443,3 +443,36 @@ class TestSheets:
             sheet3.model.data_model.get_column_name(plot.model.y_err_col) == "err_pos"
         )
         assert plot.model.get_model_expression() == "a * x + b"
+
+    def test_import_csv_asks_confirmation_if_dirty(
+        self,
+        simple_project: MainWindow,
+        mocker: MockerFixture,
+    ) -> None:
+        mocker.patch.object(simple_project, "confirm_project_close_dialog")
+        mocker.patch.object(simple_project, "get_open_filename_dialog")
+        simple_project.confirm_project_close_dialog.return_value = False
+        # select sheet 2 with actual data
+        simple_project.ui.tabWidget.setCurrentIndex(1)
+        simple_project.mark_project_dirty()
+
+        simple_project.import_csv()
+
+        simple_project.confirm_project_close_dialog.assert_called()
+        not simple_project.get_open_filename_dialog.assert_not_called()
+
+    def test_import_csv_doesnt_ask_confirmation_on_empty_sheet(
+        self,
+        simple_project: MainWindow,
+        mocker: MockerFixture,
+    ) -> None:
+        mocker.patch.object(simple_project, "confirm_project_close_dialog")
+        mocker.patch.object(simple_project, "get_open_filename_dialog")
+        simple_project.get_open_filename_dialog.return_value = None
+        # add new empty sheet
+        simple_project.add_data_sheet()
+
+        simple_project.import_csv()
+
+        simple_project.confirm_project_close_dialog.assert_not_called()
+        simple_project.get_open_filename_dialog.assert_called()

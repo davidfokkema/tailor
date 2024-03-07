@@ -54,6 +54,8 @@ DIRTY_TIMEOUT = 10000  # 10 s
 RELEASE_API_URL = "https://api.github.com/repos/davidfokkema/tailor/releases/latest"
 HTTP_TIMEOUT = 3
 
+TAILOR_PROJECT_FILTER = "Tailor project files (*.tlr);;All files (*)"
+CSV_FILE_FILTER = "CSV files (*.csv);;Text files (*.txt);;All files (*)"
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -773,11 +775,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def save_as_project_dialog(self):
         """Present save project dialog and save project."""
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self,
-            dir=self.get_recent_directory(),
-            filter="Tailor project files (*.tlr);;All files (*)",
-        )
+        filename = self.get_save_filename_dialog(filter=TAILOR_PROJECT_FILTER)
         if filename:
             self.set_recent_directory(pathlib.Path(filename).parent)
             self.save_project(filename)
@@ -811,14 +809,43 @@ class MainWindow(QtWidgets.QMainWindow):
         """Present open project dialog and load project."""
         if self.confirm_project_close_dialog():
             if filename is None:
-                filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                    parent=self,
-                    dir=self.get_recent_directory(),
-                    filter="Tailor project files (*.tlr);;All files (*)",
-                )
+                filename = self.get_open_filename_dialog(filter=TAILOR_PROJECT_FILTER)
             if filename:
                 self.set_recent_directory(pathlib.Path(filename).parent)
                 self.load_project(filename)
+
+    def get_open_filename_dialog(self, filter):
+        """Get a filename from a 'Open File' dialog.
+
+        Args:
+            filter (str): available options for filtering filenames
+
+        Returns:
+            str|None: path to the file or None.
+        """
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self,
+            dir=self.get_recent_directory(),
+            filter=filter,
+        )
+
+        return filename
+
+    def get_save_filename_dialog(self, filter):
+        """Get a filename from a 'Save File' dialog.
+
+        Args:
+            filter (str): available options for filtering filenames
+
+        Returns:
+            str|None: path to the file or None.
+        """
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self,
+            dir=self.get_recent_directory(),
+            filter=filter,
+        )
+        return filename
 
     def get_recent_directory(self):
         """Get recent directory from config file.
@@ -936,11 +963,7 @@ class MainWindow(QtWidgets.QMainWindow):
         Export all data in the table as a comma-separated values file.
         """
         if data_sheet := self._on_data_sheet():
-            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                parent=self,
-                dir=self.get_recent_directory(),
-                filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
-            )
+            filename = self.get_save_filename_dialog(filter=CSV_FILE_FILTER)
             if filename:
                 self.set_recent_directory(pathlib.Path(filename).parent)
                 data_sheet.model.export_csv(filename)
@@ -952,12 +975,14 @@ class MainWindow(QtWidgets.QMainWindow):
         values file.
         """
         if data_sheet := self._on_data_sheet():
-            if self.confirm_project_close_dialog():
-                filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                    parent=self,
-                    dir=self.get_recent_directory(),
-                    filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
-                )
+            if (
+                not data_sheet.model.is_empty()
+                and not self.confirm_project_close_dialog()
+            ):
+                return
+            else:
+                print(f"{data_sheet.model.is_empty()=}")
+                filename = self.get_open_filename_dialog(filter=CSV_FILE_FILTER)
                 if filename:
                     self.set_recent_directory(pathlib.Path(filename).parent)
                     dialog = CSVFormatDialog(filename, parent=self)
