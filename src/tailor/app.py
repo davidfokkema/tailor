@@ -614,8 +614,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._set_project_path(None)
         if add_sheet:
             sheet = self.add_data_sheet()
-            sheet.model.renameColumn(0, "x")
-            sheet.model.renameColumn(1, "y")
             # force updating column information in UI
             sheet.selection_changed()
         self.mark_project_dirty(False)

@@ -62,6 +62,8 @@ class DataSheet(QtWidgets.QWidget):
         self.model = QDataModel(main_window=self.main_window)
         self.model.insertColumns(0, 2)
         self.model.insertRows(0, 5)
+        self.model.renameColumn(0, "x")
+        self.model.renameColumn(1, "y")
 
         # Set view and selection model
         self.ui.data_view.setModel(self.model)
