@@ -50,7 +50,6 @@ class TabbedWidget(NamedTuple):
 
 MAX_RECENT_FILES = 5
 
-DIRTY_TIMEOUT = 10000  # 10 s
 RELEASE_API_URL = "https://api.github.com/repos/davidfokkema/tailor/releases/latest"
 HTTP_TIMEOUT = 3
 
