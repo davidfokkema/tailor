@@ -225,7 +225,8 @@ class DataModel:
 
     def is_empty(self):
         """Check whether all cells are empty."""
-        # check for *all* nans in a row or column
+        # Rows or columns are dropped only if *all* values in that row or column
+        # are NaN. Then, check if anything is left.
         return self._data.dropna(how="all").empty
 
     def insert_calculated_column(self, column: int) -> str:
