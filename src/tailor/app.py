@@ -409,6 +409,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 y_err = labels[dialog.ui.y_err_box.currentIndex()]
                 if x_var and y_var:
                     self.create_plot_tab(data_sheet, x_var, y_var, x_err, y_err)
+                else:
+                    dialogs.show_error_dialog(
+                        parent=self,
+                        msg="You must select columns for both x and y values.",
+                    )
 
     def create_plot_tab(
         self, data_sheet, x_var, y_var, x_err=None, y_err=None
