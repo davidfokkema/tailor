@@ -6,8 +6,10 @@ from tailor.ui_data_source_dialog import Ui_DataSourceDialog
 
 
 class DataSourceDialog(QtWidgets.QDialog):
-    def __init__(self, plot: PlotTab, data_sheets: list[DataSheet]) -> None:
-        super().__init__()
+    def __init__(
+        self, parent: QtWidgets.QWidget, plot: PlotTab, data_sheets: list[DataSheet]
+    ) -> None:
+        super().__init__(parent=parent)
         self.ui = Ui_DataSourceDialog()
         self.ui.setupUi(self)
 

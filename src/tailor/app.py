@@ -204,8 +204,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def show_about_dialog(self):
         """Show about application dialog."""
-        box = QtWidgets.QMessageBox()
-        box.setIconPixmap(self.windowIcon().pixmap(64, 64))
+        box = QtWidgets.QMessageBox(parent=self)
         box.setText("Tailor")
         box.setInformativeText(
             dedent(
@@ -463,13 +462,13 @@ class MainWindow(QtWidgets.QMainWindow):
         """Create a dialog to request variables for creating a plot."""
 
         class Dialog(QtWidgets.QDialog):
-            def __init__(self):
-                super().__init__()
+            def __init__(self, parent):
+                super().__init__(parent=parent)
                 self.ui = Ui_CreatePlotDialog()
                 self.ui.setupUi(self)
 
         choices = [None] + data_sheet.model.columnNames()
-        create_dialog = Dialog()
+        create_dialog = Dialog(parent=self)
         create_dialog.ui.x_axis_box.addItems(choices)
         create_dialog.ui.y_axis_box.addItems(choices)
         create_dialog.ui.x_err_box.addItems(choices)
@@ -715,7 +714,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         if plot := self._on_plot():
             data_sheets = self.get_data_sheets()
-            dialog = DataSourceDialog(plot, data_sheets)
+            dialog = DataSourceDialog(parent=self, plot=plot, data_sheets=data_sheets)
             if dialog.exec() == QtWidgets.QDialog.Accepted:
                 x_col_name = dialog.ui.x_box.currentText()
                 y_col_name = dialog.ui.y_box.currentText()
@@ -746,12 +745,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _do_rename_widget(self, widget) -> None:
         class Dialog(QtWidgets.QDialog):
-            def __init__(self):
-                super().__init__()
+            def __init__(self, parent):
+                super().__init__(parent=parent)
                 self.ui = Ui_RenameDialog()
                 self.ui.setupUi(self)
 
-        dialog = Dialog()
+        dialog = Dialog(parent=self)
         dialog.ui.name_box.setText(widget.name)
         if dialog.exec() == QtWidgets.QDialog.Accepted:
             widget.name = dialog.ui.name_box.text()
@@ -1014,8 +1013,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if plot := self._on_plot_or_multiplot():
 
             class Dialog(QtWidgets.QDialog):
-                def __init__(self):
-                    super().__init__()
+                def __init__(self, parent):
+                    super().__init__(parent=parent)
                     self.ui = Ui_PreviewDialog()
                     self.ui.setupUi(self)
 
@@ -1030,7 +1029,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         text="It might help to check your axis labels for invalid LaTeX code.",
                     )
                 else:
-                    dialog = Dialog()
+                    dialog = Dialog(parent=self)
                     pixmap = QtGui.QPixmap()
                     pixmap.load(file.name)
                     dialog.ui.label.setPixmap(pixmap)
