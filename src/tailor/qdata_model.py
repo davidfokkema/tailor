@@ -7,7 +7,7 @@ table view used in the app. This class in this module mostly implements the GUI 
 import pathlib
 
 import numpy as np
-from PySide6 import QtCore, QtGui
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from tailor.csv_format_dialog import FormatParameters
 from tailor.data_model import DataModel
@@ -103,14 +103,27 @@ class QDataModel(QtCore.QAbstractTableModel):
             # request for the background fill of the cell
             if self.data_model.is_calculated_column(label):
                 if self.data_model.is_column_valid(label):
-                    # Yellow
-                    return QtGui.QBrush(QtGui.QColor(255, 255, 200))
+                    if self.dark_mode_enabled():
+                        return QtGui.QBrush(QtGui.QColor(75, 75, 0))
+                    else:
+                        # Yellow
+                        return QtGui.QBrush(QtGui.QColor(255, 255, 200))
                 else:
-                    # Red
-                    return QtGui.QBrush(QtGui.QColor(255, 200, 200))
+                    if self.dark_mode_enabled():
+                        return QtGui.QBrush(QtGui.QColor(100, 00, 00))
+                    else:
+                        # Red
+                        return QtGui.QBrush(QtGui.QColor(255, 200, 200))
         # not implemented, return an invalid QVariant (None) per the docs
         # See Qt for Python docs -> Considerations -> API Changes
         return None
+
+    def dark_mode_enabled(self) -> bool:
+        """Check if dark mode is enabled."""
+        return (
+            QtWidgets.QApplication.instance().styleHints().colorScheme()
+            == QtCore.Qt.ColorScheme.Dark
+        )
 
     def headerData(
         self,
