@@ -982,7 +982,6 @@ class MainWindow(QtWidgets.QMainWindow):
             ):
                 return
             else:
-                print(f"{data_sheet.model.is_empty()=}")
                 filename = self.get_open_filename_dialog(filter=CSV_FILE_FILTER)
                 if filename:
                     self.set_recent_directory(pathlib.Path(filename).parent)

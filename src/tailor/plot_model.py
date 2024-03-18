@@ -190,7 +190,8 @@ class PlotModel:
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get data values from model in fit domain.
 
-        If the fit domain is not specified, return all data.
+        If the fit domain is not specified, return all data. The fit domain
+        bounds are inclusive.
 
         Returns:
             A tuple of NumPy arrays containing x, y, x-error and y-error values.

@@ -16,6 +16,7 @@ from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 def plot_tab(mocker: MockerFixture):
     mocker.patch.object(tailor.plot_tab, "Ui_PlotTab")
     mocker.patch.object(tailor.plot_tab, "PlotModel", spec=PlotModel)
+    mocker.patch.object(PlotTab, "set_fit_domain_from_data")
     mocker.patch.object(PlotTab, "finish_ui")
     data_sheet = mocker.Mock(spec=DataSheet)
     return PlotTab(
@@ -33,6 +34,7 @@ def plot_tab(mocker: MockerFixture):
 class TestImplementationDetails:
     def test_init(self, mocker: MockerFixture):
         PlotModel_ = mocker.patch.object(tailor.plot_tab, "PlotModel")
+        mocker.patch.object(PlotTab, "set_fit_domain_from_data")
         mocker.patch.object(PlotTab, "create_plot")
         mocker.patch.object(PlotTab, "finish_ui")
         mocker.patch.object(PlotTab, "connect_ui_events")
@@ -60,6 +62,7 @@ class TestImplementationDetails:
             sentinel.y_err_col,
         )
         assert isinstance(plot_tab.data_sheet, DataSheet) is True
+        plot_tab.set_fit_domain_from_data.assert_called()
         plot_tab.create_plot.assert_called()
         plot_tab.finish_ui.assert_called()
         plot_tab.connect_ui_events.assert_called()

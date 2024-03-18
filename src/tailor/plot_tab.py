@@ -93,6 +93,7 @@ class PlotTab(QtWidgets.QWidget):
         self.create_plot()
         self.connect_ui_events()
         self.finish_ui()
+        self.set_fit_domain_from_data()
 
     def __repr__(self) -> None:
         return f"PlotTab(id={self.id}, name={self.name})"
@@ -189,6 +190,11 @@ class PlotTab(QtWidgets.QWidget):
         self.update_fit_domain_from_model()
         self.update_model_curves()
         self.update_info_box()
+
+    def set_fit_domain_from_data(self):
+        """Set fit domain using x limits from data."""
+        xmin, xmax, _, _ = self.model.get_limits_from_data(padding=0)
+        self.model.set_fit_domain(xmin=xmin, xmax=xmax)
 
     def change_data_source(
         self,
@@ -702,7 +708,7 @@ class PlotTab(QtWidgets.QWidget):
         """
         option = self.get_draw_curve_option()
         if option == DrawCurve.ON_DATA:
-            x_min, x_max, _, _ = self.model.get_limits_from_data()
+            x_min, x_max, _, _ = self.model.get_limits_from_data(padding=0)
         elif option == DrawCurve.ON_DOMAIN:
             x_min, x_max = self.model.get_fit_domain()
         elif option == DrawCurve.ON_AXIS:
