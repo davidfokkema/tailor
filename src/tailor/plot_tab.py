@@ -676,7 +676,7 @@ class PlotTab(QtWidgets.QWidget):
             self.model.perform_fit()
         except FitError as exc:
             dialogs.show_exception(
-                self, exc.__cause__, title="Foobar", text=FITERROR_MSG
+                self, exc.__cause__, title="Error performing fit", text=FITERROR_MSG
             )
         self.plot_best_fit()
         self.update_info_box()
