@@ -8,7 +8,7 @@ import pandas as pd
 import xxhash
 from numpy.typing import ArrayLike
 
-from tailor.ast_names import rename_variables
+from tailor.cst_names import rename_variables
 from tailor.data_model import DataModel
 
 
@@ -268,14 +268,15 @@ class PlotModel:
         names. After calling this method, the `parameters` attribute has an
         updated dictionary of model parameters.
 
+        Note: a model should not only depend on the indepent (x) variable and
+        parameters, not the values of other data columns.
+
         Args:
             expression (str): the model expression.
 
         Returns:
             True if the expression is successfully updated, False otherwise.
         """
-        # remove whitespace after newlines to prevent indentation errors
-        expression = re.sub(r"\n\s*", "\n", expression)
         # mapping: name -> label
         mapping = {self.data_model.get_column_name(self.x_col): self.x_col}
         try:
@@ -406,6 +407,9 @@ class PlotModel:
 
     def get_model_expression(self) -> str:
         """Get model expression.
+
+        Note: a model should not only depend on the indepent (x) variable and
+        parameters, not the values of other data columns.
 
         Returns:
             str: the model expression.

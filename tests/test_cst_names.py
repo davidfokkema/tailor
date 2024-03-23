@@ -1,6 +1,6 @@
 import pytest
 
-from tailor.ast_names import get_variable_names, rename_variables
+from tailor.cst_names import get_variable_names, rename_variables
 
 
 @pytest.mark.parametrize(

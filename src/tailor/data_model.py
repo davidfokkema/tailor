@@ -11,7 +11,7 @@ import asteval
 import numpy as np
 import pandas as pd
 
-from tailor.ast_names import get_variable_names, rename_variables
+from tailor.cst_names import get_variable_names, rename_variables
 from tailor.csv_format_dialog import FormatParameters
 
 
@@ -286,7 +286,7 @@ class DataModel:
         """
         expression = self._calculated_column_expression.get(label, None)
 
-        if expression is not None:
+        if expression:
             try:
                 var_names = get_variable_names(expression)
             except SyntaxError:

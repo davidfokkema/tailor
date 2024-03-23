@@ -25,7 +25,7 @@ def create_test_project(app: MainWindow):
     app.create_plot_tab(sheet, x_col, y_col, None, y_col)
 
     plot1: PlotTab = app.ui.tabWidget.currentWidget()
-    plot1.ui.model_func.setPlainText("a * x +b")
+    plot1.ui.model_func.setPlainText("a * x\n + b * x")
     plot1.ui.draw_curve_option.setCurrentIndex(1)
     plot1.perform_fit()
 

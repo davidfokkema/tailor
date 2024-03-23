@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0b3
+## 2.0b5
 
 About eight months have passed since the previous release of Tailor and many (long-requested) features have been added. Work on the 2.0 branch already started in May, 2023 with the refactoring of large parts of the code to make it more modular. This enabled us to separate data sheets, plots and underlying data models which led to simpler, more robust and better testable code. It then became easier to add functionality for creating multiple data sheets, multiplots, etc. and fixing some long-standing bugs. Our guiding principle always was to build the most simple and intuitive interface possible, even while adding features. Enjoy!
 
@@ -26,6 +26,7 @@ About eight months have passed since the previous release of Tailor and many (lo
 * You can change the source of a plot to use another data sheet or other data columns for x and y axes and uncertainties.
 * When a fit fails you now get some suggestions along with a detailed error message.
 * Show a red border to indicate problems with calculated model or fit model expressions.
+* When enclosing the model in parentheses, you can use newlines to separate parts of the expression.
 * Upgraded to Qt/PySide 6.6 and Pandas 2.0, amongst other updates.
 
 

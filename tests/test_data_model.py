@@ -51,15 +51,17 @@ def calc_model(model: DataModel) -> DataModel:
     This fixture depends on certain implementation details.
     """
     model._data = pd.DataFrame.from_dict(
-        {k: [1.0, 2.0, 3.0] for k in ["col1", "col2", "col3", "col4"]}
+        {k: [1.0, 2.0, 3.0] for k in ["col1", "col2", "col3", "col4", "col5"]}
     )
-    model._col_names = {"col1": "x", "col2": "y", "col3": "z", "col4": "t"}
+    model._col_names = {"col1": "x", "col2": "y", "col3": "z", "col4": "t", "col5": "u"}
     model._calculated_column_expression = {
         "col1": "3.14",
         "col2": "col1 ** 2",
         "col4": "sqrt(col2)",
+        "col5": "",
     }
     model._is_calculated_column_valid = {k: True for k in ["col1", "col2", "col4"]}
+    model._is_calculated_column_valid["col5"] = False
     return model
 
 
@@ -401,8 +403,17 @@ class TestDataModel:
         # variables are renamed from column labels -> names
         assert bare_bones_data.get_column_expression("col3") == "y + 5"
 
-    def test_get_column_expression_returns_None(self, bare_bones_data: DataModel):
+    def test_get_column_expression_returns_None_for_data_column(
+        self, bare_bones_data: DataModel
+    ):
         assert bare_bones_data.get_column_expression("col1") is None
+        assert bare_bones_data.get_column_expression("doesnotexist") is None
+
+    def test_get_column_expression_returns_None_for_empty_expression(
+        self, calc_model: DataModel
+    ):
+        assert calc_model.get_column_expression("col5") is None
+        assert calc_model.get_column_expression("doesnotexist") is None
 
     def test_get_column_expression_with_syntax_error(self, bare_bones_data: DataModel):
         bare_bones_data._calculated_column_expression["col3"] = "y *"
@@ -466,7 +477,7 @@ class TestDataModel:
 
         calc_model.recalculate_columns_from("col2")
 
-        expected = [call("col2"), call("col4")]
+        expected = [call("col2"), call("col4"), call("col5")]
         assert calc_model.recalculate_column.call_args_list == expected
 
     def test_recalculate_all_columns(
@@ -476,7 +487,7 @@ class TestDataModel:
 
         calc_model.recalculate_all_columns()
 
-        expected = [call("col1"), call("col2"), call("col4")]
+        expected = [call("col1"), call("col2"), call("col4"), call("col5")]
         assert calc_model.recalculate_column.call_args_list == expected
 
     def test_accessible_columns_are_present(self, calc_model: DataModel):

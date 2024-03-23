@@ -293,8 +293,8 @@ class TestPlotModel:
             ("col1", "y ** 2 + 2 * x", "y ** 2 + 2 * col1"),
             ("col2", "y + 2 * x", "col2 + 2 * x"),
             ("col3", "x + 2 * z", "x + 2 * col3"),
-            ("col1", "x ** 2\n+    2 * z", "col1 ** 2\n+2 * z"),
-            ("col1", "x ** 2\n    +2 * z", "col1 ** 2\n+2 * z"),
+            ("col1", "(x ** 2\n+    2 * z)", "(col1 ** 2\n+    2 * z)"),
+            ("col1", "(x ** 2\n    +2 * z)", "(col1 ** 2\n    +2 * z)"),
         ],
     )
     def test_update_model_expression(
@@ -314,6 +314,7 @@ class TestPlotModel:
         is_updated = model.update_model_expression(expression)
 
         assert is_updated is True
+        # a model should only depend on the x column, by name, not label
         model.data_model.get_column_name.assert_called_with(x_col)
         assert model._model_expression == transformed
         assert isinstance(model._model, lmfit.models.ExpressionModel)
@@ -335,7 +336,7 @@ class TestPlotModel:
         bare_bones_data.data_model.get_column_name.return_value = "x"
         bare_bones_data.best_fit = sentinel.fit
 
-        is_updated = bare_bones_data.update_model_expression("a*x+b")
+        is_updated = bare_bones_data.update_model_expression("a * x + b")
         assert is_updated is False
         assert bare_bones_data.best_fit is sentinel.fit
 
@@ -372,8 +373,8 @@ class TestPlotModel:
             ("col2", "col2 ** 2 + 2 * col3", "y ** 2 + 2 * col3"),
             ("col1", "col2 + 2 * col1", "col2 + 2 * x"),
             ("col2", "col2 + 2 * t", "y + 2 * t"),
-            ("col2", "col2 ** 2\n+2 * col3", "y ** 2\n+2 * col3"),
-            ("col3", "col2 ** 2\n+2 * col3", "col2 ** 2\n+2 * z"),
+            ("col2", "(col2 ** 2\n+2 * col3)", "(y ** 2\n+2 * col3)"),
+            ("col3", "(col2 ** 2\n+2 * col3)", "(col2 ** 2\n+2 * z)"),
             ("col1", "x + (2 * ", "x + (2 * "),
         ],
     )
