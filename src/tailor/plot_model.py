@@ -283,10 +283,15 @@ class PlotModel:
             transformed = rename_variables(expression, mapping)
         except SyntaxError:
             # expression could not be parsed
-            self._model_expression = expression
-            self._model = None
-            self.best_fit = None
-            return True
+            if self._model_expression != expression:
+                # expression was changed
+                self._model_expression = expression
+                self._model = None
+                self.best_fit = None
+                return True
+            else:
+                # expression was unchanged
+                return False
         else:
             if self._model_expression != transformed:
                 self._model_expression = transformed

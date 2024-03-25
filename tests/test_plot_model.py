@@ -346,6 +346,13 @@ class TestPlotModel:
         is_updated = bare_bones_data.update_model_expression("a*x+")
         assert is_updated is True
 
+    def test_update_model_expression_returns_False_if_broken_expr_is_unchanged(
+        self, bare_bones_data: PlotModel
+    ):
+        bare_bones_data.update_model_expression("a*x+")
+        is_updated = bare_bones_data.update_model_expression("a*x+")
+        assert is_updated is False
+
     @pytest.mark.parametrize(
         "expression, transformed",
         [("x + (2 * ", "x + (2 * "), ("a * y + b", "a * y + b")],
