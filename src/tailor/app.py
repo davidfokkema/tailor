@@ -756,6 +756,7 @@ class MainWindow(QtWidgets.QMainWindow):
             widget.name = dialog.ui.name_box.text()
             tab_idx = self.ui.tabWidget.indexOf(widget)
             self.ui.tabWidget.setTabText(tab_idx, widget.name)
+            self.mark_project_dirty()
 
     def new_project(self):
         """Close the current project and open a new one."""
