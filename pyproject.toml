@@ -32,7 +32,7 @@ requires = [
 ]
 test_requires = ["pytest", "pytest-mock"]
 
-[tool.briefcase.app.tailor.document_type.tlr]
+[tool.briefcase.app.tailor.document_type.project]
 extension = "tlr"
 description = "Tailor project"
 icon = "src/tailor/resources/document_icon"
