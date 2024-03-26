@@ -16,9 +16,11 @@ $(uidir)/ui_%.py: $(uisrcdir)/%.ui
 	pyside6-uic $< -o $@
 
 .PHONY: build
-build:
+build-macos:
+# 	conda create -n tailor-py311 python=3.11 --yes
 	python -m pip install briefcase==0.3.17
 	briefcase create
 	python pruner.py
+	cp build/Info.plist build/tailor/macos/app/Tailor.app/Contents/
 	briefcase build
-	briefcase package
+	briefcase package -i "Developer ID Application: David Fokkema (HWB9PKA687)"
