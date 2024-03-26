@@ -30,7 +30,7 @@ build-win:
 	python -m pip install briefcase==0.3.17
 	briefcase create
 	python pruner.py
-	cp build\tailor.wxs build\tailor\windows\app\
-	cp build\tailor\windows\app\src\app\tailor\resources\document_icon.ico build\tailor\windows\app\
+	copy build\tailor.wxs build\tailor\windows\app
+	copy build\tailor\windows\app\src\app\tailor\resources\document_icon.ico build\tailor\windows\app
 	briefcase build
-	briefcase package -i "Developer ID Application: David Fokkema (HWB9PKA687)"
+	briefcase package
