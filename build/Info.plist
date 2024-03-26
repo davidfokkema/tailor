@@ -50,7 +50,8 @@
 			<string>tailor-project.icns</string>
 			<key>UTTypeConformsTo</key>
 			<array>
-				<string>public.content</string>
+				<string>public.data</string>
+				<string>public.composite-content</string>
 			</array>
 			<key>UTTypeDescription</key>
 			<string>Tailor project</string>
