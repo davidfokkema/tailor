@@ -4,68 +4,125 @@ A widget containing a scatter plot of some data columns with user interface
 elements to specify a mathematical model to fit to the model.
 """
 
-from importlib import resources
+import enum
+import functools
+from typing import TYPE_CHECKING
 
-import asteval
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pyqtgraph as pg
-from lmfit import models
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtUiTools import QUiLoader
+
+from tailor import dialogs
+from tailor.data_sheet import DataSheet
+from tailor.plot_model import FitError, PlotModel
+from tailor.ui_plot_tab import Ui_PlotTab
+
+if TYPE_CHECKING:
+    from tailor.app import MainWindow
+
 
 NUM_POINTS = 1000
 MSG_TIMEOUT = 0
 
-DRAW_CURVE_ON_DATA = 0
-DRAW_CURVE_ON_DOMAIN = 1
-DRAW_CURVE_ON_AXIS = 2
-DRAW_CURVE_OPTIONS = ["On data points", "Only on fit domain", "On full axis"]
+
+DrawCurve = enum.IntEnum("DrawCurve", ["ON_DATA", "ON_DOMAIN", "ON_AXIS"])
+DRAW_CURVE_OPTIONS = {
+    DrawCurve.ON_DATA: "On data points",
+    DrawCurve.ON_DOMAIN: "Only on fit domain",
+    DrawCurve.ON_AXIS: "On full axis",
+}
+
+FITERROR_MSG = """
+There was an error while performing the fit. This is often the result of NaN (Not a Number) values caused by division by zero or the square root of a negative number in your model function. You can try one of the following:
+    1. Choose initial parameter values which are much closer to the data
+    2. Set bounds on the parameters (change -inf and inf to finite numbers)
+    3. Use a model with less parameters.
+N.B. the number of parameters in your model must never exceed the number of data points in your plot.
+"""
 
 
 class VariableError(RuntimeError):
     pass
 
 
-class PlotTab:
+class PlotTab(QtWidgets.QWidget):
     """Tab widget containing plot with associated user interface.
 
     A widget containing a scatter plot of some data columns with user interface
     elements to specify a mathematical model to fit to the model.
     """
 
-    x = None
-    x_var = None
-    y = None
-    y_var = None
-    x_err = None
-    x_err_var = None
-    y_err = None
-    y_err_var = None
-    err_width = None
-    err_height = None
-    fit = None
-    fit_domain = None, None
-    model = None
+    name: str
+    id: int
+    main_window: "MainWindow"
+    data_sheet: DataSheet
+    model: PlotModel
+    _params: dict[str, QtWidgets.QWidget]
+    _cursor_pos: int = 0
 
-    def __init__(self, data_model, main_app):
+    def __init__(
+        self,
+        main_window: "MainWindow",
+        name: str,
+        id: int,
+        data_sheet: DataSheet,
+        x_col: str,
+        y_col: str,
+        x_err_col: str | None = None,
+        y_err_col: str | None = None,
+    ) -> None:
         """Initialize the widget.
 
         Args:
-            data_model: the data model holding the data.
+            data_sheet: the data sheet holding the data.
         """
-        self.data_model = data_model
+        super().__init__()
+        self.ui = Ui_PlotTab()
+        self.ui.setupUi(self)
 
-        loader = QUiLoader()
-        loader.registerCustomWidget(pg.PlotWidget)
-        loader.registerCustomWidget(pg.SpinBox)
-        self.ui = loader.load(resources.path("tailor.resources", "plot_tab.ui"))
-        # store reference to this code in widget
-        self.ui.code = self
+        self.name = name
+        self.id = id
+        self.main_window = main_window
+        self.model = PlotModel(
+            data_sheet.model.data_model, x_col, y_col, x_err_col, y_err_col
+        )
+        self.data_sheet = data_sheet
+        self._params = {}
 
-        self.main_app = main_app
+        self.create_plot()
+        self.connect_ui_events()
+        self.finish_ui()
+        self.set_fit_domain_from_data()
 
+    def __repr__(self) -> None:
+        return f"PlotTab(id={self.id}, name={self.name})"
+
+    def connect_ui_events(self):
+        # Connect signals
+        self.ui.model_func.textChanged.connect(self.update_model_expression)
+        self.ui.model_func.cursorPositionChanged.connect(self.store_cursor_position)
+        self.ui.show_initial_fit.stateChanged.connect(
+            self.show_initial_fit_option_changed
+        )
+        self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain_xmin)
+        self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain_xmax)
+        self.ui.use_fit_domain.stateChanged.connect(self.set_use_fit_domain)
+        self.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
+        self.ui.xlabel.textChanged.connect(self.update_xlabel)
+        self.ui.ylabel.textChanged.connect(self.update_ylabel)
+        self.ui.x_min.textChanged.connect(self.update_x_min)
+        self.ui.x_max.textChanged.connect(self.update_x_max)
+        self.ui.y_min.textChanged.connect(self.update_y_min)
+        self.ui.y_max.textChanged.connect(self.update_y_max)
+        self.ui.set_limits_button.clicked.connect(self.update_limits)
+        self.ui.fit_button.clicked.connect(self.perform_fit)
+        self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
+        self.ui.draw_curve_option.currentIndexChanged.connect(
+            self.draw_curve_option_changed
+        )
+
+    def finish_ui(self):
         self.ui.param_layout = QtWidgets.QVBoxLayout()
         self.ui.param_layout.setContentsMargins(4, 0, 0, 0)
         self.ui.param_layout.setSpacing(0)
@@ -73,17 +130,6 @@ class PlotTab:
         # parameters
         self.ui.param_layout.addStretch()
         self.ui.parameter_list.setLayout(self.ui.param_layout)
-        self._params = {}
-        self._symbols = set(asteval.Interpreter().symtable.keys())
-
-        # FIXME move this to create_plot, or vice versa?
-        self._initial_param_plot = self.ui.plot_widget.plot(
-            symbol=None, pen=pg.mkPen(color="00F4", width=4)
-        )
-        self._fit_plot = self.ui.plot_widget.plot(
-            symbol=None, pen=pg.mkPen(color="r", width=4)
-        )
-        self.ui.fit_domain_area = pg.LinearRegionItem(movable=True, brush="00F1")
 
         # Set options affecting the UI
         self.ui.fit_start_box.setOpts(
@@ -94,54 +140,17 @@ class PlotTab:
         )
         self.ui.fit_start_box.setMaximumWidth(75)
         self.ui.fit_end_box.setMaximumWidth(75)
-        self.ui.draw_curve_option.addItems(DRAW_CURVE_OPTIONS)
-        # lambda is necessary to gobble the 'index' parameter of the
-        # currentIndexChanged signal
-        self.ui.draw_curve_option.currentIndexChanged.connect(
-            lambda index: self.update_best_fit_plot()
-        )
-
-        # Connect signals
-        self.ui.model_func.textChanged.connect(self.update_fit_params)
-        self.ui.show_initial_fit.stateChanged.connect(self.plot_initial_model)
-        self.ui.fit_start_box.sigValueChanging.connect(self.update_fit_domain)
-        self.ui.fit_end_box.sigValueChanging.connect(self.update_fit_domain)
-        self.ui.use_fit_domain.stateChanged.connect(self.toggle_use_fit_domain)
-        self.ui.fit_domain_area.sigRegionChanged.connect(self.fit_domain_region_changed)
-        self.ui.fit_button.clicked.connect(self.perform_fit)
-        self.ui.xlabel.textChanged.connect(self.update_xlabel)
-        self.ui.ylabel.textChanged.connect(self.update_ylabel)
-        self.ui.xmin.textChanged.connect(self.update_limits)
-        self.ui.xmax.textChanged.connect(self.update_limits)
-        self.ui.ymin.textChanged.connect(self.update_limits)
-        self.ui.ymax.textChanged.connect(self.update_limits)
-        self.ui.set_limits_button.clicked.connect(self.update_limits)
-        self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
+        self.ui.draw_curve_option.addItems(DRAW_CURVE_OPTIONS.values())
 
         self.ui.plot_widget.setMenuEnabled(False)
         self.ui.plot_widget.hideButtons()
 
-    def create_plot(self, x_var, y_var, x_err, y_err):
+    def create_plot(self):
         """Create a plot in the widget.
 
         Create a plot from data in the columns specified by the given column
         names.
-
-        Args:
-            x_var: a string containing the name of the column with x values.
-            y_var: a string containing the name of the column with y values.
-            x_err: a string containing the name of the column with x error
-                values.
-            y_err: a string containing the name of the column with y error
-                values.
         """
-        self.x_var = x_var
-        self.y_var = y_var
-        if x_err:
-            self.x_err_var = x_err
-        if y_err:
-            self.y_err_var = y_err
-
         self.plot = self.ui.plot_widget.plot(
             symbol="o",
             pen=None,
@@ -151,67 +160,202 @@ class PlotTab:
         )
         self.error_bars = pg.ErrorBarItem()
         self.ui.plot_widget.addItem(self.error_bars)
-        self.update_function_label(y_var)
-        self.ui.xlabel.setText(x_var)
-        self.ui.ylabel.setText(y_var)
+        self.initial_param_plot = self.ui.plot_widget.plot(
+            symbol=None, pen=pg.mkPen(color="#DDF", width=4)
+        )
+        self.fit_plot = self.ui.plot_widget.plot(
+            symbol=None, pen=pg.mkPen(color="#00F", width=4)
+        )
+        self.fit_domain_area = pg.LinearRegionItem(movable=True, brush="#00F1")
+
+        self.ui.plot_widget.setLabel("bottom", self.model.x_label)
+        self.ui.plot_widget.setLabel("left", self.model.y_label)
+
+    def refresh_ui(self):
+        """Refresh UI after switching tabs.
+
+        When the plot tab becomes visible again, update all data and
+        information. Explicitly refresh all things that may have changed: the
+        model (x-axis name change), plot curves and info box (x- and y-axis name
+        changes) and possibly invalidated best fit. Because changes are
+        propagated this may actually result in certain methods being called
+        multiple times. Since this only happens on tab switches, we don't
+        optimize that away to keep the code simple.
+        """
+        self.update_model_widget()
+        self.update_axis_settings_from_model()
+        self.update_plot()
+        self.model.verify_best_fit_data()
+        self.update_params_ui_values_from_model()
+        self.update_fit_domain_from_model()
+        self.update_model_curves()
         self.update_info_box()
 
-        self.update_plot()
+    def set_fit_domain_from_data(self):
+        """Set fit domain using x limits from data."""
+        xmin, xmax, _, _ = self.model.get_limits_from_data(padding=0)
+        self.model.set_fit_domain(xmin=xmin, xmax=xmax)
 
-        # set fit domain
-        self.ui.fit_start_box.setValue(self.x.min())
-        self.ui.fit_end_box.setValue(self.x.max())
+    def change_data_source(
+        self,
+        data_sheet: DataSheet,
+        x_col_name: str,
+        y_col_name: str,
+        x_err_col_name: str | None = None,
+        y_err_col_name: str | None = None,
+    ) -> None:
+        """Change data source of the plot.
+
+        This method will let you change the sheet containing the underlying data, but also change the axes or error bars to other data columns. The model expression is left unchanged. That is, if you had something like `a * x + b` and your x-axis is now called `t`, you'll have to manually update the model expression.
+
+        Args:
+            data_sheet (DataSheet): the new data sheet containing the data.
+            x_col_name (str): the new x column name.
+            y_col_name (str): the new y column name.
+            x_err_col_name (str | None, optional): the new x error column name.
+                Defaults to None.
+            y_err_col_name (str | None, optional): the new y error column name.
+                Defaults to None.
+        """
+        # Save model expression using variable names. This is necessary because
+        # the model is stored using column labels like col1, col2, etc. If you
+        # change plot sources, you want the 'x' in your model to point to the
+        # 'x' column in the data, not 'col1' to 'col1', which might be something
+        # different on another data sheet.
+        current_model = self.model.get_model_expression()
+
+        # change data source
+        self.data_sheet = data_sheet
+        self.model.data_model = data_sheet.model.data_model
+        self.model.x_col = self.model.data_model.get_column_label_by_name(x_col_name)
+        self.model.y_col = self.model.data_model.get_column_label_by_name(y_col_name)
+        self.model.x_err_col = (
+            self.model.data_model.get_column_label_by_name(x_err_col_name)
+            if x_err_col_name
+            else None
+        )
+        self.model.y_err_col = (
+            self.model.data_model.get_column_label_by_name(y_err_col_name)
+            if y_err_col_name
+            else None
+        )
+
+        # restore model expression using variable names
+        self.model.update_model_expression(current_model)
+        # refresh the plot UI
+        self.refresh_ui()
+        self.main_window.mark_project_dirty()
+
+    def draw_curve_option_changed(self) -> None:
+        """Updates UI when draw curve option is changed."""
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
+
+    def get_draw_curve_option(self) -> DrawCurve:
+        """Get the currently selected draw curve option.
+
+        Returns:
+            DrawCurve: the currently selected option
+        """
+        option_idx = self.ui.draw_curve_option.currentIndex()
+        options = list(DRAW_CURVE_OPTIONS.keys())
+        return options[option_idx]
+
+    def update_model_widget(self):
+        """Update function label."""
+        variable = self.model.get_y_col_name()
+        new_label_text = f"Function: {variable} ="
+        self.ui.model_func_label.setText(new_label_text)
+        cursor_pos = self._cursor_pos
+        self.ui.model_func.setPlainText(self.model.get_model_expression())
+        # cursor is reset after setting text
+        cursor = self.ui.model_func.textCursor()
+        cursor.setPosition(cursor_pos)
+        self.ui.model_func.setTextCursor(cursor)
+        self.update_expression_border()
+
+    def update_axis_settings_from_model(self) -> None:
+        """Update axis labels from model."""
+        self.ui.xlabel.setText(self.model.x_label)
+        self.ui.ylabel.setText(self.model.y_label)
+        self.ui.x_min.setText("" if self.model.x_min is None else str(self.model.x_min))
+        self.ui.x_max.setText("" if self.model.x_max is None else str(self.model.x_max))
+        self.ui.y_min.setText("" if self.model.y_min is None else str(self.model.y_min))
+        self.ui.y_max.setText("" if self.model.y_max is None else str(self.model.y_max))
 
     def update_plot(self):
         """Update plot to reflect any data changes."""
-        self.update_data()
+
+        # x_err, y_err will be 0.0 if no errors are specified
+        x, y, x_err, y_err = self.model.get_data()
 
         # set data for scatter plot and error bars
-        self.plot.setData(self.x, self.y)
-        if self.x_err is not None:
-            self.err_width = 2 * self.x_err
-        if self.y_err is not None:
-            self.err_height = 2 * self.y_err
-        self.error_bars.setData(
-            x=self.x, y=self.y, width=self.err_width, height=self.err_height
-        )
+        self.plot.setData(x, y)
+        err_width = 2 * x_err
+        err_height = 2 * y_err
+        self.error_bars.setData(x=x, y=y, width=err_width, height=err_height)
 
         self.update_limits()
-
-    def update_data(self):
-        """Update data values from model."""
-        x, y = self.data_model.get_columns([self.x_var, self.y_var])
-        if self.x_err_var is not None:
-            x_err = self.data_model.get_column(self.x_err_var)
-        else:
-            x_err = 0
-        if self.y_err_var is not None:
-            y_err = self.data_model.get_column(self.y_err_var)
-        else:
-            y_err = 0
-
-        # Drop NaN and Inf values
-        df = pd.DataFrame.from_dict({"x": x, "y": y, "x_err": x_err, "y_err": y_err})
-        df.dropna(inplace=True)
-        self.x, self.y, self.x_err, self.y_err = df.to_numpy().T
-
-    def update_xlabel(self):
-        """Update the x-axis label of the plot."""
-        self.ui.plot_widget.setLabel("bottom", self.ui.xlabel.text())
-        self.main_app.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
-
-    def update_ylabel(self):
-        """Update the y-axis label of the plot."""
-        self.ui.plot_widget.setLabel("left", self.ui.ylabel.text())
-        self.main_app.ui.statusbar.showMessage("Updated label.", timeout=MSG_TIMEOUT)
 
     def update_info_box(self):
         """Update the information box."""
         msgs = []
-        if self.fit:
-            msgs.append(self.format_fit_results())
         msgs.append(self.format_plot_info())
+        if self.model.best_fit is not None:
+            msgs.append(self.format_fit_results())
         self.ui.result_box.setPlainText("\n".join(msgs))
+
+    def update_xlabel(self):
+        """Update the x-axis label of the plot."""
+        self.model.x_label = self.ui.xlabel.text()
+        self.ui.plot_widget.setLabel("bottom", self.model.x_label)
+        self.main_window.mark_project_dirty()
+
+    def update_ylabel(self):
+        """Update the y-axis label of the plot."""
+        self.model.y_label = self.ui.ylabel.text()
+        self.ui.plot_widget.setLabel("left", self.model.y_label)
+        self.main_window.mark_project_dirty()
+
+    def update_x_min(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.x_min.text())
+        except ValueError:
+            value = None
+        self.model.x_min = value
+        self.update_limits()
+        self.main_window.mark_project_dirty()
+
+    def update_x_max(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.x_max.text())
+        except ValueError:
+            value = None
+        self.model.x_max = value
+        self.update_limits()
+        self.main_window.mark_project_dirty()
+
+    def update_y_min(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.y_min.text())
+        except ValueError:
+            value = None
+        self.model.y_min = value
+        self.update_limits()
+        self.main_window.mark_project_dirty()
+
+    def update_y_max(self):
+        """Update the minimum x axis limit."""
+        try:
+            value = float(self.ui.y_max.text())
+        except ValueError:
+            value = None
+        self.model.y_max = value
+        self.update_limits()
+        self.main_window.mark_project_dirty()
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -224,151 +368,55 @@ class PlotTab:
         self.ui.plot_widget.setRange(
             xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
-        self.main_app.ui.statusbar.showMessage("Updated limits.", timeout=MSG_TIMEOUT)
 
     def get_adjusted_limits(self):
         """Get adjusted plot limits from the data points and text fields.
 
         Return the minimum and maximum values of the data points, taking the
-        error bars into account and adjust those values using the text fields
-        for manual limits in the UI.
+        error bars into account but override with any limits specified.
 
         Returns:
             Tuple of four float values (xmin, xmax, ymin, ymax).
         """
-        xmin, xmax, ymin, ymax = self.get_limits_from_data()
-        xmin = self.update_value_from_text(xmin, self.ui.xmin)
-        xmax = self.update_value_from_text(xmax, self.ui.xmax)
-        ymin = self.update_value_from_text(ymin, self.ui.ymin)
-        ymax = self.update_value_from_text(ymax, self.ui.ymax)
-        return xmin, xmax, ymin, ymax
+        x_min, x_max, y_min, y_max = self.model.get_limits_from_data()
+        x_min = x_min if self.model.x_min is None else self.model.x_min
+        x_max = x_max if self.model.x_max is None else self.model.x_max
+        y_min = y_min if self.model.y_min is None else self.model.y_min
+        y_max = y_max if self.model.y_max is None else self.model.y_max
+        return x_min, x_max, y_min, y_max
 
-    def get_limits_from_data(self, padding=0.05):
-        """Get plot limits from the data points.
+    def update_model_expression(self):
+        """Update the model expression and related UI."""
+        expression = self.ui.model_func.toPlainText()
+        is_updated = self.model.update_model_expression(expression)
+        self.update_expression_border()
+        self.update_params_ui()
+        self.plot_initial_model()
+        self.plot_best_fit()
+        if is_updated:
+            self.main_window.mark_project_dirty()
 
-        Return the minimum and maximum values of the data points, taking the
-        error bars into account.
+    def update_expression_border(self) -> None:
+        """Update border of the model expression widget.
 
-        Args:
-            padding: the relative amount of padding to add to the axis limits.
-                Default is .05.
-
-        Returns:
-            Tuple of four float values (xmin, xmax, ymin, ymax).
+        If the model expression is not valid, draw a red border around the
+        widget.
         """
-        if self.x_err is not None:
-            x_err = self.x_err
+        if self.model.is_model_valid():
+            self.ui.model_func.setStyleSheet("border: 0px")
         else:
-            x_err = 0
-        if self.y_err is not None:
-            y_err = self.y_err
-        else:
-            y_err = 0
+            self.ui.model_func.setStyleSheet("border: 1px solid red")
 
-        xmin = min(self.x - x_err)
-        xmax = max(self.x + x_err)
-        ymin = min(self.y - y_err)
-        ymax = max(self.y + y_err)
+    def store_cursor_position(self):
+        """Store the cursor position inside the model expression."""
+        self._cursor_pos = self.ui.model_func.textCursor().position()
 
-        xrange = xmax - xmin
-        yrange = ymax - ymin
-
-        xmin -= padding * xrange
-        xmax += padding * xrange
-        ymin -= padding * yrange
-        ymax += padding * yrange
-
-        return xmin, xmax, ymin, ymax
-
-    def update_value_from_text(self, value, widget):
-        """Update value from using a widget's text.
-
-        Args:
-            value: the original value, if update fails.
-            widget: the widget containing the updated value.
-
-        Returns:
-            The updated value, or the original value if the update fails.
-        """
-        try:
-            value = float(widget.text())
-        except ValueError:
-            pass
-        return value
-
-    def update_function_label(self, variable):
-        """Update function label.
-
-        Updates the text label next to the model function input field. The label
-        will contain the name of the dependent variable. For example, "y = ".
-
-        Args:
-            variable: a string containing the name of the dependent variable.
-        """
-        label_text = self.ui.model_func_label.text()
-        title, _, _ = label_text.partition(":")
-        new_label_text = f"{title}:  {variable} ="
-        self.ui.model_func_label.setText(new_label_text)
-
-    def update_fit_params(self):
-        """Update fit parameters.
-
-        Gets parameter names from the model function and updates the layout to
-        add new parameters and remove parameters which are no longer part of the
-        model.
-        """
-        try:
-            params = self.get_params_and_update_model()
-        except (SyntaxError, VariableError) as exc:
-            self.main_app.ui.statusbar.showMessage(
-                f"ERROR: {exc!s}", timeout=MSG_TIMEOUT
-            )
-            self.model = None
-        else:
-            self.update_params_ui(params)
-            self.plot_initial_model()
-            self.main_app.ui.statusbar.showMessage(
-                "Updated model.", timeout=MSG_TIMEOUT
-            )
-
-    def update_params_ui(self, params):
-        """Add and/or remove parameters if necessary.
-
-        Args:
-            params: list of parameter names which should be in the user interface.
-        """
+    def update_params_ui(self):
+        """Add and/or remove parameters if necessary."""
         old_params = set(self._params)
-        self.add_params_to_ui(params - old_params)
-        self.remove_params_from_ui(old_params - params)
-
-    def get_params_and_update_model(self):
-        """Get parameter names and update the model function.
-
-        Based on the mathematical expression for the model function, determine
-        what are the parameters of the model. If the model compiles, the model
-        object is updated as well.
-
-        Raises VariableError when the dependent variable is part of the model
-        function.
-
-        Returns:
-            A set of parameter names.
-        """
-        model_expr = self.ui.model_func.toPlainText().replace("\n", "")
-        code = compile(model_expr, "<string>", "eval")
-        params = set(code.co_names) - set([self.x_var]) - self._symbols
-        if self.y_var in params:
-            raise VariableError(
-                f"Dependent variable {self.y_var} must not be in function definition"
-            )
-        else:
-            try:
-                self.model = models.ExpressionModel(
-                    model_expr, independent_vars=[self.x_var]
-                )
-            except ValueError as exc:
-                raise VariableError(exc)
-            return params
+        current_params = set(self.model.get_parameter_names())
+        self.add_params_to_ui(current_params - old_params)
+        self.remove_params_from_ui(old_params - current_params)
 
     def add_params_to_ui(self, params):
         """Add parameters to user interface.
@@ -391,20 +439,26 @@ class PlotTab:
                 compactHeight=False,
             )
             value_box.setObjectName("value")
+            value_box._parameter = param
             min_box = pg.SpinBox(value=-np.inf, finite=False, compactHeight=False)
             min_box.setObjectName("min")
+            min_box._parameter = param
             max_box = pg.SpinBox(value=+np.inf, finite=False, compactHeight=False)
             max_box.setObjectName("max")
+            max_box._parameter = param
             is_fixed_checkbox = QtWidgets.QCheckBox("Fixed", objectName="is_fixed")
+            is_fixed_checkbox._parameter = param
             create_leq_sign = lambda: QtWidgets.QLabel(
                 "≤", alignment=QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
             )
 
-            # connect signals to changes in parameter value
-            value_box.sigValueChanging.connect(
-                lambda: self.ui.show_initial_fit.setChecked(True)
+            # connect signals to changes in parameter values or bounds
+            value_box.sigValueChanging.connect(self.update_parameter_value)
+            min_box.sigValueChanging.connect(self.update_parameter_min_bound)
+            max_box.sigValueChanging.connect(self.update_parameter_max_bound)
+            is_fixed_checkbox.stateChanged.connect(
+                functools.partial(self.update_parameter_fixed_state, is_fixed_checkbox)
             )
-            value_box.sigValueChanging.connect(self.plot_initial_model)
 
             # build parameter layout
             layout = QtWidgets.QHBoxLayout()
@@ -428,7 +482,7 @@ class PlotTab:
             # store parameter layout
             self._params[param] = layout_widget
             # determine position to insert the parameter in alphabetical order
-            sorted_params = sorted(list(self._params.keys()))
+            sorted_params = sorted(list(self._params.keys()), key=lambda x: x.lower())
             idx = sorted_params.index(param)
             self.ui.param_layout.insertWidget(idx, layout_widget)
 
@@ -446,44 +500,65 @@ class PlotTab:
             self.ui.param_layout.removeWidget(layout_widget)
             layout_widget.deleteLater()
 
-    def get_parameter_values(self):
-        """Get current parameter values."""
-        return {
-            k: v.findChild(QtWidgets.QWidget, "value").value()
-            for k, v in self._params.items()
-        }
+    def update_parameter_value(self, widget, value):
+        self.model.set_parameter_value(widget._parameter, value)
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
-    def get_parameter_hints(self):
-        """Get current parameter hints.
+    def update_parameter_min_bound(self, widget, value):
+        self.model.set_parameter_min_value(widget._parameter, value)
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
-        Return not only the current value of parameters, but also the bounds and
-        whether to vary the parameter or fix it.
+    def update_parameter_max_bound(self, widget, value):
+        self.model.set_parameter_max_value(widget._parameter, value)
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
-        Returns:
-            A dictionary with the parameter names as keys, and a tuple (min,
-            value, max, fixed) as values.
+    def update_parameter_fixed_state(self, widget, fixed_state):
+        vary_state = not fixed_state
+        self.model.set_parameter_vary_state(widget._parameter, vary_state)
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
+
+    def update_params_ui_values_from_model(self):
+        """Update the parameters UI to sync with model.
+
+        Changed parameter values in the UI will propagate to the PlotModel
+        instance managing all plot data, but you will need to call this method
+        to propagate changed model values back to the UI.
+
+        This method expects that all model parameters already exist within the
+        UI.
         """
-        return {
-            k: {
-                "min": v.findChild(QtWidgets.QWidget, "min").value(),
-                "value": v.findChild(QtWidgets.QWidget, "value").value(),
-                "max": v.findChild(QtWidgets.QWidget, "max").value(),
-                "vary": not v.findChild(QtWidgets.QWidget, "is_fixed").checkState(),
-            }
-            for k, v in self._params.items()
-        }
+        for name in self.model.get_parameter_names():
+            parameter = self.model.get_parameter_by_name(name)
+            widget = self._params[parameter.name]
+            for w in widget.findChildren(QtWidgets.QWidget):
+                w.blockSignals(True)
+            widget.findChild(QtWidgets.QWidget, "min").setValue(parameter.min)
+            widget.findChild(QtWidgets.QWidget, "value").setValue(parameter.value)
+            widget.findChild(QtWidgets.QWidget, "max").setValue(parameter.max)
+            widget.findChild(QtWidgets.QWidget, "is_fixed").setChecked(
+                not parameter.vary
+            )
+            for w in widget.findChildren(QtWidgets.QWidget):
+                w.blockSignals(False)
 
-    def toggle_use_fit_domain(self, state):
+    def set_use_fit_domain(self, state):
         """Enable or disable use of fit domain.
 
         Args:
             state: integer (enum Qt::CheckState) with the checkbox state.
         """
-        if state == QtCore.Qt.Checked:
-            self.ui.plot_widget.addItem(self.ui.fit_domain_area)
-            self.update_fit_domain()
+        if state == QtCore.Qt.Checked.value:
+            self.model.set_fit_domain_enabled(True)
+            self.ui.plot_widget.addItem(self.fit_domain_area)
         else:
-            self.ui.plot_widget.removeItem(self.ui.fit_domain_area)
+            self.model.set_fit_domain_enabled(False)
+            self.ui.plot_widget.removeItem(self.fit_domain_area)
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
     def fit_domain_region_changed(self):
         """Update the fit domain values.
@@ -491,95 +566,80 @@ class PlotTab:
         When the fit domain region is dragged by the user, the values in the
         start and end boxes need to be updated.
         """
-        xmin, xmax = self.ui.fit_domain_area.getRegion()
+        xmin, xmax = self.fit_domain_area.getRegion()
         self.ui.fit_start_box.setValue(xmin)
         self.ui.fit_end_box.setValue(xmax)
-        self.update_best_fit_plot()
+        self.main_window.mark_project_dirty()
 
-    def update_fit_domain(self):
-        """Update the fit domain and indicate with vertical lines."""
-        start = self.ui.fit_start_box.value()
-        end = self.ui.fit_end_box.value()
-        if start <= end:
-            self.fit_domain = start, end
-            self.ui.fit_domain_area.setRegion((start, end))
-        else:
-            self.main_app.ui.statusbar.showMessage(
-                "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
-            )
+    def update_fit_domain_xmin(self, widget, xmin: float) -> None:
+        """Update fit domain lower bound.
 
-    def plot_initial_model(self):
-        """Plot model with initial parameters.
+        Update the lower bound of the fit domain in the model and update the
+        shaded region in the plot. If the lower bound is greater than the upper
+        bound, the upper bound is pushed to the right and both bounds are equal.
 
-        Plots the model with the initial parameters as given in the user
-        interface.
+        Args:
+            widget (Any): the spinbox widget (ignored).
+            xmin (float): the new value for the lower bound.
         """
-        # FIXME Problem for constants like y = a
-        x = np.linspace(min(self.x), max(self.x), NUM_POINTS)
-        kwargs = self.get_parameter_values()
-        kwargs[self.x_var] = x
-        y = self.model.eval(**kwargs)
+        xmax = self.ui.fit_end_box.value()
+        if xmax < xmin:
+            xmax = xmin
+            self.ui.fit_end_box.setValue(xmax)
+        self.model.set_fit_domain(xmin=xmin, xmax=xmax)
+        self.fit_domain_area.blockSignals(True)
+        self.fit_domain_area.setRegion((xmin, xmax))
+        self.fit_domain_area.blockSignals(False)
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
-        if self.ui.show_initial_fit.isChecked():
-            self._initial_param_plot.setData(x, y)
-        else:
-            self._initial_param_plot.setData([], [])
+    def update_fit_domain_xmax(self, widget, xmax: float) -> None:
+        """Update fit domain upper bound.
 
-    def perform_fit(self):
-        """Perform fit and plot best fit model.
+        Update the upper bound of the fit domain in the model and update the
+        shaded region in the plot. If the upper bound is smaller than the lower
+        bound, the lower bound is pushed to the left and both bounds are equal.
 
-        Fits the model function to the data to estimate best fit parameters.
-        When the fit is successful, the results are given in the result box and
-        the best fit is plotted on top of the data.
+        Args:
+            widget (Any): the spinbox widget (ignored).
+            xmin (float): the new value for the upper bound.
         """
-        if self.model is None:
-            self.main_app.ui.statusbar.showMessage(
-                "FIT FAILED: please fix your model first."
-            )
-            return
+        xmin = self.ui.fit_start_box.value()
+        if xmin > xmax:
+            xmin = xmax
+            self.ui.fit_start_box.setValue(xmin)
+        self.model.set_fit_domain(xmin=xmin, xmax=xmax)
+        self.fit_domain_area.blockSignals(True)
+        self.fit_domain_area.setRegion((xmin, xmax))
+        self.fit_domain_area.blockSignals(False)
+        self.update_model_curves()
+        self.main_window.mark_project_dirty()
 
-        # set model parameter hints
-        param_hints = self.get_parameter_hints()
-        for p, hints in param_hints.items():
-            self.model.set_param_hint(p, **hints)
+    def update_fit_domain_from_model(self) -> None:
+        """Update fit domain parameters from model.
 
-        # select data for fit
-        if self.ui.use_fit_domain.checkState() == QtCore.Qt.Checked:
-            xmin = self.ui.fit_start_box.value()
-            xmax = self.ui.fit_end_box.value()
-            if xmin > xmax:
-                self.main_app.ui.statusbar.showMessage(
-                    "ERROR: domain start is larger than end.", timeout=MSG_TIMEOUT
-                )
-                return
-            condition = (xmin <= self.x) & (self.x <= xmax)
-            x = self.x[condition]
-            y = self.y[condition]
-            if self.y_err_var is not None:
-                y_err = self.y_err[condition]
-            else:
-                y_err = None
+        Update the fit domain UI widgets with values taken from the plot model.
+        Makes sure signals are not unnecessarily triggered which would result in
+        invalidating the best fit. The best fit is preserved by this method.
+        """
+        self.ui.fit_start_box.blockSignals(True)
+        self.ui.fit_end_box.blockSignals(True)
+        xmin, xmax = self.model.get_fit_domain()
+        self.ui.fit_start_box.setValue(xmin)
+        self.ui.fit_end_box.setValue(xmax)
+        if self.model.get_fit_domain_enabled():
+            state = QtCore.Qt.CheckState.Checked
         else:
-            x = self.x
-            y = self.y
-            if self.y_err_var is not None:
-                y_err = self.y_err
-            else:
-                y_err = None
+            state = QtCore.Qt.CheckState.Unchecked
+        self.ui.use_fit_domain.setCheckState(state)
+        self.fit_domain_area.setRegion((xmin, xmax))
+        self.ui.fit_start_box.blockSignals(False)
+        self.ui.fit_end_box.blockSignals(False)
 
-        # perform fit
-        kwargs = {self.x_var: x}
-        if y_err is not None:
-            kwargs["weights"] = 1 / y_err
-        try:
-            self.fit = self.model.fit(y, nan_policy="omit", **kwargs)
-        except Exception as exc:
-            self.main_app.ui.statusbar.showMessage(f"FIT FAILED: {exc}")
-        else:
-            self.update_info_box()
-            self.update_best_fit_plot()
-            self.ui.show_initial_fit.setChecked(False)
-            self.main_app.ui.statusbar.showMessage("Updated fit.", timeout=MSG_TIMEOUT)
+    def update_model_curves(self):
+        """Update initial and best fit curves."""
+        self.plot_initial_model()
+        self.plot_best_fit()
 
     def updated_plot_range(self):
         """Handle updated plot range.
@@ -587,25 +647,56 @@ class PlotTab:
         If the fitted curves are drawn on the full axis, they need to be updated
         when the plot range is changed.
         """
-        if self.ui.draw_curve_option.currentIndex() == DRAW_CURVE_ON_AXIS:
-            self.update_best_fit_plot()
+        if self.get_draw_curve_option() == DrawCurve.ON_AXIS:
+            self.update_model_curves()
 
-    def update_best_fit_plot(self, x_var=None):
+    def show_initial_fit_option_changed(self) -> None:
+        """Updates UI when show initial fit option is changed."""
+        self.plot_initial_model()
+        self.main_window.mark_project_dirty()
+
+    def plot_initial_model(self):
+        """Plot model with initial parameters.
+
+        Plots the model with the initial parameters as given in the user
+        interface.
+        """
+        if self.ui.show_initial_fit.isChecked():
+            x_min, x_max = self.get_fit_curve_x_limits()
+            x = np.linspace(x_min, x_max, NUM_POINTS)
+            y = self.model.evaluate_model(x)
+            if y is not None:
+                self.initial_param_plot.setData(x, y)
+                return
+        # in all other cases: reset data
+        self.initial_param_plot.setData([], [])
+
+    def perform_fit(self):
+        try:
+            self.model.perform_fit()
+        except FitError as exc:
+            dialogs.show_exception(
+                self, exc.__cause__, title="Error performing fit", text=FITERROR_MSG
+            )
+        self.plot_best_fit()
+        self.update_info_box()
+        self.main_window.mark_project_dirty()
+
+    def plot_best_fit(self):
         """Update the plot of the best-fit model curve.
 
-        Args:
-            x_var: optional name of the x-variable to use for the model. Only
-                useful for loading project files which have an outdated fit object
-                with an outdated x-variable name (i.e. shortly after renaming a
-                column and not updating the model function).
+        Plots the model with the best fit parameters if they are previously
+        determined by performing a fit.
         """
-        if self.fit:
-            if x_var is None:
-                x_var = self.x_var
-            xmin, xmax = self.get_fit_curve_x_limits()
-            x = np.linspace(xmin, xmax, NUM_POINTS)
-            y = self.fit.eval(**{x_var: x})
-            self._fit_plot.setData(x, y)
+        x_min, x_max = self.get_fit_curve_x_limits()
+        x = np.linspace(x_min, x_max, NUM_POINTS)
+        y = self.model.evaluate_best_fit(x)
+        if y is not None:
+            self.fit_plot.setData(x, y)
+            self.fit_plot.setPen(color="b", width=4)
+        else:
+            # colour outdated fit plot light red
+            self.fit_plot.setPen(color="#FBB", width=4)
 
     def get_fit_curve_x_limits(self):
         """Get x-axis limits for fit curve.
@@ -613,20 +704,16 @@ class PlotTab:
         This method respects the choice in the 'Draw curve' option box.
 
         Returns:
-            xmin, xmax: tuple of floats with the x-axis limits
+            x_min, x_max: tuple of floats with the x-axis limits
         """
-        option_idx = self.ui.draw_curve_option.currentIndex()
-        if option_idx == DRAW_CURVE_ON_DATA:
-            xmin, xmax = min(self.x), max(self.x)
-        elif option_idx == DRAW_CURVE_ON_DOMAIN:
-            xmin, xmax = self.fit_domain
-        elif option_idx == DRAW_CURVE_ON_AXIS:
-            [[xmin, xmax], _] = self.ui.plot_widget.viewRange()
-        else:
-            raise NotImplementedError(
-                f"Draw curve option {option_idx} not implemented."
-            )
-        return xmin, xmax
+        option = self.get_draw_curve_option()
+        if option == DrawCurve.ON_DATA:
+            x_min, x_max, _, _ = self.model.get_limits_from_data(padding=0)
+        elif option == DrawCurve.ON_DOMAIN:
+            x_min, x_max = self.model.get_fit_domain()
+        elif option == DrawCurve.ON_AXIS:
+            [[x_min, x_max], _] = self.ui.plot_widget.viewRange()
+        return x_min, x_max
 
     def format_plot_info(self):
         """Format basic plot information in the results box.
@@ -638,8 +725,20 @@ class PlotTab:
         msg += make_table(
             [
                 # make sure everything is a string, even None
-                ("X: ", str(self.x_var), " +- ", str(self.x_err_var)),
-                ("Y: ", str(self.y_var), " +- ", str(self.y_err_var)),
+                (
+                    "X: ",
+                    str(self.model.get_x_col_name()),
+                    " +- ",
+                    str(self.model.get_x_err_col_name() or 0),
+                    f" (from {self.data_sheet.name})",
+                ),
+                (
+                    "Y: ",
+                    str(self.model.get_y_col_name()),
+                    " +- ",
+                    str(self.model.get_y_err_col_name() or 0),
+                    f" (from {self.data_sheet.name})",
+                ),
             ]
         )
         return msg
@@ -650,218 +749,60 @@ class PlotTab:
         Returns:
             A string containing the formatted fit results.
         """
-        msg = make_header("Fit statistics")
+        fit = self.model.best_fit
+        msg = make_header("Fit parameters")
+        msg += make_param_table(fit.params)
+        msg += "\n"
+        msg += make_header("Fit statistics")
         msg += make_table(
             [
-                ("function evaluations", " = ", f"{self.fit.nfev:<9.4g}"),
-                ("reduced chisquare", " = ", f"{self.fit.redchi:<9.4g}"),
-                ("degrees of freedom", " = ", f"{self.fit.nfree:<9.4g}"),
+                ("function evaluations", " = ", f"{fit.nfev:<9.4g}"),
+                ("reduced chisquare", " = ", f"{fit.redchi:<9.4g}"),
+                ("degrees of freedom", " = ", f"{fit.nfree:<9.4g}"),
             ]
         )
-
-        msg += "\n\n"
-        msg += make_header("Fit parameters")
-        msg += make_param_table(self.fit.params)
-
         return msg
 
-    def save_state_to_obj(self, save_obj):
-        """Save all data and state to save object.
-
-        Args:
-            save_obj: a dictionary to store the data and state.
-        """
-        # save objects
-        save_obj.update(
-            {
-                name: getattr(self, name)
-                for name in [
-                    "x_var",
-                    "y_var",
-                    "x_err_var",
-                    "y_err_var",
-                    "fit_domain",
-                ]
-            }
-        )
-
-        # save checkbox state
-        save_obj.update(
-            {
-                name: int(getattr(self.ui, name).checkState())
-                for name in ["show_initial_fit", "use_fit_domain"]
-            }
-        )
-
-        # save combobox state
-        save_obj.update(
-            {
-                name: getattr(self.ui, name).currentIndex()
-                for name in ["draw_curve_option"]
-            }
-        )
-
-        # save lineedit strings
-        save_obj.update(
-            {
-                name: getattr(self.ui, name).text()
-                for name in [
-                    "xlabel",
-                    "xmin",
-                    "xmax",
-                    "ylabel",
-                    "ymin",
-                    "ymax",
-                ]
-            }
-        )
-
-        # save plaintext strings
-        save_obj["model_func"] = self.ui.model_func.toPlainText()
-
-        save_obj["parameters"] = self.get_parameter_hints()
-
-        # save (possibly outdated) fit
-        if self.fit:
-            if self.fit.weights is not None:
-                weights = list(self.fit.weights)
-            else:
-                weights = None
-            x_var = self.fit.model.independent_vars[0]
-            saved_fit = {
-                "model": self.fit.model.expr,
-                "param_hints": self.fit.model.param_hints,
-                "data": list(self.fit.data),
-                "weights": weights,
-                "x_var": x_var,
-                "xdata": list(self.fit.userkws[x_var]),
-            }
-            save_obj["saved_fit"] = saved_fit
-
-    def load_state_from_obj(self, save_obj):
-        """Load all data and state from save object.
-
-        Args:
-            save_obj: a dictionary that contains the saved data and state.
-        """
-        self.create_plot(
-            save_obj["x_var"],
-            save_obj["y_var"],
-            save_obj["x_err_var"],
-            save_obj["y_err_var"],
-        )
-
-        start, end = save_obj["fit_domain"]
-        self.ui.fit_start_box.setValue(start)
-        self.ui.fit_end_box.setValue(end)
-
-        # load linedit strings
-        for name in [
-            "xlabel",
-            "xmin",
-            "xmax",
-            "ylabel",
-            "ymin",
-            "ymax",
-        ]:
-            text = save_obj[name]
-            widget = getattr(self.ui, name)
-            widget.setText(text)
-
-        # load plaintext strings
-        self.ui.model_func.setPlainText(save_obj["model_func"])
-
-        # load checkbox state
-        for name in ["use_fit_domain"]:
-            state = QtCore.Qt.CheckState(save_obj[name])
-            getattr(self.ui, name).setCheckState(state)
-
-        # load combobox state
-        for name in ["draw_curve_option"]:
-            state = QtCore.Qt.CheckState(save_obj[name])
-            getattr(self.ui, name).setCurrentIndex(state)
-
-        # set parameter hints
-        params = save_obj["parameters"].keys()
-        self.update_params_ui(params)
-        for p, hints in save_obj["parameters"].items():
-            if hints["vary"]:
-                fixed_state = QtCore.Qt.Unchecked
-            else:
-                fixed_state = QtCore.Qt.Checked
-            layout_widget = self._params[p]
-            layout_widget.findChild(QtWidgets.QWidget, "min").setValue(hints["min"])
-            layout_widget.findChild(QtWidgets.QWidget, "value").setValue(hints["value"])
-            layout_widget.findChild(QtWidgets.QWidget, "max").setValue(hints["max"])
-            layout_widget.findChild(QtWidgets.QWidget, "is_fixed").setCheckState(
-                fixed_state
-            )
-
-        # manually recreate (possibly outdated!) fit
-        if "saved_fit" in save_obj:
-            saved_fit = save_obj["saved_fit"]
-
-            # workaround for older projects which did not explicitly store the
-            # fit objects x-variable
-            if "x_var" in saved_fit:
-                x_var = saved_fit["x_var"]
-            else:
-                x_var = self.x_var
-
-            model = models.ExpressionModel(saved_fit["model"], independent_vars=[x_var])
-
-            for param, hint in saved_fit["param_hints"].items():
-                model.set_param_hint(param, **hint)
-
-            xdata = {x_var: np.array(saved_fit["xdata"])}
-            weights = saved_fit["weights"]
-            if weights is not None:
-                weights = np.array(weights)
-            self.fit = model.fit(
-                np.array(saved_fit["data"]),
-                **xdata,
-                # weights MUST BE a NumPy array or calculations will fail
-                weights=weights,
-                nan_policy="omit",
-            )
-
-            self.update_info_box()
-            self.update_best_fit_plot(x_var)
-
-        # set state of show_initial_fit, will have changed when setting parameters
-        state = QtCore.Qt.CheckState(save_obj["show_initial_fit"])
-        self.ui.show_initial_fit.setCheckState(state)
-
-    def export_graph(self, filename):
+    def export_graph(self, filename, dpi=300):
         """Export graph to a file.
 
         Args:
             filename: path to the file.
         """
+        # x_err, y_err will be 0.0 if no errors are specified
+        x, y, x_err, y_err = self.model.get_data()
         xmin, xmax, ymin, ymax = self.get_adjusted_limits()
 
         plt.figure()
         plt.errorbar(
-            self.x,
-            self.y,
-            xerr=self.x_err,
-            yerr=self.y_err,
+            x,
+            y,
+            xerr=x_err,
+            yerr=y_err,
             fmt="ko",
             ms=3,
             elinewidth=0.5,
         )
-        if self.fit:
-            fit_xmin, fit_xmax = self.get_fit_curve_x_limits()
-            x = np.linspace(fit_xmin, fit_xmax, NUM_POINTS)
-            y = self.fit.eval(**{self.x_var: x})
-            plt.plot(x, y, "r-")
-        if self.ui.use_fit_domain.isChecked():
-            plt.axvspan(*self.fit_domain, facecolor="k", alpha=0.1)
-        plt.xlabel(self.ui.xlabel.text())
-        plt.ylabel(self.ui.ylabel.text())
+
+        x_min, x_max = self.get_fit_curve_x_limits()
+        x = np.linspace(x_min, x_max, NUM_POINTS)
+        y = self.model.evaluate_best_fit(x)
+        if y is not None:
+            plt.plot(x, y, "b-")
+
+        if self.ui.show_initial_fit.isChecked():
+            y = self.model.evaluate_model(x)
+            if y is not None:
+                plt.plot(x, y, "b-", alpha=0.2)
+
+        if self.model.get_fit_domain_enabled():
+            plt.axvspan(*self.model.get_fit_domain(), facecolor="k", alpha=0.1)
+
+        plt.xlabel(self.model.x_label)
+        plt.ylabel(self.model.y_label)
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
-        plt.savefig(filename, dpi=300)
+        plt.savefig(filename, dpi=dpi)
 
 
 def make_header(text):
@@ -910,7 +851,7 @@ def make_param_table(params):
         width = max([len(p) for p in params])
         text = ""
         fmt = "{:" + str(width) + "s} = {:< 12.6g} +/- {:< 12.6g} ({:s} %)\n"
-        for p in params:
+        for p in sorted(params, key=lambda x: x.lower()):
             value = params[p].value
             stderr = params[p].stderr
             if stderr is None:

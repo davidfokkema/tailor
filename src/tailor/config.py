@@ -1,16 +1,12 @@
+import importlib.metadata
 import pathlib
-import sys
-from importlib import metadata as importlib_metadata
+import tomllib
 
 import appdirs
-import tomli
 import tomli_w
 
-app_module = sys.modules["__main__"].__package__
-metadata = importlib_metadata.metadata(app_module)
-__name__ = metadata["name"]
-
-APP_NAME = __name__.title()
+metadata = importlib.metadata.metadata("tailor")
+APP_NAME = metadata["name"].title()
 CONFIG_FILE = "config.toml"
 
 
@@ -20,8 +16,8 @@ def read_config():
     if config_path.is_file():
         try:
             with open(config_path, "rb") as f:
-                return tomli.load(f)
-        except (tomli.TOMLDecodeError, UnicodeDecodeError):
+                return tomllib.load(f)
+        except (tomllib.TOMLDecodeError, UnicodeDecodeError):
             # error parsing TOML
             return {}
     else:
