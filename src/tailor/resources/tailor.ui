@@ -18,128 +18,17 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>-1</number>
       </property>
-      <widget class="QWidget" name="data">
-       <attribute name="title">
-        <string>Data</string>
-       </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <property name="leftMargin">
-         <number>4</number>
-        </property>
-        <property name="topMargin">
-         <number>4</number>
-        </property>
-        <property name="rightMargin">
-         <number>4</number>
-        </property>
-        <property name="bottomMargin">
-         <number>4</number>
-        </property>
-        <item>
-         <widget class="QTableView" name="data_view">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>1</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="groupBox">
-          <property name="title">
-           <string>Column information</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0,0">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <layout class="QFormLayout" name="formLayout">
-             <property name="fieldGrowthPolicy">
-              <enum>QFormLayout::ExpandingFieldsGrow</enum>
-             </property>
-             <property name="leftMargin">
-              <number>4</number>
-             </property>
-             <property name="topMargin">
-              <number>4</number>
-             </property>
-             <property name="rightMargin">
-              <number>4</number>
-             </property>
-             <property name="bottomMargin">
-              <number>4</number>
-             </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="nameLabel">
-               <property name="text">
-                <string>Name:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLineEdit" name="name_edit"/>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="formulaLabel">
-               <property name="text">
-                <string>Formula</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLineEdit" name="formula_edit"/>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_2">
-             <item>
-              <widget class="QPushButton" name="add_column_button">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Add column</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="add_calculated_column_button">
-               <property name="text">
-                <string>Add calculated column</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QPushButton" name="create_plot_button">
-             <property name="text">
-              <string>Create plot</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-       </layout>
-      </widget>
+      <property name="elideMode">
+       <enum>Qt::ElideNone</enum>
+      </property>
+      <property name="usesScrollButtons">
+       <bool>true</bool>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
    </layout>
@@ -150,21 +39,26 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>24</height>
+     <height>37</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTable">
     <property name="title">
-     <string>Table</string>
+     <string>Sheet</string>
     </property>
+    <addaction name="actionAdd_Data_Sheet"/>
+    <addaction name="actionDuplicate_Data_Sheet"/>
+    <addaction name="actionDuplicate_Data_Sheet_With_Plots"/>
+    <addaction name="separator"/>
     <addaction name="actionAdd_column"/>
     <addaction name="actionAdd_calculated_column"/>
     <addaction name="actionAdd_row"/>
     <addaction name="separator"/>
     <addaction name="actionRemove_column"/>
     <addaction name="actionRemove_row"/>
-    <addaction name="separator"/>
     <addaction name="actionClear_Cell_Contents"/>
+    <addaction name="separator"/>
+    <addaction name="actionRename_Data_Sheet"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -189,6 +83,7 @@
     <addaction name="actionImport_CSV"/>
     <addaction name="actionExport_CSV"/>
     <addaction name="separator"/>
+    <addaction name="actionPreview_Graph"/>
     <addaction name="actionExport_Graph_to_PDF"/>
     <addaction name="actionExport_Graph_to_PNG"/>
     <addaction name="separator"/>
@@ -198,6 +93,10 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionReport_Issue"/>
+    <addaction name="actionShow_Documentation"/>
+    <addaction name="actionShow_Source_Code_Repository"/>
+    <addaction name="separator"/>
     <addaction name="actionAbout_Tailor"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -207,9 +106,21 @@
     <addaction name="actionCopy"/>
     <addaction name="actionPaste"/>
    </widget>
+   <widget class="QMenu" name="menuPlot">
+    <property name="title">
+     <string>Plot</string>
+    </property>
+    <addaction name="actionCreate_Plot"/>
+    <addaction name="actionDuplicate_Plot"/>
+    <addaction name="actionCreate_MultiPlot"/>
+    <addaction name="actionChange_Plot_Source"/>
+    <addaction name="separator"/>
+    <addaction name="actionRename_Plot"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuTable"/>
+   <addaction name="menuPlot"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -336,15 +247,74 @@
     <string>Paste</string>
    </property>
   </action>
+  <action name="actionAdd_Data_Sheet">
+   <property name="text">
+    <string>Add Data Sheet</string>
+   </property>
+  </action>
+  <action name="actionDuplicate_Data_Sheet">
+   <property name="text">
+    <string>Duplicate Data Sheet</string>
+   </property>
+  </action>
+  <action name="actionDuplicate_Plot">
+   <property name="text">
+    <string>Duplicate Plot</string>
+   </property>
+  </action>
+  <action name="actionDuplicate_Data_Sheet_With_Plots">
+   <property name="text">
+    <string>Duplicate Data Sheet With Plots</string>
+   </property>
+  </action>
+  <action name="actionChange_Plot_Source">
+   <property name="text">
+    <string>Change Plot Source</string>
+   </property>
+  </action>
+  <action name="actionRename_Data_Sheet">
+   <property name="text">
+    <string>Rename Data Sheet</string>
+   </property>
+  </action>
+  <action name="actionRename_Plot">
+   <property name="text">
+    <string>Rename Plot</string>
+   </property>
+  </action>
+  <action name="actionPreview_Graph">
+   <property name="text">
+    <string>Preview Graph</string>
+   </property>
+  </action>
+  <action name="actionCreate_MultiPlot">
+   <property name="text">
+    <string>Create MultiPlot</string>
+   </property>
+  </action>
+  <action name="actionCreate_Plot">
+   <property name="text">
+    <string>Create Plot</string>
+   </property>
+  </action>
+  <action name="actionReport_Issue">
+   <property name="text">
+    <string>Report Issue</string>
+   </property>
+  </action>
+  <action name="actionShow_Source_Code_Repository">
+   <property name="text">
+    <string>Show Source Code Repository</string>
+   </property>
+  </action>
+  <action name="actionShow_Documentation">
+   <property name="text">
+    <string>Show Documentation</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>tabWidget</tabstop>
-  <tabstop>data_view</tabstop>
-  <tabstop>name_edit</tabstop>
-  <tabstop>formula_edit</tabstop>
-  <tabstop>add_column_button</tabstop>
-  <tabstop>add_calculated_column_button</tabstop>
-  <tabstop>create_plot_button</tabstop>
  </tabstops>
  <resources/>
  <connections/>

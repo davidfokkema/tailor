@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>CreatePlotDialog</class>
- <widget class="QDialog" name="CreatePlotDialog">
+ <class>DataSourceDialog</class>
+ <widget class="QDialog" name="DataSourceDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -16,45 +16,55 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
+     <item row="1" column="0">
       <widget class="QLabel" name="xAxisLabel">
        <property name="text">
         <string>X-axis:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="x_axis_box"/>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="x_box"/>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="uncertaintyXLabel">
        <property name="text">
         <string>Uncertainty X:</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QComboBox" name="x_err_box"/>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="yAxisLabel">
        <property name="text">
         <string>Y-axis:</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QComboBox" name="y_axis_box"/>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="y_box"/>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="uncertaintyYLabel">
        <property name="text">
         <string>Uncertainty Y:</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="QComboBox" name="y_err_box"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="dataSourceLabel">
+       <property name="text">
+        <string>Data Source:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="data_source_box"/>
      </item>
     </layout>
    </item>
@@ -71,9 +81,9 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>x_axis_box</tabstop>
+  <tabstop>x_box</tabstop>
   <tabstop>x_err_box</tabstop>
-  <tabstop>y_axis_box</tabstop>
+  <tabstop>y_box</tabstop>
   <tabstop>y_err_box</tabstop>
  </tabstops>
  <resources/>
@@ -81,7 +91,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>CreatePlotDialog</receiver>
+   <receiver>DataSourceDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -97,7 +107,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>CreatePlotDialog</receiver>
+   <receiver>DataSourceDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

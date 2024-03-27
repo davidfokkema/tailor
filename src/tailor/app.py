@@ -4,53 +4,63 @@ Import datasets or enter data by hand and create plots to explore correlations.
 You can fit custom models to your data to estimate best-fit parameters.
 """
 
-import gzip
+import importlib.metadata
 import json
 import pathlib
 import platform
 import sys
-import traceback
+import tempfile
 import urllib.request
 import webbrowser
 from functools import partial
-from importlib import metadata as importlib_metadata
 from importlib import resources
 from textwrap import dedent
+from typing import NamedTuple, Optional
 
-import numpy as np
+import click
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtUiTools import QUiLoader
 
-from tailor import config
+from tailor import config, dialogs, project_files
 from tailor.csv_format_dialog import (
     DELIMITER_CHOICES,
     NUM_FORMAT_CHOICES,
     CSVFormatDialog,
+    FormatParameters,
 )
-from tailor.data_model import MSG_TIMEOUT, DataModel
+from tailor.data_sheet import DataSheet
+from tailor.data_source_dialog import DataSourceDialog
+from tailor.multiplot_tab import MultiPlotTab
 from tailor.plot_tab import PlotTab
+from tailor.ui_create_plot_dialog import Ui_CreatePlotDialog
+from tailor.ui_preview_dialog import Ui_PreviewDialog
+from tailor.ui_rename_dialog import Ui_RenameDialog
+from tailor.ui_tailor import Ui_MainWindow
 
-app_module = sys.modules["__main__"].__package__
-metadata = importlib_metadata.metadata(app_module)
+metadata = importlib.metadata.metadata("tailor")
 __name__ = metadata["name"]
 __version__ = metadata["version"]
 
+
+class TabbedWidget(NamedTuple):
+    widget: DataSheet | PlotTab | MultiPlotTab
+    index: int
+
+
 MAX_RECENT_FILES = 5
 
-DIRTY_TIMEOUT = 10000  # 10 s
 RELEASE_API_URL = "https://api.github.com/repos/davidfokkema/tailor/releases/latest"
 HTTP_TIMEOUT = 3
 
+TAILOR_PROJECT_FILTER = "Tailor project files (*.tlr);;All files (*)"
+CSV_FILE_FILTER = "CSV files (*.csv);;Text files (*.txt);;All files (*)"
 
-# FIXME: antialiasing is EXTREMELY slow. Why?
-# pg.setConfigOptions(antialias=True)
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
 
-class Application(QtCore.QObject):
+class MainWindow(QtWidgets.QMainWindow):
     """Main user interface for the tailor app.
 
     The user interface centers on the table containing the data values. A single
@@ -61,44 +71,35 @@ class Application(QtCore.QObject):
     _project_filename = None
     _recent_files_actions = None
     _selected_col_idx = None
-    _plot_num = 1
+    _plot_num: int
+    _sheet_num: int
 
     _is_dirty = False
 
-    def __init__(self):
+    def __init__(self, add_sheet=False):
         """Initialize the class."""
 
         super().__init__()
-
-        self.ui = QUiLoader().load(resources.path("tailor.resources", "tailor.ui"))
-        self.ui.setWindowIcon(
-            QtGui.QIcon(str(resources.path("tailor.resources", "tailor.png")))
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        self.setWindowIcon(
+            QtGui.QIcon(str(resources.files("tailor.resources") / "tailor.png"))
         )
-        self.clipboard = QtWidgets.QApplication.clipboard()
-        # store reference to this code in data tab
-        self.ui.data.code = self
 
-        # set up dirty timer
-        self._dirty_timer = QtCore.QTimer()
-        self._dirty_timer.timeout.connect(self.mark_project_dirty)
+        self.connect_menu_items()
+        self.connect_ui_events()
+        self.setup_keyboard_shortcuts()
+        self.fill_recent_menu()
 
-        # clear all program state
-        self.clear_all()
+        # install event filter to capture UI events (which are not signals)
+        # necessary to capture closeEvent inside QMainWindow widget
+        self.installEventFilter(self)
 
-        # Enable close buttons...
-        self.ui.tabWidget.setTabsClosable(True)
-        # ...but remove them for the table view
-        for pos in QtWidgets.QTabBar.LeftSide, QtWidgets.QTabBar.RightSide:
-            widget = self.ui.tabWidget.tabBar().tabButton(0, pos)
-            if widget:
-                widget.close()
+        # clear all program state and set up as new project
+        self.clear_all(add_sheet)
 
-        # connect button signals
-        self.ui.add_column_button.clicked.connect(self.add_column)
-        self.ui.add_calculated_column_button.clicked.connect(self.add_calculated_column)
-
-        # connect menu items
-        self.ui.actionQuit.triggered.connect(self.ui.close)
+    def connect_menu_items(self):
+        self.ui.actionQuit.triggered.connect(self.close)
         self.ui.actionAbout_Tailor.triggered.connect(self.show_about_dialog)
         self.ui.actionNew.triggered.connect(self.new_project)
         self.ui.actionOpen.triggered.connect(self.open_project_dialog)
@@ -107,6 +108,7 @@ class Application(QtCore.QObject):
         self.ui.actionCheck_for_updates.triggered.connect(self.check_for_updates)
         self.ui.actionImport_CSV.triggered.connect(self.import_csv)
         self.ui.actionExport_CSV.triggered.connect(self.export_csv)
+        self.ui.actionPreview_Graph.triggered.connect(self.preview_graph)
         self.ui.actionExport_Graph_to_PDF.triggered.connect(
             lambda: self.export_graph(".pdf")
         )
@@ -114,36 +116,41 @@ class Application(QtCore.QObject):
             lambda: self.export_graph(".png")
         )
         self.ui.actionClose.triggered.connect(self.new_project)
+        # use lambda to gobble 'checked' parameter
+        self.ui.actionAdd_Data_Sheet.triggered.connect(lambda: self.add_data_sheet())
+        self.ui.actionDuplicate_Data_Sheet.triggered.connect(self.duplicate_data_sheet)
+        self.ui.actionDuplicate_Data_Sheet_With_Plots.triggered.connect(
+            self.duplicate_data_sheet_with_plots
+        )
+        self.ui.actionCreate_Plot.triggered.connect(self.ask_and_create_plot_tab)
+        self.ui.actionDuplicate_Plot.triggered.connect(self.duplicate_plot)
+        self.ui.actionCreate_MultiPlot.triggered.connect(self.create_multiplot)
+        self.ui.actionChange_Plot_Source.triggered.connect(self.change_plot_data_source)
+        self.ui.actionRename_Data_Sheet.triggered.connect(self.rename_data_sheet)
+        self.ui.actionRename_Plot.triggered.connect(self.rename_plot)
+
         self.ui.actionAdd_column.triggered.connect(self.add_column)
         self.ui.actionAdd_calculated_column.triggered.connect(
             self.add_calculated_column
         )
         self.ui.actionAdd_row.triggered.connect(self.add_row)
-        self.ui.actionRemove_column.triggered.connect(self.remove_column)
+        self.ui.actionRemove_column.triggered.connect(self.remove_selected_columns)
         self.ui.actionRemove_row.triggered.connect(self.remove_row)
         self.ui.actionClear_Cell_Contents.triggered.connect(self.clear_selected_cells)
         self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
         self.ui.actionPaste.triggered.connect(self.paste_cells)
 
-        # set up the open recent menu
-        self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
-            self.ui.actionClear_Menu
+        self.ui.actionReport_Issue.triggered.connect(self.report_issue)
+        self.ui.actionShow_Documentation.triggered.connect(self.show_documentation)
+        self.ui.actionShow_Source_Code_Repository.triggered.connect(
+            self.show_code_repository
         )
-        self.update_recent_files()
-        self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
-        # user interface events
-        self.ui.data_view.horizontalHeader().sectionMoved.connect(self.column_moved)
+    def connect_ui_events(self):
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
-        self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
-        self.ui.name_edit.textEdited.connect(self.rename_column)
-        self.ui.formula_edit.textEdited.connect(self.update_column_expression)
-        self.ui.create_plot_button.clicked.connect(self.ask_and_create_plot_tab)
+        self.ui.tabWidget.tabCloseRequested.connect(self.close_tab_with_children)
 
-        # install event filter to capture UI events (which are not signals)
-        # necessary to caputer closeEvent inside QMainWindow widget
-        self.ui.installEventFilter(self)
-
+    def setup_keyboard_shortcuts(self):
         # Set standard shortcuts for menu items
         self.ui.actionNew.setShortcut(QtGui.QKeySequence.New)
         self.ui.actionOpen.setShortcut(QtGui.QKeySequence.Open)
@@ -152,6 +159,7 @@ class Application(QtCore.QObject):
         self.ui.actionSave_As.setShortcut(QtGui.QKeySequence.SaveAs)
         self.ui.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
         self.ui.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
+        self.ui.actionPreview_Graph.setShortcut(QtGui.QKeySequence.Print)
 
         # Set other shortcuts for menu items
         self.ui.actionImport_CSV.setShortcut(QtGui.QKeySequence("Ctrl+I"))
@@ -164,80 +172,17 @@ class Application(QtCore.QObject):
             QtGui.QKeySequence("Shift+Ctrl+G")
         )
 
-        # Create shortcut for return/enter keys
-        for key in QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter:
-            QtGui.QShortcut(
-                QtGui.QKeySequence(key), self.ui.data_view, self.edit_or_move_down
-            )
-        # Shortcut for backspace and delete: clear cell contents
-        for key in QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete:
-            QtGui.QShortcut(
-                QtGui.QKeySequence(key), self.ui.data_view, self.clear_selected_cells
-            )
-
-        # Start at (0, 0)
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
-
-    def _set_view_and_selection_model(self):
-        """Set up data view and selection model.
-
-        Connects the table widget to the data model, sets up various behaviours
-        and resets visual column ordering.
-        """
-        self.ui.data_view.setModel(self.data_model)
-        self.ui.data_view.setDragDropMode(self.ui.data_view.NoDragDrop)
-        header = self.ui.data_view.horizontalHeader()
-        header.setSectionsMovable(True)
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        header.setMinimumSectionSize(header.defaultSectionSize())
-
-        # reset column ordering. There is, apparently, no easy way to do this :'(
-        for log_idx in range(self.data_model.columnCount()):
-            # move sections in the correct position FROM LEFT TO RIGHT
-            # so, logical indexes should be numbered [0, 1, 2, ... ]
-            # >>> header.moveSection(from, to)
-            vis_idx = header.visualIndex(log_idx)
-            header.moveSection(vis_idx, log_idx)
-
-        self.selection = self.ui.data_view.selectionModel()
-        self.selection.selectionChanged.connect(self.selection_changed)
+    def fill_recent_menu(self):
+        self.ui._recent_files_separator = self.ui.menuOpen_Recent.insertSeparator(
+            self.ui.actionClear_Menu
+        )
+        self.update_recent_files()
+        self.ui.actionClear_Menu.triggered.connect(self.clear_recent_files_menu)
 
     def mark_project_dirty(self, is_dirty=True):
-        """Mark project as dirty"""
+        """Mark project as dirty or as clean."""
         self._is_dirty = is_dirty
         self.update_window_title()
-        if not is_dirty:
-            # FIXME: this can be implemented much better by actually detecting changes.
-            self._dirty_timer.start(DIRTY_TIMEOUT)
-
-    def column_moved(self, logidx, oldidx, newidx):
-        """Move column in reaction to UI signal.
-
-        Dragging a column to a new location triggers execution of this method.
-        Since the UI only reorders the column visually and does not change the
-        underlying data, things can get tricky when trying to determine which
-        variables are available to the left of calculated columns and which
-        columns include the bouding box of a selection for copy/paste. So, we
-        will immediately move back the column in the view and move the
-        underlying data instead. That way, visual and logical ordering are
-        always in sync.
-
-        Args:
-            logidx (int): the logical column index (index in the dataframe)
-            oldidx (int): the old visual index newidx (int): the new visual
-            index
-        """
-        print(f"Column moved from {oldidx=} to {newidx=}")
-        header = self.ui.data_view.horizontalHeader()
-        header.blockSignals(True)
-        # move the column back, keep the header in logical order
-        header.moveSection(newidx, oldidx)
-        header.blockSignals(False)
-        # move the underlying data column instead
-        self.data_model.moveColumn(None, oldidx, None, newidx)
-        self.data_model.recalculate_all_columns()
-        # select the column that was just moved at the new location
-        self.ui.data_view.selectColumn(newidx)
 
     def eventFilter(self, watched, event):
         """Catch PySide6 events.
@@ -253,7 +198,7 @@ class Application(QtCore.QObject):
         Returns:
             boolean: True if the event is ignored, False otherwise.
         """
-        if watched is self.ui and event.type() == QtCore.QEvent.Close:
+        if watched is self and event.type() == QtCore.QEvent.Close:
             if self.confirm_project_close_dialog():
                 event.accept()
                 return False
@@ -265,8 +210,7 @@ class Application(QtCore.QObject):
 
     def show_about_dialog(self):
         """Show about application dialog."""
-        box = QtWidgets.QMessageBox()
-        box.setIconPixmap(self.ui.windowIcon().pixmap(64, 64))
+        box = QtWidgets.QMessageBox(parent=self)
         box.setText("Tailor")
         box.setInformativeText(
             dedent(
@@ -283,167 +227,151 @@ class Application(QtCore.QObject):
         )
         box.exec()
 
-    def edit_or_move_down(self):
-        """Edit cell or move cursor down a row.
-
-        Start editing a cell. If the cell was already being edited, move the
-        cursor down a row, stopping the edit in the process. Trigger a
-        recalculation of all calculated columns.
-        """
-        cur_index = self.ui.data_view.currentIndex()
-        if not self.ui.data_view.isPersistentEditorOpen(cur_index):
-            # is not yet editing, so start an edit
-            self.ui.data_view.edit(cur_index)
+    def _on_data_sheet(self) -> Optional[DataSheet]:
+        """Return the current tab if a data sheet else display warning."""
+        if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
+            return tab
         else:
-            # is already editing, what index is below?
-            new_index = self.get_index_below_selected_cell()
-            if new_index == cur_index:
-                # already on bottom row, create a new row and take that index
-                self.add_row()
-                new_index = self.get_index_below_selected_cell()
-            # move to it (finishing editing in the process)
-            self.ui.data_view.setCurrentIndex(new_index)
-
-    def clear_selected_cells(self):
-        """Clear contents of selected cells."""
-        for index in self.selection.selectedIndexes():
-            self.data_model.setData(index, "", skip_update=True)
-        # signal that ALL values may have changed using an invalid index
-        # this can be MUCH quicker than emitting signals for each cell
-        self.data_model.dataChanged.emit(QtCore.QModelIndex(), QtCore.QModelIndex())
-        # recalculate computed values once
-        self.data_model.recalculate_all_columns()
-
-    def get_index_below_selected_cell(self):
-        """Get index directly below the selected cell."""
-        return self.ui.data_view.moveCursor(
-            self.ui.data_view.MoveDown, QtCore.Qt.NoModifier
-        )
-
-    def copy_selected_cells(self):
-        """Copy selected cells to clipboard."""
-
-        # get bounding rectangle coordinates and sizes
-        selection = self.selection.selection().toList()
-        left = min(r.left() for r in selection)
-        width = max(r.right() for r in selection) - left + 1
-        top = min(r.top() for r in selection)
-        height = max(r.bottom() for r in selection) - top + 1
-
-        # fill data from selected indexes, not selected -> NaN
-        data = np.full((height, width), np.nan)
-        for index in self.selection.selectedIndexes():
-            if (value := index.data()) == "":
-                value = np.nan
-            data[index.row() - top, index.column() - left] = value
-
-        # create tab separated values from data, NaN -> empty string, e.g.
-        # 1 2 3
-        # 2   4
-        # 5 5 6
-        text = "\n".join(
-            [
-                "\t".join([str(v) if not np.isnan(v) else "" for v in row])
-                for row in data
-            ]
-        )
-
-        # write TSV text to clipboard
-        self.clipboard.setText(text)
-
-    def paste_cells(self):
-        """Paste cells from clipboard."""
-
-        # get data from clipboard
-        text = self.clipboard.text()
-
-        # create array from tab separated values, "" -> NaN
-        try:
-            data = np.array(
-                [
-                    [float(v) if v != "" else np.nan for v in row.split("\t")]
-                    for row in text.split("\n")
-                ]
+            dialogs.show_warning_dialog(
+                parent=self, msg="You must select a data sheet to perform this action."
             )
-        except ValueError as exc:
-            self.ui.statusbar.showMessage(
-                f"Error pasting from clipboard: {exc}", timeout=MSG_TIMEOUT
+            return None
+
+    def _on_plot(self) -> Optional[PlotTab]:
+        """Return the current tab if it is a plot else display warning."""
+        if type(tab := self.ui.tabWidget.currentWidget()) == PlotTab:
+            return tab
+        else:
+            dialogs.show_warning_dialog(
+                parent=self, msg="You must select a plot to perform this action."
             )
-            return
+            return None
 
-        # get current coordinates and data size
-        current_index = self.ui.data_view.currentIndex()
-        start_row, start_column = current_index.row(), current_index.column()
-        height, width = data.shape
-
-        # extend rows and columns if necessary
-        last_table_column = self.data_model.columnCount() - 1
-        if (last_data_column := start_column + width - 1) > last_table_column:
-            for _ in range(last_data_column - last_table_column):
-                self.add_column()
-        last_table_row = self.data_model.rowCount() - 1
-        if (last_data_row := start_row + height - 1) > last_table_row:
-            for _ in range(last_data_row - last_table_row):
-                self.add_row()
-
-        # write clipboard data to data model
-        it = np.nditer(data, flags=["multi_index"])
-        for value in it:
-            row, column = it.multi_index
-            self.data_model.setData(
-                self.data_model.createIndex(row + start_row, column + start_column),
-                value,
-                skip_update=True,
+    def _on_plot_or_multiplot(self) -> Optional[PlotTab | MultiPlotTab]:
+        """Return the current tab if it is a plot else display warning."""
+        if type(tab := self.ui.tabWidget.currentWidget()) in (PlotTab, MultiPlotTab):
+            return tab
+        else:
+            dialogs.show_warning_dialog(
+                parent=self,
+                msg="You must select a plot or multiplot to perform this action.",
             )
+            return None
 
-        # signal that values have changed
-        self.data_model.dataChanged.emit(
-            self.data_model.createIndex(start_row, start_column),
-            self.data_model.createIndex(
-                start_row + height - 1, start_column + width - 1
-            ),
-        )
-        # recalculate computed values once
-        self.data_model.recalculate_all_columns()
-        # reset current index and focus
-        self.ui.data_view.setCurrentIndex(current_index)
-        self.ui.data_view.setFocus()
+    def add_column(self):
+        """Add a column to the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.add_column()
 
-    def selection_changed(self, selected, deselected):
-        """Handle selectionChanged events in the data view.
+    def add_calculated_column(self):
+        """Add a calculated column to the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.add_calculated_column()
 
-        When the selection is changed, the column index of the left-most cell in
-        the first selection is used to identify the column name and the
-        mathematical expression that is used to calculate the column values.
-        These values are used to update the column information in the user
-        interface.
+    def add_row(self):
+        """Add a row to the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.add_row()
+
+    def remove_selected_columns(self):
+        """Remove a column from the current data sheet."""
+        msgs = []
+        if current_tab := self._on_data_sheet():
+            selected_labels = current_tab.get_selected_column_labels()
+
+            # find associated plots
+            plot_titles = self.get_plots_which_use_columns(current_tab, selected_labels)
+            if plot_titles:
+                titles = [f"'{plot}'" for plot in plot_titles]
+                msgs.append(f"This column is used by plots {', '.join(titles)}.")
+
+            # find associated calculated columns
+            column_names = self.get_columns_which_use_columns(
+                current_tab, selected_labels
+            )
+            if column_names:
+                names = [f"'{col}'" for col in column_names]
+                msgs.append(
+                    f"This column is used by calculated columns {', '.join(names)}."
+                )
+
+            if msgs:
+                msgs.insert(
+                    0,
+                    "This column can only be removed when it is unused. Please remove the following items first.",
+                )
+                dialogs.show_warning_dialog(parent=self, msg=" ".join(msgs))
+            else:
+                current_tab.remove_selected_columns()
+
+    def get_plots_which_use_columns(
+        self, sheet: DataSheet, columns: list[str]
+    ) -> list[str]:
+        """Get plot titles which use one of the supplied columns.
+
+        Check which plots use one of the supplied columns and return their
+        titles. This method should be called with the column _labels_, not their
+        _names_.
 
         Args:
-            selected: QItemSelection containing the newly selected events.
-            deselected: QItemSelection containing previously selected, and now
-            deselected, items.
+            sheet (DataSheet): the DataSheet containing the columns.
+            columns (list[str]): a list of column labels.
+
+        Returns:
+            list[str]: a list of plot titles that use one of the columns.
         """
-        if not selected.isEmpty():
-            self.ui.nameLabel.setEnabled(True)
-            self.ui.name_edit.setEnabled(True)
-            first_selection = selected.first()
-            col_idx = first_selection.left()
-            self._selected_col_idx = col_idx
-            self.ui.name_edit.setText(self.data_model.get_column_name(col_idx))
-            self.ui.formula_edit.setText(self.data_model.get_column_expression(col_idx))
-            if self.data_model.is_calculated_column(col_idx):
-                self.ui.formulaLabel.setEnabled(True)
-                self.ui.formula_edit.setEnabled(True)
-            else:
-                self.ui.formulaLabel.setEnabled(False)
-                self.ui.formula_edit.setEnabled(False)
-        else:
-            self.ui.nameLabel.setEnabled(False)
-            self.ui.name_edit.clear()
-            self.ui.name_edit.setEnabled(False)
-            self.ui.formulaLabel.setEnabled(False)
-            self.ui.formula_edit.clear()
-            self.ui.formula_edit.setEnabled(False)
+        data_model = sheet.model.data_model
+        plot_titles = []
+        for idx in range(self.ui.tabWidget.count()):
+            tab = self.ui.tabWidget.widget(idx)
+            if type(tab) == PlotTab and tab.model.uses(data_model, columns):
+                plot_titles.append(tab.name)
+        return plot_titles
+
+    def get_columns_which_use_columns(
+        self, sheet: DataSheet, columns: list[str]
+    ) -> list[str]:
+        """Get column names which use any of the supplied columns.
+
+        Check which columns use any of the supplied other columns and return
+        their names. This method should be called with the column _labels_, not
+        their _names_. Only checks other columns, so if 'b' uses 'a', and we ask
+        'who uses a or b', do _not_ return 'b'.
+
+        Args:
+            sheet (DataSheet): the DataSheet containing the columns.
+            columns (list[str]): a list of column labels.
+
+        Returns:
+            list[str]: a list of column names which use any of the columns.
+        """
+        column_names = []
+        for idx in range(sheet.model.columnCount()):
+            # only check other columns
+            if sheet.model.columnLabel(idx) not in columns:
+                if sheet.model.columnUses(idx, columns):
+                    column_names.append(sheet.model.columnName(idx))
+        return column_names
+
+    def remove_row(self):
+        """Remove a row from the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.remove_selected_row()
+
+    def clear_selected_cells(self):
+        """Clear the contents of selected cells in the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.clear_selected_cells()
+
+    def copy_selected_cells(self):
+        """Copy selected cells in the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.copy_selected_cells()
+
+    def paste_cells(self):
+        """Paste selected cells into the current data sheet."""
+        if tab := self._on_data_sheet():
+            tab.paste_cells()
 
     def tab_changed(self, idx):
         """Handle currentChanged events of the tab widget.
@@ -465,128 +393,9 @@ class Application(QtCore.QObject):
         Args:
             idx: an integer index of the tab.
         """
-        tab = self.ui.tabWidget.widget(idx).code
-        if type(tab) == PlotTab:
-            tab.update_plot()
-
-    def update_all_plots(self):
-        """Update all plot tabs.
-
-        Update all plots to reflect any changes to the data that might have
-        occured.
-        """
-        for idx in range(self.ui.tabWidget.count()):
-            self.update_plot_tab(idx)
-
-    def add_column(self):
-        """Add column to data model and select it."""
-        col_index = self.data_model.columnCount()
-        self.data_model.insertColumn(col_index)
-        self.ui.data_view.selectColumn(col_index)
-        self.ui.name_edit.selectAll()
-        self.ui.name_edit.setFocus()
-
-    def add_calculated_column(self):
-        """Add a calculated column to data model and select it."""
-        col_index = self.data_model.columnCount()
-        self.data_model.insert_calculated_column(col_index)
-        self.ui.data_view.selectColumn(col_index)
-        self.ui.name_edit.selectAll()
-        self.ui.name_edit.setFocus()
-
-    def add_row(self):
-        """Add row to data model."""
-        self.data_model.insertRow(self.data_model.rowCount())
-
-    def remove_column(self):
-        """Remove selected column(s) from data model."""
-        selected_columns = [s.column() for s in self.selection.selectedColumns()]
-        if selected_columns:
-            # Remove columns in reverse order to avoid index shifting during
-            # removal. WIP: It would be more efficient to merge ranges of
-            # contiguous columns since they can be removed in one fell swoop.
-            selected_columns.sort(reverse=True)
-            for column in selected_columns:
-                self.data_model.removeColumn(column)
-        else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select one or more columns.")
-            error_msg.exec()
-
-    def remove_row(self):
-        """Remove selected row(s) from data model."""
-        selected_rows = [s.row() for s in self.selection.selectedRows()]
-        if selected_rows:
-            # Remove rows in reverse order to avoid index shifting during
-            # removal. WIP: It would be more efficient to merge ranges of
-            # contiguous rows since they can be removed in one fell swoop.
-            selected_rows.sort(reverse=True)
-            for row in selected_rows:
-                self.data_model.removeRow(row)
-        else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select one or more rows.")
-            error_msg.exec()
-
-    def rename_column(self, name):
-        """Rename a column.
-
-        Renames the currently selected column.
-
-        Args:
-            name: a QString containing the new name.
-        """
-        if self._selected_col_idx is not None:
-            # Do not allow empty names or duplicate column names
-            if name and name not in self.data_model.get_column_names():
-                old_name = self.data_model.get_column_name(self._selected_col_idx)
-                new_name = self.data_model.rename_column(self._selected_col_idx, name)
-                self.rename_plot_variables(old_name, new_name)
-                # set the normalized name to the name edit field
-                self.ui.name_edit.setText(new_name)
-
-    def rename_plot_variables(self, old_name, new_name):
-        """Rename any plotted variables
-
-        Args:
-            old_name: the name that may be currently in use.
-            new_name: the new column name
-        """
-        num_tabs = self.ui.tabWidget.count()
-        tabs = [self.ui.tabWidget.widget(i).code for i in range(num_tabs)]
-        for tab in tabs:
-            if type(tab) == PlotTab:
-                needs_info_update = False
-                for var in ["x_var", "y_var", "x_err_var", "y_err_var"]:
-                    if getattr(tab, var) == old_name:
-                        needs_info_update = True
-                        setattr(tab, var, new_name)
-                        # The following creates problems with partial matches
-                        # For now, the model function is *not* updated
-                        #
-                        # if var == "x_var":
-                        # update model expression and model object
-                        # expr = tab.model_func.text()
-                        # new_expr = expr.replace(old_name, new_name)
-                        # tab.model_func.setText(new_expr)
-                        # tab.get_params_and_update_model()
-                        if var == "y_var":
-                            # update y-label for model expression
-                            tab.update_function_label(new_name)
-                if needs_info_update:
-                    tab.update_info_box()
-
-    def update_column_expression(self, expression):
-        """Update a column expression.
-
-        Tries to recalculate the values of the currently selected column in the
-        data model.
-
-        Args:
-            expression: a QString containing the mathematical expression.
-        """
-        if self._selected_col_idx is not None:
-            self.data_model.update_column_expression(self._selected_col_idx, expression)
+        tab = self.ui.tabWidget.widget(idx)
+        if type(tab) == PlotTab or type(tab) == MultiPlotTab:
+            tab.refresh_ui()
 
     def ask_and_create_plot_tab(self):
         """Opens a dialog and create a new tab with a plot.
@@ -595,78 +404,370 @@ class Application(QtCore.QObject):
         to plot. When the dialog is accepted, creates a new tab containing the
         requested plot.
         """
-        dialog = self.create_plot_dialog()
-        if dialog.exec() == QtWidgets.QDialog.Accepted:
-            x_var = dialog.x_axis_box.currentText()
-            y_var = dialog.y_axis_box.currentText()
-            x_err = dialog.x_err_box.currentText()
-            y_err = dialog.y_err_box.currentText()
-            if x_var and y_var:
-                self.create_plot_tab(x_var, y_var, x_err, y_err)
+        if data_sheet := self._on_data_sheet():
+            dialog = self.create_plot_dialog(data_sheet)
+            if dialog.exec() == QtWidgets.QDialog.Accepted:
+                labels = [None] + data_sheet.model.columnLabels()
+                x_var = labels[dialog.ui.x_axis_box.currentIndex()]
+                y_var = labels[dialog.ui.y_axis_box.currentIndex()]
+                x_err = labels[dialog.ui.x_err_box.currentIndex()]
+                y_err = labels[dialog.ui.y_err_box.currentIndex()]
+                if x_var and y_var:
+                    self.create_plot_tab(data_sheet, x_var, y_var, x_err, y_err)
+                else:
+                    dialogs.show_error_dialog(
+                        parent=self,
+                        msg="You must select columns for both x and y values.",
+                    )
 
-    def create_plot_tab(self, x_var, y_var, x_err=None, y_err=None):
+    def create_plot_tab(
+        self, data_sheet, x_var, y_var, x_err=None, y_err=None
+    ) -> PlotTab:
         """Create a new tab with a plot.
 
         After creating the plot, the tab containing the plot is focused.
 
         Args:
+            data_sheet (DataSheet): the sheet containing the data.
             x_var: the name of the variable to plot on the x-axis.
             y_var: the name of the variable to plot on the y-axis.
             x_err: the name of the variable to use for the x-error bars.
             y_err: the name of the variable to use for the y-error bars.
         """
-        plot_tab = PlotTab(self.data_model, main_app=self)
-        idx = self.ui.tabWidget.addTab(plot_tab.ui, f"Plot {self._plot_num}")
         self._plot_num += 1
-        plot_tab.create_plot(x_var, y_var, x_err, y_err)
-
-        self.ui.tabWidget.setCurrentIndex(idx)
-
-    def create_plot_dialog(self):
-        """Create a dialog to request variables for creating a plot."""
-        create_dialog = QUiLoader().load(
-            resources.path("tailor.resources", "create_plot_dialog.ui"),
-            self.ui,
+        name = f"Plot {self._plot_num}"
+        plot_tab = PlotTab(
+            main_window=self,
+            name=name,
+            id=self._plot_num,
+            data_sheet=data_sheet,
+            x_col=x_var,
+            y_col=y_var,
+            x_err_col=x_err,
+            y_err_col=y_err,
         )
-        choices = [None] + self.data_model.get_column_names()
-        create_dialog.x_axis_box.addItems(choices)
-        create_dialog.y_axis_box.addItems(choices)
-        create_dialog.x_err_box.addItems(choices)
-        create_dialog.y_err_box.addItems(choices)
-        return create_dialog
+        idx = self.ui.tabWidget.addTab(plot_tab, name)
+        self.ui.tabWidget.setCurrentIndex(idx)
+        self.mark_project_dirty()
+        return plot_tab
 
-    def close_tab(self, idx):
-        """Close a plot tab.
-
-        Closes the requested tab, but do not close the table view.
+    def add_plot_tab(self, plot_tab: PlotTab) -> None:
+        """Create a new tab for the supplied plot.
 
         Args:
-            idx: an integer tab index
+            plot_tab (PlotTab): the plot for which to create a new tab.
         """
-        if idx > 0:
-            # Don't close the table view, only close plot tabs
-            if self.confirm_close_dialog("Are you sure you want to close this plot?"):
-                self.ui.tabWidget.removeTab(idx)
+        self._plot_num += 1
+        # create fresh plot id
+        plot_tab.id = self._plot_num
+        idx = self.ui.tabWidget.addTab(plot_tab, plot_tab.name)
+        self.ui.tabWidget.setCurrentIndex(idx)
+        self.mark_project_dirty()
 
-    def clear_all(self):
+    def create_plot_dialog(self, data_sheet: DataSheet) -> QtWidgets.QDialog:
+        """Create a dialog to request variables for creating a plot."""
+
+        class Dialog(QtWidgets.QDialog):
+            def __init__(self, parent):
+                super().__init__(parent=parent)
+                self.ui = Ui_CreatePlotDialog()
+                self.ui.setupUi(self)
+
+        choices = [None] + data_sheet.model.columnNames()
+        create_dialog = Dialog(parent=self)
+        create_dialog.ui.x_axis_box.addItems(choices)
+        create_dialog.ui.y_axis_box.addItems(choices)
+        create_dialog.ui.x_err_box.addItems(choices)
+        create_dialog.ui.y_err_box.addItems(choices)
+        return create_dialog
+
+    def close_tab_with_children(self, close_idx):
+        """Close a tab.
+
+        Closes the requested tab with all children (related plots and
+        multiplots).
+
+        Args:
+            close_idx: an integer tab index
+        """
+        close_tab = TabbedWidget(
+            widget=self.ui.tabWidget.widget(close_idx), index=close_idx
+        )
+        if type(close_tab.widget) == DataSheet:
+            # data sheets need special attention
+            if self._count_data_sheets() == 1:
+                # there's just the one data sheet, close all and start new
+                # project
+                if self.confirm_close_dialog(
+                    "Are you sure you want to close the only data sheet and start a new project?"
+                ):
+                    self.clear_all(add_sheet=True)
+            else:
+                tabs = self.get_associated_tabs(close_tab)
+                plot_titles = [p.widget.name for p in tabs]
+                if self.confirm_close_dialog(
+                    f"Are you sure you want to close this data sheet and all associated plots ({', '.join(plot_titles)})?"
+                ):
+                    self.close_tabs([close_tab] + tabs)
+        elif type(close_tab.widget) == PlotTab:
+            tabs = self.get_associated_tabs(close_tab)
+            multiplot_titles = [p.widget.name for p in tabs]
+            if self.confirm_close_dialog(
+                f"Are you sure you want to close this plot and associated multiplots ({', '.join(multiplot_titles)})?"
+            ):
+                self.close_tabs([close_tab] + tabs)
+        elif type(close_tab.widget) == MultiPlotTab:
+            if self.confirm_close_dialog("Are you sure you want to close this plot?"):
+                self.close_tabs([close_tab])
+
+    def get_associated_tabs(self, tab: TabbedWidget) -> list[TabbedWidget]:
+        """Get all tabs associated with a data sheet or plot.
+
+        Args:
+            tab (TabbedWidget): the tab for which to get associated tabs.
+
+        Raises:
+            NotImplementedError: only implemented for DataSheet and PlotTab.
+
+        Returns:
+            list[TabbedWidget]: a list of associated tabs.
+        """
+        if type(tab.widget) == DataSheet:
+            # find associated plots
+            plots = self.get_associated_plots(tab.widget)
+        elif type(tab.widget) == PlotTab:
+            plots = [tab]
+        else:
+            raise NotImplementedError(
+                f"Associated tabs for type {type(tab)} not implemented."
+            )
+        multiplots = []
+        for plot in plots:
+            multiplots.extend(self.get_associated_multiplots(plot.widget))
+        return plots + multiplots
+
+    def close_tabs(self, tabs: list[TabbedWidget]) -> None:
+        """Close tabs using a list of tabbed widgets.
+
+        Args:
+            close_idxs (list[TabbedWidget]): a list of tabbed widgets (sheets,
+                plots or multiplots).
+        """
+        close_idxs = [t.index for t in tabs]
+        # close from right to left to avoid jumping indexes
+        for idx in sorted(close_idxs, reverse=True):
+            self.ui.tabWidget.removeTab(idx)
+        self.mark_project_dirty()
+
+    def get_associated_plots(self, data_sheet: DataSheet) -> list[TabbedWidget]:
+        """Get plots associated with a data sheet."""
+        plots = []
+        for idx in range(self.ui.tabWidget.count()):
+            tab = self.ui.tabWidget.widget(idx)
+            if type(tab) == PlotTab and tab.data_sheet == data_sheet:
+                plots.append(TabbedWidget(index=idx, widget=tab))
+        return plots
+
+    def get_associated_multiplots(self, plot: PlotTab) -> list[TabbedWidget]:
+        """Get multiplots associated with a plot."""
+        multiplots = []
+        for idx in range(self.ui.tabWidget.count()):
+            tab = self.ui.tabWidget.widget(idx)
+            if type(tab) == MultiPlotTab and tab.model.uses_plot(plot):
+                multiplots.append(TabbedWidget(index=idx, widget=tab))
+        return multiplots
+
+    def get_data_sheets(self) -> list[DataSheet]:
+        """Get a list of the data sheets.
+
+        Returns:
+            list[DataSheet]: a list of all data sheets
+        """
+        widgets = [
+            self.ui.tabWidget.widget(idx) for idx in range(self.ui.tabWidget.count())
+        ]
+        return [widget for widget in widgets if type(widget) == DataSheet]
+
+    def get_plots(self) -> list[PlotTab]:
+        """Get a list of all plots.
+
+        Returns:
+            list[PlotTab]: a list of all plots.
+        """
+        widgets = [
+            self.ui.tabWidget.widget(idx) for idx in range(self.ui.tabWidget.count())
+        ]
+        return [widget for widget in widgets if type(widget) == PlotTab]
+
+    def _count_data_sheets(self):
+        """Count the number of data sheets."""
+        is_data_sheet = [
+            type(self.ui.tabWidget.widget(idx)) == DataSheet
+            for idx in range(self.ui.tabWidget.count())
+        ]
+        return sum(is_data_sheet)
+
+    def clear_all(self, add_sheet=False):
         """Clear all program state.
 
-        Closes all tabs and data.
+        Closes all tabs and data, optionally creating a new empty data sheet.
+
+        Args:
+            add_sheet (bool, optional): Should add a new data sheet be added.
+                Defaults to False.
         """
-        for idx in range(self.ui.tabWidget.count(), 0, -1):
-            # close all plot tabs in reverse order, they are no longer valid
-            self.ui.tabWidget.removeTab(idx)
-        self._plot_num = 1
-        self.data_model = DataModel(main_app=self)
-        self._set_view_and_selection_model()
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
+        self.ui.tabWidget.clear()
+        self.ui.tabWidget.setTabsClosable(True)
+
+        self._plot_num = 0
+        self._sheet_num = 0
         self._set_project_path(None)
+        if add_sheet:
+            sheet = self.add_data_sheet()
+            # force updating column information in UI
+            sheet.selection_changed()
         self.mark_project_dirty(False)
+
+    def add_data_sheet(self, new_sheet: DataSheet | None = None) -> DataSheet:
+        """Add a new data sheet to the project.
+
+        If a data sheet is supplied, that one is added as a new sheet.
+
+        Args:
+            new_sheet (DataSheet | None, optional): a prebuilt data sheet.
+                Defaults to None.
+
+        Returns:
+            DataSheet: the newly added data sheet.
+        """
+        self._sheet_num += 1
+        name = f"Sheet {self._sheet_num}"
+        if new_sheet is None:
+            new_sheet = DataSheet(name=name, id=self._sheet_num, main_window=self)
+        else:
+            new_sheet.name = name
+            new_sheet.id = self._sheet_num
+        idx = self.ui.tabWidget.addTab(new_sheet, name)
+        self.ui.tabWidget.setCurrentIndex(idx)
+        new_sheet.ui.data_view.setFocus()
+        self.mark_project_dirty()
+        return new_sheet
+
+    def duplicate_data_sheet(self) -> None:
+        """Duplicate the current data sheet.
+
+        The data sheet is duplicated by leveraging code used to managing project
+        files.
+        """
+        if current_sheet := self._on_data_sheet():
+            model = project_files.save_data_sheet(current_sheet)
+            new_sheet = project_files.load_data_sheet(app=self, model=model)
+            self.add_data_sheet(new_sheet)
+
+    def duplicate_data_sheet_with_plots(self) -> None:
+        """Duplicate the current data sheet and associated plots.
+
+        The data sheet and plots are duplicated by leveraging code used to managing project
+        files. The plots use the new data sheet as the data source.
+        """
+        if current_sheet := self._on_data_sheet():
+            model = project_files.save_data_sheet(current_sheet)
+            new_sheet = project_files.load_data_sheet(app=self, model=model)
+            self.add_data_sheet(new_sheet)
+            idx = self.ui.tabWidget.currentIndex()
+            for plot in self.get_associated_plots(current_sheet):
+                model = project_files.save_plot(plot.widget)
+                model.name += f" ({new_sheet.name})"
+                new_plot = project_files.load_plot(
+                    project=self, model=model, data_sheet=new_sheet
+                )
+                self.add_plot_tab(new_plot)
+            self.ui.tabWidget.setCurrentIndex(idx)
+
+    def duplicate_plot(self) -> None:
+        """Duplicate the current plot.
+
+        The plot is duplicated by leveraging code used to managing project files.
+        """
+        if current_plot := self._on_plot():
+            model = project_files.save_plot(current_plot)
+            model.name = f"Plot {self._plot_num + 1}"
+            new_plot = project_files.load_plot(
+                project=self, model=model, data_sheet=current_plot.data_sheet
+            )
+            self.add_plot_tab(new_plot)
+
+    def create_multiplot(self) -> MultiPlotTab | None:
+        if plot := self._on_plot():
+            name = f"Plot {self._plot_num + 1}"
+            multiplot = MultiPlotTab(
+                main_window=self,
+                name=name,
+                id=-1,
+                x_label=plot.model.x_label,
+                y_label=plot.model.y_label,
+            )
+            multiplot.add_plot(plot)
+            self.add_plot_tab(multiplot)
+            return multiplot
+
+    def change_plot_data_source(self) -> None:
+        """Change the data source of a plot.
+
+        When you've added a plot to Sheet 1 and you want to have the same plot
+        for Sheet 2, first duplicate the plot and then change the data source to
+        Sheet 2.
+        """
+        if plot := self._on_plot():
+            data_sheets = self.get_data_sheets()
+            dialog = DataSourceDialog(parent=self, plot=plot, data_sheets=data_sheets)
+            if dialog.exec() == QtWidgets.QDialog.Accepted:
+                x_col_name = dialog.ui.x_box.currentText()
+                y_col_name = dialog.ui.y_box.currentText()
+                if x_col_name == "" or y_col_name == "":
+                    dialogs.show_warning_dialog(
+                        parent=self, msg="You must select both x and y axes."
+                    )
+                else:
+                    x_err_col_name = dialog.ui.x_err_box.currentText()
+                    y_err_col_name = dialog.ui.y_err_box.currentText()
+                    plot.change_data_source(
+                        data_sheet=data_sheets[
+                            dialog.ui.data_source_box.currentIndex()
+                        ],
+                        x_col_name=x_col_name,
+                        x_err_col_name=x_err_col_name,
+                        y_col_name=y_col_name,
+                        y_err_col_name=y_err_col_name,
+                    )
+
+    def rename_data_sheet(self) -> None:
+        if sheet := self._on_data_sheet():
+            self._do_rename_widget(sheet)
+
+    def rename_plot(self) -> None:
+        if plot := self._on_plot_or_multiplot():
+            self._do_rename_widget(plot)
+
+    def _do_rename_widget(self, widget) -> None:
+        class Dialog(QtWidgets.QDialog):
+            def __init__(self, parent):
+                super().__init__(parent=parent)
+                self.ui = Ui_RenameDialog()
+                self.ui.setupUi(self)
+
+        dialog = Dialog(parent=self)
+        dialog.ui.name_box.setText(widget.name)
+        if dialog.exec() == QtWidgets.QDialog.Accepted:
+            widget.name = dialog.ui.name_box.text()
+            tab_idx = self.ui.tabWidget.indexOf(widget)
+            self.ui.tabWidget.setTabText(tab_idx, widget.name)
+            self.mark_project_dirty()
 
     def new_project(self):
         """Close the current project and open a new one."""
         if self.confirm_project_close_dialog():
-            self.clear_all()
+            self.clear_all(add_sheet=True)
 
     def save_project_or_dialog(self):
         """Save project or present a dialog.
@@ -682,11 +783,7 @@ class Application(QtCore.QObject):
 
     def save_as_project_dialog(self):
         """Present save project dialog and save project."""
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self.ui,
-            dir=self.get_recent_directory(),
-            filter="Tailor project files (*.tlr);;All files (*)",
-        )
+        filename = self.get_save_filename_dialog(filter=TAILOR_PROJECT_FILTER)
         if filename:
             self.set_recent_directory(pathlib.Path(filename).parent)
             self.save_project(filename)
@@ -701,52 +798,62 @@ class Application(QtCore.QObject):
             filename: a string containing the filename to save to.
         """
         try:
-            save_obj = {
-                "application": __name__,
-                "version": __version__,
-                "data_model": {},
-                "tabs": [],
-                "plot_num": self._plot_num,
-                "current_tab": self.ui.tabWidget.currentIndex(),
-            }
-
-            # save data for the data model
-            self.data_model.save_state_to_obj(save_obj["data_model"])
-
-            for idx in range(1, self.ui.tabWidget.count()):
-                # save data for each tab
-                tab = self.ui.tabWidget.widget(idx).code
-                tab_data = {"label": self.ui.tabWidget.tabBar().tabText(idx)}
-                tab.save_state_to_obj(tab_data)
-                save_obj["tabs"].append(tab_data)
+            project_files.save_project_to_path(self, filename)
         except Exception as exc:
-            self._show_exception(
-                exc,
+            dialogs.show_exception(
+                parent=self,
+                exc=exc,
                 title="Unable to save project.",
                 text="This is a bug in the application.",
             )
+        else:
+            # remember filename for subsequent call to "Save"
+            self._set_project_path(filename)
 
-        # save data to disk
-        with gzip.open(filename, "w") as f:
-            f.write(json.dumps(save_obj).encode("utf-8"))
+            self.update_recent_files(filename)
+            self.mark_project_dirty(False)
 
-        # remember filename for subsequent call to "Save"
-        self._set_project_path(filename)
-
-        self.update_recent_files(filename)
-        self.mark_project_dirty(False)
-
-    def open_project_dialog(self):
+    def open_project_dialog(self, event=None, filename=None):
         """Present open project dialog and load project."""
         if self.confirm_project_close_dialog():
-            filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self.ui,
-                dir=self.get_recent_directory(),
-                filter="Tailor project files (*.tlr);;All files (*)",
-            )
+            if filename is None:
+                filename = self.get_open_filename_dialog(filter=TAILOR_PROJECT_FILTER)
             if filename:
                 self.set_recent_directory(pathlib.Path(filename).parent)
                 self.load_project(filename)
+
+    def get_open_filename_dialog(self, filter):
+        """Get a filename from a 'Open File' dialog.
+
+        Args:
+            filter (str): available options for filtering filenames
+
+        Returns:
+            str|None: path to the file or None.
+        """
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self,
+            dir=self.get_recent_directory(),
+            filter=filter,
+        )
+
+        return filename
+
+    def get_save_filename_dialog(self, filter):
+        """Get a filename from a 'Save File' dialog.
+
+        Args:
+            filter (str): available options for filtering filenames
+
+        Returns:
+            str|None: path to the file or None.
+        """
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self,
+            dir=self.get_recent_directory(),
+            filter=filter,
+        )
+        return filename
 
     def get_recent_directory(self):
         """Get recent directory from config file.
@@ -783,7 +890,7 @@ class Application(QtCore.QObject):
         else:
             msg = "This action will lose any changes in the current project. Discard the current project, or cancel?"
             button = QtWidgets.QMessageBox.warning(
-                self.ui,
+                self,
                 "Please confirm",
                 msg,
                 buttons=QtWidgets.QMessageBox.Save
@@ -816,7 +923,7 @@ class Application(QtCore.QObject):
         if msg is None:
             msg = "You might lose changes."
         button = QtWidgets.QMessageBox.warning(
-            self.ui,
+            self,
             "Please confirm",
             msg,
             buttons=QtWidgets.QMessageBox.Close | QtWidgets.QMessageBox.Cancel,
@@ -837,51 +944,37 @@ class Application(QtCore.QObject):
             filename: a string containing the filename to load from.
         """
         try:
-            with gzip.open(filename) as f:
-                save_obj = json.loads(f.read().decode("utf-8"))
-
-            if save_obj["application"] == __name__:
-                self.clear_all()
-
-                # remember filename for subsequent call to "Save"
-                self._set_project_path(filename)
-
-                # load data for the data model
-                self.data_model.load_state_from_obj(save_obj["data_model"])
-
-                # create a tab and load data for each plot
-                for tab_data in save_obj["tabs"]:
-                    plot_tab = PlotTab(self.data_model, main_app=self)
-                    self.ui.tabWidget.addTab(plot_tab.ui, tab_data["label"])
-                    plot_tab.load_state_from_obj(tab_data)
-                self._plot_num = save_obj["plot_num"]
-                self.ui.tabWidget.setCurrentIndex(save_obj["current_tab"])
+            self.clear_all()
+            project_files.load_project_from_path(self, filename)
         except Exception as exc:
-            self._show_exception(
-                exc,
+            dialogs.show_exception(
+                parent=self,
+                exc=exc,
                 title="Unable to open project.",
                 text="This can happen if the file is corrupt or if there is a bug in the application.",
             )
         else:
+            # remember filename for subsequent call to "Save"
+            self._set_project_path(filename)
             self.update_recent_files(filename)
+            # rebuild UI on all tabs
+            current_idx = self.ui.tabWidget.currentIndex()
+            for idx in range(self.ui.tabWidget.count()):
+                self.ui.tabWidget.setCurrentIndex(idx)
+            self.ui.tabWidget.setCurrentIndex(current_idx)
+            # mark project as not dirty (clean)
             self.mark_project_dirty(False)
-            self.ui.statusbar.showMessage(
-                "Finished loading project.", timeout=MSG_TIMEOUT
-            )
 
     def export_csv(self):
         """Export all data as CSV.
 
         Export all data in the table as a comma-separated values file.
         """
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            parent=self.ui,
-            dir=self.get_recent_directory(),
-            filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
-        )
-        if filename:
-            self.set_recent_directory(pathlib.Path(filename).parent)
-            self.data_model.write_csv(filename)
+        if data_sheet := self._on_data_sheet():
+            filename = self.get_save_filename_dialog(filter=CSV_FILE_FILTER)
+            if filename:
+                self.set_recent_directory(pathlib.Path(filename).parent)
+                data_sheet.model.export_csv(filename)
 
     def import_csv(self):
         """Import data from a CSV file.
@@ -889,61 +982,67 @@ class Application(QtCore.QObject):
         After confirmation, erase all data and import from a comma-separated
         values file.
         """
-        if self.confirm_project_close_dialog():
-            filename, _ = QtWidgets.QFileDialog.getOpenFileName(
-                parent=self.ui,
-                dir=self.get_recent_directory(),
-                filter="CSV files (*.csv);;Text files (*.txt);;All files (*)",
-            )
-            if filename:
-                self.set_recent_directory(pathlib.Path(filename).parent)
-                dialog = CSVFormatDialog(filename, parent=self.ui)
-                if dialog.ui.exec() == QtWidgets.QDialog.Accepted:
-                    (
-                        delimiter,
-                        decimal,
-                        thousands,
-                        header,
-                        skiprows,
-                    ) = dialog.get_format_parameters()
-                    self._do_import_csv(
-                        filename,
-                        delimiter,
-                        decimal,
-                        thousands,
-                        header,
-                        skiprows,
-                    )
+        if data_sheet := self._on_data_sheet():
+            if (
+                not data_sheet.model.is_empty()
+                and not self.confirm_project_close_dialog()
+            ):
+                return
+            else:
+                filename = self.get_open_filename_dialog(filter=CSV_FILE_FILTER)
+                if filename:
+                    self.set_recent_directory(pathlib.Path(filename).parent)
+                    dialog = CSVFormatDialog(filename, parent=self)
+                    if dialog.exec() == QtWidgets.QDialog.Accepted:
+                        format_parameters = dialog.get_format_parameters()
+                        self._do_import_csv(data_sheet, filename, format_parameters)
 
-    def _do_import_csv(self, filename, delimiter, decimal, thousands, header, skiprows):
+    def _do_import_csv(
+        self, data_sheet: DataSheet, filename: str, format: FormatParameters
+    ) -> None:
         """Import CSV data from file.
 
         Args:
+            data_sheet (DataSheet): the data sheet into which the data will be
+                written.
             filename: a string containing the path to the CSV file
-            delimiter: a string containing the column delimiter
-            decimal: a string containing the decimal separator
-            thousands: a string containing the thousands separator
-            header: an integer with the row number containing the column names,
-                or None.
-            skiprows: an integer with the number of rows to skip at start of file
+            format (FormatParameters): CSV format parameters
         """
-        if self.data_model.is_empty():
-            # when the data only contains empty cells
-            self.clear_all()
-            import_func = self.data_model.read_csv
+        if data_sheet.model.is_empty():
+            # when the data only contains empty cells, overwrite all columns
+            data_sheet.model.import_csv(filename, format)
         else:
-            import_func = self.data_model.read_and_concat_csv
+            data_sheet.model.merge_csv(filename, format)
+        data_sheet.ui.data_view.setCurrentIndex(data_sheet.model.createIndex(0, 0))
 
-        import_func(
-            filename,
-            delimiter=delimiter,
-            decimal=decimal,
-            thousands=thousands,
-            header=header,
-            skiprows=skiprows,
-        )
-        self.ui.data_view.setCurrentIndex(self.data_model.createIndex(0, 0))
-        self.update_all_plots()
+    def preview_graph(self):
+        if plot := self._on_plot_or_multiplot():
+
+            class Dialog(QtWidgets.QDialog):
+                def __init__(self, parent):
+                    super().__init__(parent=parent)
+                    self.ui = Ui_PreviewDialog()
+                    self.ui.setupUi(self)
+
+            with tempfile.NamedTemporaryFile(delete=False) as file:
+                try:
+                    plot.export_graph(file, dpi=100)
+                except Exception as exc:
+                    dialogs.show_exception(
+                        parent=self,
+                        exc=exc,
+                        title="Unable to preview graph.",
+                        text="It might help to check your axis labels for invalid LaTeX code.",
+                    )
+                else:
+                    dialog = Dialog(parent=self)
+                    pixmap = QtGui.QPixmap()
+                    pixmap.load(file.name)
+                    dialog.ui.label.setPixmap(pixmap)
+                    dialog.exec()
+                    # delete must be False on Windows, so remove manually
+                    file.close()
+                    pathlib.Path(file.name).unlink()
 
     def export_graph(self, suffix):
         """Export a graph to a file.
@@ -954,10 +1053,9 @@ class Application(QtCore.QObject):
         Args:
             suffix: the required suffix of the file.
         """
-        tab = self.ui.tabWidget.currentWidget().code
-        if type(tab) == PlotTab:
+        if plot := self._on_plot_or_multiplot():
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                parent=self.ui,
+                parent=self,
                 dir=self.get_recent_directory(),
                 filter=f"Graphics (*{suffix});;All files (*)",
             )
@@ -966,21 +1064,18 @@ class Application(QtCore.QObject):
                 self.set_recent_directory(path.parent)
                 if path.suffix == suffix:
                     try:
-                        tab.export_graph(path)
+                        plot.export_graph(path)
                     except Exception as exc:
-                        self._show_exception(
-                            exc,
+                        dialogs.show_exception(
+                            parent=self,
+                            exc=exc,
                             title="Unable to export graph.",
                             text="This can happen if there is a bug in the application.",
                         )
                 else:
-                    error_msg = QtWidgets.QMessageBox()
-                    error_msg.setText(f"You didn't select a {suffix} file.")
-                    error_msg.exec()
-        else:
-            error_msg = QtWidgets.QMessageBox()
-            error_msg.setText("You must select a plot tab first.")
-            error_msg.exec()
+                    dialogs.show_error_dialog(
+                        self, f"You didn't select a {suffix} file."
+                    )
 
     def _set_project_path(self, filename):
         """Set window title and project name."""
@@ -998,22 +1093,7 @@ class Application(QtCore.QObject):
             title += f": {pathlib.Path(filename).stem}"
         if self._is_dirty:
             title += "*"
-        self.ui.setWindowTitle(title)
-
-    def _show_exception(self, exc, title, text):
-        """Show a messagebox with detailed exception information.
-
-        Args:
-            exc: the exception.
-            title: short header text.
-            text: longer informative text describing the problem.
-        """
-        msg = QtWidgets.QMessageBox(parent=self.ui)
-        msg.setText(title)
-        msg.setInformativeText(text)
-        msg.setDetailedText(traceback.format_exc())
-        msg.setStyleSheet("QLabel{min-width: 400px;}")
-        msg.exec()
+        self.setWindowTitle(title)
 
     def update_recent_files(self, file=None):
         """Update open recent files list.
@@ -1069,8 +1149,11 @@ class Application(QtCore.QObject):
         self.ui.actionClear_Menu.setEnabled(False)
 
     def open_recent_project_action(self, filename):
-        if self.confirm_project_close_dialog():
-            self.load_project(filename)
+        if not pathlib.Path(filename).is_file():
+            dialogs.show_error_dialog(parent=self, msg="File does not exist.")
+        else:
+            if self.confirm_project_close_dialog():
+                self.load_project(filename)
 
     def check_for_updates(self, silent=False):
         """Check for new releases of Tailor.
@@ -1102,25 +1185,27 @@ class Application(QtCore.QObject):
             # no updates, and asked to be silent
             return
         elif update_link is None:
-            dialog = QtWidgets.QMessageBox(parent=self.ui)
+            dialog = QtWidgets.QMessageBox(parent=self)
             dialog.setText("Updates")
             dialog.setInformativeText(msg)
             dialog.setStyleSheet("QLabel{min-width: 300px;}")
-            dialog.setStandardButtons(dialog.Ok)
+            dialog.setStandardButtons(QtWidgets.QMessageBox.Ok)
             dialog.exec()
         else:
-            dialog = QtWidgets.QMessageBox(parent=self.ui)
+            dialog = QtWidgets.QMessageBox(parent=self)
             dialog.setText("Updates")
             dialog.setInformativeText(msg)
             dialog.setStyleSheet("QLabel{min-width: 300px;}")
-            dialog.setStandardButtons(dialog.Ok | dialog.Cancel)
+            dialog.setStandardButtons(
+                QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
+            )
 
-            dialog.button(dialog.Ok).setText("Download Update")
-            dialog.button(dialog.Cancel).setText("Skip Update")
+            dialog.button(QtWidgets.QMessageBox.Ok).setText("Download Update")
+            dialog.button(QtWidgets.QMessageBox.Cancel).setText("Skip Update")
 
             value = dialog.exec()
             match value:
-                case dialog.Ok:
+                case QtWidgets.QMessageBox.Ok:
                     # if app is in the main event loop, ask to quit so user can
                     # install update
                     QtWidgets.QApplication.instance().quit()
@@ -1128,7 +1213,7 @@ class Application(QtCore.QObject):
                     webbrowser.open(update_link)
                     # if not, return with True to signal that the user wants the update
                     return True
-                case dialog.Cancel:
+                case QtWidgets.QMessageBox.Cancel:
                     return False
                 case default:
                     return None
@@ -1168,9 +1253,7 @@ class Application(QtCore.QObject):
                                 (u for u in asset_urls if "intel.dmg" in u), None
                             ) or next(u for u in asset_urls if ".dmg" in u)
                         case ("Windows", *machine):
-                            download_url = next(
-                                u for u in asset_urls if ".msi" in u
-                            )
+                            download_url = next(u for u in asset_urls if ".msi" in u)
                         case default:
                             # platform not yet supported
                             download_url = None
@@ -1182,18 +1265,51 @@ class Application(QtCore.QObject):
                 download_url = None
             return latest_version, download_url, release_info["html_url"]
 
+    def report_issue(self) -> None:
+        webbrowser.open("https://github.com/davidfokkema/tailor/issues")
 
-def main():
-    """Main entry point."""
-    qapp = QtWidgets.QApplication()
-    app = Application()
-    app.ui.show()
-    # Preflight
-    if not "--no-update-check" in sys.argv:
-        # will check for updates
-        if app.check_for_updates(silent=True):
-            # user wants to install available updates, so quit
-            return
+    def show_documentation(self) -> None:
+        webbrowser.open("https://davidfokkema.github.io/tailor/")
+
+    def show_code_repository(self) -> None:
+        webbrowser.open("https://github.com/davidfokkema/tailor")
+
+
+class Application(QtWidgets.QApplication):
+    def __init__(
+        self, project_path: str | None = None, update_check: bool = True
+    ) -> None:
+        super().__init__()
+
+        self.app = MainWindow(add_sheet=True)
+        self.app.show()
+        # Preflight
+        if update_check:
+            # will check for updates
+            if self.app.check_for_updates(silent=True):
+                # user wants to install available updates, so quit
+                return
+        if project_path and pathlib.Path(project_path).is_file():
+            self.app.open_project_dialog(filename=project_path)
+
+    def event(self, event):
+        if event.type() == QtCore.QEvent.FileOpen:
+            self.app.open_project_dialog(filename=event.file())
+            return True
+        return super().event(event)
+
+
+@click.command()
+@click.argument("project_path", required=False)
+@click.option(
+    "--update-check/--no-update-check", default=True, help="Check for new versions."
+)
+def main(project_path, update_check):
+    """Application for fitting non-linear models to experimental data.
+
+    The path to a project file to open on launch can be supplied as an argument.
+    """
+    qapp = Application(project_path, update_check)
     sys.exit(qapp.exec())
 
 

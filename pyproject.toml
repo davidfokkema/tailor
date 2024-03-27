@@ -1,7 +1,7 @@
 [tool.briefcase]
 project_name = "Tailor"
 bundle = "com.amsphyslab.tailor"
-version = "1.8.0"
+version = "2.0b4"
 url = "https://github.com/davidfokkema/tailor"
 license = "GNU General Public License v3 (GPLv3)"
 author = 'David Fokkema'
@@ -12,22 +12,27 @@ formal_name = "Tailor"
 description = "Explore datasets and fit models."
 icon = "src/tailor/resources/tailor"
 sources = ['src/tailor']
+test_sources = ["tests"]
 requires = [
     'std-nslog',
     'appdirs>=1.4.4,<2.0.0',
-    'tomli>=2.0.1,<3.0.0',
     'tomli_w>=1.0.0,<2.0.0',
     'numpy>=1.22.1,<2.0.0',
-    'pandas>=1.4.0,<2.0.0',
+    'pandas>=2.0.0,<3.0.0',
     'lmfit>=1.0.3,<2.0.0',
     'scipy>=1.8.0,<2.0.0',
     'asteval>=0.9.26,<1.0.0',
-    'PySide6_essentials>=6.3.2,<6.4.0',
-    'pyqtgraph>=0.12.3,<0.13.0',
+    'libcst>=1.2.0,<2.0.0',
+    'PySide6_essentials>=6.6.2,<6.6.3',
+    'pyqtgraph>=0.13.3,<0.14.0',
     'matplotlib>=3.5.1,<4.0.0',
+    'xxhash>=3.2.0,<4.0.0',
+    'pydantic>=2.1.1,<3.0.0',
+    'click>=8.1.7,<8.2.0',
 ]
+test_requires = ["pytest", "pytest-mock"]
 
-[tool.briefcase.app.tailor.document_type.tlr]
+[tool.briefcase.app.tailor.document_type.project]
 extension = "tlr"
 description = "Tailor project"
 icon = "src/tailor/resources/document_icon"
@@ -41,6 +46,7 @@ requires = []
 system_requires = []
 
 [tool.briefcase.app.tailor.windows]
+use_full_install_path = false
 requires = []
 
 # Mobile deployments

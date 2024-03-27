@@ -1,10 +1,11 @@
+import collections
 import textwrap
-from importlib import resources
 from pathlib import Path
 
 import pandas as pd
 from PySide6 import QtWidgets
-from PySide6.QtUiTools import QUiLoader
+
+from tailor.ui_csv_format_dialog import Ui_CsvFormatDialog
 
 DELIMITER_CHOICES = {
     "detect": None,
@@ -15,17 +16,23 @@ DELIMITER_CHOICES = {
 }
 NUM_FORMAT_CHOICES = {"1,000.0": (".", ","), "1.000,0": (",", ".")}
 
+FormatParameters = collections.namedtuple(
+    "FormatParameters",
+    "delimiter decimal thousands header skiprows",
+    defaults=[",", ".", None, 0, 0],
+)
 
-class CSVFormatDialog:
+
+class CSVFormatDialog(QtWidgets.QDialog):
     def __init__(self, filename, parent):
         """Create the CSV file format selection dialog."""
         super().__init__()
 
+        self.ui = Ui_CsvFormatDialog()
+        self.ui.setupUi(self)
+
         self.filename = Path(filename).expanduser()
 
-        self.ui = QUiLoader().load(
-            resources.path("tailor.resources", "csv_format_dialog.ui"), parent
-        )
         self.ui.delimiter_box.addItems(DELIMITER_CHOICES.keys())
         self.ui.num_format_box.addItems(NUM_FORMAT_CHOICES.keys())
 
@@ -40,21 +47,15 @@ class CSVFormatDialog:
     def show_preview(self):
         """Show a preview of the CSV data."""
         if self.ui.preview_choice.checkedButton() == self.ui.preview_csv_button:
-            (
-                delimiter,
-                decimal,
-                thousands,
-                header,
-                skiprows,
-            ) = self.get_format_parameters()
+            format = self.get_format_parameters()
             try:
                 df = pd.read_csv(
                     self.filename,
-                    delimiter=delimiter,
-                    decimal=decimal,
-                    thousands=thousands,
-                    header=header,
-                    skiprows=skiprows,
+                    delimiter=format.delimiter,
+                    decimal=format.decimal,
+                    thousands=format.thousands,
+                    header=format.header,
+                    skiprows=format.skiprows,
                 )
             except pd.errors.ParserError as exc:
                 text = textwrap.dedent(
@@ -108,4 +109,10 @@ class CSVFormatDialog:
         else:
             header = None
             skiprows = self.ui.header_row_box.value()
-        return delimiter, decimal, thousands, header, skiprows
+        return FormatParameters(
+            delimiter=delimiter,
+            decimal=decimal,
+            thousands=thousands,
+            header=header,
+            skiprows=skiprows,
+        )
