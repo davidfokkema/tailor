@@ -70,3 +70,6 @@ django/
 
 # Briefcase dev logs
 briefcase.*.log
+
+# MkDocs site directory
+site/
