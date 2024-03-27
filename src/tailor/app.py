@@ -1269,7 +1269,7 @@ class MainWindow(QtWidgets.QMainWindow):
         webbrowser.open("https://github.com/davidfokkema/tailor/issues")
 
     def show_documentation(self) -> None:
-        webbrowser.open("https://github.com/davidfokkema/tailor")
+        webbrowser.open("https://davidfokkema.github.io/tailor/")
 
     def show_code_repository(self) -> None:
         webbrowser.open("https://github.com/davidfokkema/tailor")
