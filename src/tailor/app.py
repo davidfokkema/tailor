@@ -140,6 +140,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.actionCopy.triggered.connect(self.copy_selected_cells)
         self.ui.actionPaste.triggered.connect(self.paste_cells)
 
+        self.ui.actionReport_Issue.triggered.connect(self.report_issue)
+        self.ui.actionShow_Documentation.triggered.connect(self.show_documentation)
+        self.ui.actionShow_Source_Code_Repository.triggered.connect(
+            self.show_code_repository
+        )
+
     def connect_ui_events(self):
         self.ui.tabWidget.currentChanged.connect(self.tab_changed)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab_with_children)
@@ -1258,6 +1264,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 # No new version available
                 download_url = None
             return latest_version, download_url, release_info["html_url"]
+
+    def report_issue(self) -> None:
+        webbrowser.open("https://github.com/davidfokkema/tailor/issues")
+
+    def show_documentation(self) -> None:
+        webbrowser.open("https://github.com/davidfokkema/tailor")
+
+    def show_code_repository(self) -> None:
+        webbrowser.open("https://github.com/davidfokkema/tailor")
 
 
 class Application(QtWidgets.QApplication):

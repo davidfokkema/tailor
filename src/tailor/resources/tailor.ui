@@ -93,6 +93,10 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionReport_Issue"/>
+    <addaction name="actionShow_Documentation"/>
+    <addaction name="actionShow_Source_Code_Repository"/>
+    <addaction name="separator"/>
     <addaction name="actionAbout_Tailor"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -291,6 +295,21 @@
   <action name="actionCreate_Plot">
    <property name="text">
     <string>Create Plot</string>
+   </property>
+  </action>
+  <action name="actionReport_Issue">
+   <property name="text">
+    <string>Report Issue</string>
+   </property>
+  </action>
+  <action name="actionShow_Source_Code_Repository">
+   <property name="text">
+    <string>Show Source Code Repository</string>
+   </property>
+  </action>
+  <action name="actionShow_Documentation">
+   <property name="text">
+    <string>Show Documentation</string>
    </property>
   </action>
  </widget>
