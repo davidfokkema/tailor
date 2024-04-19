@@ -90,7 +90,9 @@ class QDataModel(QtCore.QAbstractTableModel):
         col = index.column()
         label = self.data_model.get_column_label(col)
 
-        if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
+        if role == QtCore.Qt.SizeHintRole:
+            return QtCore.QSize()
+        elif role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole]:
             # request for the data itself
             value = self.data_model.get_value(row, col)
             if np.isnan(value) and not self.data_model.is_calculated_column(label):
