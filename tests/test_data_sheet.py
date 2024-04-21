@@ -173,3 +173,24 @@ class TestIntegratedDataSheet:
         )
         actual = data_sheet_with_data.model.data_model.get_values(0, 0, 5, 2)
         assert actual.flatten().tolist() == expected.flatten().tolist()
+
+    def test_remove_selected_row(self, data_sheet_with_data: DataSheet) -> None:
+        def select(row1, col1, row2, col2):
+            top_left = data_sheet_with_data.model.createIndex(row1, col1)
+            bottom_right = data_sheet_with_data.model.createIndex(row2, col2)
+            data_sheet_with_data.selection.select(
+                QtCore.QItemSelection(top_left, bottom_right),
+                data_sheet_with_data.selection.SelectionFlag.Select,
+            )
+
+        # select from (4, 0) - (4, 1), i.e. not a full row
+        select(4, 0, 4, 1)
+        # select from (5, 0) - (5, 2), i.e. row 5
+        select(5, 0, 5, 2)
+        # select from (1, 0) - (3, 2), i.e. rows 1 and 2
+        select(1, 0, 2, 2)
+
+        # check that three rows are removed
+        assert data_sheet_with_data.model.rowCount() == 6
+        data_sheet_with_data.remove_selected_row()
+        assert data_sheet_with_data.model.rowCount() == 3

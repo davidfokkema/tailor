@@ -6,6 +6,7 @@
 
 * Improved data refresh times by 10x so that changing column expressions no longer freezes the interface for large datasets.
 * Fixed a bug where it was possible to save a corrupt project when you removed almost all data rows.
+* Much faster row removal by removing rows in selection blocks instead of removing individual rows.
 
 
 ## 2.0.0

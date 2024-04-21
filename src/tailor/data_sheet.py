@@ -121,15 +121,17 @@ class DataSheet(QtWidgets.QWidget):
 
     def remove_selected_row(self):
         """Remove selected row(s) from data model."""
-        selected_rows = [s.row() for s in self.selection.selectedRows()]
-        if selected_rows:
-            # Remove rows in reverse order to avoid index shifting during
-            # removal. WIP: It would be more efficient to merge ranges of
-            # contiguous rows since they can be removed in one fell swoop.
-            selected_rows.sort(reverse=True)
-            for row in selected_rows:
-                self.model.removeRow(row)
-        else:
+        removed_rows = False
+        ranges = list(self.selection.selection())
+        ranges.sort(key=lambda r: r.top(), reverse=True)
+
+        num_columns = self.model.columnCount()
+        for range_ in ranges:
+            if range_.left() == 0 and range_.right() == num_columns - 1:
+                self.model.removeRows(range_.top(), range_.height())
+                removed_rows = True
+
+        if not removed_rows:
             dialogs.show_warning_dialog(
                 parent=self, msg="You must select one or more rows."
             )
