@@ -1,13 +1,14 @@
 import lmfit
 import numpy as np
 import pytest
-from PySide6 import QtCore, QtWidgets
-from pytest_mock import MockerFixture, mocker
+from PySide6 import QtWidgets
+from pytest_mock import MockerFixture
 
 import tailor.data_sheet
 from tailor import plot_model, project_files
 from tailor.app import MainWindow
 from tailor.data_sheet import DataSheet
+from tailor.plot_model import PlotModel
 from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 
 
@@ -143,6 +144,13 @@ class TestProjectFiles:
         assert next(p for p in plot.parameters if p.name == "a").value == 2.0
         assert plot.draw_curve_option == DrawCurve.ON_DOMAIN
 
+    def test_save_plot_verifies_fit(
+        self, plot_tab: PlotTab, mocker: MockerFixture
+    ) -> None:
+        verify = mocker.patch.object(PlotModel, "verify_best_fit_data")
+        project_files.save_plot(plot_tab)
+        verify.assert_called()
+
     def test_load_plot(
         self,
         plot_tab_model: project_files.Plot,
@@ -231,3 +239,33 @@ class TestProjectFiles:
         assert plot.model.get_model_expression() == "N_0 * 0.5 ** (t / t_half) + N_bkg"
         assert plot.get_draw_curve_option() == DrawCurve.ON_DOMAIN
         assert plot.ui.show_initial_fit.isChecked() is False
+
+    def test_save_and_open_project_with_fit_error(
+        self, simple_project, tmp_path
+    ) -> None:
+        project = MainWindow()
+        sheet = project.add_data_sheet()
+
+        data_model = sheet.model.data_model
+        data_model.set_values_from_array(
+            0,
+            0,
+            np.array(
+                [
+                    [1.0, 1.0],
+                    [2.0, 3.9],
+                    [3.0, 4.2],
+                ]
+            ),
+        )
+        plot = project.create_plot_tab(sheet, "col1", "col2")
+        model = plot.model
+        model.update_model_expression("a * col1**2 + b * col1 + c")
+        model.perform_fit()
+
+        # model now has more parameters than data points (will not work)
+        sheet.model.removeRow(2)
+
+        model = project_files.save_project_to_model(project)
+        project = MainWindow()
+        project_files.load_project_from_model(project, model)

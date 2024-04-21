@@ -164,6 +164,7 @@ def save_plot(plot: PlotTab):
         Parameter(name=p.name, value=p.value, min=p.min, max=p.max, vary=p.vary)
         for p in plot.model._parameters.values()
     ]
+    plot.model.verify_best_fit_data()
     best_fit = plot.model.best_fit is not None
     return Plot(
         name=plot.name,

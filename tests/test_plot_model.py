@@ -499,6 +499,7 @@ class TestPlotModel:
             ),
         )
         model = PlotModel(data_model=data_model, x_col="col1", y_col="col2")
+        # model with more parameters than data points (will not work)
         model.update_model_expression("a * col1**2 + b * col1 + c")
 
         with pytest.raises(FitError):

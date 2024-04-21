@@ -5,6 +5,7 @@
 ### :beetle: Fixes
 
 * Improved data refresh times by 10x so that changing column expressions no longer freezes the interface for large datasets.
+* Fixed a bug where it was possible to save a corrupt project when you removed almost all data rows.
 
 
 ## 2.0.0

@@ -473,7 +473,8 @@ class PlotModel:
                 nan_policy="omit",
             )
         except Exception as exc:
-            raise FitError("foo") from exc
+            self.best_fit = None
+            raise FitError("Fit failed") from exc
 
     def hash_data(self, data: ArrayLike) -> int:
         """Calculate a hash (checksum) of the data.
