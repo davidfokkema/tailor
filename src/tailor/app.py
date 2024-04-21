@@ -429,10 +429,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         Args:
             data_sheet (DataSheet): the sheet containing the data.
-            x_var: the name of the variable to plot on the x-axis.
-            y_var: the name of the variable to plot on the y-axis.
-            x_err: the name of the variable to use for the x-error bars.
-            y_err: the name of the variable to use for the y-error bars.
+            x_var: the label of the column to plot on the x-axis.
+            y_var: the label of the column to plot on the y-axis.
+            x_err: the label of the column to use for the x-error bars.
+            y_err: the label of the column to use for the y-error bars.
         """
         self._plot_num += 1
         name = f"Plot {self._plot_num}"
