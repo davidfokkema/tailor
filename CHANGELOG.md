@@ -1,6 +1,6 @@
 # Changelog
 
-## Draft
+## 2.0.1
 
 ### :beetle: Fixes
 
