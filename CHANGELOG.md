@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.2
+
+### :beetle: Fixes
+
+* Fixed a bug where closing a plot would close the plot _and_ the next tab widget. This is never desired and could lead to the loss of data if the next widget was a data sheet. If there were plots for that data sheet, the project could never be opened again. Loading the project would raise an exeception because of the missing data sheet being referenced by the surviving plot. Thanks for the detailed report, Jurre Heijmen!
+
+
 ## 2.0.1
 
 ### :beetle: Fixes
