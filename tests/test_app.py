@@ -77,6 +77,29 @@ def plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
 
 
 @pytest.fixture()
+def another_plot_tab(data_sheet: DataSheet, mocker: MockerFixture) -> PlotTab:
+    plot_tab = PlotTab(
+        main_window=mocker.Mock(),
+        name="Plot 2",
+        id=45675,
+        data_sheet=data_sheet,
+        x_col="col1",
+        y_col="col2",
+        x_err_col="col3",
+        y_err_col="col4",
+    )
+    plot_tab.model.x_label = "Time"
+    plot_tab.model.y_label = "Distance"
+    plot_tab.model.update_model_expression("a * x**2 + b")
+    plot_tab.model._parameters["a"].value = 2.0
+    plot_tab.model.perform_fit()
+    option = DrawCurve.ON_DOMAIN
+    option_idx = list(DRAW_CURVE_OPTIONS.keys()).index(option)
+    plot_tab.ui.draw_curve_option.setCurrentIndex(option_idx)
+    return plot_tab
+
+
+@pytest.fixture()
 def simple_project_without_plot(data_sheet: DataSheet) -> MainWindow:
     project = MainWindow(add_sheet=True)
     project.ui.tabWidget.addTab(data_sheet, data_sheet.name)
@@ -90,6 +113,23 @@ def simple_project(
 ) -> MainWindow:
     project = simple_project_without_plot
     project.ui.tabWidget.addTab(plot_tab, plot_tab.name)
+    project._plot_num += 1
+    return project
+
+
+@pytest.fixture()
+def simple_project_with_two_plots(
+    simple_project_without_plot: MainWindow,
+    plot_tab: PlotTab,
+    another_plot_tab: PlotTab,
+) -> MainWindow:
+    # project already has two data sheets
+    project = simple_project_without_plot
+    # 1st plot
+    project.ui.tabWidget.addTab(plot_tab, plot_tab.name)
+    project._plot_num += 1
+    # 2nd plot
+    project.ui.tabWidget.addTab(another_plot_tab, another_plot_tab.name)
     project._plot_num += 1
     return project
 
@@ -185,6 +225,28 @@ class TestSheets:
         for idx in range(2):
             widget = simple_project.ui.tabWidget.widget(idx)
             assert isinstance(widget, DataSheet)
+
+    def test_close_unused_plot_but_not_other_tabs(
+        self, simple_project_with_two_plots: MainWindow, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(simple_project_with_two_plots, "confirm_close_dialog")
+
+        # check that tab under test is indeed a plot and that there are more tabs
+        PLOT_IDX = 2
+        assert isinstance(
+            simple_project_with_two_plots.ui.tabWidget.widget(PLOT_IDX), PlotTab
+        )
+        assert isinstance(
+            simple_project_with_two_plots.ui.tabWidget.widget(PLOT_IDX + 1), PlotTab
+        )
+
+        # first, we have 4 tabs
+        assert simple_project_with_two_plots.ui.tabWidget.count() == 4
+        # confirm close request
+        simple_project_with_two_plots.confirm_close_dialog.return_value = True
+        simple_project_with_two_plots.close_tab_with_children(PLOT_IDX)
+        # now, we have 3 tabs
+        assert simple_project_with_two_plots.ui.tabWidget.count() == 3
 
     def test_close_multiplot(
         self, project_with_multiplot: MainWindow, mocker: MockerFixture

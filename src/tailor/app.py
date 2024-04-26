@@ -532,18 +532,19 @@ class MainWindow(QtWidgets.QMainWindow):
         Returns:
             list[TabbedWidget]: a list of associated tabs.
         """
+        plots, multiplots = [], []
         if type(tab.widget) == DataSheet:
-            # find associated plots
+            # find associated plots and multiplots
             plots = self.get_associated_plots(tab.widget)
+            for plot in plots:
+                multiplots.extend(self.get_associated_multiplots(plot.widget))
         elif type(tab.widget) == PlotTab:
-            plots = [tab]
+            # find associated multiplots
+            multiplots = self.get_associated_multiplots(tab.widget)
         else:
             raise NotImplementedError(
                 f"Associated tabs for type {type(tab)} not implemented."
             )
-        multiplots = []
-        for plot in plots:
-            multiplots.extend(self.get_associated_multiplots(plot.widget))
         return plots + multiplots
 
     def close_tabs(self, tabs: list[TabbedWidget]) -> None:
