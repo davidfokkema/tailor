@@ -27,6 +27,11 @@ class DataSheet(QtWidgets.QWidget):
         self.connect_ui_events()
         self.setup_keyboard_shortcuts()
 
+        # Make columns resizable
+        self.ui.data_view.horizontalHeader().setSectionResizeMode(
+            self.ui.data_view.horizontalHeader().ResizeMode.Interactive
+        )
+
         # Start at (0, 0)
         self.ui.data_view.setCurrentIndex(self.model.createIndex(0, 0))
 

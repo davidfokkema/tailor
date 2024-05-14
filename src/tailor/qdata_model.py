@@ -100,7 +100,7 @@ class QDataModel(QtCore.QAbstractTableModel):
                 return ""
             else:
                 # Show float value or "nan" in a calculated column
-                return f"{value:.10g}"
+                return float(value)
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell
             if self.data_model.is_calculated_column(label):

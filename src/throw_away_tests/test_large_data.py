@@ -28,7 +28,6 @@ def create_test_project(app: MainWindow):
     )
     sheet.model.updateColumnExpression(1, "sin(x)")
     sheet.model.updateColumnExpression(3, "y")
-    sheet.model.updateColumnExpression(3, "y * a")
 
     sheet.ui.data_view.setCurrentIndex(sheet.model.createIndex(0, 1))
     sheet.ui.formula_edit.setFocus()
