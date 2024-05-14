@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<?define ProductVersion = "2.0.2" ?>
+<?define ProductVersion = "2.0.3" ?>
 <?define ProductUpgradeCode = "e29f156c-a732-5d2c-a4ba-cfc8568a0476" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
    <Product

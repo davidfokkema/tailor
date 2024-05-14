@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.3
+
+### :rocket: Features
+
+* Columns are now resizable using the mouse
+
+
+### :beetle: Fixes
+
+* Improved float representation (better fits into a column, won't break up to "0...")
+
+
 ## 2.0.2
 
 ### :beetle: Fixes
