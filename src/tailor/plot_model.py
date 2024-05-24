@@ -246,10 +246,18 @@ class PlotModel:
         """
         x, y, x_err, y_err = self.get_data()
 
-        xmin = min(x - x_err)
-        xmax = max(x + x_err)
-        ymin = min(y - y_err)
-        ymax = max(y + y_err)
+        try:
+            xmin = min(x - x_err)
+            xmax = max(x + x_err)
+        except ValueError:
+            xmin = -1
+            xmax = 1
+        try:
+            ymin = min(y - y_err)
+            ymax = max(y + y_err)
+        except ValueError:
+            ymin = -1
+            ymax = 1
 
         xrange = xmax - xmin
         yrange = ymax - ymin
