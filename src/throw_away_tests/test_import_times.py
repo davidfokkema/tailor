@@ -13,11 +13,8 @@ t.start()
 t.join()
 t1 = time.monotonic()
 
-
-import numpy
-
-t2 = time.monotonic()
-
-
 print(f"NumPy took {1000 * (t1 - t0):.1f} ms")
-print(f"Second import of NumPy took {1000 * (t2 - t1):.1f} ms")
+
+from test_import_import_times import main
+
+main()
