@@ -1,7 +1,8 @@
 import importlib
-import toga
-from toga.style import Pack, pack
+import sys
+import threading
 
+from PySide6 import QtWidgets
 
 PREFLIGHT_MODULES = [
     "pydantic",
@@ -17,39 +18,38 @@ PREFLIGHT_MODULES = [
 ]
 
 
-class PreflightImports(toga.app.BackgroundTask):
+class UserInterface(QtWidgets.QMainWindow):
+    def __init__(self):
+        # roep de __init__() aan van de parent class
+        super().__init__()
 
-    def __call__(self, app, **kwargs):
-        app.progress.max = len(PREFLIGHT_MODULES)
-        for idx, module in enumerate(PREFLIGHT_MODULES):
-            app.progress.value = idx
-            app.status_label.text = f"Importing {module}..."
-            # update interface, yield a delay value?
-            yield 0.001
-            # import module
+        # elk QMainWindow moet een central widget hebben
+        # hierbinnen maak je een layout en hang je andere widgets
+        central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(central_widget)
+
+        # voeg geneste layouts en widgets toe
+        vbox = QtWidgets.QVBoxLayout(central_widget)
+        self.label = QtWidgets.QLabel("Importing...")
+        vbox.addWidget(self.label)
+
+        self.preflight_thread = threading.Thread(target=self.preflight)
+        self.preflight_thread.start()
+
+    def preflight(self):
+        for module in PREFLIGHT_MODULES:
+            self.label.setText(f"Importing module {module}")
             importlib.import_module(module)
-        app.loop.stop()
-
-
-class PreflightWindow(toga.App):
-    def startup(self) -> None:
-        main_box = toga.Box(style=Pack(direction=pack.COLUMN))
-        self.status_label = toga.Label("Importing ...")
-        self.progress = toga.ProgressBar()
-        main_box.add(self.status_label)
-        main_box.add(self.progress)
-
-        self.main_window = toga.MainWindow(title=self.formal_name)
-        self.main_window.content = main_box
-
-        # threading.Thread(target=self.preflight_imports).start()
-
-        self.main_window.show()
-        self.add_background_task(PreflightImports())
+        app.exit()
 
 
 if __name__ == "__main__":
-    PreflightWindow().main_loop()
+    app = QtWidgets.QApplication(sys.argv)
+    ui = UserInterface()
+    ui.show()
+    app.exec()
+    app.shutdown()
+
     print("done")
 
     from tailor.app import main
