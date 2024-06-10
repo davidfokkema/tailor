@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.4
+
+### :rocket: Features
+
+* Shows a splash screen during import of large Python packages.
+
+
 ## 2.0.3
 
 ### :rocket: Features
