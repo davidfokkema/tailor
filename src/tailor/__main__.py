@@ -1,8 +1,7 @@
 import importlib
-import sys
-import threading
+import importlib.resources
 
-from PySide6 import QtWidgets
+from PySide6 import QtGui, QtWidgets
 
 PREFLIGHT_MODULES = [
     "pydantic",
@@ -18,39 +17,32 @@ PREFLIGHT_MODULES = [
 ]
 
 
-class UserInterface(QtWidgets.QMainWindow):
-    def __init__(self):
-        # roep de __init__() aan van de parent class
-        super().__init__()
+def preflight():
+    """Perform preflight.
 
-        # elk QMainWindow moet een central widget hebben
-        # hierbinnen maak je een layout en hang je andere widgets
-        central_widget = QtWidgets.QWidget()
-        self.setCentralWidget(central_widget)
-
-        # voeg geneste layouts en widgets toe
-        vbox = QtWidgets.QVBoxLayout(central_widget)
-        self.label = QtWidgets.QLabel("Importing...")
-        vbox.addWidget(self.label)
-
-        self.preflight_thread = threading.Thread(target=self.preflight)
-        self.preflight_thread.start()
-
-    def preflight(self):
-        for module in PREFLIGHT_MODULES:
-            self.label.setText(f"Importing module {module}")
-            importlib.import_module(module)
-        app.exit()
+    This function imports modules listed in PREFLIGHT_MODULES. These include
+    modules that are quite large and take some time to load, especially after a
+    cold start when the OS preforms extra malware checks. While loading, a
+    splash screen is shown to the user to indicate activity.
+    """
+    app = QtWidgets.QApplication()
+    pixmap = QtGui.QPixmap(
+        importlib.resources.files("tailor.resources") / "splashscreen.png"
+    )
+    splash = QtWidgets.QSplashScreen(pixmap)
+    splash.show()
+    for num, module in enumerate(PREFLIGHT_MODULES, start=1):
+        splash.showMessage(
+            f"Importing module {module}... {num}/{len(PREFLIGHT_MODULES)}"
+        )
+        app.processEvents()
+        importlib.import_module(module)
+    splash.close()
+    app.shutdown()
 
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    ui = UserInterface()
-    ui.show()
-    app.exec()
-    app.shutdown()
-
-    print("done")
+    preflight()
 
     from tailor.app import main
 
