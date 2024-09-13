@@ -63,12 +63,12 @@ class TestQtRequired:
     @pytest.mark.parametrize(
         "row, column, is_calculated, value, expected, role",
         [
-            (0, 0, False, 0.0, "0", None),
-            (0, 0, True, 0.0, "0", None),
+            (0, 0, False, 0.0, 0.0, None),
+            (0, 0, True, 0.0, 0.0, None),
             (0, 0, False, np.nan, "", None),
-            (0, 0, True, np.nan, "nan", None),
-            (3, 4, False, 1.23456, "1.23456", None),
-            (2, 1, False, 4.2, "4.2", QtCore.Qt.DisplayRole),
+            (0, 0, True, np.nan, np.nan, None),
+            (3, 4, False, 1.23456, 1.23456, None),
+            (2, 1, False, 4.2, 4.2, QtCore.Qt.DisplayRole),
             (1, 7, False, 3.7, "3.7", QtCore.Qt.EditRole),
         ],
     )
@@ -92,7 +92,7 @@ class TestQtRequired:
             actual = qmodel.data(index, role)
 
         qmodel.data_model.get_value.assert_called_once_with(row, column)
-        assert actual == expected
+        np.testing.assert_equal(actual, expected)
 
     def test_data_returns_None_for_invalid_role(self, qmodel: QDataModel):
         index = qmodel.createIndex(2, 1)

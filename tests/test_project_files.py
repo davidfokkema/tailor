@@ -116,7 +116,7 @@ class TestProjectFiles:
         assert isinstance(data_sheet, DataSheet)
         assert data_sheet.model.rowCount() == 6
         # test single value
-        assert data_sheet.model.data(data_sheet.model.createIndex(5, 1)) == "25"
+        assert data_sheet.model.data(data_sheet.model.createIndex(5, 1)) == 25.0
         assert data_sheet.model.columnExpression(2) == "0.02 * x ** 2"
         assert data_sheet.model.columnNames() == ["x", "y", "z", "yerr", "empty"]
         # must be called twice (once implicitly, once explicitly by our code)

@@ -99,8 +99,13 @@ class QDataModel(QtCore.QAbstractTableModel):
                 # NaN in a data column, show as empty
                 return ""
             else:
-                # Show float value or "nan" in a calculated column
-                return float(value)
+                if role == QtCore.Qt.EditRole:
+                    # when editing, the default delegate for floats is too restrictive
+                    # return a string, so we get a free-form string edit widget
+                    return str(value)
+                else:
+                    # Show float value or "nan" in a calculated column
+                    return float(value)
         elif role == QtCore.Qt.BackgroundRole:
             # request for the background fill of the cell
             if self.data_model.is_calculated_column(label):
