@@ -86,6 +86,10 @@ class MainWindow(QtWidgets.QMainWindow):
             QtGui.QIcon(str(resources.files("tailor.resources") / "tailor.png"))
         )
 
+        if platform.system() == "Windows":
+            # On Windows, the Fusion style correctly handles dark mode
+            QtWidgets.QApplication.instance().setStyle("fusion")
+
         self.connect_menu_items()
         self.connect_ui_events()
         self.setup_keyboard_shortcuts()
