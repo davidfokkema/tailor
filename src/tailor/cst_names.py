@@ -38,7 +38,7 @@ def rename_variables(expression: str, mapping: dict[str, str]) -> str:
 
 def get_variable_names(expression: str) -> list[str]:
     try:
-        tree = cst.parse_module(expression)
+        tree = cst.parse_expression(expression)
     except cst.ParserSyntaxError:
         raise SyntaxError("SyntaxError while parsing expression")
 

@@ -537,7 +537,10 @@ class DataModel:
         if not self.is_calculated_column(label):
             return False
         expression = self._calculated_column_expression[label]
-        variables = get_variable_names(expression)
+        try:
+            variables = get_variable_names(expression)
+        except SyntaxError:
+            variables = set()
         if variables & set(labels):
             return True
         else:

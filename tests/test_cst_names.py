@@ -25,3 +25,9 @@ def test_renaming_variables(expression, mapping, expected):
 )
 def test_get_variables_name(expression, expected):
     assert get_variable_names(expression) == expected
+
+
+@pytest.mark.parametrize("expression", ["y * ", "y = 4"])
+def test_get_variables_name_raises_exception(expression):
+    with pytest.raises(SyntaxError):
+        get_variable_names(expression)

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Open Tailor projects from Finder, don't show an empty window (#84).
 - Changing a value in a cell again shows a free-form text editor, instead of a restrictive two-decimal DoubleSpinBox which didn't accept scientific notation like 1.2e-3.
 - Correctly handle dark mode on Windows.
+- Fix a RecursionError when you entered an assignment into a column expression. For example, 'y = 4' is valid Python code, but not a valid expression ('col3 = y = 4'??). This broke Tailor in subtle ways.
 
 ## 2.0.4
 
