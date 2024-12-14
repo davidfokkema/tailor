@@ -8,6 +8,21 @@ Tailor is an application for data analysis and curve fitting. You can fit custom
 **Note:** If you want to try out Tailor please visit the `materials <https://davidfokkema.github.io/BFY4-workshop/>`_ from the 
 workshop on Tailor for the *Beyond the First Year 4 (2023)* conference.
 
+**Note:** Nederlandstalig oefenmateriaal is beschikbaar van onze workshop op `Woudschoten 2023 <https://davidfokkema.github.io/WND2023-workshop/>`_.
+
+
+Installation
+------------
+
+The latest version is always available on the `Releases page <https://github.com/davidfokkema/tailor/releases/latest>`_ (link is also in the right sidebar). Please scroll down to *Assets* and download the .msi-installer for Windows and the .dmg-installer for macOS. Als u onze stand op Woudschoten 2024 bezocht: dank voor uw interesse!
+
+
+Helpdesk
+--------
+
+We don't have a formal helpdesk, but please drop a line to d.b.r.a.fokkema@vu.nl if you need assistance or have questions.
+
+
 Features
 --------
 
