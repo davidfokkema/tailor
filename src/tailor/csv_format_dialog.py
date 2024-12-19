@@ -56,6 +56,7 @@ class CSVFormatDialog(QtWidgets.QDialog):
                     thousands=format.thousands,
                     header=format.header,
                     skiprows=format.skiprows,
+                    encoding_errors="backslashreplace",
                 )
             except pd.errors.ParserError as exc:
                 text = textwrap.dedent(

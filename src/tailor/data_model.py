@@ -655,6 +655,7 @@ class DataModel:
             thousands=format.thousands,
             header=format.header,
             skiprows=format.skiprows,
+            encoding_errors="backslashreplace",
         )
         # make sure column names are strings, even for numbered columns
         df.columns = df.columns.astype(str)
