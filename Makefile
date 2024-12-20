@@ -17,8 +17,8 @@ $(uidir)/ui_%.py: $(uisrcdir)/%.ui
 
 .PHONY: build
 build-macos:
-# 	conda create -n tailor-py311 python=3.11 --yes
-	python -m pip install briefcase==0.3.17
+# 	conda create -n tailor-py311 python=3.12 --yes
+	python -m pip install briefcase==0.3.20
 	briefcase create
 	python pruner.py
 	cp build/Info.plist build/tailor/macos/app/Tailor.app/Contents/
@@ -26,8 +26,8 @@ build-macos:
 	briefcase package -i "Developer ID Application: David Fokkema (HWB9PKA687)"
 
 build-win:
-# 	conda create -n tailor-py311 python=3.11 --yes
-	python -m pip install briefcase==0.3.17
+# 	conda create -n tailor-py311 python=3.12 --yes
+	python -m pip install briefcase==0.3.20
 	briefcase create
 	python pruner.py
 	copy build\tailor.wxs build\tailor\windows\app

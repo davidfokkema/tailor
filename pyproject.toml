@@ -1,7 +1,7 @@
 [tool.briefcase]
 project_name = "Tailor"
 bundle = "com.amsphyslab.tailor"
-version = "2.0.5"
+version = "2.0.6.dev5"
 url = "https://github.com/davidfokkema/tailor"
 license = "GNU General Public License v3 (GPLv3)"
 author = 'David Fokkema'
@@ -20,7 +20,7 @@ requires = [
     'numpy>=1.22.1,<2.0.0',
     'pandas>=2.0.0,<3.0.0',
     'lmfit>=1.0.3,<2.0.0',
-    'scipy>=1.8.0,<2.0.0',
+    'scipy>=1.8.0,<1.14',
     'asteval>=0.9.26,<1.0.0',
     'libcst>=1.2.0,<2.0.0',
     'PySide6_essentials>=6.6.2,<6.6.3',
