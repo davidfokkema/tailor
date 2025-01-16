@@ -20,23 +20,26 @@ We don't have a formal helpdesk, but please drop a line to d.b.r.a.fokkema@vu.nl
 ## Features
 
 * Spreadsheet-like editing of data
-* Copy and paste data to and from external applications
-* Open and save project files
+* Add multiple datasets in seperate tabs to a single project
 * Import and export of CSV files
+* Copy and paste data to and from external applications
 * Add / remove columns or rows
 * Drag to reorder columns
 * Add columns based on mathematical expressions
 * Create scatter plots with X/Y error bars
 * Fit custom models to data based on mathematical expressions
-* Models can include a wide range of Python operators and mathematical functions
-* Parameters are automatically deduced from the model expression and displayed in the user interface
-* Starting values can be easily changed and an initial fit is updated in the plot window
-* Bounds on parameters and the ability to fix a parameter to a particular value
-* Fits can be restricted to a subset of the data by specifying a fit domain
-* Fit results include reduced chi-square statistic and parameter value and error estimations
-* Easily adjustable axis labels and ranges
-* Zooming and panning of the plot
-* Export plot as PNG (bitmap) or PDF (vector) images
+* Create as many plots as you like to analyse multiple datasets or the same dataset with different models
+* Use a wide range of Python operators and mathematical functions
+* Deduce parameters automatically from the model expression
+* Easily change initial values and update the initial fit in the plot window
+* Apply bounds on parameters and fix a parameter to a particular value
+* Restrict fits to a subset of the data by specifying a fit domain
+* Include reduced chi-square statistic and parameter value and error estimations in the fit results
+* Easily adjust axis labels and ranges
+* Zoom and pan of all plots
+* Export plots as PNG (bitmap) or PDF (vector) images
+* Copy a dataset with associated plots and load new data to quickly repeat your analysis on a new measurement inside a single project
+* Display multiple datasets and best fits in a single plot for easy comparison
 
 ## Screenshots
 
@@ -48,7 +51,10 @@ Screenshot showing the user interface for a diagram. In this screen you can zoom
 
 An example of an exported graph of the same dataset and fit as in the previous screenshot:
 ![exported graph of a decaying radon-220 sample](docs/images/exponential-fit-radon220.png)
-   
+
+Tailor can display multiple datasets and best fits in a single plot:
+![exported graph showing multiple datasets and best fits of a simple pendulum](docs/images/simple-pendulum-multiplot.png)
+
 ## Development
 
 Set up a development environment with::
