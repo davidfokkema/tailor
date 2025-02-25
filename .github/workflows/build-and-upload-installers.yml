@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-upload-installer:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - os: macos-latest
