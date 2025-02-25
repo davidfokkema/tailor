@@ -1,7 +1,7 @@
 [tool.briefcase]
 project_name = "Tailor"
-bundle = "com.amsphyslab.tailor"
-version = "2.0.6"
+bundle = "com.amsphyslab"
+version = "2.1.0.dev1"
 url = "https://github.com/davidfokkema/tailor"
 license = "GNU General Public License v3 (GPLv3)"
 author = 'David Fokkema'
@@ -40,6 +40,8 @@ url = "https://github.com/davidfokkema/tailor"
 
 [tool.briefcase.app.tailor.macOS]
 requires = []
+template = "https://github.com/davidfokkema/briefcase-macOS-app-template"
+template_branch = "file-associations"
 
 [tool.briefcase.app.tailor.linux]
 requires = []
