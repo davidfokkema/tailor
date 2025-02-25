@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-upload-installer:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - os: macos-latest
@@ -17,12 +17,13 @@ jobs:
             filename: dist/*.msi
     runs-on: ${{ matrix.os }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: import certificates on macOS
         if: matrix.os == 'macos-latest'
         uses: ./.github/actions/import_apple_certs
 
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
