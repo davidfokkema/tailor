@@ -66,8 +66,9 @@ jobs:
         run: briefcase package
       - name: package briefcase app for macOS
         if: matrix.os == 'macos-latest'
+        env:
+            CERTIFICATE_ID: ${{ secrets.CERTIFICATE_ID }}
         run: |
-          echo "$CERTIFICATE_ID"
           briefcase package -i "$CERTIFICATE_ID" 
 
       - name: upload assets to release page
