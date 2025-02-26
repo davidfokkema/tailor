@@ -25,6 +25,10 @@ jobs:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.SIGN_CERT_BASE64 }}
           P12_PASSWORD: ${{ secrets.SIGN_PW }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          CERTIFICATE_ID: ${{ secrets.CERTIFICATE_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          BRIEFCASE_PASSWORD: ${{ secrets.BRIEFCASE_PASSWORD }}
         run: |
           # create variables
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
@@ -45,6 +49,12 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
+          # store app-specific password for notarization
+          xcrun notarytool store-credentials "briefcase-macOS-$TEAM_ID"
+               --apple-id "$APPLE_ID"
+               --team-id $TEAM_ID
+               --password $BRIEFCASE_PASSWORD
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -60,7 +70,7 @@ jobs:
       - name: package briefcase app for macOS
         if: matrix.os == 'macos-latest'
         run: |
-          briefcase package -i 'Developer ID Application: David Fokkema (HWB9PKA687)'
+          briefcase package -i "$CERTIFICATE_ID"
 
       - name: upload assets to release page
         if: github.event_name == 'release'
