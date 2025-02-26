@@ -50,10 +50,7 @@ jobs:
           security list-keychain -d user -s $KEYCHAIN_PATH
 
           # store app-specific password for notarization
-          xcrun notarytool store-credentials "briefcase-macOS-$TEAM_ID"
-               --apple-id "$APPLE_ID"
-               --team-id $TEAM_ID
-               --password $BRIEFCASE_PASSWORD
+          xcrun notarytool store-credentials "briefcase-macOS-$TEAM_ID" --apple-id "$APPLE_ID" --team-id $TEAM_ID --password $BRIEFCASE_PASSWORD
 
       - uses: actions/setup-python@v5
         with:
