@@ -71,6 +71,12 @@ jobs:
         run: |
           briefcase package -i "$CERTIFICATE_ID" 
 
+      - name: upload installer artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Installer ${{ matrix.os }}
+          path: ${{ matrix.filename }}
+          
       - name: upload assets to release page
         if: github.event_name == 'release'
         uses: svenstaro/upload-release-action@v2
