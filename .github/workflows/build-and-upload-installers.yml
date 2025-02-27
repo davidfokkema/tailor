@@ -74,6 +74,7 @@ jobs:
       - name: upload installer artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: ${{ matrix.filename }}
           path: ${{ matrix.filename }}
           
       - name: upload assets to release page
