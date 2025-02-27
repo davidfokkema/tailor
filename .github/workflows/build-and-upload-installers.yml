@@ -73,13 +73,16 @@ jobs:
 
       - name: locate installer binary
         run: |
-          echo "artifactPath=`ls ${{ matrix.filename }}`" >> $GITHUB_ENV
+          INSTALLER_PATH=$(ls ${{ matrix.filename }})
+          INSTALLER_NAME=$(basename "$INSTALLER_PATH")
+          echo "artifactPath=$INSTALLER_PATH" >> $GITHUB_ENV
+          echo "artifactName=$INSTALLER_NAME" >> $GITHUB_ENV
         shell: bash
 
       - name: upload installer artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.artifactPath }}
+          name: ${{ env.artifactName }}
           path: ${{ env.artifactPath }}
           
       - name: upload assets to release page
