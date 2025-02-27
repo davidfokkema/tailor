@@ -71,17 +71,21 @@ jobs:
         run: |
           briefcase package -i "$CERTIFICATE_ID" 
 
+      - name: locate installer binary
+        run: |
+          echo "artifactPath=`ls ${{ matrix.filename }}`" >> $GITHUB_ENV
+        shell: bash
+
       - name: upload installer artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.filename }}
-          path: ${{ matrix.filename }}
+          name: ${{ env.artifactPath }}
+          path: ${{ env.artifactPath }}
           
       - name: upload assets to release page
         if: github.event_name == 'release'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file_glob: true
-          file: ${{ matrix.filename }}
+          file: ${{ env.artifactPath }}
           tag: ${{ github.ref }}
