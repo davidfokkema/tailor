@@ -12,7 +12,7 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            filename: macOS/Tailor-*.dmg
+            filename: dist/Tailor-*.dmg
           - os: windows-latest
             filename: dist/*.msi
     runs-on: ${{ matrix.os }}
@@ -74,7 +74,6 @@ jobs:
       - name: upload installer artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Installer ${{ matrix.os }}
           path: ${{ matrix.filename }}
           
       - name: upload assets to release page
