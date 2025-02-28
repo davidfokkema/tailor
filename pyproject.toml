@@ -1,7 +1,7 @@
 [tool.briefcase]
 project_name = "Tailor"
 bundle = "com.amsphyslab"
-version = "2.1.0.dev2"
+version = "2.1.0.dev3"
 url = "https://github.com/davidfokkema/tailor"
 license = "GNU General Public License v3 (GPLv3)"
 author = 'David Fokkema'
