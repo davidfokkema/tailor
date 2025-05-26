@@ -51,6 +51,7 @@ icon = "src/tailor/resources/document_icon"
 url = "https://github.com/davidfokkema/tailor"
 
 [tool.briefcase.app.tailor.macOS]
+min_os_version = "12.0"
 requires = []
 template = "https://github.com/davidfokkema/briefcase-macOS-app-template"
 template_branch = "file-associations"
