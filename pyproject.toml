@@ -1,6 +1,6 @@
 [project]
 name = "Tailor"
-version = "2.1.0.dev3"
+version = "2.1.0.dev4"
 description = "Explore datasets and fit models."
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -62,8 +62,8 @@ system_requires = []
 [tool.briefcase.app.tailor.windows]
 use_full_install_path = false
 requires = []
-template = "https://github.com/davidfokkema/briefcase-windows-app-template"
-template_branch = "file-associations"
+# template = "https://github.com/davidfokkema/briefcase-windows-app-template"
+# template_branch = "file-associations"
 
 # Mobile deployments
 [tool.briefcase.app.tailor.iOS]
