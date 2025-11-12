@@ -24,8 +24,6 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from tailor import config, dialogs, project_files
 from tailor.csv_format_dialog import (
-    DELIMITER_CHOICES,
-    NUM_FORMAT_CHOICES,
     CSVFormatDialog,
     FormatParameters,
 )
@@ -233,7 +231,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _on_data_sheet(self) -> Optional[DataSheet]:
         """Return the current tab if a data sheet else display warning."""
-        if type(tab := self.ui.tabWidget.currentWidget()) == DataSheet:
+        if isinstance(tab := self.ui.tabWidget.currentWidget(), DataSheet):
             return tab
         else:
             dialogs.show_warning_dialog(
@@ -243,7 +241,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _on_plot(self) -> Optional[PlotTab]:
         """Return the current tab if it is a plot else display warning."""
-        if type(tab := self.ui.tabWidget.currentWidget()) == PlotTab:
+        if isinstance(tab := self.ui.tabWidget.currentWidget(), PlotTab):
             return tab
         else:
             dialogs.show_warning_dialog(
@@ -328,7 +326,7 @@ class MainWindow(QtWidgets.QMainWindow):
         plot_titles = []
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
-            if type(tab) == PlotTab and tab.model.uses(data_model, columns):
+            if isinstance(tab, PlotTab) and tab.model.uses(data_model, columns):
                 plot_titles.append(tab.name)
         return plot_titles
 
@@ -398,7 +396,7 @@ class MainWindow(QtWidgets.QMainWindow):
             idx: an integer index of the tab.
         """
         tab = self.ui.tabWidget.widget(idx)
-        if type(tab) == PlotTab or type(tab) == MultiPlotTab:
+        if isinstance(tab, (PlotTab, MultiPlotTab)):
             tab.refresh_ui()
 
     def ask_and_create_plot_tab(self):
@@ -497,7 +495,7 @@ class MainWindow(QtWidgets.QMainWindow):
         close_tab = TabbedWidget(
             widget=self.ui.tabWidget.widget(close_idx), index=close_idx
         )
-        if type(close_tab.widget) == DataSheet:
+        if isinstance(close_tab.widget, DataSheet):
             # data sheets need special attention
             if self._count_data_sheets() == 1:
                 # there's just the one data sheet, close all and start new
@@ -513,14 +511,14 @@ class MainWindow(QtWidgets.QMainWindow):
                     f"Are you sure you want to close this data sheet and all associated plots ({', '.join(plot_titles)})?"
                 ):
                     self.close_tabs([close_tab] + tabs)
-        elif type(close_tab.widget) == PlotTab:
+        elif isinstance(close_tab.widget, PlotTab):
             tabs = self.get_associated_tabs(close_tab)
             multiplot_titles = [p.widget.name for p in tabs]
             if self.confirm_close_dialog(
                 f"Are you sure you want to close this plot and associated multiplots ({', '.join(multiplot_titles)})?"
             ):
                 self.close_tabs([close_tab] + tabs)
-        elif type(close_tab.widget) == MultiPlotTab:
+        elif isinstance(close_tab.widget, MultiPlotTab):
             if self.confirm_close_dialog("Are you sure you want to close this plot?"):
                 self.close_tabs([close_tab])
 
@@ -537,12 +535,12 @@ class MainWindow(QtWidgets.QMainWindow):
             list[TabbedWidget]: a list of associated tabs.
         """
         plots, multiplots = [], []
-        if type(tab.widget) == DataSheet:
+        if isinstance(tab.widget, DataSheet):
             # find associated plots and multiplots
             plots = self.get_associated_plots(tab.widget)
             for plot in plots:
                 multiplots.extend(self.get_associated_multiplots(plot.widget))
-        elif type(tab.widget) == PlotTab:
+        elif isinstance(tab.widget, PlotTab):
             # find associated multiplots
             multiplots = self.get_associated_multiplots(tab.widget)
         else:
@@ -569,7 +567,7 @@ class MainWindow(QtWidgets.QMainWindow):
         plots = []
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
-            if type(tab) == PlotTab and tab.data_sheet == data_sheet:
+            if isinstance(tab, PlotTab) and tab.data_sheet == data_sheet:
                 plots.append(TabbedWidget(index=idx, widget=tab))
         return plots
 
@@ -578,7 +576,7 @@ class MainWindow(QtWidgets.QMainWindow):
         multiplots = []
         for idx in range(self.ui.tabWidget.count()):
             tab = self.ui.tabWidget.widget(idx)
-            if type(tab) == MultiPlotTab and tab.model.uses_plot(plot):
+            if isinstance(tab, MultiPlotTab) and tab.model.uses_plot(plot):
                 multiplots.append(TabbedWidget(index=idx, widget=tab))
         return multiplots
 
@@ -591,7 +589,7 @@ class MainWindow(QtWidgets.QMainWindow):
         widgets = [
             self.ui.tabWidget.widget(idx) for idx in range(self.ui.tabWidget.count())
         ]
-        return [widget for widget in widgets if type(widget) == DataSheet]
+        return [widget for widget in widgets if isinstance(widget, DataSheet)]
 
     def get_plots(self) -> list[PlotTab]:
         """Get a list of all plots.
@@ -602,12 +600,12 @@ class MainWindow(QtWidgets.QMainWindow):
         widgets = [
             self.ui.tabWidget.widget(idx) for idx in range(self.ui.tabWidget.count())
         ]
-        return [widget for widget in widgets if type(widget) == PlotTab]
+        return [widget for widget in widgets if isinstance(widget, PlotTab)]
 
     def _count_data_sheets(self):
         """Count the number of data sheets."""
         is_data_sheet = [
-            type(self.ui.tabWidget.widget(idx)) == DataSheet
+            isinstance(self.ui.tabWidget.widget(idx), DataSheet)
             for idx in range(self.ui.tabWidget.count())
         ]
         return sum(is_data_sheet)
@@ -1220,7 +1218,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     return True
                 case QtWidgets.QMessageBox.Cancel:
                     return False
-                case default:
+                case _:
                     return None
 
     def get_latest_version_and_update_link(self):
@@ -1259,7 +1257,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             ) or next(u for u in asset_urls if ".dmg" in u)
                         case ("Windows", *machine):
                             download_url = next(u for u in asset_urls if ".msi" in u)
-                        case default:
+                        case _:
                             # platform not yet supported
                             download_url = None
                 except StopIteration:

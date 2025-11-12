@@ -133,8 +133,10 @@ class MultiPlotTab(QtWidgets.QWidget):
         for plot in plots:
             self.model.remove_plot(plot)
             widget = self._plots.pop(plot)
-            # FIXME: removeWidget does nothing?!
-            # self.ui.plot_selection_layout.removeWidget(widget)
+            # Remove widget from layout and delete it
+            # removeWidget() alone doesn't work because the widget still has a parent
+            self.ui.plot_selection_layout.removeWidget(widget)
+            widget.setParent(None)
             widget.deleteLater()
 
     def rebuild_plot_selection_ui(self) -> None:

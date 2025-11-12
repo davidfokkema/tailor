@@ -379,7 +379,7 @@ class DataModel:
                 output = output.astype("float64")
             else:
                 output = float(output)
-        except Exception as exc:
+        except Exception:
             # error in evaluation or output cannot be cast to a float (series)
             self._is_calculated_column_valid[label] = False
             return False
