@@ -1299,7 +1299,8 @@ class Application(QtWidgets.QApplication):
 
     def event(self, event):
         if event.type() == QtCore.QEvent.FileOpen:
-            self.app.open_project_dialog(filename=event.file())
+            if pathlib.Path(event.file()).name != "tailor":
+                self.app.open_project_dialog(filename=event.file())
             return True
         return super().event(event)
 
