@@ -467,7 +467,9 @@ class QDataModel(QtCore.QAbstractTableModel):
     def renameColumn(self, column: int, name: str) -> str:
         label = self.data_model.get_column_label(column)
         self.main_window.mark_project_dirty()
-        return self.data_model.rename_column(label, name)
+        normalized_name = self.data_model.rename_column(label, name)
+        self.headerDataChanged.emit(QtCore.Qt.Horizontal, column, column)
+        return normalized_name
 
     def isCalculatedColumn(self, column: int):
         label = self.data_model.get_column_label(column)

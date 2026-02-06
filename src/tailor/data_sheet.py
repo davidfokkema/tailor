@@ -163,8 +163,6 @@ class DataSheet(QtWidgets.QWidget):
                 new_pos = len(new_name) - pos_from_end
                 self.ui.name_edit.setText(new_name)
                 self.ui.name_edit.setCursorPosition(new_pos)
-                header = self.ui.data_view.horizontalHeader()
-                header.headerDataChanged(QtCore.Qt.Horizontal, col_idx, col_idx)
 
     def update_column_expression(self, expression):
         """Update a column expression.
