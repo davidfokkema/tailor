@@ -1,6 +1,6 @@
 [project]
 name = "tailor"
-version = "2.1.0.dev4"
+version = "2.1.0.dev5"
 description = "Explore datasets and fit models."
 readme = "README.md"
 license = "GPL-3.0-or-later"
