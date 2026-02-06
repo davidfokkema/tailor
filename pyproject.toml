@@ -53,8 +53,8 @@ url = "https://github.com/davidfokkema/tailor"
 [tool.briefcase.app.tailor.macOS]
 min_os_version = "12.0"
 requires = []
-template = "https://github.com/davidfokkema/briefcase-macOS-app-template"
-template_branch = "file-associations"
+# template = "https://github.com/davidfokkema/briefcase-macOS-app-template"
+# template_branch = "file-associations"
 
 [tool.briefcase.app.tailor.linux]
 requires = []
@@ -63,8 +63,8 @@ system_requires = []
 [tool.briefcase.app.tailor.windows]
 use_full_install_path = false
 requires = []
-template = "https://github.com/davidfokkema/briefcase-windows-app-template"
-template_branch = "file-associations"
+# template = "https://github.com/davidfokkema/briefcase-windows-app-template"
+# template_branch = "file-associations"
 
 # Mobile deployments
 [tool.briefcase.app.tailor.iOS]
