@@ -4,14 +4,23 @@
 
 Tailor is an application for data analysis and curve fitting. You can fit custom models to your data, simply by entering the mathematical expression and choosing suitable initial values. The application is tailored to giving you an intuitive interface for entering or inspecting your data, calculating additional quantities and comparing different model curves to give you a best fit. Fashion and math do have a bit of shared vocabulary. Hence the name, *Tailor*. Also, at both the Vrije Universiteit Amsterdam and the University of Amsterdam we use the book "An Introduction to Error Analysis" by John R. Taylor in our inquiry-based physics labs for students. Taylor discusses least-squares fitting in chapter 8.
 
-**Note:** If you want to try out Tailor please visit the [materials](<https://davidfokkema.github.io/BFY4-workshop/>) from the 
-workshop on Tailor for the *Beyond the First Year 4 (2023)* conference.
-
-**Note:** Nederlandstalig oefenmateriaal is beschikbaar van onze workshop op [Woudschoten 2023](<https://davidfokkema.github.io/WND2023-workshop/>).
-
 ## Installation
 
-The latest version is always available on the [Releases page](<https://github.com/davidfokkema/tailor/releases/latest>) (link is also in the right sidebar). Please scroll down to *Assets* and download the .msi-installer for Windows and the .dmg-installer for macOS. Als u onze stand op Woudschoten 2024 bezocht: dank voor uw interesse!
+The latest version is always available on the [Releases page](<https://github.com/davidfokkema/tailor/releases/latest>) (link is also in the right sidebar on GitHub). Please scroll down to *Assets* and download the .msi-installer for Windows and the .dmg-installer for macOS. If you have uv installed, you can run Tailor without installing using:
+```console
+uvx -p 3.12 tailor
+```
+The installers do give you a better integration with your OS, including file associations for Tailor projects. This means you can double-click on a Tailor project in the Finder on macOS or Explorer on Windows and Tailor will automatically open your project.
+
+## Workshops
+
+Workshop materials for Tailor are available from various conferences:
+
+* **NVON 2025** — Workshop op NVON 2025 congres: <https://davidfokkema.github.io/NVON2025-workshop/>
+* **GIREP-EPEC 2025** — Workshop on Tailor for the GIREP-EPEC 2025 conference in Leiden: <https://davidfokkema.github.io/GIREP-EPEC-25-workshop/>
+* **LNPD 2024** — Workshop at the Dutch National Physics Practicum Day 2024: <https://davidfokkema.github.io/LNPD2024-workshop/>
+* **Woudschoten 2023** — Nederlandstalig oefenmateriaal van onze workshop op Woudschoten 2023: <https://davidfokkema.github.io/WND2023-workshop/>
+* **Beyond the First Year 4 (2023)** — Workshop on Tailor for the BFY4 conference: <https://davidfokkema.github.io/BFY4-workshop/>
 
 ## Helpdesk
 
