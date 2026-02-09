@@ -298,6 +298,7 @@ class DataSheet(QtWidgets.QWidget):
         self.model.moveColumn(sourceColumn=oldidx, destinationChild=destidx)
         # select the column that was just moved at the new location
         self.ui.data_view.selectColumn(newidx)
+        self._selected_col_idx = newidx
 
     def edit_or_move_down(self):
         """Edit cell or move cursor down a row.
