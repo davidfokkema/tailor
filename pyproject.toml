@@ -102,6 +102,8 @@ include = [
     "PySide6/__init__.py",
     "PySide6/QtCore.*",
     "PySide6/QtGui.*",
+    "PySide6/QtOpenGL.*",
+    "PySide6/QtOpenGLWidgets.*",
     "PySide6/QtUiTools.*",
     "PySide6/QtWidgets.*",
     "PySide6/Qt",
