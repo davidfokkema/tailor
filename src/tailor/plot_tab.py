@@ -60,6 +60,9 @@ class PlotTab(QtWidgets.QWidget):
     model: PlotModel
     _params: dict[str, QtWidgets.QWidget]
     _cursor_pos: int = 0
+    _remembered_x_range: tuple[float, float] | None = None
+    _remembered_y_range: tuple[float, float] | None = None
+    _block_range_signal: bool = False
 
     def __init__(
         self,
@@ -115,7 +118,7 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.x_max.textChanged.connect(self.update_x_max)
         self.ui.y_min.textChanged.connect(self.update_y_min)
         self.ui.y_max.textChanged.connect(self.update_y_max)
-        self.ui.set_limits_button.clicked.connect(self.update_limits)
+        self.ui.set_limits_button.clicked.connect(self.on_set_limits_clicked)
         self.ui.fit_button.clicked.connect(self.perform_fit)
         self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
         self.ui.draw_curve_option.currentIndexChanged.connect(
@@ -284,8 +287,7 @@ class PlotTab(QtWidgets.QWidget):
         self.ui.y_max.setText("" if self.model.y_max is None else str(self.model.y_max))
 
     def update_plot(self):
-        """Update plot to reflect any data changes."""
-
+        """Update plot and restore remembered zoom range if available."""
         # x_err, y_err will be 0.0 if no errors are specified
         x, y, x_err, y_err = self.model.get_data()
 
@@ -295,7 +297,34 @@ class PlotTab(QtWidgets.QWidget):
         err_height = 2 * y_err
         self.error_bars.setData(x=x, y=y, width=err_width, height=err_height)
 
-        self.update_limits()
+        # Restore remembered zoom if available, otherwise use default limits
+        if (
+            self._remembered_x_range is not None
+            and self._remembered_y_range is not None
+        ):
+            # Block signals to prevent triggering updated_plot_range() when
+            # restoring the remembered zoom but blockSignals does not work
+            # self.ui.plot_widget.blockSignals(True)
+            self._block_range_signal = True
+            self.ui.plot_widget.setRange(
+                xRange=self._remembered_x_range,
+                yRange=self._remembered_y_range,
+                padding=0,
+                disableAutoRange=True,
+            )
+            # self.ui.plot_widget.blockSignals(False)
+            self._block_range_signal = False
+        else:
+            self.update_limits()
+
+    def _clear_remembered_zoom(self):
+        """Clear the remembered zoom range.
+
+        This should be called when the user manually changes axis limits,
+        as the remembered zoom is no longer valid.
+        """
+        self._remembered_x_range = None
+        self._remembered_y_range = None
 
     def update_info_box(self):
         """Update the information box."""
@@ -324,6 +353,7 @@ class PlotTab(QtWidgets.QWidget):
         except ValueError:
             value = None
         self.model.x_min = value
+        self._clear_remembered_zoom()
         self.update_limits()
         self.main_window.mark_project_dirty()
 
@@ -334,6 +364,7 @@ class PlotTab(QtWidgets.QWidget):
         except ValueError:
             value = None
         self.model.x_max = value
+        self._clear_remembered_zoom()
         self.update_limits()
         self.main_window.mark_project_dirty()
 
@@ -344,6 +375,7 @@ class PlotTab(QtWidgets.QWidget):
         except ValueError:
             value = None
         self.model.y_min = value
+        self._clear_remembered_zoom()
         self.update_limits()
         self.main_window.mark_project_dirty()
 
@@ -354,8 +386,17 @@ class PlotTab(QtWidgets.QWidget):
         except ValueError:
             value = None
         self.model.y_max = value
+        self._clear_remembered_zoom()
         self.update_limits()
         self.main_window.mark_project_dirty()
+
+    def on_set_limits_clicked(self):
+        """Handle set limits button click.
+
+        Clear the remembered zoom and update the axis limits.
+        """
+        self._clear_remembered_zoom()
+        self.update_limits()
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -365,9 +406,16 @@ class PlotTab(QtWidgets.QWidget):
         # bug for large y-values (> 1e6)
         # However, that will break setting the axis limits manually. Setting to
         # True for now.
+
+        # Block signals to prevent triggering updated_plot_range() when
+        # programmatically setting the range, but blockSignals does not work.
+        # self.ui.plot_widget.blockSignals(True)
+        self._block_range_signal = True
         self.ui.plot_widget.setRange(
             xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
+        # self.ui.plot_widget.blockSignals(False)
+        self._block_range_signal = False
 
     def get_adjusted_limits(self):
         """Get adjusted plot limits from the data points and text fields.
@@ -645,8 +693,15 @@ class PlotTab(QtWidgets.QWidget):
         """Handle updated plot range.
 
         If the fitted curves are drawn on the full axis, they need to be updated
-        when the plot range is changed.
+        when the plot range is changed. Also remember the current zoom range so
+        it can be restored when returning to this tab.
         """
+        # Only remember zoom after initial setup is complete
+        if not self._block_range_signal:
+            [[x_min, x_max], [y_min, y_max]] = self.ui.plot_widget.viewRange()
+            self._remembered_x_range = (x_min, x_max)
+            self._remembered_y_range = (y_min, y_max)
+
         if self.get_draw_curve_option() == DrawCurve.ON_AXIS:
             self.update_model_curves()
 

@@ -410,6 +410,7 @@ class TestPlotTab:
         plot_tab.ui.draw_curve_option.currentIndex.return_value = list(
             DRAW_CURVE_OPTIONS.keys()
         ).index(DrawCurve.ON_AXIS)
+        plot_tab.ui.plot_widget.viewRange.return_value = [[0, 10.0], [0, 10.0]]
 
         plot_tab.updated_plot_range()
 
