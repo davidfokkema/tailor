@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix sporadic column renaming bug. Fixes #83.
+- MultiPlot uses its own range when drawing curves. Fixes #81.
 
 ## [2.0.6] - 2024-12-20
 

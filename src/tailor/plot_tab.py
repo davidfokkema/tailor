@@ -715,6 +715,33 @@ class PlotTab(QtWidgets.QWidget):
             [[x_min, x_max], _] = self.ui.plot_widget.viewRange()
         return x_min, x_max
 
+    def get_fit_curve_x_limits_for_range(self, x_min=None, x_max=None):
+        """Get x-axis limits for fit curve with optional override range.
+
+        This method respects the choice in the 'Draw curve' option box.
+        When the option is 'ON_AXIS' and override limits are provided,
+        those limits are returned instead of the plot tab's own view range.
+        This is useful when drawing the fit curve on a multiplot with
+        different axis limits.
+
+        Args:
+            x_min (float, optional): override x minimum limit for ON_AXIS option
+            x_max (float, optional): override x maximum limit for ON_AXIS option
+
+        Returns:
+            x_min, x_max: tuple of floats with the x-axis limits
+        """
+        option = self.get_draw_curve_option()
+        if option == DrawCurve.ON_DATA:
+            x_min, x_max, _, _ = self.model.get_limits_from_data(padding=0)
+        elif option == DrawCurve.ON_DOMAIN:
+            x_min, x_max = self.model.get_fit_domain()
+        elif option == DrawCurve.ON_AXIS:
+            # Use override limits if provided, otherwise use plot widget range
+            if x_min is None or x_max is None:
+                [[x_min, x_max], _] = self.ui.plot_widget.viewRange()
+        return x_min, x_max
+
     def format_plot_info(self):
         """Format basic plot information in the results box.
 

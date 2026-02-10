@@ -77,6 +77,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.ui.y_min.textChanged.connect(self.update_y_min)
         self.ui.y_max.textChanged.connect(self.update_y_max)
         self.ui.set_limits_button.clicked.connect(self.update_limits)
+        self.ui.plot_widget.sigXRangeChanged.connect(self.updated_plot_range)
 
     def refresh_ui(self):
         """Refresh UI.
@@ -197,15 +198,20 @@ class MultiPlotTab(QtWidgets.QWidget):
         self.draw_plot()
         self.main_window.mark_project_dirty()
 
-    def draw_plot(self) -> None:
-        """Create a plot in the widget.
+    def _draw_plot_items(self) -> None:
+        """Draw data points, error bars, and model fits on the plot.
 
-        Create a plot from data in the columns specified by the given column
-        names.
+        This method handles the actual drawing of all plot elements.
+        It should be called when the plot needs to be redrawn (e.g., on zoom).
         """
         self.ui.plot_widget.clear()
+        
+        # Get the current axis range for model fit drawing
+        [[x_range_min, x_range_max], _] = self.ui.plot_widget.viewRange()
+        
         for plot_tab in self._plots.keys():
             if plot_info := self.model.get_plot_info(plot_tab):
+                # Draw data points
                 x, y, xerr, yerr = plot_tab.model.get_data()
                 self.ui.plot_widget.plot(
                     x=x,
@@ -216,6 +222,8 @@ class MultiPlotTab(QtWidgets.QWidget):
                     symbolPen=plot_info.color,
                     symbolBrush=plot_info.color,
                 )
+                
+                # Draw error bars
                 error_bars = pg.ErrorBarItem(
                     x=x,
                     y=y,
@@ -224,8 +232,13 @@ class MultiPlotTab(QtWidgets.QWidget):
                     pen=pg.mkPen(color=plot_info.color),
                 )
                 self.ui.plot_widget.addItem(error_bars)
+                
+                # Draw model fit if available
                 if plot_tab.model.best_fit:
-                    x_min, x_max = plot_tab.get_fit_curve_x_limits()
+                    # Use multiplot's axis range for fit curve limits
+                    x_min, x_max = plot_tab.get_fit_curve_x_limits_for_range(
+                        x_range_min, x_range_max
+                    )
                     x = np.linspace(x_min, x_max, NUM_POINTS)
                     y = plot_tab.model.evaluate_best_fit(x)
                     self.ui.plot_widget.plot(
@@ -234,9 +247,39 @@ class MultiPlotTab(QtWidgets.QWidget):
                         symbol=None,
                         pen=pg.mkPen(color=plot_info.color, width=4),
                     )
+
+    def draw_plot(self) -> None:
+        """Create a plot in the widget.
+
+        Create a plot from data in the columns specified by the given column
+        names. This method draws the plot items, sets axis labels, and updates
+        axis limits.
+        """
+        self._draw_plot_items()
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
         self.ui.plot_widget.setLabel("left", self.model.y_label)
         self.update_limits()
+
+    def updated_plot_range(self) -> None:
+        """Handle updated plot range (zoom events).
+
+        When the plot is zoomed, redraw model fit curves for any plots that
+        have the 'ON_AXIS' draw curve option enabled. This ensures fit curves
+        are redrawn with the correct limits for the multiplot's current view.
+        """
+        from tailor.plot_tab import DrawCurve
+        
+        # Check if any included plot has DrawCurve.ON_AXIS selected
+        needs_redraw = False
+        for plot_tab in self._plots.keys():
+            if self.model.get_plot_info(plot_tab):
+                if plot_tab.get_draw_curve_option() == DrawCurve.ON_AXIS:
+                    needs_redraw = True
+                    break
+        
+        # Only redraw if necessary
+        if needs_redraw:
+            self._draw_plot_items()
 
     def export_graph(self, filename, dpi=300):
         """Export graph to a file.
@@ -245,6 +288,10 @@ class MultiPlotTab(QtWidgets.QWidget):
             filename: path to the file.
         """
         plt.figure()
+        
+        # Get the multiplot's axis limits for exporting
+        xmin, xmax, ymin, ymax = self.get_adjusted_limits()
+        
         for plot_tab in self.main_window.get_plots():
             if self.model.uses_plot(plot_tab):
                 plot_info = self.model.get_plot_info(plot_tab)
@@ -262,7 +309,10 @@ class MultiPlotTab(QtWidgets.QWidget):
                 )
 
                 if plot_tab.model.best_fit:
-                    x_min, x_max = plot_tab.get_fit_curve_x_limits()
+                    # Use multiplot's axis limits when determining fit curve range
+                    x_min, x_max = plot_tab.get_fit_curve_x_limits_for_range(
+                        xmin, xmax
+                    )
                     x = np.linspace(x_min, x_max, NUM_POINTS)
                     y = plot_tab.model.evaluate_best_fit(x)
                     if y is not None:
@@ -270,7 +320,6 @@ class MultiPlotTab(QtWidgets.QWidget):
 
         plt.xlabel(self.model.x_label)
         plt.ylabel(self.model.y_label)
-        xmin, xmax, ymin, ymax = self.get_adjusted_limits()
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
         plt.legend()
