@@ -24,6 +24,9 @@ class MultiPlotTab(QtWidgets.QWidget):
     main_window: "MainWindow"
     model: MultiPlotModel
     _plots: dict[PlotTab, QtWidgets.QHBoxLayout]
+    _remembered_x_range: tuple[float, float] | None = None
+    _remembered_y_range: tuple[float, float] | None = None
+    _block_range_signal: bool = False
 
     def __init__(
         self, main_window: "MainWindow", name: str, id: int, x_label: str, y_label: str
@@ -205,10 +208,10 @@ class MultiPlotTab(QtWidgets.QWidget):
         It should be called when the plot needs to be redrawn (e.g., on zoom).
         """
         self.ui.plot_widget.clear()
-        
+
         # Get the current axis range for model fit drawing
         [[x_range_min, x_range_max], _] = self.ui.plot_widget.viewRange()
-        
+
         for plot_tab in self._plots.keys():
             if plot_info := self.model.get_plot_info(plot_tab):
                 # Draw data points
@@ -222,7 +225,7 @@ class MultiPlotTab(QtWidgets.QWidget):
                     symbolPen=plot_info.color,
                     symbolBrush=plot_info.color,
                 )
-                
+
                 # Draw error bars
                 error_bars = pg.ErrorBarItem(
                     x=x,
@@ -232,7 +235,7 @@ class MultiPlotTab(QtWidgets.QWidget):
                     pen=pg.mkPen(color=plot_info.color),
                 )
                 self.ui.plot_widget.addItem(error_bars)
-                
+
                 # Draw model fit if available
                 if plot_tab.model.best_fit:
                     # Use multiplot's axis range for fit curve limits
@@ -249,16 +252,40 @@ class MultiPlotTab(QtWidgets.QWidget):
                     )
 
     def draw_plot(self) -> None:
-        """Create a plot in the widget.
-
-        Create a plot from data in the columns specified by the given column
-        names. This method draws the plot items, sets axis labels, and updates
-        axis limits.
-        """
+        """Create a plot and restore remembered zoom range if available."""
         self._draw_plot_items()
         self.ui.plot_widget.setLabel("bottom", self.model.x_label)
         self.ui.plot_widget.setLabel("left", self.model.y_label)
-        self.update_limits()
+
+        # Restore remembered zoom if available, otherwise use default limits
+        if (
+            self._remembered_x_range is not None
+            and self._remembered_y_range is not None
+        ):
+            # Block signals to prevent triggering updated_plot_range() when
+            # restoring the remembered zoom but blockSignals does not work.
+            # self.ui.plot_widget.blockSignals(True)
+            self._block_range_signal = True
+            self.ui.plot_widget.setRange(
+                xRange=self._remembered_x_range,
+                yRange=self._remembered_y_range,
+                padding=0,
+                disableAutoRange=True,
+            )
+            # self.ui.plot_widget.blockSignals(False)
+            self._block_range_signal = False
+        else:
+            # update_limits() already blocks signals
+            self.update_limits()
+
+    def _clear_remembered_zoom(self):
+        """Clear the remembered zoom range.
+
+        This should be called when the user manually changes axis limits,
+        as the remembered zoom is no longer valid.
+        """
+        self._remembered_x_range = None
+        self._remembered_y_range = None
 
     def updated_plot_range(self) -> None:
         """Handle updated plot range (zoom events).
@@ -266,9 +293,16 @@ class MultiPlotTab(QtWidgets.QWidget):
         When the plot is zoomed, redraw model fit curves for any plots that
         have the 'ON_AXIS' draw curve option enabled. This ensures fit curves
         are redrawn with the correct limits for the multiplot's current view.
+        Also remember the current zoom range so it can be restored when returning
+        to this tab.
         """
         from tailor.plot_tab import DrawCurve
-        
+
+        if not self._block_range_signal:
+            [[x_min, x_max], [y_min, y_max]] = self.ui.plot_widget.viewRange()
+            self._remembered_x_range = (x_min, x_max)
+            self._remembered_y_range = (y_min, y_max)
+
         # Check if any included plot has DrawCurve.ON_AXIS selected
         needs_redraw = False
         for plot_tab in self._plots.keys():
@@ -276,7 +310,7 @@ class MultiPlotTab(QtWidgets.QWidget):
                 if plot_tab.get_draw_curve_option() == DrawCurve.ON_AXIS:
                     needs_redraw = True
                     break
-        
+
         # Only redraw if necessary
         if needs_redraw:
             self._draw_plot_items()
@@ -288,10 +322,10 @@ class MultiPlotTab(QtWidgets.QWidget):
             filename: path to the file.
         """
         plt.figure()
-        
+
         # Get the multiplot's axis limits for exporting
         xmin, xmax, ymin, ymax = self.get_adjusted_limits()
-        
+
         for plot_tab in self.main_window.get_plots():
             if self.model.uses_plot(plot_tab):
                 plot_info = self.model.get_plot_info(plot_tab)
@@ -310,9 +344,7 @@ class MultiPlotTab(QtWidgets.QWidget):
 
                 if plot_tab.model.best_fit:
                     # Use multiplot's axis limits when determining fit curve range
-                    x_min, x_max = plot_tab.get_fit_curve_x_limits_for_range(
-                        xmin, xmax
-                    )
+                    x_min, x_max = plot_tab.get_fit_curve_x_limits_for_range(xmin, xmax)
                     x = np.linspace(x_min, x_max, NUM_POINTS)
                     y = plot_tab.model.evaluate_best_fit(x)
                     if y is not None:
@@ -353,6 +385,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         except ValueError:
             value = None
         self.model.x_min = value
+        self._clear_remembered_zoom()
         self.update_limits()
         self.main_window.mark_project_dirty()
 
@@ -363,6 +396,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         except ValueError:
             value = None
         self.model.x_max = value
+        self._clear_remembered_zoom()
         self.update_limits()
         self.main_window.mark_project_dirty()
 
@@ -373,6 +407,7 @@ class MultiPlotTab(QtWidgets.QWidget):
         except ValueError:
             value = None
         self.model.y_min = value
+        self._clear_remembered_zoom()
         self.update_limits()
         self.main_window.mark_project_dirty()
 
@@ -383,8 +418,17 @@ class MultiPlotTab(QtWidgets.QWidget):
         except ValueError:
             value = None
         self.model.y_max = value
+        self._clear_remembered_zoom()
         self.update_limits()
         self.main_window.mark_project_dirty()
+
+    def on_set_limits_clicked(self):
+        """Handle set limits button click.
+
+        Clear the remembered zoom and update the axis limits.
+        """
+        self._clear_remembered_zoom()
+        self.update_limits()
 
     def update_limits(self):
         """Update the axis limits of the plot."""
@@ -394,9 +438,16 @@ class MultiPlotTab(QtWidgets.QWidget):
         # bug for large y-values (> 1e6)
         # However, that will break setting the axis limits manually. Setting to
         # True for now.
+
+        # Block signals to prevent triggering updated_plot_range() when
+        # programmatically setting the range but blockSignals does not work.
+        # self.ui.plot_widget.blockSignals(True)
+        self._block_range_signal = True
         self.ui.plot_widget.setRange(
             xRange=(xmin, xmax), yRange=(ymin, ymax), padding=0, disableAutoRange=True
         )
+        # self.ui.plot_widget.blockSignals(False)
+        self._block_range_signal = False
 
     def get_adjusted_limits(self):
         """Get adjusted plot limits from the data points and text fields.
