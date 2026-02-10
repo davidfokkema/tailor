@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - List Python and dependency versions in About dialog.
+- Remember zoom range when switching tabs.
 
 ### Changed
 
