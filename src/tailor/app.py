@@ -214,6 +214,35 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def show_about_dialog(self):
         """Show about application dialog."""
+        # Get Python version
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        
+        # Get dependency list with versions
+        dependencies = [
+            "appdirs",
+            "asteval",
+            "briefcase",
+            "click",
+            "libcst",
+            "lmfit",
+            "matplotlib",
+            "numpy",
+            "pandas",
+            "pydantic",
+            "pyqtgraph",
+            "pyside6_essentials",
+            "scipy",
+            "std-nslog",
+            "tomli_w",
+            "xxhash",
+        ]
+
+        dependency_info = [f"Python {python_version}"]
+        for dep in dependencies:
+            version = importlib.metadata.version(dep)
+            dependency_info.append(f"{dep} {version}")
+        dependency_list = "<br>".join(dependency_info)
+
         box = QtWidgets.QMessageBox(parent=self)
         box.setText("Tailor")
         box.setInformativeText(
@@ -226,6 +255,9 @@ class MainWindow(QtWidgets.QMainWindow):
             <p>Tailor is free software licensed under the GNU General Public License v3.0 or later.</p>
 
             <p>For more information, please visit:<br><a href="https://github.com/davidfokkema/tailor">https://github.com/davidfokkema/tailor</a></p>
+
+            <p style="color: gray; font-size: small; margin-top: 1em;">Dependencies:</p>
+            <p style="color: gray; font-size: small;">{dependency_list}</p>
         """
             )
         )
