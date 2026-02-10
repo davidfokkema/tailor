@@ -7,17 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- List Python and dependency versions in About dialog.
+
 ### Changed
 
 - Use Python 3.13.
 - Updated dependencies.
+- Don't use Liquid Glass for now (UI bugs in Qt6).
 
 ### Fixed
 
 - MultiPlot uses its own range when drawing curves. Fixes #81.
 - Fix sporadic column renaming bug. Fixes #83.
 - Update column index after moving column. Fixes #85.
-- Don't use Liquid Glass for now (UI bugs in Qt6).
 
 ## [2.0.6] - 2024-12-20
 
