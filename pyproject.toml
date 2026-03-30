@@ -1,6 +1,6 @@
 [project]
 name = "tailor"
-version = "2.1.0.dev7"
+version = "2.1.0"
 description = "Explore datasets and fit models."
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -42,7 +42,7 @@ Changelog = "https://github.com/davidfokkema/tailor/blob/main/CHANGELOG.md"
 tailor = "tailor.app:main"
 
 [build-system]
-requires = ["uv_build>=0.9.30,<0.10.0"]
+requires = ["uv_build>=0.11.2,<0.12.0"]
 build-backend = "uv_build"
 
 [tool.briefcase]
