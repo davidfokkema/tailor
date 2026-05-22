@@ -1434,7 +1434,7 @@ wheels = [
 
 [[package]]
 name = "tailor"
-version = "2.1.2.dev1"
+version = "2.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
