@@ -10,7 +10,6 @@ import pathlib
 import platform
 import sys
 import tempfile
-import urllib.request
 import webbrowser
 from functools import partial
 from importlib import resources
@@ -18,6 +17,7 @@ from textwrap import dedent
 from typing import NamedTuple, Optional
 
 import click
+import httpx2
 import packaging
 import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -216,7 +216,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Show about application dialog."""
         # Get Python version
         python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-        
+
         # Get dependency list with versions
         dependencies = [
             "appdirs",
@@ -1266,8 +1266,8 @@ class MainWindow(QtWidgets.QMainWindow):
             str: URL to download link or None.
         """
         try:
-            r = urllib.request.urlopen(RELEASE_API_URL, timeout=HTTP_TIMEOUT)
-        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
+            r = httpx2.get(RELEASE_API_URL, timeout=HTTP_TIMEOUT)
+        except httpx2.RequestError:
             # no internet connection?
             return None, None, None
         else:
