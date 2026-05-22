@@ -5,7 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - 2026-03-30
+## [2.1.1] - 2026-05-22
+
+### Added
+
+- List Python and dependency versions in About dialog.
+- Remember zoom range when switching tabs.
+
+### Changed
+
+- Use Python 3.13.
+- Updated dependencies.
+- Don't use Liquid Glass for now (UI bugs in Qt6).
+
+### Fixed
+
+- MultiPlot uses its own range when drawing curves. Fixes #81.
+- Fix sporadic column renaming bug. Fixes #83.
+- Update column index after moving column. Fixes #85.
+- Fix broken installer (but still need to uninstall 2.0.x first...)
+
+## [2.1.0] - 2026-03-30 (yanked)
 
 ### Added
 
