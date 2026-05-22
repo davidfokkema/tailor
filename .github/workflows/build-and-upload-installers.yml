@@ -17,7 +17,7 @@ jobs:
             filename: dist/*.msi
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Import signing certificates on macOS
         if: matrix.os == 'macos-latest'
@@ -52,7 +52,7 @@ jobs:
           # store app-specific password for notarization
           xcrun notarytool store-credentials "briefcase-macOS-$TEAM_ID" --apple-id "$APPLE_ID" --team-id $TEAM_ID --password $BRIEFCASE_PASSWORD
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -80,7 +80,7 @@ jobs:
         shell: bash
 
       - name: upload installer artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.artifactName }}
           path: ${{ env.artifactPath }}
