@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix crash happening sometime after importing malformed CSV files.
+- Fix explicit dependency on std-nslog.
 
 ## [2.1.2] - 2026-05-22
 
