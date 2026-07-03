@@ -655,8 +655,12 @@ class DataModel:
             thousands=format.thousands,
             header=format.header,
             skiprows=format.skiprows,
+            skipfooter=format.skipfooter,
             encoding_errors="backslashreplace",
+            engine="python",
         )
+        # make sure all values are converted to numeric
+        df = df.apply(pd.to_numeric, errors="coerce")
         # make sure column names are strings, even for numbered columns
         df.columns = df.columns.astype(str)
         # normalize column names to valid python variable names

@@ -19,7 +19,7 @@
      <item>
       <layout class="QFormLayout" name="formLayout">
        <property name="fieldGrowthPolicy">
-        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        <enum>QFormLayout::FieldGrowthPolicy::AllNonFixedFieldsGrow</enum>
        </property>
        <item row="0" column="0">
         <widget class="QLabel" name="columnDelimiterLabel">
@@ -65,6 +65,16 @@
        <item row="3" column="1">
         <widget class="QSpinBox" name="header_row_box"/>
        </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="numberOfFooterRowsToSkipLabel">
+         <property name="text">
+          <string>Number of footer rows to skip:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QSpinBox" name="footer_row_box"/>
+       </item>
       </layout>
      </item>
      <item>
@@ -109,7 +119,7 @@
         </font>
        </property>
        <property name="lineWrapMode">
-        <enum>QPlainTextEdit::NoWrap</enum>
+        <enum>QPlainTextEdit::LineWrapMode::NoWrap</enum>
        </property>
        <property name="readOnly">
         <bool>true</bool>
@@ -121,10 +131,10 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>

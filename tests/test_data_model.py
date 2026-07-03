@@ -590,6 +590,23 @@ x,y,z
         assert data["_1"] == pytest.approx([0.0, 1.0, 3.0])
         assert data["_2"] == pytest.approx([0.0, 2.0, 4.0])
 
+    def test_create_df_from_csv_with_str_data(
+        self, model: DataModel, tmp_path: pathlib.Path
+    ) -> None:
+        """Assert that string data is always converted to numeric type."""
+        data_path = tmp_path / "testdata.csv"
+        data_path.write_text(
+            """\
+1,2
+0.0,IAMASTRING
+1.0,2.0
+3.0,4.0                                                     
+"""
+        )
+
+        df = model.create_df_from_csv(data_path, FormatParameters())
+        assert all(df.apply(pd.api.types.is_any_real_numeric_dtype)) is True
+
     def test_import_csv(self, model: DataModel, tmp_path: pathlib.Path) -> None:
         # data can be imported into sheet with some empty columns
         model.insert_columns(0, 2)

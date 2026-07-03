@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'csv_format_dialog.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.2
+## Created by: Qt User Interface Compiler version 6.9.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -31,47 +31,57 @@ class Ui_CsvFormatDialog(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.formLayout = QFormLayout()
         self.formLayout.setObjectName(u"formLayout")
-        self.formLayout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
+        self.formLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.columnDelimiterLabel = QLabel(CsvFormatDialog)
         self.columnDelimiterLabel.setObjectName(u"columnDelimiterLabel")
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.columnDelimiterLabel)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.columnDelimiterLabel)
 
         self.delimiter_box = QComboBox(CsvFormatDialog)
         self.delimiter_box.setObjectName(u"delimiter_box")
 
-        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.delimiter_box)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.FieldRole, self.delimiter_box)
 
         self.numberFormatLabel = QLabel(CsvFormatDialog)
         self.numberFormatLabel.setObjectName(u"numberFormatLabel")
 
-        self.formLayout.setWidget(1, QFormLayout.LabelRole, self.numberFormatLabel)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.numberFormatLabel)
 
         self.num_format_box = QComboBox(CsvFormatDialog)
         self.num_format_box.setObjectName(u"num_format_box")
 
-        self.formLayout.setWidget(1, QFormLayout.FieldRole, self.num_format_box)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.num_format_box)
 
         self.useColumnHeaderLabel = QLabel(CsvFormatDialog)
         self.useColumnHeaderLabel.setObjectName(u"useColumnHeaderLabel")
 
-        self.formLayout.setWidget(2, QFormLayout.LabelRole, self.useColumnHeaderLabel)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.useColumnHeaderLabel)
 
         self.use_header_box = QCheckBox(CsvFormatDialog)
         self.use_header_box.setObjectName(u"use_header_box")
         self.use_header_box.setChecked(True)
 
-        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.use_header_box)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.use_header_box)
 
         self.headerRowLabel = QLabel(CsvFormatDialog)
         self.headerRowLabel.setObjectName(u"headerRowLabel")
 
-        self.formLayout.setWidget(3, QFormLayout.LabelRole, self.headerRowLabel)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, self.headerRowLabel)
 
         self.header_row_box = QSpinBox(CsvFormatDialog)
         self.header_row_box.setObjectName(u"header_row_box")
 
-        self.formLayout.setWidget(3, QFormLayout.FieldRole, self.header_row_box)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.header_row_box)
+
+        self.numberOfFooterRowsToSkipLabel = QLabel(CsvFormatDialog)
+        self.numberOfFooterRowsToSkipLabel.setObjectName(u"numberOfFooterRowsToSkipLabel")
+
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.LabelRole, self.numberOfFooterRowsToSkipLabel)
+
+        self.footer_row_box = QSpinBox(CsvFormatDialog)
+        self.footer_row_box.setObjectName(u"footer_row_box")
+
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.FieldRole, self.footer_row_box)
 
 
         self.verticalLayout.addLayout(self.formLayout)
@@ -106,7 +116,7 @@ class Ui_CsvFormatDialog(object):
         font = QFont()
         font.setFamilies([u"Courier New"])
         self.preview_box.setFont(font)
-        self.preview_box.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.preview_box.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.preview_box.setReadOnly(True)
 
         self.verticalLayout.addWidget(self.preview_box)
@@ -116,8 +126,8 @@ class Ui_CsvFormatDialog(object):
 
         self.buttonBox = QDialogButtonBox(CsvFormatDialog)
         self.buttonBox.setObjectName(u"buttonBox")
-        self.buttonBox.setOrientation(Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.buttonBox.setOrientation(Qt.Orientation.Horizontal)
+        self.buttonBox.setStandardButtons(QDialogButtonBox.StandardButton.Cancel|QDialogButtonBox.StandardButton.Ok)
 
         self.verticalLayout_2.addWidget(self.buttonBox)
 
@@ -135,6 +145,7 @@ class Ui_CsvFormatDialog(object):
         self.numberFormatLabel.setText(QCoreApplication.translate("CsvFormatDialog", u"Number format:", None))
         self.useColumnHeaderLabel.setText(QCoreApplication.translate("CsvFormatDialog", u"Use column header:", None))
         self.headerRowLabel.setText(QCoreApplication.translate("CsvFormatDialog", u"Header row / number of rows to skip:", None))
+        self.numberOfFooterRowsToSkipLabel.setText(QCoreApplication.translate("CsvFormatDialog", u"Number of footer rows to skip:", None))
         self.label.setText(QCoreApplication.translate("CsvFormatDialog", u"Preview:", None))
         self.preview_csv_button.setText(QCoreApplication.translate("CsvFormatDialog", u"CSV import", None))
         self.preview_text_button.setText(QCoreApplication.translate("CsvFormatDialog", u"Plain text", None))

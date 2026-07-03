@@ -3,7 +3,7 @@ import textwrap
 from pathlib import Path
 
 import pandas as pd
-from PySide6 import QtWidgets
+from PySide6 import QtGui, QtWidgets
 
 from tailor.ui_csv_format_dialog import Ui_CsvFormatDialog
 
@@ -18,8 +18,8 @@ NUM_FORMAT_CHOICES = {"1,000.0": (".", ","), "1.000,0": (",", ".")}
 
 FormatParameters = collections.namedtuple(
     "FormatParameters",
-    "delimiter decimal thousands header skiprows",
-    defaults=[",", ".", None, 0, 0],
+    "delimiter decimal thousands header skiprows skipfooter",
+    defaults=[",", ".", None, 0, 0, 0],
 )
 
 
@@ -40,11 +40,14 @@ class CSVFormatDialog(QtWidgets.QDialog):
         self.ui.num_format_box.currentIndexChanged.connect(self.show_preview)
         self.ui.use_header_box.stateChanged.connect(self.show_preview)
         self.ui.header_row_box.valueChanged.connect(self.show_preview)
+        self.ui.footer_row_box.valueChanged.connect(
+            lambda value: self.show_preview(value, scroll_to_end=True)
+        )
         self.ui.preview_choice.buttonClicked.connect(self.show_preview)
 
         self.show_preview()
 
-    def show_preview(self):
+    def show_preview(self, value=0, scroll_to_end=False):
         """Show a preview of the CSV data."""
         if self.ui.preview_choice.checkedButton() == self.ui.preview_csv_button:
             format = self.get_format_parameters()
@@ -56,8 +59,11 @@ class CSVFormatDialog(QtWidgets.QDialog):
                     thousands=format.thousands,
                     header=format.header,
                     skiprows=format.skiprows,
+                    skipfooter=format.skipfooter,
                     encoding_errors="backslashreplace",
+                    engine="python",
                 )
+                df = df.apply(pd.to_numeric, errors="coerce")
             except pd.errors.ParserError as exc:
                 text = textwrap.dedent(
                     f"""\
@@ -80,7 +86,13 @@ class CSVFormatDialog(QtWidgets.QDialog):
         else:
             try:
                 with open(self.filename) as f:
-                    text = "".join(f.readlines())
+                    lines = f.readlines()
+                # Add line numbers
+                max_width = len(str(len(lines)))
+                numbered = [
+                    f"{idx:>{max_width}}: {line}" for idx, line in enumerate(lines, 1)
+                ]
+                text = "".join(numbered)
             except Exception as exc:
                 text = textwrap.dedent(
                     f"""\
@@ -95,6 +107,10 @@ class CSVFormatDialog(QtWidgets.QDialog):
                     """
                 )
         self.ui.preview_box.setPlainText(text)
+        if scroll_to_end:
+            self.ui.preview_box.moveCursor(QtGui.QTextCursor.MoveOperation.End)
+        else:
+            self.ui.preview_box.moveCursor(QtGui.QTextCursor.MoveOperation.Start)
 
     def get_format_parameters(self):
         """Get CSV format parameters
@@ -104,6 +120,7 @@ class CSVFormatDialog(QtWidgets.QDialog):
         """
         delimiter = DELIMITER_CHOICES[self.ui.delimiter_box.currentText()]
         decimal, thousands = NUM_FORMAT_CHOICES[self.ui.num_format_box.currentText()]
+        skipfooter = self.ui.footer_row_box.value()
         if self.ui.use_header_box.isChecked():
             header = self.ui.header_row_box.value()
             skiprows = 0
@@ -116,4 +133,5 @@ class CSVFormatDialog(QtWidgets.QDialog):
             thousands=thousands,
             header=header,
             skiprows=skiprows,
+            skipfooter=skipfooter,
         )
