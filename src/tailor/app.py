@@ -239,8 +239,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         dependency_info = [f"Python {python_version}"]
         for dep in dependencies:
-            version = importlib.metadata.version(dep)
-            dependency_info.append(f"{dep} {version}")
+            try:
+                version = importlib.metadata.version(dep)
+            except importlib.metadata.PackageNotFoundError:
+                continue
+            else:
+                dependency_info.append(f"{dep} {version}")
         dependency_list = "<br>".join(dependency_info)
 
         box = QtWidgets.QMessageBox(parent=self)
