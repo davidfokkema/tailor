@@ -4,6 +4,7 @@ version = "2.1.3"
 description = "Explore datasets and fit models."
 readme = "README.md"
 license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 authors = [{ name = "David Fokkema", email = "davidfokkema@icloud.com" }]
 requires-python = ">=3.12"
 dependencies = [
@@ -49,7 +50,6 @@ build-backend = "uv_build"
 [tool.briefcase]
 project_name = "Tailor"
 bundle = "com.amsphyslab"
-license.file = "LICENSE"
 
 [tool.briefcase.app.tailor]
 formal_name = "Tailor"
