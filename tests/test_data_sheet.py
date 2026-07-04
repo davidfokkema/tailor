@@ -8,7 +8,7 @@ from pytest_mock import MockerFixture
 import tailor.data_sheet
 from tailor.data_sheet import DataSheet
 
-QtWidgets.QApplication()
+QtWidgets.QApplication.instance() or QtWidgets.QApplication()
 
 
 @pytest.fixture()

@@ -8,6 +8,8 @@ from tailor.data_sheet import DataSheet
 from tailor.multiplot_tab import MultiPlotTab
 from tailor.plot_tab import DRAW_CURVE_OPTIONS, DrawCurve, PlotTab
 
+QtWidgets.QApplication.instance() or QtWidgets.QApplication()
+
 
 @pytest.fixture()
 def data_sheet(mocker: MockerFixture) -> DataSheet:
@@ -186,6 +188,13 @@ class TestSheets:
         qapp = QtWidgets.QApplication.instance()
         project_with_multiplot.show()
         qapp.exec()
+
+    def test_show_about_dialog_runs_without_exception(
+        self, simple_project_without_plot: MainWindow, mocker: MockerFixture
+    ) -> None:
+        mocker.patch.object(QtWidgets.QMessageBox, "exec")
+
+        simple_project_without_plot.show_about_dialog()
 
     def test_close_sheet_without_any_plots(
         self, simple_project_without_plot: MainWindow, mocker: MockerFixture
