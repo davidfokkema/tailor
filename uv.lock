@@ -1444,6 +1444,17 @@ wheels = [
 ]
 
 [[package]]
+name = "std-nslog"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b4/ec/b1dcda86be2310c326e20908068fb2cc8d11a01262c0bbfe41fad1454a69/std_nslog-2.0.0.tar.gz", hash = "sha256:63e4e661d67b69458435dd23eef5d0c1e59d954ccf80b597c398a13afbfbbc11", size = 18720, upload-time = "2026-06-12T07:06:27.722Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4d/bc/a9b0e940758a92a3811e63d7524a97107c3224d0c50ea5152e79f1377f2f/std_nslog-2.0.0-cp310-abi3-macosx_10_9_universal2.whl", hash = "sha256:847e39549bf04163bd90cfb2ba004c062aeea856b94b12d389d870fbc195652e", size = 8480, upload-time = "2026-06-12T07:06:24.661Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/34/64c89bf5269f16590886b631f6eefb28265f529464a0d367d82245b023d8/std_nslog-2.0.0-cp310-abi3-macosx_10_9_x86_64.whl", hash = "sha256:50f377c4d98279eb246053564e17d7943de2933a9243386f1c09092d6344df90", size = 6878, upload-time = "2026-06-12T07:06:25.659Z" },
+    { url = "https://files.pythonhosted.org/packages/52/83/42efa1059c797434927b480b09ddbe824506a25c584e1ad2a0db200c82e6/std_nslog-2.0.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:d01bce53bbca2aba23ed0d537302b59488182b0658a8502172977f05bb21957b", size = 7883, upload-time = "2026-06-12T07:06:26.656Z" },
+]
+
+[[package]]
 name = "tailor"
 version = "2.1.3"
 source = { editable = "." }
@@ -1462,6 +1473,7 @@ dependencies = [
     { name = "pyqtgraph" },
     { name = "pyside6-essentials" },
     { name = "scipy" },
+    { name = "std-nslog", marker = "sys_platform == 'darwin'" },
     { name = "tomli-w" },
     { name = "xxhash" },
 ]
@@ -1488,6 +1500,7 @@ requires-dist = [
     { name = "pyqtgraph", specifier = ">=0.13.3" },
     { name = "pyside6-essentials", specifier = ">=6.6.2,<6.10" },
     { name = "scipy", specifier = ">=1.8.0,<2.0.0" },
+    { name = "std-nslog", marker = "sys_platform == 'darwin'", specifier = ">=2.0.0,<3.0.0" },
     { name = "tomli-w", specifier = ">=1.0.0,<2.0.0" },
     { name = "xxhash", specifier = ">=3.2.0,<4.0.0" },
 ]
